@@ -16,7 +16,7 @@ func TestRefreshInterval(t *testing.T) {
 }
 
 func TestDisplayURL(t *testing.T) {
-	if got := displayURL("192.168.1.109", "8420", "tv-woonkamer"); got != "http://192.168.1.109:8420/d/tv-woonkamer" {
+	if got := displayURL("192.168.1.109", "8420", "tv-woonkamer", "abc_-1"); got != "http://192.168.1.109:8420/d/tv-woonkamer?launch=abc_-1" {
 		t.Errorf("displayURL = %q", got)
 	}
 }

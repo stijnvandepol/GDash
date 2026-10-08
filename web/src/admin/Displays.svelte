@@ -19,6 +19,8 @@
 
   let editingId = $state<string | null>(null);
   let editName = $state('');
+  let pairingId = $state<string | null>(null);
+  let pairCode = $state('');
   let rowError = $state('');
 
   const deviceNames = $derived(new Map(devices.map((d) => [d.id, d.name])));
@@ -111,6 +113,38 @@
     }
   }
 
+  function startPairing(d: Display) {
+    pairingId = d.id;
+    pairCode = '';
+    rowError = '';
+  }
+
+  async function pair(event: SubmitEvent, id: string) {
+    event.preventDefault();
+    try {
+      await api.pairScreen(id, pairCode.trim());
+      pairingId = null;
+      await load();
+    } catch (err) {
+      rowError = handle(err);
+    }
+  }
+
+  async function unpair(d: Display) {
+    if (!confirm(`Unpair every screen showing "${d.name}"? They will ask for a new code.`)) return;
+    try {
+      await api.unpairScreens(d.id);
+      await load();
+    } catch (err) {
+      rowError = handle(err);
+    }
+  }
+
+  function describeScreens(d: Display): string {
+    const n = d.pairedScreens ?? 0;
+    return n === 1 ? '1 paired screen' : `${n} paired screens`;
+  }
+
   function describeDevice(id: string): string {
     if (!id) return 'Browser or kiosk';
     return deviceNames.get(id) ?? 'Cast device (not found right now)';
@@ -132,12 +166,29 @@
               <button type="submit">Save</button>
               <button type="button" class="link" onclick={() => (editingId = null)}>Cancel</button>
             </form>
+          {:else if pairingId === d.id}
+            <form class="inline" onsubmit={(e) => pair(e, d.id)}>
+              <input
+                bind:value={pairCode}
+                aria-label="Code shown on the screen"
+                placeholder="ABCD-EFGH"
+                autocomplete="off"
+                spellcheck="false"
+                required
+              />
+              <button type="submit">Pair</button>
+              <button type="button" class="link" onclick={() => (pairingId = null)}>Cancel</button>
+            </form>
           {:else}
             <div class="grow">
               <strong>{d.name}</strong>
-              <span class="muted">{describeDevice(d.castDeviceId)}</span>
+              <span class="muted">{describeDevice(d.castDeviceId)} · {describeScreens(d)}</span>
             </div>
             <a href="/d/{d.id}" target="_blank" rel="noopener">Open</a>
+            <button class="link" onclick={() => startPairing(d)}>Pair a screen</button>
+            {#if (d.pairedScreens ?? 0) > 0}
+              <button class="link" onclick={() => unpair(d)}>Unpair screens</button>
+            {/if}
             <button class="link" onclick={() => startRename(d)}>Rename</button>
             <button class="link danger" onclick={() => remove(d)}>Remove</button>
           {/if}

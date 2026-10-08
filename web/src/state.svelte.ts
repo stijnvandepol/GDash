@@ -1,3 +1,4 @@
+import type { PairingCode } from './pairing';
 import type { Snapshot } from './protocol';
 
 export type ConnectionState = 'connecting' | 'live' | 'offline';
@@ -9,9 +10,18 @@ const STORAGE_PREFIX = 'daycast.snapshot.';
  * localStorage, so a display that reloads while the server is down still
  * shows the dashboard instead of a blank screen.
  */
-export const display = $state<{ snapshot: Snapshot | null; connection: ConnectionState }>({
+export const display = $state<{
+  snapshot: Snapshot | null;
+  connection: ConnectionState;
+  /** The code to show while this screen waits to be paired. */
+  pairingCode: PairingCode | null;
+  /** A problem the screen cannot solve itself, shown instead of a dashboard. */
+  problem: string | null;
+}>({
   snapshot: null,
   connection: 'connecting',
+  pairingCode: null,
+  problem: null,
 });
 
 /** Minute-resolution clock shared by widgets. One timer for the whole page. */
@@ -46,5 +56,18 @@ export function restoreSnapshot(displayId: string, isValid: (v: unknown) => v is
   } catch {
     // A corrupt or inaccessible entry is ignored; the server sends a fresh
     // snapshot as soon as it is reachable.
+  }
+}
+
+/**
+ * Removes the stored snapshot, for a screen the server says is not paired:
+ * an unpaired screen must not keep showing a dashboard it no longer may see.
+ */
+export function forgetSnapshot(displayId: string): void {
+  display.snapshot = null;
+  try {
+    localStorage.removeItem(STORAGE_PREFIX + displayId);
+  } catch {
+    // Nothing stored or storage blocked: nothing to remove.
   }
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log/slog"
 	"net"
 	"time"
@@ -35,22 +36,23 @@ type Keeper struct {
 	Resolve   func(ctx context.Context) (Device, error)
 	AppID     string
 	Namespace string
-	// Messages returns the messages for the receiver: the current one at
-	// once, then every change. localIP is an address of this server that
-	// the device can reach, for receivers that need a URL back to it.
-	// The channel closes when ctx ends.
-	Messages func(ctx context.Context, localIP string) <-chan []byte
+	// Messages is for receivers that keep listening: it returns the current
+	// message at once, then every change. The channel closes when ctx ends.
+	// Set Messages or LaunchMessage, not both.
+	Messages func(ctx context.Context) <-chan []byte
+	// LaunchMessage is for receivers that handle only the first message
+	// after they start, such as DashCast, which replaces itself with the
+	// page it opens. It is called after every launch, so the message can
+	// carry a fresh single-use token. localIP is an address of this server
+	// that the device can reach. A receiver of this kind that is found
+	// already running is restarted, because it would ignore the message.
+	LaunchMessage func(localIP string) ([]byte, error)
 	// Refresh returns how often the receiver is stopped and started again,
 	// or 0 for never. Google TV covers a running cast with its screensaver
 	// after about 19 minutes while still reporting the app as running; on
 	// real hardware a restart brought the dashboard back.
 	Refresh func(Device) time.Duration
-	// FirstMessageOnly marks a receiver that handles only the first message
-	// after it starts. DashCast replaces itself with the page it opens, so
-	// a DashCast session found already running cannot take a new URL and
-	// is restarted instead.
-	FirstMessageOnly bool
-	Logger           *slog.Logger
+	Logger  *slog.Logger
 }
 
 // Run keeps the receiver alive until ctx is cancelled.
@@ -89,10 +91,13 @@ func (k *Keeper) session(ctx context.Context) error {
 	sessionCtx, cancel := context.WithCancel(ctx)
 	defer cancel()
 	s := &keeperSession{
-		keeper:   k,
-		client:   client,
-		messages: k.Messages(sessionCtx, ReachableIP(device.Addr, client.LocalIP())),
-		resend:   time.NewTimer(0),
+		keeper:  k,
+		client:  client,
+		localIP: ReachableIP(device.Addr, client.LocalIP()),
+		resend:  time.NewTimer(0),
+	}
+	if k.Messages != nil {
+		s.messages = k.Messages(sessionCtx)
 	}
 	<-s.resend.C
 	defer s.resend.Stop()
@@ -165,6 +170,7 @@ type keeperSession struct {
 	keeper    *Keeper
 	client    *Client
 	messages  <-chan []byte
+	localIP   string
 	app       Application
 	transport string
 	standby   bool
@@ -201,7 +207,7 @@ func (s *keeperSession) reconcile(ctx context.Context, status ReceiverStatus) er
 	k := s.keeper
 	s.standby = status.IsStandBy
 	app, running := status.App(k.AppID)
-	if running && k.FirstMessageOnly && s.transport == "" {
+	if running && k.LaunchMessage != nil && s.transport == "" {
 		k.Logger.Info("restarting receiver that was already running, so it takes the current page")
 		if err := s.client.Stop(ctx, app.SessionID); err != nil {
 			return err
@@ -229,6 +235,13 @@ func (s *keeperSession) reconcile(ctx context.Context, status ReceiverStatus) er
 	}
 	s.app = app
 	s.transport = app.TransportID
+	if k.LaunchMessage != nil {
+		msg, err := k.LaunchMessage(s.localIP)
+		if err != nil {
+			return fmt.Errorf("build launch message: %w", err)
+		}
+		s.latest = msg
+	}
 	s.resendIdx = 0
 	s.scheduleNextResend()
 	return s.sendLatest()

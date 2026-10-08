@@ -20,7 +20,17 @@
 <svelte:window bind:innerWidth bind:innerHeight />
 
 <main class="screen">
-  {#if dashboard}
+  {#if display.problem}
+    <p class="message">{display.problem}</p>
+  {:else if display.pairingCode}
+    <div class="pairing">
+      <p class="pairing-title">Pair this screen</p>
+      <p class="pairing-code">{display.pairingCode.code}</p>
+      <p class="pairing-help">
+        Open Daycast on your phone or computer, choose this display and enter the code. It is valid for 10 minutes.
+      </p>
+    </div>
+  {:else if dashboard}
     <div
       class="stage"
       style:width="{STAGE_WIDTH}px"
@@ -48,7 +58,7 @@
       {/each}
     </div>
   {:else}
-    <p class="waiting">Connecting to Daycast…</p>
+    <p class="message">Connecting to Daycast…</p>
   {/if}
 
   {#if display.connection === 'offline'}
@@ -80,14 +90,46 @@
     overflow: hidden;
     display: flex;
   }
-  .waiting {
+  .message {
     position: absolute;
     inset: 0;
     display: grid;
     place-items: center;
     margin: 0;
+    padding: 0 10vw;
+    text-align: center;
     color: var(--text-muted);
-    font-size: 2rem;
+    font-size: 3vmin;
+  }
+  .pairing {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3vmin;
+    text-align: center;
+  }
+  .pairing-title {
+    margin: 0;
+    font-size: 4vmin;
+    color: var(--text-muted);
+  }
+  .pairing-code {
+    margin: 0;
+    font-size: 14vmin;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-primary);
+  }
+  .pairing-help {
+    margin: 0;
+    max-width: 60vw;
+    font-size: 2.6vmin;
+    line-height: 1.4;
+    color: var(--text-muted);
   }
   .muted {
     color: var(--text-muted);

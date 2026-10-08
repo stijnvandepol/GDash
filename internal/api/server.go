@@ -1,7 +1,7 @@
 // Package api serves the display pages, the Cast receiver page and the HTTP
 // API. Every API route that reads configuration or changes anything needs a
-// logged-in user. Display pages and their event streams are still open until
-// display pairing exists (v0.5).
+// logged-in user. A display's event stream needs a screen paired with that
+// display, or a logged-in user previewing it.
 package api
 
 import (
@@ -16,6 +16,7 @@ import (
 
 	"github.com/stijnvandepol/daycast/internal/auth"
 	"github.com/stijnvandepol/daycast/internal/cast"
+	"github.com/stijnvandepol/daycast/internal/pairing"
 	"github.com/stijnvandepol/daycast/internal/store"
 	"github.com/stijnvandepol/daycast/internal/validation"
 )
@@ -23,9 +24,9 @@ import (
 const (
 	// Proxies close idle connections after 30 to 60 seconds; a comment line
 	// every 20 seconds keeps the event stream open through them.
-	ssePingInterval  = 20 * time.Second
-	sseRetryMillis   = 5000
-	discoveryTimeout = 3 * time.Second
+	defaultPingInterval = 20 * time.Second
+	sseRetryMillis      = 5000
+	discoveryTimeout    = 3 * time.Second
 )
 
 var validDisplayID = regexp.MustCompile(`^[a-z0-9][a-z0-9-]{0,31}$`)
@@ -39,6 +40,7 @@ type Subscriber interface {
 type Server struct {
 	Snapshots Subscriber
 	Auth      *auth.Service
+	Pairing   *pairing.Service
 	Store     *store.Store
 	// Web holds the built frontend: display/index.html, receiver/index.html
 	// and assets/.
@@ -47,8 +49,12 @@ type Server struct {
 	// DisplaysChanged is called after a display is created, changed or
 	// deleted, so the cast manager can follow at once.
 	DisplaysChanged func()
-	Now             func() time.Time
-	Logger          *slog.Logger
+	// PingInterval is how often an open display stream sends a keep-alive
+	// and re-checks that it may still show the display. Zero means 20
+	// seconds.
+	PingInterval time.Duration
+	Now          func() time.Time
+	Logger       *slog.Logger
 }
 
 // Handler returns the routes of the server.
@@ -66,6 +72,12 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("POST /api/sessions", s.postSession)
 	mux.Handle("DELETE /api/sessions/current", s.requireUser(s.deleteSession))
 	mux.Handle("GET /api/me", s.requireUser(s.getMe))
+
+	mux.HandleFunc("POST /api/pairing-requests", s.postPairingRequest)
+	mux.HandleFunc("POST /api/display-sessions", s.postDisplaySession)
+	mux.HandleFunc("GET /api/display-sessions/current", s.getDisplaySession)
+	mux.Handle("POST /api/displays/{display}/pairings", s.requireUser(s.postPairing))
+	mux.Handle("DELETE /api/displays/{display}/pairings", s.requireUser(s.deletePairings))
 
 	mux.Handle("GET /api/cast-devices", s.requireUser(s.castDevices))
 	mux.Handle("GET /api/displays", s.requireUser(s.listDisplays))
@@ -133,8 +145,18 @@ func (s *Server) servePage(w http.ResponseWriter, r *http.Request, name string) 
 // displayEvents handles GET /api/displays/{display}/events: a Server-Sent
 // Events stream with a "snapshot" event for every change of the display.
 func (s *Server) displayEvents(w http.ResponseWriter, r *http.Request) {
-	if !validDisplayID.MatchString(r.PathValue("display")) {
+	displayID := r.PathValue("display")
+	if !validDisplayID.MatchString(displayID) {
 		http.NotFound(w, r)
+		return
+	}
+	allowed, err := s.mayShowDisplay(r, displayID)
+	if err != nil {
+		s.internalError(w, "authorize display stream", err)
+		return
+	}
+	if !allowed {
+		writeError(w, http.StatusUnauthorized, "not_paired", "Pair this screen with the display first.")
 		return
 	}
 	rc := http.NewResponseController(w)
@@ -153,7 +175,11 @@ func (s *Server) displayEvents(w http.ResponseWriter, r *http.Request) {
 	}
 
 	messages := s.Snapshots.Subscribe(r.Context())
-	ping := time.NewTicker(ssePingInterval)
+	interval := s.PingInterval
+	if interval == 0 {
+		interval = defaultPingInterval
+	}
+	ping := time.NewTicker(interval)
 	defer ping.Stop()
 	for {
 		var err error
@@ -166,6 +192,16 @@ func (s *Server) displayEvents(w http.ResponseWriter, r *http.Request) {
 			// line is a complete event.
 			_, err = fmt.Fprintf(w, "event: snapshot\ndata: %s\n\n", msg)
 		case <-ping.C:
+			// A screen that was unpaired, or an admin whose session ended,
+			// must stop receiving data now, not at its next reconnect.
+			allowed, authErr := s.mayShowDisplay(r, displayID)
+			if authErr != nil {
+				s.Logger.Error("could not re-check display stream", "display", displayID, "error", authErr)
+				return
+			}
+			if !allowed {
+				return
+			}
 			_, err = fmt.Fprint(w, ": ping\n\n")
 		}
 		if err == nil {

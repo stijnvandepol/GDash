@@ -10,17 +10,27 @@ import (
 )
 
 // listDisplays handles GET /api/displays: {"displays": [...]}, at most
-// displays.MaxDisplays.
+// displays.MaxDisplays, each with the number of screens paired by code.
 func (s *Server) listDisplays(w http.ResponseWriter, r *http.Request) {
 	list, err := s.Store.Displays(r.Context())
 	if err != nil {
 		s.internalError(w, "list displays", err)
 		return
 	}
-	if list == nil {
-		list = []displays.Display{}
+	counts, err := s.Store.PairedScreenCounts(r.Context())
+	if err != nil {
+		s.internalError(w, "count paired screens", err)
+		return
 	}
-	writeJSON(w, http.StatusOK, map[string]any{"displays": list})
+	type listed struct {
+		displays.Display
+		PairedScreens int `json:"pairedScreens"`
+	}
+	out := make([]listed, len(list))
+	for i, d := range list {
+		out[i] = listed{Display: d, PairedScreens: counts[d.ID]}
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"displays": out})
 }
 
 // createDisplay handles POST /api/displays {id, name, castDeviceId}: 201 with

@@ -13,13 +13,14 @@ import (
 	"github.com/stijnvandepol/daycast/internal/casting"
 	"github.com/stijnvandepol/daycast/internal/display"
 	"github.com/stijnvandepol/daycast/internal/displays"
+	"github.com/stijnvandepol/daycast/internal/pairing"
 	"github.com/stijnvandepol/daycast/internal/store"
 )
 
 // newCastManager keeps the dashboard on every display that is linked to a
 // Cast device. Without an own receiver app ID it uses DashCast, which opens
 // the display page on the TV; with one it pushes snapshots to that receiver.
-func newCastManager(cfg config, db *store.Store, snapshots *display.Broadcaster, logger *slog.Logger) (*casting.Manager, error) {
+func newCastManager(cfg config, db *store.Store, snapshots *display.Broadcaster, pairings *pairing.Service, logger *slog.Logger) (*casting.Manager, error) {
 	_, port, err := net.SplitHostPort(cfg.addr)
 	if err != nil {
 		return nil, fmt.Errorf("DAYCAST_ADDR %q has no port: %w", cfg.addr, err)
@@ -28,12 +29,15 @@ func newCastManager(cfg config, db *store.Store, snapshots *display.Broadcaster,
 		keeper := &cast.Keeper{Resolve: resolveDevice(d.CastDeviceID), Refresh: refreshInterval, Logger: logger.With("display", d.ID)}
 		if cfg.castAppID != "" {
 			keeper.AppID, keeper.Namespace = cfg.castAppID, display.CastNamespace
-			keeper.Messages = func(ctx context.Context, _ string) <-chan []byte { return snapshots.Subscribe(ctx) }
+			keeper.Messages = snapshots.Subscribe
 		} else {
 			keeper.AppID, keeper.Namespace = cast.DashCastAppID, cast.DashCastNamespace
-			keeper.FirstMessageOnly = true
-			keeper.Messages = func(ctx context.Context, localIP string) <-chan []byte {
-				return single(ctx, cast.DashCastLoad(displayURL(localIP, port, d.ID)))
+			keeper.LaunchMessage = func(localIP string) ([]byte, error) {
+				launchToken, err := pairings.NewLaunchToken(d.ID)
+				if err != nil {
+					return nil, err
+				}
+				return cast.DashCastLoad(displayURL(localIP, port, d.ID, launchToken)), nil
 			}
 		}
 		keeper.Run(ctx)
@@ -75,18 +79,9 @@ func refreshInterval(d cast.Device) time.Duration {
 }
 
 // displayURL is the display page as the TV reaches it: through the address
-// this server has on the connection to that TV.
-func displayURL(localIP, port, displayID string) string {
-	return "http://" + net.JoinHostPort(localIP, port) + "/d/" + url.PathEscape(displayID)
-}
-
-// single returns a channel that holds msg until ctx ends.
-func single(ctx context.Context, msg []byte) <-chan []byte {
-	ch := make(chan []byte, 1)
-	ch <- msg
-	go func() {
-		<-ctx.Done()
-		close(ch)
-	}()
-	return ch
+// this server has on the connection to that TV. The single-use launch token
+// lets the page pair itself; the page removes it from the address bar.
+func displayURL(localIP, port, displayID, launchToken string) string {
+	return "http://" + net.JoinHostPort(localIP, port) + "/d/" + url.PathEscape(displayID) +
+		"?" + url.Values{"launch": {launchToken}}.Encode()
 }

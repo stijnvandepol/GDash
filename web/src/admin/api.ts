@@ -32,6 +32,8 @@ export interface Display {
   name: string;
   castDeviceId: string;
   createdAt: string;
+  /** Screens paired by code; only present in the display list. */
+  pairedScreens?: number;
 }
 
 export interface CastDevice {
@@ -75,6 +77,10 @@ export const api = {
   updateDisplay: (id: string, changes: { name?: string; castDeviceId?: string }) =>
     request<Display>('PATCH', `/api/displays/${encodeURIComponent(id)}`, changes),
   deleteDisplay: (id: string) => request<void>('DELETE', `/api/displays/${encodeURIComponent(id)}`),
+  pairScreen: (id: string, code: string) =>
+    request<void>('POST', `/api/displays/${encodeURIComponent(id)}/pairings`, { code }),
+  unpairScreens: (id: string) =>
+    request<{ removed: number }>('DELETE', `/api/displays/${encodeURIComponent(id)}/pairings`),
   castDevices: () => request<{ devices: CastDevice[] }>('GET', '/api/cast-devices').then((r) => r.devices),
 };
 

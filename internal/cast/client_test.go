@@ -2,8 +2,10 @@ package cast
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"log/slog"
+	"sync"
 	"testing"
 	"time"
 )
@@ -130,13 +132,11 @@ func TestKeeperLaunchesOnIdleDeviceAndForwardsState(t *testing.T) {
 	defer cancel()
 	device := newFakeDevice(t, Application{AppID: "E8C28D3C", DisplayName: "Backdrop", IsIdleScreen: true})
 
-	localIPs := make(chan string, 1)
 	keeper := &Keeper{
 		Resolve:   func(context.Context) (Device, error) { return Device{Addr: device.addr()}, nil },
 		AppID:     "ABCD1234",
 		Namespace: "urn:x-cast:app.daycast.display",
-		Messages: func(ctx context.Context, localIP string) <-chan []byte {
-			localIPs <- localIP
+		Messages: func(ctx context.Context) <-chan []byte {
 			ch := make(chan []byte, 1)
 			ch <- []byte(`{"type":"snapshot","version":1}`)
 			return ch
@@ -152,9 +152,6 @@ func TestKeeperLaunchesOnIdleDeviceAndForwardsState(t *testing.T) {
 		}
 	case <-ctx.Done():
 		t.Fatal("keeper never delivered the state to the receiver")
-	}
-	if ip := <-localIPs; ip != "127.0.0.1" {
-		t.Fatalf("localIP = %q, want the server's address on the device connection", ip)
 	}
 	// The startup resends deliver the same state again while the receiver
 	// page may still be loading.
@@ -176,7 +173,7 @@ func newRefreshingKeeper(device *fakeDevice, every time.Duration) *Keeper {
 		Resolve:   func(context.Context) (Device, error) { return Device{Addr: device.addr()}, nil },
 		AppID:     "ABCD1234",
 		Namespace: "urn:x-cast:app.daycast.display",
-		Messages: func(ctx context.Context, _ string) <-chan []byte {
+		Messages: func(ctx context.Context) <-chan []byte {
 			ch := make(chan []byte, 1)
 			ch <- []byte(`{"type":"snapshot"}`)
 			return ch
@@ -219,22 +216,72 @@ func TestKeeperDoesNotRestartDuringStandby(t *testing.T) {
 	}
 }
 
-func TestKeeperRestartsFirstMessageOnlyReceiverFoundRunning(t *testing.T) {
+// launchCounter builds numbered launch messages and records the address
+// the keeper passed.
+type launchCounter struct {
+	mu       sync.Mutex
+	n        int
+	localIPs []string
+}
+
+func (c *launchCounter) message(localIP string) ([]byte, error) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.n++
+	c.localIPs = append(c.localIPs, localIP)
+	return []byte(fmt.Sprintf(`{"launch":%d}`, c.n)), nil
+}
+
+func newLaunchingKeeper(device *fakeDevice, launches *launchCounter, refresh time.Duration) *Keeper {
+	return &Keeper{
+		Resolve:       func(context.Context) (Device, error) { return Device{Addr: device.addr()}, nil },
+		AppID:         DashCastAppID,
+		Namespace:     DashCastNamespace,
+		LaunchMessage: launches.message,
+		Refresh:       func(Device) time.Duration { return refresh },
+		Logger:        slog.New(slog.NewTextHandler(io.Discard, nil)),
+	}
+}
+
+func TestKeeperRestartsLaunchMessageReceiverFoundRunning(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), testTimeout)
 	defer cancel()
-	device := newFakeDevice(t, Application{AppID: "ABCD1234", SessionID: "old", TransportID: "web-0"})
-	keeper := newRefreshingKeeper(device, 0)
-	keeper.FirstMessageOnly = true
-	go keeper.Run(ctx)
+	device := newFakeDevice(t, Application{AppID: DashCastAppID, SessionID: "old", TransportID: "web-0"})
+	launches := &launchCounter{}
+	go newLaunchingKeeper(device, launches, 0).Run(ctx)
 
 	waitForLaunches(t, device, 1)
 	select {
 	case m := <-device.appMessages:
-		if m.DestinationID != "web-1" {
-			t.Fatalf("message went to %s, want the relaunched receiver web-1", m.DestinationID)
+		if m.DestinationID != "web-1" || m.Payload != `{"launch":1}` {
+			t.Fatalf("message %q went to %s, want the first launch message on the relaunched web-1", m.Payload, m.DestinationID)
 		}
 	case <-ctx.Done():
 		t.Fatal("relaunched receiver never got the message")
+	}
+	launches.mu.Lock()
+	defer launches.mu.Unlock()
+	if launches.localIPs[0] != "127.0.0.1" {
+		t.Fatalf("localIP = %q, want the server's address towards the device", launches.localIPs[0])
+	}
+}
+
+func TestKeeperBuildsAFreshLaunchMessageOnEveryRestart(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), testTimeout)
+	defer cancel()
+	device := newFakeDevice(t)
+	launches := &launchCounter{}
+	go newLaunchingKeeper(device, launches, 100*time.Millisecond).Run(ctx)
+
+	waitForLaunches(t, device, 3)
+	seen := map[string]bool{}
+	for len(seen) < 3 {
+		select {
+		case m := <-device.appMessages:
+			seen[m.Payload] = true
+		case <-ctx.Done():
+			t.Fatalf("saw launch messages %v, want three different ones", seen)
+		}
 	}
 }
 

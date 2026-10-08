@@ -27,6 +27,7 @@ import (
 	"github.com/stijnvandepol/daycast/internal/datahub"
 	"github.com/stijnvandepol/daycast/internal/display"
 	"github.com/stijnvandepol/daycast/internal/news"
+	"github.com/stijnvandepol/daycast/internal/pairing"
 	"github.com/stijnvandepol/daycast/internal/store"
 	"github.com/stijnvandepol/daycast/internal/weather"
 	"github.com/stijnvandepol/daycast/web"
@@ -149,7 +150,8 @@ func serve(ctx context.Context, logger *slog.Logger) error {
 	if err != nil {
 		return err
 	}
-	castManager, err := newCastManager(cfg, db, snapshots, logger)
+	pairings := pairing.New(db)
+	castManager, err := newCastManager(cfg, db, snapshots, pairings, logger)
 	if err != nil {
 		return err
 	}
@@ -162,6 +164,7 @@ func serve(ctx context.Context, logger *slog.Logger) error {
 	handler := (&api.Server{
 		Snapshots:       snapshots,
 		Auth:            authService,
+		Pairing:         pairings,
 		Store:           db,
 		Web:             frontend,
 		Discover:        cast.Discover,
