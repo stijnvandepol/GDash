@@ -154,7 +154,11 @@ func serve(ctx context.Context, logger *slog.Logger) error {
 	if err != nil {
 		return err
 	}
-	snapshots, err := startData(ctx, cfg, logger)
+	// A fresh install starts with the default layout; later edits survive.
+	if err := db.EnsureDashboard(ctx, display.DefaultDashboard(len(cfg.calendars) > 0), time.Now()); err != nil {
+		return err
+	}
+	snapshots, publisher, err := startData(ctx, cfg, db, logger)
 	if err != nil {
 		return err
 	}
@@ -170,36 +174,40 @@ func serve(ctx context.Context, logger *slog.Logger) error {
 		return err
 	}
 	handler := (&api.Server{
-		Snapshots:       snapshots,
-		Auth:            authService,
-		Pairing:         pairings,
-		Store:           db,
-		Web:             frontend,
-		Discover:        cast.Discover,
-		DisplaysChanged: castManager.Changed,
-		Now:             time.Now,
-		Logger:          logger,
+		Snapshots: snapshots,
+		Auth:      authService,
+		Pairing:   pairings,
+		Store:     db,
+		Web:       frontend,
+		Discover:  cast.Discover,
+		DisplaysChanged: func() {
+			publisher.Refresh(ctx)
+			castManager.Changed()
+		},
+		Now:    time.Now,
+		Logger: logger,
 	}).Handler()
 	return listen(ctx, cfg.addr, handler, logger)
 }
 
-// startData starts fetching dashboard data and returns the broadcaster that
-// turns every change into a display snapshot.
-func startData(ctx context.Context, cfg config, logger *slog.Logger) (*display.Broadcaster, error) {
+// startData starts fetching dashboard data. The publisher turns every data
+// or configuration change into new display snapshots on the broadcaster.
+func startData(ctx context.Context, cfg config, db *store.Store, logger *slog.Logger) (*display.Broadcaster, *display.Publisher, error) {
 	cache, err := datahub.NewFileStore(filepath.Join(cfg.dataDir, "cache"))
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	dashboard := display.DefaultDashboard(len(cfg.calendars) > 0)
 	broadcaster := display.NewBroadcaster()
 	var hub *datahub.Hub
-	publish := func() {
-		if err := broadcaster.Publish(time.Now(), dashboard, hub.Entries()); err != nil {
-			logger.Error("could not publish display state", "error", err)
-		}
+	publisher := &display.Publisher{
+		Broadcaster: broadcaster,
+		Dashboards:  db.DisplayDashboards,
+		Data:        func() map[string]datahub.Entry { return hub.Entries() },
+		Now:         time.Now,
+		Logger:      logger,
 	}
-	hub = datahub.New(cache, logger, publish)
-	publish()
+	hub = datahub.New(cache, logger, func() { publisher.Refresh(ctx) })
+	publisher.Refresh(ctx)
 
 	weatherClient := weather.Client{BaseURL: weather.DefaultBaseURL, HTTP: &http.Client{Timeout: upstreamTimeout}}
 	newsClient := &news.Client{HTTP: &http.Client{Timeout: upstreamTimeout}}
@@ -223,7 +231,7 @@ func startData(ctx context.Context, cfg config, logger *slog.Logger) (*display.B
 		})
 	}
 	go hub.Run(ctx, sources)
-	return broadcaster, nil
+	return broadcaster, publisher, nil
 }
 
 // listen serves HTTP until ctx ends, then shuts down gracefully.

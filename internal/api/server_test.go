@@ -27,7 +27,7 @@ const testSetupToken = "test-setup-token"
 
 type fixedSubscriber []byte
 
-func (f fixedSubscriber) Subscribe(ctx context.Context) <-chan []byte {
+func (f fixedSubscriber) Subscribe(ctx context.Context, _ string) <-chan []byte {
 	ch := make(chan []byte, 1)
 	ch <- f
 	go func() { <-ctx.Done(); close(ch) }()

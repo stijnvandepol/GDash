@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"testing"
 	"time"
+
+	"github.com/stijnvandepol/daycast/internal/datahub"
 )
 
 var now = time.Date(2026, 10, 8, 7, 30, 0, 0, time.UTC)
@@ -18,16 +20,20 @@ func decode(t *testing.T, msg []byte) Snapshot {
 	return s
 }
 
+func kitchenOnly() map[string]Dashboard {
+	return map[string]Dashboard{"kitchen": Normalize(DefaultDashboard(false))}
+}
+
 func TestSubscriberGetsCurrentSnapshotFirst(t *testing.T) {
 	b := NewBroadcaster()
-	if err := b.Publish(now, DefaultDashboard(false), nil); err != nil {
+	if err := b.Publish(now, kitchenOnly(), nil); err != nil {
 		t.Fatal(err)
 	}
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	first := decode(t, <-b.Subscribe(ctx))
-	if first.Version != 1 || first.Type != "snapshot" || first.Dashboard.ID != "default" {
+	first := decode(t, <-b.Subscribe(ctx, "kitchen"))
+	if first.Version != 1 || first.Type != "snapshot" || first.Dashboard.ID != DefaultID {
 		t.Fatalf("first message = %+v", first)
 	}
 }
@@ -36,10 +42,10 @@ func TestSlowSubscriberOnlyGetsNewestSnapshot(t *testing.T) {
 	b := NewBroadcaster()
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	ch := b.Subscribe(ctx)
+	ch := b.Subscribe(ctx, "kitchen")
 
 	for range 5 {
-		if err := b.Publish(now, DefaultDashboard(false), nil); err != nil {
+		if err := b.Publish(now, kitchenOnly(), nil); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -53,10 +59,45 @@ func TestSlowSubscriberOnlyGetsNewestSnapshot(t *testing.T) {
 	}
 }
 
+func TestEachDisplayGetsItsDashboardAndOnlyItsData(t *testing.T) {
+	b := NewBroadcaster()
+	withCalendar := Normalize(DefaultDashboard(true))
+	withoutCalendar := Normalize(DefaultDashboard(false))
+	data := map[string]datahub.Entry{
+		"weather.current":  {Value: []byte(`14`)},
+		"calendar.default": {Value: []byte(`["Dentist"]`)},
+		"news.default":     {Value: []byte(`[]`)},
+	}
+	if err := b.Publish(now, map[string]Dashboard{"kitchen": withCalendar, "hall": withoutCalendar}, data); err != nil {
+		t.Fatal(err)
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	kitchen := decode(t, <-b.Subscribe(ctx, "kitchen"))
+	hall := decode(t, <-b.Subscribe(ctx, "hall"))
+	if _, ok := kitchen.Data["calendar.default"]; !ok {
+		t.Fatal("kitchen, which has a calendar widget, did not get calendar data")
+	}
+	if _, ok := hall.Data["calendar.default"]; ok {
+		t.Fatal("hall has no calendar widget but received calendar data")
+	}
+	if _, ok := hall.Data["weather.current"]; !ok {
+		t.Fatal("hall did not get the weather it shows")
+	}
+
+	unknown := b.Subscribe(ctx, "garage")
+	select {
+	case msg := <-unknown:
+		t.Fatalf("a display without a dashboard got %s", msg)
+	default:
+	}
+}
+
 func TestSubscriptionClosesWithContext(t *testing.T) {
 	b := NewBroadcaster()
 	ctx, cancel := context.WithCancel(context.Background())
-	ch := b.Subscribe(ctx)
+	ch := b.Subscribe(ctx, "kitchen")
 	cancel()
 
 	select {

@@ -29,7 +29,7 @@ func newCastManager(cfg config, db *store.Store, snapshots *display.Broadcaster,
 		keeper := &cast.Keeper{Resolve: resolveDevice(d.CastDeviceID), Refresh: refreshInterval, Logger: logger.With("display", d.ID)}
 		if cfg.castAppID != "" {
 			keeper.AppID, keeper.Namespace = cfg.castAppID, display.CastNamespace
-			keeper.Messages = snapshots.Subscribe
+			keeper.Messages = func(ctx context.Context) <-chan []byte { return snapshots.Subscribe(ctx, d.ID) }
 		} else {
 			keeper.AppID, keeper.Namespace = cast.DashCastAppID, cast.DashCastNamespace
 			keeper.LaunchMessage = func(localIP string) ([]byte, error) {

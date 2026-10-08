@@ -31,9 +31,9 @@ const (
 
 var validDisplayID = regexp.MustCompile(`^[a-z0-9][a-z0-9-]{0,31}$`)
 
-// Subscriber hands out display messages, newest first.
+// Subscriber hands out a display's messages, newest first.
 type Subscriber interface {
-	Subscribe(ctx context.Context) <-chan []byte
+	Subscribe(ctx context.Context, displayID string) <-chan []byte
 }
 
 // Server wires the HTTP routes.
@@ -174,7 +174,7 @@ func (s *Server) displayEvents(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	messages := s.Snapshots.Subscribe(r.Context())
+	messages := s.Snapshots.Subscribe(r.Context(), displayID)
 	interval := s.PingInterval
 	if interval == 0 {
 		interval = defaultPingInterval
