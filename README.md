@@ -108,6 +108,11 @@ cd web && npm run dev         # frontend with hot reload, proxies /api to :8420
 The code follows [CODE_GUIDELINES.md](CODE_GUIDELINES.md). The API is described
 in [docs/api.md](docs/api.md).
 
+## Security and changes
+
+How to report a vulnerability and what Daycast protects: [SECURITY.md](SECURITY.md).
+What changed per version: [CHANGELOG.md](CHANGELOG.md).
+
 ## License
 
 Daycast is free software under the [GNU Affero General Public License
