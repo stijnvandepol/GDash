@@ -36,7 +36,7 @@ func TestValidateDashboard(t *testing.T) {
 		{"unknown type", func(d *Dashboard) { d.Widgets[0].Type = "iframe" }, `widgets[0]: unknown widget type "iframe"`},
 		{"outside grid", func(d *Dashboard) { d.Widgets[1].X = 12 }, "widgets[1]: must fit the 24x14 grid"},
 		{"negative position", func(d *Dashboard) { d.Widgets[0].Y = -1 }, "widgets[0]: must fit"},
-		{"too small", func(d *Dashboard) { d.Widgets[1].W = 3 }, "widgets[1]: a news widget needs at least 6x3 cells"},
+		{"too small", func(d *Dashboard) { d.Widgets[1].W = 3 }, "widgets[1]: a news widget needs at least 6x4 cells"},
 		{"overlap", func(d *Dashboard) { d.Widgets[1].X = 9; d.Widgets[1].W = 15 }, "widgets[1]: overlaps another widget"},
 		{"duplicate id", func(d *Dashboard) { d.Widgets[1].ID = "clock" }, "widgets[1]: id is used by another widget"},
 		{"setting on clock", func(d *Dashboard) { d.Widgets[0].Settings = map[string]any{"maxItems": float64(3)} }, `widgets[0]: unknown setting "maxItems"`},

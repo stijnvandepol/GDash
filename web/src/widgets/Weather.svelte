@@ -50,6 +50,7 @@
   }
   .temperature {
     font-size: 220px;
+    font-size: min(220px, 50cqw, 48cqh);
     font-weight: 300;
     line-height: 1;
     color: var(--text-primary);
@@ -57,6 +58,7 @@
   .description {
     margin-top: 16px;
     font-size: 56px;
+    font-size: min(56px, 12cqw, 14cqh);
     color: var(--text-primary);
   }
   .range,
@@ -75,5 +77,17 @@
   }
   .muted {
     color: var(--text-muted);
+  }
+  /* A small tile keeps the temperature, the sky and today's range. */
+  @container (max-height: 420px) {
+    .wind,
+    .updated {
+      display: none;
+    }
+  }
+  @container (max-height: 260px) {
+    .range {
+      display: none;
+    }
   }
 </style>

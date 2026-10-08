@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { Entry } from '../protocol';
   import { waitingText } from './waiting';
+  import { fitItems } from './fit';
   import { clock } from '../state.svelte';
   import { LOCALE } from '../format';
 
@@ -76,13 +77,13 @@
   }
 </script>
 
-<div class="calendar">
+<div class="calendar" use:fitItems>
   {#if events && entry}
     {#if days.length === 0}
       <p class="empty" class:stale>Nothing planned this week.</p>
     {/if}
     {#each days as day (day.key)}
-      <section class="day">
+      <section class="day" data-fit-group>
         <h2 class:stale>{day.label}</h2>
         <ul>
           {#each day.events as e, i (i)}

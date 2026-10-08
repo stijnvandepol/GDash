@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { Entry } from '../protocol';
   import { waitingText } from './waiting';
+  import { fitItems } from './fit';
   import { clock } from '../state.svelte';
   import { LOCALE } from '../format';
 
@@ -41,7 +42,7 @@
   }
 </script>
 
-<div class="news">
+<div class="news" use:fitItems>
   {#if feed && entry}
     <h2 class="source" class:stale>{feed.title}</h2>
     <ol class="headlines">

@@ -109,6 +109,8 @@
     padding: var(--space-widget);
     overflow: hidden;
     display: flex;
+    /* Widgets size their type to the tile with cqw and cqh units. */
+    container-type: size;
   }
   .message {
     position: absolute;

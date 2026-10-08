@@ -44,7 +44,7 @@ type WidgetType struct {
 var WidgetTypes = map[string]WidgetType{
 	"clock":    {MinW: 4, MinH: 3},
 	"weather":  {Source: "weather.current", MinW: 4, MinH: 4},
-	"news":     {Source: "news.default", MinW: 6, MinH: 3, HasMaxItems: true},
+	"news":     {Source: "news.default", MinW: 6, MinH: 4, HasMaxItems: true},
 	"calendar": {Source: "calendar.default", MinW: 6, MinH: 4, HasMaxItems: true},
 }
 

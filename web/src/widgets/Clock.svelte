@@ -20,6 +20,7 @@
   }
   .time {
     font-size: 172px;
+    font-size: min(172px, 34cqw, 64cqh);
     font-weight: 300;
     line-height: 1;
     letter-spacing: -0.02em;
@@ -29,6 +30,7 @@
   .date {
     margin-top: 12px;
     font-size: 48px;
+    font-size: min(48px, 10cqw, 18cqh);
     color: var(--text-muted);
   }
 </style>
