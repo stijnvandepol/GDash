@@ -91,8 +91,9 @@ address cannot be decrypted (the database was moved without its key) is
 reported with `"unreadable": true` and skipped until it is added again.
 
 Feeds and calendars may point at the LAN or at localhost, so a Nextcloud or
-Radicale at home works. Link-local addresses (169.254.0.0/16, fe80::/10),
-where cloud hosts serve instance metadata, are refused when connecting.
+Radicale at home works. Link-local addresses (169.254.0.0/16, fe80::/10)
+and AWS's IPv6 metadata address (fd00:ec2::254), where cloud hosts serve
+instance metadata, are refused when connecting, also in their NAT64 form.
 
 Changes apply at once: a changed source is fetched again, a removed one
 disappears from the displays. `status` has an entry per configured source by

@@ -23,6 +23,10 @@ func TestAllowed(t *testing.T) {
 		"::":                     false,
 		"224.0.0.251":            false,
 		"ff02::fb":               false,
+		"fd00:ec2::254":          false, // AWS metadata over IPv6
+		"fd12:3456::1":           true,  // another unique local address at home
+		"64:ff9b::a9fe:a9fe":     false, // NAT64 form of 169.254.169.254
+		"64:ff9b::5db8:d70e":     true,  // NAT64 form of a public address
 	} {
 		if got := Allowed(netip.MustParseAddr(addr)); got != want {
 			t.Errorf("Allowed(%s) = %v, want %v", addr, got, want)

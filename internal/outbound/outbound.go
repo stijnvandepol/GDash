@@ -58,10 +58,25 @@ func control(_, address string, _ syscall.RawConn) error {
 	return nil
 }
 
+var (
+	// awsMetadata holds the IPv6 address of the AWS instance metadata
+	// service (fd00:ec2::254). It is a unique local address, which the
+	// LAN rule would otherwise let through.
+	awsMetadata = netip.MustParsePrefix("fd00:ec2::/32")
+	// nat64 addresses carry an IPv4 address in their last four bytes;
+	// 64:ff9b::a9fe:a9fe reaches 169.254.169.254.
+	nat64 = netip.MustParsePrefix("64:ff9b::/96")
+)
+
 // Allowed reports whether Daycast may fetch from addr.
 func Allowed(addr netip.Addr) bool {
 	addr = addr.Unmap()
+	if nat64.Contains(addr) {
+		b := addr.As16()
+		addr = netip.AddrFrom4([4]byte{b[12], b[13], b[14], b[15]})
+	}
 	return addr.IsValid() &&
+		!awsMetadata.Contains(addr) &&
 		!addr.IsUnspecified() &&
 		!addr.IsLinkLocalUnicast() &&
 		!addr.IsLinkLocalMulticast() &&
