@@ -305,6 +305,34 @@ func TestKeeperIgnoresStaleStatusUpdate(t *testing.T) {
 	}
 }
 
+func TestKeeperRestsOutsideActiveHours(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), testTimeout)
+	defer cancel()
+	device := newFakeDevice(t, Application{AppID: "ABCD1234", SessionID: "s", TransportID: "web-0"})
+	keeper := newRefreshingKeeper(device, 50*time.Millisecond)
+	keeper.Active = func() bool { return false }
+	go keeper.Run(ctx)
+
+	deadline := time.Now().Add(testTimeout)
+	for {
+		device.mu.Lock()
+		stopped := len(device.apps) == 0
+		device.mu.Unlock()
+		if stopped {
+			break
+		}
+		if time.Now().After(deadline) {
+			t.Fatal("keeper did not stop its receiver outside active hours")
+		}
+		time.Sleep(20 * time.Millisecond)
+	}
+	// Refresh ticks pass, but nothing is launched while inactive.
+	time.Sleep(300 * time.Millisecond)
+	if n := device.launchCount(); n != 0 {
+		t.Fatalf("launches = %d outside active hours, want 0", n)
+	}
+}
+
 func TestShouldRelaunch(t *testing.T) {
 	tests := []struct {
 		name   string

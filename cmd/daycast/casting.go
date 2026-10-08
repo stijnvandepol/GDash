@@ -35,7 +35,12 @@ func newCastManager(cfg config, deps castDeps) (*casting.Manager, error) {
 		return nil, fmt.Errorf("DAYCAST_ADDR %q has no port: %w", cfg.addr, err)
 	}
 	runDisplay := func(ctx context.Context, d displays.Display) {
-		keeper := &cast.Keeper{Resolve: resolveDevice(d.CastDeviceID), Refresh: refreshInterval, Logger: logger.With("display", d.ID)}
+		keeper := &cast.Keeper{
+			Resolve: resolveDevice(d.CastDeviceID),
+			Refresh: refreshInterval,
+			Active:  activeNow(ctx, db, d.ID, logger),
+			Logger:  logger.With("display", d.ID),
+		}
 		if cfg.castAppID != "" {
 			keeper.AppID, keeper.Namespace = cfg.castAppID, display.CastNamespace
 			keeper.Messages = func(ctx context.Context) <-chan []byte { return snapshots.Subscribe(ctx, d.ID) }
@@ -52,6 +57,21 @@ func newCastManager(cfg config, deps castDeps) (*casting.Manager, error) {
 		keeper.Run(ctx)
 	}
 	return &casting.Manager{List: db.Displays, RunDisplay: runDisplay, Logger: logger}, nil
+}
+
+// activeNow reads the display's active hours on every call, so an edit in
+// the web interface applies without restarting the keeper. When the display
+// cannot be read the screen stays on: a database hiccup must not switch a TV
+// off.
+func activeNow(ctx context.Context, db *store.Store, displayID string, logger *slog.Logger) func() bool {
+	return func() bool {
+		d, err := db.Display(ctx, displayID)
+		if err != nil {
+			logger.Warn("could not read active hours; keeping the screen on", "display", displayID, "error", err)
+			return true
+		}
+		return d.Hours.Contains(time.Now())
+	}
 }
 
 // resolveDevice finds a Cast device by its device ID.

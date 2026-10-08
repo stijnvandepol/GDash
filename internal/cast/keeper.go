@@ -47,6 +47,11 @@ type Keeper struct {
 	// that the device can reach. A receiver of this kind that is found
 	// already running is restarted, because it would ignore the message.
 	LaunchMessage func(localIP string) ([]byte, error)
+	// Active reports whether the display is in its active hours. Outside
+	// them the keeper stops the receiver and does not launch it, so the TV
+	// can go to standby. Nil means always active. It is checked at every
+	// status poll, so a change takes effect within 30 seconds.
+	Active func() bool
 	// Refresh returns how often the receiver is stopped and started again,
 	// or 0 for never. Google TV covers a running cast with its screensaver
 	// after about 19 minutes while still reporting the app as running; on
@@ -179,6 +184,17 @@ type keeperSession struct {
 	resendIdx int
 }
 
+// rest stops the receiver outside active hours. It stops it only while it
+// is the keeper's own app, never another app on the TV.
+func (s *keeperSession) rest(ctx context.Context, app Application, running bool) error {
+	s.transport = ""
+	if !running {
+		return nil
+	}
+	s.keeper.Logger.Info("outside active hours, stopping receiver")
+	return s.client.Stop(ctx, app.SessionID)
+}
+
 func (k *Keeper) refreshInterval(d Device) time.Duration {
 	if k.Refresh == nil {
 		return 0
@@ -207,6 +223,9 @@ func (s *keeperSession) reconcile(ctx context.Context, status ReceiverStatus) er
 	k := s.keeper
 	s.standby = status.IsStandBy
 	app, running := status.App(k.AppID)
+	if k.Active != nil && !k.Active() {
+		return s.rest(ctx, app, running)
+	}
 	if running && k.LaunchMessage != nil && s.transport == "" {
 		k.Logger.Info("restarting receiver that was already running, so it takes the current page")
 		if err := s.client.Stop(ctx, app.SessionID); err != nil {
