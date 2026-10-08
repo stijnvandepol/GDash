@@ -4,8 +4,7 @@ Your day on every TV in the house. Self-hosted, casts to the Chromecast or
 Google TV you already own. No extra hardware, no subscription, no cloud.
 
 > **Status: prototype.** It works on real hardware at home, but there is no
-> dashboard editor yet and the TV pages are not paired. Run it only on a
-> network you trust.
+> dashboard editor yet. Run it only on a network you trust.
 
 ## What works
 
@@ -22,7 +21,11 @@ Google TV you already own. No extra hardware, no subscription, no cloud.
   about 19 minutes. No Home Assistant, no HTTPS and no Cast developer account
   needed.
 - **Browser displays**: any browser, kiosk or Raspberry Pi can open
-  `/d/<display>` instead.
+  `/d/<display>` instead. The page shows a code; enter it in the web
+  interface to pair the screen.
+- **Paired screens only**: a dashboard only streams to a screen paired with
+  that display. A TV opened by Daycast pairs itself with a single-use token.
+  Unpairing stops a screen within 20 seconds.
 
 Progress and test results: [docs/progress.md](docs/progress.md). The research
 behind the design (Dutch) is in

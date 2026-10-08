@@ -223,13 +223,18 @@ CI:               .github/workflows/ci.yml runs all of the above on every push.
 Architecture:     One Go binary (cmd/daycast). internal/datahub fetches external data once for all displays
                   and keeps the last good value; internal/display builds and streams snapshots;
                   internal/store is the only package with SQL; internal/auth handles accounts and sessions;
-                  internal/api serves pages, SSE and the JSON API (docs/api.md); internal/cast talks to Cast
-                  devices (mDNS, CASTV2) and keeps a receiver on screen; internal/casting runs one keeper per
-                  display. web/ holds the web interface (/), the display runtime (/d/<id>) and the receiver.
+                  internal/pairing decides which screens may show a display; internal/token and
+                  internal/ratelimit are shared by both; internal/news and internal/weather read external
+                  sources; internal/api serves pages, SSE and the JSON API (docs/api.md); internal/cast talks
+                  to Cast devices (mDNS, CASTV2) and keeps a receiver on screen; internal/casting runs one
+                  keeper per display. web/ holds the web interface (/), the display runtime (/d/<id>) and the
+                  receiver.
                   Research and design decisions: GoogleHome-Dashboard/docs/onderzoek (Dutch).
 Known oddities:   - Plain HTTP on the LAN, against "All transport is TLS". A TV that opens /d/<id> through
                     DashCast cannot be given a certificate it trusts for a LAN address, and Chromecasts reject
                     self-signed ones. TLS is expected from a reverse proxy for the web interface. Open decision.
+                  - A cast keeper puts a launch token in the URL it opens, against the advice to keep tokens
+                    out of URLs. It works once, expires after 2 minutes, and the page removes it at once.
                   - The setup token is written to the log, against "never log secrets". It is a one-time
                     secret that only works while no account exists; the log is the channel by design.
                   - internal/cast skips TLS verification: Cast devices use Google's device CA, which no trust
