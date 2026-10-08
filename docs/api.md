@@ -35,11 +35,11 @@ come from another site (cross-site request forgery protection).
 | `POST /api/displays` `{id, name, castDeviceId, activeFrom?, activeUntil?}` | admin | `201` display | `401`, `409 conflict`, `422` |
 | `PATCH /api/displays/{id}` `{name?, castDeviceId?, dashboardId?, activeFrom?, activeUntil?}` | admin | `200` display | `401`, `404 not_found`, `422` (also for an unknown `dashboardId`) |
 | `DELETE /api/displays/{id}` | admin | `204` | `401`, `404 not_found` |
-| `GET /api/widget-types` | admin | `200 {columns, rows, types: {name: {minW, minH, hasMaxItems}}}` | `401` |
+| `GET /api/widget-types` | admin | `200 {columns, rows, themes, types: {name: {minW, minH, hasMaxItems}}}` | `401` |
 | `GET /api/dashboards` | admin | `200 {"dashboards": [dashboard]}` | `401` |
-| `POST /api/dashboards` `{id, name, widgets}` | admin | `201` dashboard | `401`, `409 conflict`, `422` |
+| `POST /api/dashboards` `{id, name, theme?, widgets}` | admin | `201` dashboard | `401`, `409 conflict`, `422` |
 | `GET /api/dashboards/{id}` | admin | `200` dashboard | `401`, `404` |
-| `PUT /api/dashboards/{id}` `{name, widgets}` | admin | `200` dashboard; screens update at once | `401`, `404`, `422` |
+| `PUT /api/dashboards/{id}` `{name, theme?, widgets}` | admin | `200` dashboard; screens update at once | `401`, `404`, `422` |
 | `DELETE /api/dashboards/{id}` | admin | `204`; its displays fall back to the default | `401`, `404`, `409` for `default` |
 | `GET /api/cast-devices` | admin | `200 {"devices": [device]}` | `401`, `500 discovery_failed` |
 | `GET /api/displays/{id}/events` | paired screen or admin | `text/event-stream`, `snapshot` events | `401 not_paired`, `404` for an invalid id |
@@ -76,7 +76,8 @@ screen within that time. Deleting a display unpairs all its screens.
 always on. Outside them the page is dark, the snapshot has no data and the cast is stopped.
 
 **dashboard:** `{"id": "default", "name": "Default", "columns": 24, "rows": 14, "theme": "minimal-dark", "widgets": [widget]}`.
-The grid size, theme and every widget's `source` are set by the server; values sent by a client are ignored.
+`theme` is one of `minimal-dark` (default), `minimal-light` and `glass`; an unknown theme is a `422`. The grid size and
+every widget's `source` are set by the server; values sent by a client are ignored.
 
 **widget:** `{"id": "news", "type": "news", "x": 10, "y": 9, "w": 14, "h": 5, "source": "news.default", "settings": {"maxItems": 3}}`.
 Types are `clock`, `weather`, `news` and `calendar`. A layout is rejected with field errors such as `widgets[2]` when a

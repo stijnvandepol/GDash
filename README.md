@@ -19,7 +19,8 @@ Google TV you already own. No extra hardware, no subscription, no cloud.
 - **A web interface** at `/` to set up the first account, log in and manage
   displays.
 - **A dashboard editor**: drag and resize widgets on the TV's 16:9 grid, make
-  several dashboards and pick one per display. Saving updates the TVs within
+  several dashboards, pick a theme (Minimal dark, Minimal light, Glass) and
+  choose a dashboard per display. Saving updates the TVs within
   seconds. A display only receives the data its own widgets show.
 - **Displays**: link a display to a Cast device found on your network, and
   Daycast keeps the dashboard on that TV. It restarts the cast every 15
