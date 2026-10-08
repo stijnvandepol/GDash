@@ -109,8 +109,18 @@ func (s *Store) backup(ctx context.Context, path string, version int) error {
 	if err := os.Remove(target); err != nil && !errors.Is(err, fs.ErrNotExist) {
 		return fmt.Errorf("remove old backup: %w", err)
 	}
-	if _, err := s.db.ExecContext(ctx, "VACUUM INTO ?", target); err != nil {
+	if err := s.WriteCopy(ctx, target); err != nil {
 		return fmt.Errorf("back up database before migration: %w", err)
+	}
+	return nil
+}
+
+// WriteCopy writes a consistent copy of the database to target, which must
+// not exist yet. It is safe while Daycast runs: SQLite copies from one
+// read transaction.
+func (s *Store) WriteCopy(ctx context.Context, target string) error {
+	if _, err := s.db.ExecContext(ctx, "VACUUM INTO ?", target); err != nil {
+		return fmt.Errorf("copy database: %w", err)
 	}
 	return nil
 }

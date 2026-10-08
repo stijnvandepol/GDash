@@ -27,6 +27,7 @@ import (
 
 	"github.com/stijnvandepol/daycast/internal/api"
 	"github.com/stijnvandepol/daycast/internal/auth"
+	"github.com/stijnvandepol/daycast/internal/backup"
 	"github.com/stijnvandepol/daycast/internal/cast"
 	"github.com/stijnvandepol/daycast/internal/display"
 	"github.com/stijnvandepol/daycast/internal/pairing"
@@ -48,6 +49,8 @@ const (
 	// short headlines keep a snapshot far below the 64 KB Cast limit.
 	newsItems       = 10
 	upstreamTimeout = 15 * time.Second
+	// A week of daily database copies covers a mistake noticed days later.
+	backupsKept     = 7
 	shutdownTimeout = 5 * time.Second
 )
 
@@ -153,6 +156,10 @@ func serve(ctx context.Context, logger *slog.Logger) error {
 		return err
 	}
 	defer db.Close()
+	go (&backup.Daily{
+		Dir: filepath.Join(cfg.dataDir, "backups"), Keep: backupsKept,
+		Write: db.WriteCopy, Now: time.Now, Logger: logger,
+	}).Run(ctx)
 	authService, err := newAuthService(ctx, db, logger)
 	if err != nil {
 		return err

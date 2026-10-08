@@ -187,3 +187,26 @@ func TestFailedMigrationLeavesVersionUnchanged(t *testing.T) {
 		t.Fatalf("schema version = %d (err %v), want %d", version, err, len(scripts))
 	}
 }
+
+func TestWriteCopyMakesAUsableDatabase(t *testing.T) {
+	ctx := context.Background()
+	s, path := openTestStore(t)
+	if err := s.CreateDisplay(ctx, kitchen()); err != nil {
+		t.Fatal(err)
+	}
+	target := filepath.Join(filepath.Dir(path), "copy.db")
+	if err := s.WriteCopy(ctx, target); err != nil {
+		t.Fatalf("WriteCopy: %v", err)
+	}
+	if err := s.WriteCopy(ctx, target); err == nil {
+		t.Fatal("WriteCopy overwrote an existing file")
+	}
+	copied, err := Open(ctx, target)
+	if err != nil {
+		t.Fatalf("open the copy: %v", err)
+	}
+	defer copied.Close()
+	if d, err := copied.Display(ctx, "keuken"); err != nil || d.Name != "Keuken TV" {
+		t.Fatalf("display in the copy = %+v, %v", d, err)
+	}
+}
