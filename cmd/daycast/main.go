@@ -10,6 +10,8 @@ package main
 
 import (
 	"context"
+	// The Docker image has no time zone database; calendars name zones such
+	// as Europe/Amsterdam and "today" depends on TZ.
 	"errors"
 	"fmt"
 	"log/slog"
@@ -20,9 +22,11 @@ import (
 	"syscall"
 	"text/tabwriter"
 	"time"
+	_ "time/tzdata"
 
 	"github.com/stijnvandepol/daycast/internal/api"
 	"github.com/stijnvandepol/daycast/internal/auth"
+	"github.com/stijnvandepol/daycast/internal/calendar"
 	"github.com/stijnvandepol/daycast/internal/cast"
 	"github.com/stijnvandepol/daycast/internal/datahub"
 	"github.com/stijnvandepol/daycast/internal/display"
@@ -36,6 +40,10 @@ import (
 const (
 	weatherInterval = 15 * time.Minute
 	newsInterval    = 15 * time.Minute
+	// Calendar changes should show up soon after they are made; ICS
+	// servers are built for clients polling this often.
+	calendarInterval = 10 * time.Minute
+	calendarDays     = 7
 	// newsItems is what the server keeps; widgets show a part of it. Ten
 	// short headlines keep a snapshot far below the 64 KB Cast limit.
 	newsItems       = 10
@@ -182,7 +190,7 @@ func startData(ctx context.Context, cfg config, logger *slog.Logger) (*display.B
 	if err != nil {
 		return nil, err
 	}
-	dashboard := display.DefaultDashboard()
+	dashboard := display.DefaultDashboard(len(cfg.calendars) > 0)
 	broadcaster := display.NewBroadcaster()
 	var hub *datahub.Hub
 	publish := func() {
@@ -195,7 +203,7 @@ func startData(ctx context.Context, cfg config, logger *slog.Logger) (*display.B
 
 	weatherClient := weather.Client{BaseURL: weather.DefaultBaseURL, HTTP: &http.Client{Timeout: upstreamTimeout}}
 	newsClient := &news.Client{HTTP: &http.Client{Timeout: upstreamTimeout}}
-	go hub.Run(ctx, []datahub.Source{{
+	sources := []datahub.Source{{
 		Key:      "weather.current",
 		Interval: weatherInterval,
 		Fetch:    func(ctx context.Context) (any, error) { return weatherClient.Current(ctx, cfg.location) },
@@ -203,7 +211,18 @@ func startData(ctx context.Context, cfg config, logger *slog.Logger) (*display.B
 		Key:      "news.default",
 		Interval: newsInterval,
 		Fetch:    func(ctx context.Context) (any, error) { return newsClient.Fetch(ctx, cfg.newsFeed, newsItems) },
-	}})
+	}}
+	if len(cfg.calendars) > 0 {
+		calendarClient := &calendar.Client{HTTP: &http.Client{Timeout: upstreamTimeout}, Location: time.Local, Now: time.Now}
+		sources = append(sources, datahub.Source{
+			Key:      "calendar.default",
+			Interval: calendarInterval,
+			Fetch: func(ctx context.Context) (any, error) {
+				return calendarClient.Upcoming(ctx, cfg.calendars, calendarDays)
+			},
+		})
+	}
+	go hub.Run(ctx, sources)
 	return broadcaster, nil
 }
 

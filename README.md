@@ -10,6 +10,9 @@ Google TV you already own. No extra hardware, no subscription, no cloud.
 
 - **Weather** from [Open-Meteo](https://open-meteo.com) (no API key). The last
   good value is kept when the internet drops, and stale data is marked.
+- **Calendar** from secret iCal addresses (Google, Outlook, iCloud,
+  Nextcloud): the coming week with recurrences, exceptions and moved
+  occurrences, without OAuth. Only paired screens receive it.
 - **News headlines** from any RSS or Atom feed (default: NOS). Fetched once by
   the server for all TVs, with conditional requests; only plain-text titles
   reach the screen.
@@ -55,6 +58,8 @@ and read the token with `docker compose logs daycast`.
 | `DAYCAST_ADDR` | `:8420` | Listen address |
 | `DAYCAST_DATA_DIR` | `data` | Database and cached data |
 | `DAYCAST_NEWS_FEED` | NOS general news | RSS or Atom URL for the news widget |
+| `DAYCAST_CALENDAR_URLS` | none | Comma-separated secret iCal (ICS) addresses; adds the calendar widget. Treat them as passwords |
+| `TZ` | system | Time zone for "today" in the calendar, for example `Europe/Amsterdam` |
 | `DAYCAST_CAST_APP_ID` | none | App ID of an own registered receiver ([docs/receiver.md](docs/receiver.md)); without it Daycast uses DashCast |
 
 ## Command line

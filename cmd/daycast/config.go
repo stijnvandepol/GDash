@@ -8,6 +8,7 @@ import (
 	"regexp"
 	"strconv"
 
+	"github.com/stijnvandepol/daycast/internal/calendar"
 	"github.com/stijnvandepol/daycast/internal/weather"
 )
 
@@ -24,6 +25,8 @@ type config struct {
 	// Daycast uses the public DashCast receiver.
 	castAppID string
 	newsFeed  string
+	// calendars are secret ICS URLs; they are never logged.
+	calendars []calendar.Source
 }
 
 // defaultNewsFeed is the general news feed of the NOS, the Dutch public
@@ -57,6 +60,10 @@ func loadConfig(getenv func(string) string) (config, error) {
 	cfg.newsFeed = valueOr(getenv("DAYCAST_NEWS_FEED"), defaultNewsFeed)
 	if u, err := url.Parse(cfg.newsFeed); err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
 		return config{}, fmt.Errorf("DAYCAST_NEWS_FEED %q is not an http(s) URL", cfg.newsFeed)
+	}
+
+	if cfg.calendars, err = calendar.ParseSources(getenv("DAYCAST_CALENDAR_URLS")); err != nil {
+		return config{}, fmt.Errorf("DAYCAST_CALENDAR_URLS: %w", err)
 	}
 
 	cfg.castAppID = getenv("DAYCAST_CAST_APP_ID")

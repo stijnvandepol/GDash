@@ -40,9 +40,10 @@ type Dashboard struct {
 }
 
 // DefaultDashboard is the only dashboard in the prototype. The editor in
-// v0.5 replaces it with dashboards stored in SQLite.
-func DefaultDashboard() Dashboard {
-	return Dashboard{
+// v0.5 replaces it with dashboards stored in SQLite. withCalendar adds the
+// calendar when calendars are configured.
+func DefaultDashboard(withCalendar bool) Dashboard {
+	d := Dashboard{
 		ID:      "default",
 		Name:    "Default",
 		Theme:   "minimal-dark",
@@ -54,6 +55,15 @@ func DefaultDashboard() Dashboard {
 			{ID: "news", Type: "news", X: 0, Y: 6, W: 14, H: 8, Source: "news.default", Settings: map[string]any{"maxItems": 5}},
 		},
 	}
+	if withCalendar {
+		d.Widgets = []Widget{
+			{ID: "clock", Type: "clock", X: 0, Y: 0, W: 10, H: 5},
+			{ID: "weather", Type: "weather", X: 0, Y: 5, W: 10, H: 9, Source: "weather.current"},
+			{ID: "calendar", Type: "calendar", X: 10, Y: 0, W: 14, H: 9, Source: "calendar.default", Settings: map[string]any{"maxItems": 5}},
+			{ID: "news", Type: "news", X: 10, Y: 9, W: 14, H: 5, Source: "news.default", Settings: map[string]any{"maxItems": 3}},
+		}
+	}
+	return d
 }
 
 // Snapshot is the complete state of a display. Version increases with every

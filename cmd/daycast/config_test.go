@@ -17,6 +17,9 @@ func TestLoadConfigDefaults(t *testing.T) {
 	if cfg.addr != ":8420" || cfg.dataDir != "data" || cfg.castAppID != "" {
 		t.Fatalf("cfg = %+v", cfg)
 	}
+	if len(cfg.calendars) != 0 {
+		t.Fatalf("calendars = %+v, want none by default", cfg.calendars)
+	}
 	if cfg.newsFeed != defaultNewsFeed {
 		t.Fatalf("newsFeed = %q, want the default", cfg.newsFeed)
 	}
@@ -56,6 +59,7 @@ func TestLoadConfigErrors(t *testing.T) {
 		{"latitude not a number", map[string]string{"DAYCAST_LATITUDE": "noord", "DAYCAST_LONGITUDE": "5"}, "not a number"},
 		{"latitude out of range", map[string]string{"DAYCAST_LATITUDE": "95", "DAYCAST_LONGITUDE": "5"}, "invalid location"},
 		{"news feed not http", map[string]string{"DAYCAST_LATITUDE": "51", "DAYCAST_LONGITUDE": "5", "DAYCAST_NEWS_FEED": "file:///etc/passwd"}, "DAYCAST_NEWS_FEED"},
+		{"calendar not a URL", map[string]string{"DAYCAST_LATITUDE": "51", "DAYCAST_LONGITUDE": "5", "DAYCAST_CALENDAR_URLS": "ftp://x/y.ics"}, "DAYCAST_CALENDAR_URLS"},
 		{"malformed app id", map[string]string{"DAYCAST_LATITUDE": "51", "DAYCAST_LONGITUDE": "5", "DAYCAST_CAST_APP_ID": "dashcast"}, "8-character"},
 	}
 	for _, tt := range tests {

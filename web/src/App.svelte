@@ -4,6 +4,7 @@
   import Clock from './widgets/Clock.svelte';
   import Weather from './widgets/Weather.svelte';
   import News from './widgets/News.svelte';
+  import Calendar from './widgets/Calendar.svelte';
 
   // Dashboards are designed on a fixed 1920x1080 stage and scaled to the
   // screen, so a layout looks the same on a 720p Chromecast and a 4K TV.
@@ -49,6 +50,8 @@
             <Clock />
           {:else if widget.type === 'weather'}
             <Weather entry={widget.source ? display.snapshot?.data[widget.source] : undefined} />
+          {:else if widget.type === 'calendar'}
+            <Calendar entry={widget.source ? display.snapshot?.data[widget.source] : undefined} settings={widget.settings} />
           {:else if widget.type === 'news'}
             <News entry={widget.source ? display.snapshot?.data[widget.source] : undefined} settings={widget.settings} />
           {:else}
