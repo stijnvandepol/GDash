@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"net"
 	"time"
 )
 
@@ -19,17 +20,27 @@ const (
 	healthySessionLength = time.Minute
 )
 
-// Keeper keeps a Daycast receiver on screen on one Cast device and forwards
-// display messages to it. It reconnects with backoff and relaunches the
-// receiver when it disappears, within the limits of ShouldRelaunch.
+// startupResends are the delays, after connecting to a freshly launched
+// receiver, at which the latest message is sent again. A receiver page
+// that is still loading drops messages; on real hardware the first one
+// often arrived too early.
+var startupResends = []time.Duration{2 * time.Second, 5 * time.Second}
+
+// Keeper keeps a receiver app on screen on one Cast device and sends it
+// messages. It reconnects with backoff and relaunches the app when it
+// disappears, within the limits of ShouldRelaunch.
 type Keeper struct {
-	Addr      string
+	// Resolve returns the device's current address. Looking it up for every
+	// session survives an IP change after a router restart.
+	Resolve   func(ctx context.Context) (string, error)
 	AppID     string
 	Namespace string
-	// Subscribe returns a channel with display messages. The first message
-	// must be the current state; the channel closes when ctx ends.
-	Subscribe func(ctx context.Context) <-chan []byte
-	Logger    *slog.Logger
+	// Messages returns the messages for the receiver: the current one at
+	// once, then every change. localIP is this server's address as seen
+	// from the device, for receivers that need a URL back to the server.
+	// The channel closes when ctx ends.
+	Messages func(ctx context.Context, localIP string) <-chan []byte
+	Logger   *slog.Logger
 }
 
 // Run keeps the receiver alive until ctx is cancelled.
@@ -44,7 +55,7 @@ func (k *Keeper) Run(ctx context.Context) {
 		if time.Since(started) > healthySessionLength {
 			delay = minRetryDelay
 		}
-		k.Logger.Warn("cast session ended, retrying", "device", k.Addr, "retry_in", delay, "error", err)
+		k.Logger.Warn("cast session ended, retrying", "retry_in", delay, "error", err)
 		select {
 		case <-ctx.Done():
 			return
@@ -55,7 +66,11 @@ func (k *Keeper) Run(ctx context.Context) {
 }
 
 func (k *Keeper) session(ctx context.Context) error {
-	client, err := Dial(ctx, k.Addr)
+	addr, err := k.Resolve(ctx)
+	if err != nil {
+		return err
+	}
+	client, err := Dial(ctx, addr)
 	if err != nil {
 		return err
 	}
@@ -63,9 +78,12 @@ func (k *Keeper) session(ctx context.Context) error {
 
 	sessionCtx, cancel := context.WithCancel(ctx)
 	defer cancel()
-	messages := k.Subscribe(sessionCtx)
+	messages := k.Messages(sessionCtx, client.LocalIP())
 
-	s := &keeperSession{keeper: k, client: client}
+	s := &keeperSession{keeper: k, client: client, resend: time.NewTimer(0)}
+	<-s.resend.C
+	defer s.resend.Stop()
+
 	status, err := client.Status(ctx)
 	if err != nil {
 		return err
@@ -84,7 +102,7 @@ func (k *Keeper) session(ctx context.Context) error {
 			return client.Err()
 		case msg, ok := <-messages:
 			if !ok {
-				return fmt.Errorf("display message stream closed")
+				return fmt.Errorf("receiver message stream closed")
 			}
 			s.latest = msg
 			if err := s.sendLatest(); err != nil {
@@ -100,6 +118,11 @@ func (k *Keeper) session(ctx context.Context) error {
 					return err
 				}
 			}
+		case <-s.resend.C:
+			if err := s.sendLatest(); err != nil {
+				return err
+			}
+			s.scheduleNextResend()
 		case <-poll.C:
 			status, err := client.Status(ctx)
 			if err != nil {
@@ -120,6 +143,8 @@ type keeperSession struct {
 	client    *Client
 	transport string
 	latest    []byte
+	resend    *time.Timer
+	resendIdx int
 }
 
 // reconcile makes sure the receiver runs and is connected, launching it when
@@ -132,7 +157,7 @@ func (s *keeperSession) reconcile(ctx context.Context, status ReceiverStatus) er
 		if !ShouldRelaunch(status) {
 			return nil
 		}
-		k.Logger.Info("launching receiver", "device", k.Addr, "app_id", k.AppID)
+		k.Logger.Info("launching receiver", "app_id", k.AppID)
 		launched, err := s.client.Launch(ctx, k.AppID)
 		if err != nil {
 			return err
@@ -146,7 +171,21 @@ func (s *keeperSession) reconcile(ctx context.Context, status ReceiverStatus) er
 		return err
 	}
 	s.transport = app.TransportID
+	s.resendIdx = 0
+	s.scheduleNextResend()
 	return s.sendLatest()
+}
+
+func (s *keeperSession) scheduleNextResend() {
+	if s.resendIdx >= len(startupResends) {
+		return
+	}
+	previous := time.Duration(0)
+	if s.resendIdx > 0 {
+		previous = startupResends[s.resendIdx-1]
+	}
+	s.resend.Reset(startupResends[s.resendIdx] - previous)
+	s.resendIdx++
 }
 
 func (s *keeperSession) sendLatest() error {
@@ -162,6 +201,8 @@ func (s *keeperSession) sendLatest() error {
 //
 // Current policy: only take over when nothing else is on screen, so the
 // keeper never interrupts someone who casts YouTube to the kitchen TV.
+// Known gap: Google TV devices report no apps while a native app such as
+// Netflix runs, so the keeper would start over it.
 func ShouldRelaunch(status ReceiverStatus) bool {
 	for _, app := range status.Applications {
 		if !app.IsIdleScreen {
@@ -174,4 +215,13 @@ func ShouldRelaunch(status ReceiverStatus) bool {
 func isReadySignal(payload string) bool {
 	var msg struct{ Type string }
 	return json.Unmarshal([]byte(payload), &msg) == nil && msg.Type == "ready"
+}
+
+// LocalIP returns this machine's address on the connection to the device:
+// the address the device can use to reach Daycast.
+func (c *Client) LocalIP() string {
+	if addr, ok := c.conn.LocalAddr().(*net.TCPAddr); ok {
+		return addr.IP.String()
+	}
+	return ""
 }

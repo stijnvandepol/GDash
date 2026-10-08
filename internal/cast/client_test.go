@@ -59,6 +59,30 @@ func TestClientLaunchesAppAndSendsMessage(t *testing.T) {
 	}
 }
 
+func TestClientStopsSession(t *testing.T) {
+	ctx := testContext(t)
+	device := newFakeDevice(t)
+	c, err := Dial(ctx, device.addr())
+	if err != nil {
+		t.Fatalf("Dial: %v", err)
+	}
+	defer c.Close()
+	app, err := c.Launch(ctx, "ABCD1234")
+	if err != nil {
+		t.Fatalf("Launch: %v", err)
+	}
+	if err := c.Stop(ctx, app.SessionID); err != nil {
+		t.Fatalf("Stop: %v", err)
+	}
+	status, err := c.Status(ctx)
+	if err != nil {
+		t.Fatalf("Status: %v", err)
+	}
+	if _, running := status.App("ABCD1234"); running {
+		t.Fatal("app still running after Stop")
+	}
+}
+
 func TestClientAnswersDevicePing(t *testing.T) {
 	ctx := testContext(t)
 	device := newFakeDevice(t)
@@ -106,11 +130,13 @@ func TestKeeperLaunchesOnIdleDeviceAndForwardsState(t *testing.T) {
 	defer cancel()
 	device := newFakeDevice(t, Application{AppID: "E8C28D3C", DisplayName: "Backdrop", IsIdleScreen: true})
 
+	localIPs := make(chan string, 1)
 	keeper := &Keeper{
-		Addr:      device.addr(),
+		Resolve:   func(context.Context) (string, error) { return device.addr(), nil },
 		AppID:     "ABCD1234",
 		Namespace: "urn:x-cast:app.daycast.display",
-		Subscribe: func(ctx context.Context) <-chan []byte {
+		Messages: func(ctx context.Context, localIP string) <-chan []byte {
+			localIPs <- localIP
 			ch := make(chan []byte, 1)
 			ch <- []byte(`{"type":"snapshot","version":1}`)
 			return ch
@@ -126,6 +152,19 @@ func TestKeeperLaunchesOnIdleDeviceAndForwardsState(t *testing.T) {
 		}
 	case <-ctx.Done():
 		t.Fatal("keeper never delivered the state to the receiver")
+	}
+	if ip := <-localIPs; ip != "127.0.0.1" {
+		t.Fatalf("localIP = %q, want the server's address on the device connection", ip)
+	}
+	// The startup resends deliver the same state again while the receiver
+	// page may still be loading.
+	select {
+	case m := <-device.appMessages:
+		if m.Payload != `{"type":"snapshot","version":1}` {
+			t.Fatalf("resend carried %q", m.Payload)
+		}
+	case <-ctx.Done():
+		t.Fatal("keeper did not resend the state after startup")
 	}
 	if n := device.launchCount(); n != 1 {
 		t.Fatalf("launches = %d, want 1", n)

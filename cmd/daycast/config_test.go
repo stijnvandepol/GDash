@@ -14,7 +14,7 @@ func TestLoadConfigDefaults(t *testing.T) {
 	if err != nil {
 		t.Fatalf("loadConfig: %v", err)
 	}
-	if cfg.addr != ":8420" || cfg.dataDir != "data" || cfg.castDevice != "" {
+	if cfg.addr != ":8420" || cfg.dataDir != "data" || cfg.castAppID != "" {
 		t.Fatalf("cfg = %+v", cfg)
 	}
 	if cfg.location.Latitude != 51.65 || cfg.location.Longitude != 5.94 {
@@ -22,16 +22,24 @@ func TestLoadConfigDefaults(t *testing.T) {
 	}
 }
 
-func TestLoadConfigCastDevice(t *testing.T) {
+func TestLoadConfigCastAppID(t *testing.T) {
 	cfg, err := loadConfig(env(map[string]string{
-		"DAYCAST_LATITUDE": "51.65", "DAYCAST_LONGITUDE": "5.95",
-		"DAYCAST_CAST_DEVICE": "192.168.1.40", "DAYCAST_CAST_APP_ID": "ABCD1234",
+		"DAYCAST_LATITUDE": "51.65", "DAYCAST_LONGITUDE": "5.95", "DAYCAST_CAST_APP_ID": "ABCD1234",
 	}))
 	if err != nil {
 		t.Fatalf("loadConfig: %v", err)
 	}
-	if cfg.castDevice != "192.168.1.40:8009" || cfg.castAppID != "ABCD1234" {
+	if cfg.castAppID != "ABCD1234" {
 		t.Fatalf("cfg = %+v", cfg)
+	}
+}
+
+func TestWithDefaultPort(t *testing.T) {
+	if got := withDefaultPort("192.168.1.40"); got != "192.168.1.40:8009" {
+		t.Errorf("withDefaultPort(ip) = %q", got)
+	}
+	if got := withDefaultPort("192.168.1.40:9000"); got != "192.168.1.40:9000" {
+		t.Errorf("withDefaultPort(ip:port) = %q", got)
 	}
 }
 
@@ -44,7 +52,7 @@ func TestLoadConfigErrors(t *testing.T) {
 		{"missing location", map[string]string{}, "DAYCAST_LATITUDE"},
 		{"latitude not a number", map[string]string{"DAYCAST_LATITUDE": "noord", "DAYCAST_LONGITUDE": "5"}, "not a number"},
 		{"latitude out of range", map[string]string{"DAYCAST_LATITUDE": "95", "DAYCAST_LONGITUDE": "5"}, "invalid location"},
-		{"device without app id", map[string]string{"DAYCAST_LATITUDE": "51", "DAYCAST_LONGITUDE": "5", "DAYCAST_CAST_DEVICE": "10.0.0.2"}, "both"},
+		{"malformed app id", map[string]string{"DAYCAST_LATITUDE": "51", "DAYCAST_LONGITUDE": "5", "DAYCAST_CAST_APP_ID": "dashcast"}, "8-character"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

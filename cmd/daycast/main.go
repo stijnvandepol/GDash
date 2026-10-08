@@ -79,10 +79,7 @@ func discover(ctx context.Context) error {
 // status shows what a Cast device is doing without changing anything on it,
 // to check the CASTV2 connection and to see how a device reports its state.
 func status(ctx context.Context, device string) error {
-	addr, err := withDefaultPort(device)
-	if err != nil {
-		return err
-	}
+	addr := withDefaultPort(device)
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 	client, err := cast.Dial(ctx, addr)
@@ -134,14 +131,6 @@ func serve(ctx context.Context, logger *slog.Logger) error {
 	if err != nil {
 		return err
 	}
-	frontend, err := web.Dist()
-	if err != nil {
-		return err
-	}
-	cache, err := datahub.NewFileStore(filepath.Join(cfg.dataDir, "cache"))
-	if err != nil {
-		return err
-	}
 	db, err := store.Open(ctx, filepath.Join(cfg.dataDir, "daycast.db"))
 	if err != nil {
 		return err
@@ -151,7 +140,40 @@ func serve(ctx context.Context, logger *slog.Logger) error {
 	if err != nil {
 		return err
 	}
+	snapshots, err := startData(ctx, cfg, logger)
+	if err != nil {
+		return err
+	}
+	castManager, err := newCastManager(cfg, db, snapshots, logger)
+	if err != nil {
+		return err
+	}
+	go castManager.Run(ctx)
 
+	frontend, err := web.Dist()
+	if err != nil {
+		return err
+	}
+	handler := (&api.Server{
+		Snapshots:       snapshots,
+		Auth:            authService,
+		Store:           db,
+		Web:             frontend,
+		Discover:        cast.Discover,
+		DisplaysChanged: castManager.Changed,
+		Now:             time.Now,
+		Logger:          logger,
+	}).Handler()
+	return listen(ctx, cfg.addr, handler, logger)
+}
+
+// startData starts fetching dashboard data and returns the broadcaster that
+// turns every change into a display snapshot.
+func startData(ctx context.Context, cfg config, logger *slog.Logger) (*display.Broadcaster, error) {
+	cache, err := datahub.NewFileStore(filepath.Join(cfg.dataDir, "cache"))
+	if err != nil {
+		return nil, err
+	}
 	dashboard := display.DefaultDashboard()
 	broadcaster := display.NewBroadcaster()
 	var hub *datahub.Hub
@@ -169,29 +191,14 @@ func serve(ctx context.Context, logger *slog.Logger) error {
 		Interval: weatherInterval,
 		Fetch:    func(ctx context.Context) (any, error) { return weatherClient.Current(ctx, cfg.location) },
 	}})
+	return broadcaster, nil
+}
 
-	if cfg.castDevice != "" {
-		keeper := &cast.Keeper{
-			Addr:      cfg.castDevice,
-			AppID:     cfg.castAppID,
-			Namespace: display.CastNamespace,
-			Subscribe: broadcaster.Subscribe,
-			Logger:    logger,
-		}
-		go keeper.Run(ctx)
-	}
-
+// listen serves HTTP until ctx ends, then shuts down gracefully.
+func listen(ctx context.Context, addr string, handler http.Handler, logger *slog.Logger) error {
 	srv := &http.Server{
-		Addr: cfg.addr,
-		Handler: (&api.Server{
-			Snapshots: broadcaster,
-			Auth:      authService,
-			Store:     db,
-			Web:       frontend,
-			Discover:  cast.Discover,
-			Now:       time.Now,
-			Logger:    logger,
-		}).Handler(),
+		Addr:              addr,
+		Handler:           handler,
 		ReadHeaderTimeout: 10 * time.Second,
 		// No WriteTimeout: display event streams stay open for days.
 		IdleTimeout: 2 * time.Minute,
@@ -200,10 +207,11 @@ func serve(ctx context.Context, logger *slog.Logger) error {
 		<-ctx.Done()
 		shutdownCtx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
 		defer cancel()
-		srv.Shutdown(shutdownCtx)
+		if err := srv.Shutdown(shutdownCtx); err != nil {
+			logger.Warn("shutdown did not finish cleanly", "error", err)
+		}
 	}()
-
-	logger.Info("daycast listening; open /d/<name> on a browser display", "addr", cfg.addr)
+	logger.Info("daycast listening; open the web interface at / on this address", "addr", addr)
 	if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		return err
 	}

@@ -93,6 +93,10 @@ func (d *fakeDevice) handle(conn net.Conn) {
 			}
 		case nsReceiver:
 			switch payload["type"] {
+			case "STOP":
+				d.mu.Lock()
+				d.apps = nil
+				d.mu.Unlock()
 			case "LAUNCH":
 				d.mu.Lock()
 				appID, _ := payload["appId"].(string)

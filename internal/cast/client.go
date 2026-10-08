@@ -158,6 +158,19 @@ func (c *Client) Launch(ctx context.Context, appID string) (Application, error) 
 	return app, nil
 }
 
+// Stop ends the app session with the given ID. The device returns to its
+// idle screen, unless a new app is launched right after.
+func (c *Client) Stop(ctx context.Context, sessionID string) error {
+	resp, err := c.request(ctx, map[string]any{"type": "STOP", "sessionId": sessionID})
+	if err != nil {
+		return fmt.Errorf("stop session %s: %w", sessionID, err)
+	}
+	if resp.Type != "RECEIVER_STATUS" {
+		return fmt.Errorf("stop session %s: device answered %s", sessionID, resp.Type)
+	}
+	return nil
+}
+
 // Connect opens a virtual connection to a running app, which is required
 // before sending it messages.
 func (c *Client) Connect(transportID string) error {

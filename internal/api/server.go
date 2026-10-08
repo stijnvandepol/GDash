@@ -44,8 +44,11 @@ type Server struct {
 	// and assets/.
 	Web      fs.FS
 	Discover func(ctx context.Context) ([]cast.Device, error)
-	Now      func() time.Time
-	Logger   *slog.Logger
+	// DisplaysChanged is called after a display is created, changed or
+	// deleted, so the cast manager can follow at once.
+	DisplaysChanged func()
+	Now             func() time.Time
+	Logger          *slog.Logger
 }
 
 // Handler returns the routes of the server.

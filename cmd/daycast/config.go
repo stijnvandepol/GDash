@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"regexp"
 	"strconv"
 
 	"github.com/stijnvandepol/daycast/internal/weather"
@@ -11,14 +12,16 @@ import (
 
 const defaultCastPort = "8009"
 
+// validAppID matches the 8 hex characters of a Cast application ID.
+var validAppID = regexp.MustCompile(`^[0-9A-F]{8}$`)
+
 type config struct {
 	addr     string
 	dataDir  string
 	location weather.Location
-	// castDevice and castAppID are optional. When both are set, Daycast
-	// keeps its receiver on that device.
-	castDevice string
-	castAppID  string
+	// castAppID is the app ID of an own registered receiver. Empty means
+	// Daycast uses the public DashCast receiver.
+	castAppID string
 }
 
 // loadConfig reads the configuration from environment variables. The
@@ -45,15 +48,9 @@ func loadConfig(getenv func(string) string) (config, error) {
 		return config{}, fmt.Errorf("invalid location: %w", err)
 	}
 
-	device, appID := getenv("DAYCAST_CAST_DEVICE"), getenv("DAYCAST_CAST_APP_ID")
-	if (device == "") != (appID == "") {
-		return config{}, errors.New("set both DAYCAST_CAST_DEVICE and DAYCAST_CAST_APP_ID, or neither")
-	}
-	if device != "" {
-		if cfg.castDevice, err = withDefaultPort(device); err != nil {
-			return config{}, fmt.Errorf("DAYCAST_CAST_DEVICE: %w", err)
-		}
-		cfg.castAppID = appID
+	cfg.castAppID = getenv("DAYCAST_CAST_APP_ID")
+	if cfg.castAppID != "" && !validAppID.MatchString(cfg.castAppID) {
+		return config{}, fmt.Errorf("DAYCAST_CAST_APP_ID %q is not an 8-character Cast application ID", cfg.castAppID)
 	}
 	return cfg, nil
 }
@@ -66,9 +63,9 @@ func valueOr(value, fallback string) string {
 }
 
 // withDefaultPort accepts "192.168.1.40" or "192.168.1.40:8009".
-func withDefaultPort(addr string) (string, error) {
+func withDefaultPort(addr string) string {
 	if _, _, err := net.SplitHostPort(addr); err == nil {
-		return addr, nil
+		return addr
 	}
-	return net.JoinHostPort(addr, defaultCastPort), nil
+	return net.JoinHostPort(addr, defaultCastPort)
 }

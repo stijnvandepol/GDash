@@ -12,6 +12,7 @@ import (
 	"net/http/httptest"
 	"path/filepath"
 	"strings"
+	"sync/atomic"
 	"testing"
 	"testing/fstest"
 	"time"
@@ -33,8 +34,9 @@ func (f fixedSubscriber) Subscribe(ctx context.Context) <-chan []byte {
 }
 
 type testEnv struct {
-	srv    *httptest.Server
-	client *http.Client
+	srv     *httptest.Server
+	client  *http.Client
+	changes *atomic.Int32
 }
 
 func newTestEnv(t *testing.T, discover func(context.Context) ([]cast.Device, error)) *testEnv {
@@ -48,6 +50,7 @@ func newTestEnv(t *testing.T, discover func(context.Context) ([]cast.Device, err
 	if err != nil {
 		t.Fatal(err)
 	}
+	changes := &atomic.Int32{}
 	s := &Server{
 		Snapshots: fixedSubscriber(`{"type":"snapshot","version":1}`),
 		Auth:      authService,
@@ -58,14 +61,15 @@ func newTestEnv(t *testing.T, discover func(context.Context) ([]cast.Device, err
 			"receiver/index.html": {Data: []byte("<html>receiver</html>")},
 			"assets/app.js":       {Data: []byte("console.log(1)")},
 		},
-		Discover: discover,
-		Now:      func() time.Time { return time.Date(2026, 10, 8, 17, 0, 0, 0, time.UTC) },
-		Logger:   slog.New(slog.NewTextHandler(io.Discard, nil)),
+		Discover:        discover,
+		DisplaysChanged: func() { changes.Add(1) },
+		Now:             func() time.Time { return time.Date(2026, 10, 8, 17, 0, 0, 0, time.UTC) },
+		Logger:          slog.New(slog.NewTextHandler(io.Discard, nil)),
 	}
 	srv := httptest.NewServer(s.Handler())
 	t.Cleanup(srv.Close)
 	jar, _ := cookiejar.New(nil)
-	return &testEnv{srv: srv, client: &http.Client{Jar: jar}}
+	return &testEnv{srv: srv, client: &http.Client{Jar: jar}, changes: changes}
 }
 
 // do sends a request with a JSON body and returns status and body.
@@ -291,6 +295,11 @@ func TestDisplayCRUD(t *testing.T) {
 	}
 	if status, _ := env.do(t, "DELETE", "/api/displays/keuken", ""); status != http.StatusNotFound {
 		t.Fatalf("delete again = %d, want 404", status)
+	}
+	// Create, rename and delete changed the displays; the failed requests
+	// did not.
+	if got := env.changes.Load(); got != 3 {
+		t.Fatalf("DisplaysChanged called %d times, want 3", got)
 	}
 }
 
