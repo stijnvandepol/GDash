@@ -184,8 +184,9 @@ func serve(ctx context.Context, logger *slog.Logger) error {
 			publisher.Refresh(ctx)
 			castManager.Changed()
 		},
-		Now:    time.Now,
-		Logger: logger,
+		DashboardsChanged: func() { publisher.Refresh(ctx) },
+		Now:               time.Now,
+		Logger:            logger,
 	}).Handler()
 	return listen(ctx, cfg.addr, handler, logger)
 }

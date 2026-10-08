@@ -66,11 +66,12 @@ func newTestEnv(t *testing.T, discover func(context.Context) ([]cast.Device, err
 			"receiver/index.html": {Data: []byte("<html>receiver</html>")},
 			"assets/app.js":       {Data: []byte("console.log(1)")},
 		},
-		Discover:        discover,
-		DisplaysChanged: func() { changes.Add(1) },
-		PingInterval:    50 * time.Millisecond,
-		Now:             func() time.Time { return time.Date(2026, 10, 8, 17, 0, 0, 0, time.UTC) },
-		Logger:          slog.New(slog.NewTextHandler(io.Discard, nil)),
+		Discover:          discover,
+		DisplaysChanged:   func() { changes.Add(1) },
+		DashboardsChanged: func() { changes.Add(1) },
+		PingInterval:      50 * time.Millisecond,
+		Now:               func() time.Time { return time.Date(2026, 10, 8, 17, 0, 0, 0, time.UTC) },
+		Logger:            slog.New(slog.NewTextHandler(io.Discard, nil)),
 	}
 	srv := httptest.NewServer(s.Handler())
 	t.Cleanup(srv.Close)

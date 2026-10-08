@@ -47,8 +47,11 @@ type Server struct {
 	Web      fs.FS
 	Discover func(ctx context.Context) ([]cast.Device, error)
 	// DisplaysChanged is called after a display is created, changed or
-	// deleted, so the cast manager can follow at once.
+	// deleted, so screens and the cast manager can follow at once.
 	DisplaysChanged func()
+	// DashboardsChanged is called after a dashboard is created, changed or
+	// deleted, so screens showing it update at once.
+	DashboardsChanged func()
 	// PingInterval is how often an open display stream sends a keep-alive
 	// and re-checks that it may still show the display. Zero means 20
 	// seconds.
@@ -78,6 +81,13 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /api/display-sessions/current", s.getDisplaySession)
 	mux.Handle("POST /api/displays/{display}/pairings", s.requireUser(s.postPairing))
 	mux.Handle("DELETE /api/displays/{display}/pairings", s.requireUser(s.deletePairings))
+
+	mux.Handle("GET /api/widget-types", s.requireUser(s.getWidgetTypes))
+	mux.Handle("GET /api/dashboards", s.requireUser(s.listDashboards))
+	mux.Handle("POST /api/dashboards", s.requireUser(s.createDashboard))
+	mux.Handle("GET /api/dashboards/{dashboard}", s.requireUser(s.getDashboard))
+	mux.Handle("PUT /api/dashboards/{dashboard}", s.requireUser(s.updateDashboard))
+	mux.Handle("DELETE /api/dashboards/{dashboard}", s.requireUser(s.deleteDashboard))
 
 	mux.Handle("GET /api/cast-devices", s.requireUser(s.castDevices))
 	mux.Handle("GET /api/displays", s.requireUser(s.listDisplays))

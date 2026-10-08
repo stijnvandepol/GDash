@@ -58,13 +58,15 @@ func (s *Server) createDisplay(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusCreated, d)
 }
 
-// updateDisplay handles PATCH /api/displays/{display} {name?, castDeviceId?}:
+// updateDisplay handles PATCH /api/displays/{display} {name?, castDeviceId?,
+// dashboardId?}; an empty dashboardId means the default dashboard:
 // changes only the fields present and answers 200 with the display. The
 // id is fixed, because it is part of the display's URL.
 func (s *Server) updateDisplay(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		Name         *string `json:"name"`
 		CastDeviceID *string `json:"castDeviceId"`
+		DashboardID  *string `json:"dashboardId"`
 	}
 	if !decodeJSON(w, r, &body) {
 		return
@@ -79,6 +81,9 @@ func (s *Server) updateDisplay(w http.ResponseWriter, r *http.Request) {
 	}
 	if body.CastDeviceID != nil {
 		d.CastDeviceID = *body.CastDeviceID
+	}
+	if body.DashboardID != nil {
+		d.DashboardID = *body.DashboardID
 	}
 	if err := displays.Validate(d); err != nil {
 		writeValidationError(w, validation.Fields(err))
@@ -104,6 +109,8 @@ func (s *Server) deleteDisplay(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) writeStoreError(w http.ResponseWriter, op string, err error) {
 	switch {
+	case errors.Is(err, store.ErrUnknownDashboard):
+		writeValidationError(w, []validation.FieldError{{Field: "dashboardId", Message: "this dashboard does not exist"}})
 	case errors.Is(err, store.ErrNotFound):
 		writeError(w, http.StatusNotFound, "not_found", "This display does not exist.")
 	case errors.Is(err, store.ErrConflict):
