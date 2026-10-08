@@ -49,8 +49,9 @@ func DefaultDashboard() Dashboard {
 		Columns: 24,
 		Rows:    14,
 		Widgets: []Widget{
-			{ID: "clock", Type: "clock", X: 0, Y: 0, W: 14, H: 14},
+			{ID: "clock", Type: "clock", X: 0, Y: 0, W: 14, H: 6},
 			{ID: "weather", Type: "weather", X: 14, Y: 0, W: 10, H: 14, Source: "weather.current"},
+			{ID: "news", Type: "news", X: 0, Y: 6, W: 14, H: 8, Source: "news.default", Settings: map[string]any{"maxItems": 5}},
 		},
 	}
 }

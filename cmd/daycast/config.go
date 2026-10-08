@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"net/url"
 	"regexp"
 	"strconv"
 
@@ -22,7 +23,12 @@ type config struct {
 	// castAppID is the app ID of an own registered receiver. Empty means
 	// Daycast uses the public DashCast receiver.
 	castAppID string
+	newsFeed  string
 }
+
+// defaultNewsFeed is the general news feed of the NOS, the Dutch public
+// broadcaster. Daycast starts in the Netherlands; any RSS or Atom URL works.
+const defaultNewsFeed = "https://feeds.nos.nl/nosnieuwsalgemeen"
 
 // loadConfig reads the configuration from environment variables. The
 // prototype has no setup wizard yet, so the location is required here.
@@ -46,6 +52,11 @@ func loadConfig(getenv func(string) string) (config, error) {
 	}
 	if cfg.location, err = weather.NewLocation(lat, lon); err != nil {
 		return config{}, fmt.Errorf("invalid location: %w", err)
+	}
+
+	cfg.newsFeed = valueOr(getenv("DAYCAST_NEWS_FEED"), defaultNewsFeed)
+	if u, err := url.Parse(cfg.newsFeed); err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
+		return config{}, fmt.Errorf("DAYCAST_NEWS_FEED %q is not an http(s) URL", cfg.newsFeed)
 	}
 
 	cfg.castAppID = getenv("DAYCAST_CAST_APP_ID")

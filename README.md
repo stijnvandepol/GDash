@@ -11,6 +11,9 @@ Google TV you already own. No extra hardware, no subscription, no cloud.
 
 - **Weather** from [Open-Meteo](https://open-meteo.com) (no API key). The last
   good value is kept when the internet drops, and stale data is marked.
+- **News headlines** from any RSS or Atom feed (default: NOS). Fetched once by
+  the server for all TVs, with conditional requests; only plain-text titles
+  reach the screen.
 - **A web interface** at `/` to set up the first account, log in and manage
   displays.
 - **Displays**: link a display to a Cast device found on your network, and
@@ -48,6 +51,7 @@ and read the token with `docker compose logs daycast`.
 | `DAYCAST_LATITUDE`, `DAYCAST_LONGITUDE` | required | Location for the weather, rounded to about 1 km before it leaves the server |
 | `DAYCAST_ADDR` | `:8420` | Listen address |
 | `DAYCAST_DATA_DIR` | `data` | Database and cached data |
+| `DAYCAST_NEWS_FEED` | NOS general news | RSS or Atom URL for the news widget |
 | `DAYCAST_CAST_APP_ID` | none | App ID of an own registered receiver ([docs/receiver.md](docs/receiver.md)); without it Daycast uses DashCast |
 
 ## Command line

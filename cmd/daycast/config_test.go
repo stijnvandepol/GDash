@@ -17,6 +17,9 @@ func TestLoadConfigDefaults(t *testing.T) {
 	if cfg.addr != ":8420" || cfg.dataDir != "data" || cfg.castAppID != "" {
 		t.Fatalf("cfg = %+v", cfg)
 	}
+	if cfg.newsFeed != defaultNewsFeed {
+		t.Fatalf("newsFeed = %q, want the default", cfg.newsFeed)
+	}
 	if cfg.location.Latitude != 51.65 || cfg.location.Longitude != 5.94 {
 		t.Fatalf("location = %+v, want rounded to 2 decimals", cfg.location)
 	}
@@ -52,6 +55,7 @@ func TestLoadConfigErrors(t *testing.T) {
 		{"missing location", map[string]string{}, "DAYCAST_LATITUDE"},
 		{"latitude not a number", map[string]string{"DAYCAST_LATITUDE": "noord", "DAYCAST_LONGITUDE": "5"}, "not a number"},
 		{"latitude out of range", map[string]string{"DAYCAST_LATITUDE": "95", "DAYCAST_LONGITUDE": "5"}, "invalid location"},
+		{"news feed not http", map[string]string{"DAYCAST_LATITUDE": "51", "DAYCAST_LONGITUDE": "5", "DAYCAST_NEWS_FEED": "file:///etc/passwd"}, "DAYCAST_NEWS_FEED"},
 		{"malformed app id", map[string]string{"DAYCAST_LATITUDE": "51", "DAYCAST_LONGITUDE": "5", "DAYCAST_CAST_APP_ID": "dashcast"}, "8-character"},
 	}
 	for _, tt := range tests {

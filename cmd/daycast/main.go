@@ -26,6 +26,7 @@ import (
 	"github.com/stijnvandepol/daycast/internal/cast"
 	"github.com/stijnvandepol/daycast/internal/datahub"
 	"github.com/stijnvandepol/daycast/internal/display"
+	"github.com/stijnvandepol/daycast/internal/news"
 	"github.com/stijnvandepol/daycast/internal/store"
 	"github.com/stijnvandepol/daycast/internal/weather"
 	"github.com/stijnvandepol/daycast/web"
@@ -33,6 +34,10 @@ import (
 
 const (
 	weatherInterval = 15 * time.Minute
+	newsInterval    = 15 * time.Minute
+	// newsItems is what the server keeps; widgets show a part of it. Ten
+	// short headlines keep a snapshot far below the 64 KB Cast limit.
+	newsItems       = 10
 	upstreamTimeout = 15 * time.Second
 	shutdownTimeout = 5 * time.Second
 )
@@ -186,10 +191,15 @@ func startData(ctx context.Context, cfg config, logger *slog.Logger) (*display.B
 	publish()
 
 	weatherClient := weather.Client{BaseURL: weather.DefaultBaseURL, HTTP: &http.Client{Timeout: upstreamTimeout}}
+	newsClient := &news.Client{HTTP: &http.Client{Timeout: upstreamTimeout}}
 	go hub.Run(ctx, []datahub.Source{{
 		Key:      "weather.current",
 		Interval: weatherInterval,
 		Fetch:    func(ctx context.Context) (any, error) { return weatherClient.Current(ctx, cfg.location) },
+	}, {
+		Key:      "news.default",
+		Interval: newsInterval,
+		Fetch:    func(ctx context.Context) (any, error) { return newsClient.Fetch(ctx, cfg.newsFeed, newsItems) },
 	}})
 	return broadcaster, nil
 }

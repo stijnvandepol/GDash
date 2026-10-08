@@ -19,7 +19,7 @@
     width: 100%;
   }
   .time {
-    font-size: 260px;
+    font-size: 220px;
     font-weight: 300;
     line-height: 1;
     letter-spacing: -0.02em;
@@ -27,8 +27,8 @@
     color: var(--text-primary);
   }
   .date {
-    margin-top: 24px;
-    font-size: 64px;
+    margin-top: 16px;
+    font-size: 56px;
     color: var(--text-muted);
   }
 </style>

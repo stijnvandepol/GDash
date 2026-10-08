@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>Example Atom</title>
+  <entry>
+    <title type="html">Release &lt;em&gt;2.0&lt;/em&gt; is out</title>
+    <link rel="enclosure" href="https://example.org/image.jpg"/>
+    <link href="https://example.org/release"/>
+    <updated>2026-10-08T15:30:00Z</updated>
+  </entry>
+  <entry>
+    <title>Published wins over updated</title>
+    <link rel="alternate" href="https://example.org/two"/>
+    <published>2026-10-07T09:00:00+02:00</published>
+    <updated>2026-10-08T09:00:00+02:00</updated>
+  </entry>
+</feed>
