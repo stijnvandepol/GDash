@@ -1,0 +1,182 @@
+package store
+
+import (
+	"context"
+	"errors"
+	"os"
+	"path/filepath"
+	"testing"
+	"time"
+
+	"github.com/stijnvandepol/daycast/internal/displays"
+)
+
+var created = time.Date(2026, 10, 8, 17, 0, 0, 0, time.UTC)
+
+func openTestStore(t *testing.T) (*Store, string) {
+	t.Helper()
+	path := filepath.Join(t.TempDir(), "daycast.db")
+	s, err := Open(context.Background(), path)
+	if err != nil {
+		t.Fatalf("Open: %v", err)
+	}
+	t.Cleanup(func() { s.Close() })
+	return s, path
+}
+
+func kitchen() displays.Display {
+	return displays.Display{ID: "keuken", Name: "Keuken TV", CastDeviceID: "e542c41e4d94baa86e46f36dfdebf26e", CreatedAt: created}
+}
+
+func TestDisplayLifecycle(t *testing.T) {
+	ctx := context.Background()
+	s, _ := openTestStore(t)
+
+	if err := s.CreateDisplay(ctx, kitchen()); err != nil {
+		t.Fatalf("CreateDisplay: %v", err)
+	}
+	got, err := s.Display(ctx, "keuken")
+	if err != nil {
+		t.Fatalf("Display: %v", err)
+	}
+	if got != kitchen() {
+		t.Fatalf("Display = %+v, want %+v", got, kitchen())
+	}
+
+	renamed := kitchen()
+	renamed.Name = "Keuken"
+	renamed.CastDeviceID = ""
+	if err := s.UpdateDisplay(ctx, renamed); err != nil {
+		t.Fatalf("UpdateDisplay: %v", err)
+	}
+	list, err := s.Displays(ctx)
+	if err != nil {
+		t.Fatalf("Displays: %v", err)
+	}
+	if len(list) != 1 || list[0] != renamed {
+		t.Fatalf("Displays = %+v, want [%+v]", list, renamed)
+	}
+
+	if err := s.DeleteDisplay(ctx, "keuken"); err != nil {
+		t.Fatalf("DeleteDisplay: %v", err)
+	}
+	if _, err := s.Display(ctx, "keuken"); !errors.Is(err, ErrNotFound) {
+		t.Fatalf("Display after delete: err = %v, want ErrNotFound", err)
+	}
+}
+
+func TestCreateDisplayRejectsDuplicateID(t *testing.T) {
+	ctx := context.Background()
+	s, _ := openTestStore(t)
+	if err := s.CreateDisplay(ctx, kitchen()); err != nil {
+		t.Fatal(err)
+	}
+	if err := s.CreateDisplay(ctx, kitchen()); !errors.Is(err, ErrConflict) {
+		t.Fatalf("second CreateDisplay: err = %v, want ErrConflict", err)
+	}
+}
+
+func TestCreateDisplayEnforcesLimit(t *testing.T) {
+	ctx := context.Background()
+	s, _ := openTestStore(t)
+	for i := range displays.MaxDisplays {
+		d := displays.Display{ID: "d" + string(rune('a'+i%26)) + string(rune('a'+i/26)), Name: "x", CreatedAt: created}
+		if err := s.CreateDisplay(ctx, d); err != nil {
+			t.Fatalf("CreateDisplay %d: %v", i, err)
+		}
+	}
+	over := displays.Display{ID: "one-too-many", Name: "x", CreatedAt: created}
+	if err := s.CreateDisplay(ctx, over); !errors.Is(err, ErrConflict) {
+		t.Fatalf("CreateDisplay above limit: err = %v, want ErrConflict", err)
+	}
+}
+
+func TestUpdateAndDeleteMissingDisplay(t *testing.T) {
+	ctx := context.Background()
+	s, _ := openTestStore(t)
+	if err := s.UpdateDisplay(ctx, kitchen()); !errors.Is(err, ErrNotFound) {
+		t.Fatalf("UpdateDisplay: err = %v, want ErrNotFound", err)
+	}
+	if err := s.DeleteDisplay(ctx, "keuken"); !errors.Is(err, ErrNotFound) {
+		t.Fatalf("DeleteDisplay: err = %v, want ErrNotFound", err)
+	}
+}
+
+func TestReopenKeepsDataAndSkipsMigrations(t *testing.T) {
+	ctx := context.Background()
+	s, path := openTestStore(t)
+	if err := s.CreateDisplay(ctx, kitchen()); err != nil {
+		t.Fatal(err)
+	}
+	s.Close()
+
+	reopened, err := Open(ctx, path)
+	if err != nil {
+		t.Fatalf("reopen: %v", err)
+	}
+	defer reopened.Close()
+	if _, err := reopened.Display(ctx, "keuken"); err != nil {
+		t.Fatalf("display lost after reopen: %v", err)
+	}
+	if _, err := os.Stat(path + ".bak-v1"); !errors.Is(err, os.ErrNotExist) {
+		t.Fatalf("backup written although no migration ran: %v", err)
+	}
+}
+
+func TestOpenRefusesNewerSchema(t *testing.T) {
+	ctx := context.Background()
+	s, path := openTestStore(t)
+	if _, err := s.db.ExecContext(ctx, "PRAGMA user_version = 99"); err != nil {
+		t.Fatal(err)
+	}
+	s.Close()
+	if _, err := Open(ctx, path); err == nil {
+		t.Fatal("Open accepted a database from a newer Daycast")
+	}
+}
+
+func TestMigrationBacksUpExistingDatabase(t *testing.T) {
+	ctx := context.Background()
+	s, path := openTestStore(t)
+	if err := s.CreateDisplay(ctx, kitchen()); err != nil {
+		t.Fatal(err)
+	}
+	scripts, err := loadMigrations()
+	if err != nil {
+		t.Fatal(err)
+	}
+	next := append(scripts, "CREATE TABLE extra (x INTEGER) STRICT;")
+	if err := s.migrate(ctx, path, next); err != nil {
+		t.Fatalf("migrate: %v", err)
+	}
+
+	backup, err := Open(ctx, path+".bak-v1")
+	if err != nil {
+		t.Fatalf("open backup: %v", err)
+	}
+	defer backup.Close()
+	if _, err := backup.Display(ctx, "keuken"); err != nil {
+		t.Fatalf("backup does not contain the data from before the migration: %v", err)
+	}
+	var version int
+	if err := s.db.QueryRowContext(ctx, "PRAGMA user_version").Scan(&version); err != nil || version != 2 {
+		t.Fatalf("schema version = %d (err %v), want 2", version, err)
+	}
+}
+
+func TestFailedMigrationLeavesVersionUnchanged(t *testing.T) {
+	ctx := context.Background()
+	s, path := openTestStore(t)
+	scripts, err := loadMigrations()
+	if err != nil {
+		t.Fatal(err)
+	}
+	broken := append(scripts, "CREATE TABLE broken (;")
+	if err := s.migrate(ctx, path, broken); err == nil {
+		t.Fatal("migrate accepted invalid SQL")
+	}
+	var version int
+	if err := s.db.QueryRowContext(ctx, "PRAGMA user_version").Scan(&version); err != nil || version != 1 {
+		t.Fatalf("schema version = %d (err %v), want 1", version, err)
+	}
+}
