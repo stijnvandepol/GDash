@@ -176,3 +176,19 @@ func TestHeadlinesMergesFeedsNewestFirst(t *testing.T) {
 		t.Fatal("a removed feed is still cached")
 	}
 }
+
+func TestHeadlinesFetchesFeedsInParallel(t *testing.T) {
+	const delay = 300 * time.Millisecond
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		time.Sleep(delay)
+		w.Write([]byte(`<rss><channel><title>T</title><item><title>x</title></item></channel></rss>`))
+	}))
+	defer srv.Close()
+	c := &Client{HTTP: &http.Client{Timeout: 5 * time.Second}}
+	sources := []Source{{Name: "a", URL: srv.URL + "/a"}, {Name: "b", URL: srv.URL + "/b"}, {Name: "c", URL: srv.URL + "/c"}}
+	ctx, cancel := context.WithTimeout(context.Background(), 2*delay)
+	defer cancel()
+	if feed, err := c.Headlines(ctx, sources, 5); err != nil || len(feed.Items) != 3 {
+		t.Fatalf("Headlines of three slow feeds within twice the delay of one = %+v, %v", feed, err)
+	}
+}

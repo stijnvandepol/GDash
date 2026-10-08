@@ -29,6 +29,10 @@ type Source struct {
 	// Version identifies the source's configuration, such as a hash of its
 	// addresses. Configure restarts a source only when it changes.
 	Version string
+	// Timeout bounds one refresh; zero means fetchTimeout. A source that
+	// downloads several calendars needs more than one that asks a single
+	// weather service.
+	Timeout time.Duration
 	Fetch   func(ctx context.Context) (any, error)
 }
 
@@ -163,7 +167,11 @@ func (h *Hub) loop(ctx context.Context, src Source) {
 
 // refresh fetches one source once and records the outcome.
 func (h *Hub) refresh(ctx context.Context, src Source) error {
-	fetchCtx, cancel := context.WithTimeout(ctx, fetchTimeout)
+	timeout := src.Timeout
+	if timeout == 0 {
+		timeout = fetchTimeout
+	}
+	fetchCtx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
 	value, err := src.Fetch(fetchCtx)

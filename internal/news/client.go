@@ -53,14 +53,30 @@ func (c *Client) Headlines(ctx context.Context, sources []Source, maxItems int) 
 	if len(sources) == 1 {
 		return c.Fetch(ctx, sources[0].URL, maxItems)
 	}
-	merged := Feed{Items: []Item{}}
+	// Feeds download in parallel, so a slow one does not hold up the rest
+	// past the refresh's time limit. There are at most a handful.
+	feeds := make([]Feed, len(sources))
+	errs := make([]error, len(sources))
+	var wg sync.WaitGroup
 	for i, src := range sources {
-		feed, err := c.Fetch(ctx, src.URL, maxItems)
-		if err != nil {
-			return Feed{}, fmt.Errorf("feed %d: %w", i+1, err)
-		}
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			feed, err := c.Fetch(ctx, src.URL, maxItems)
+			if err != nil {
+				errs[i] = fmt.Errorf("feed %d: %w", i+1, err)
+			}
+			feeds[i] = feed
+		}()
+	}
+	wg.Wait()
+	if err := errors.Join(errs...); err != nil {
+		return Feed{}, err
+	}
+	merged := Feed{Items: []Item{}}
+	for i, feed := range feeds {
 		for _, item := range feed.Items {
-			item.Source = src.Name
+			item.Source = sources[i].Name
 			merged.Items = append(merged.Items, item)
 		}
 	}

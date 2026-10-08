@@ -100,6 +100,7 @@ func (d *dataSources) build(cfg settings.Sources) []datahub.Source {
 		sources = append(sources, datahub.Source{
 			Key:      "news.default",
 			Interval: newsInterval,
+			Timeout:  newsTimeout,
 			Version:  fingerprint(feeds),
 			Fetch:    func(ctx context.Context) (any, error) { return d.news.Headlines(ctx, feeds, newsItems) },
 		})
@@ -108,6 +109,7 @@ func (d *dataSources) build(cfg settings.Sources) []datahub.Source {
 		sources = append(sources, datahub.Source{
 			Key:      "calendar.default",
 			Interval: calendarInterval,
+			Timeout:  calendarTimeout,
 			Version:  fingerprint(calendars),
 			Fetch: func(ctx context.Context) (any, error) {
 				return d.calendar.Upcoming(ctx, calendars, calendarDays)

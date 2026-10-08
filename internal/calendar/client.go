@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -18,7 +19,10 @@ const (
 	maxCalendarBytes = 10 << 20
 	// maxEvents keeps a snapshot well below the 64 KB Cast message limit.
 	maxEvents = 50
-	userAgent = "Daycast (self-hosted TV dashboard; +https://github.com/stijnvandepol/daycast)"
+	// parallelFetches bounds how many calendars download at once: each may
+	// be up to maxCalendarBytes, and a home server has little memory.
+	parallelFetches = 4
+	userAgent       = "Daycast (self-hosted TV dashboard; +https://github.com/stijnvandepol/daycast)"
 )
 
 // Source is one calendar feed. Its URL is a secret: the iCal address of a
@@ -73,17 +77,34 @@ func (c *Client) Upcoming(ctx context.Context, sources []Source, days int) ([]Ev
 	from := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, c.Location)
 	w := Window{From: from, To: from.AddDate(0, 0, days), Location: c.Location}
 
-	events := []Event{}
+	// Calendars download in parallel, so a few slow ones do not add up to
+	// more than the refresh may take.
+	found := make([][]Event, len(sources))
+	errs := make([]error, len(sources))
+	slots := make(chan struct{}, parallelFetches)
+	var wg sync.WaitGroup
 	for i, src := range sources {
-		body, err := c.fetch(ctx, src)
-		if err != nil {
-			return nil, fmt.Errorf("calendar %d: %w", i+1, err)
-		}
-		found, err := Parse(bytes.NewReader(body), w, src.Name)
-		if err != nil {
-			return nil, fmt.Errorf("calendar %d: %w", i+1, err)
-		}
-		events = append(events, found...)
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			slots <- struct{}{}
+			defer func() { <-slots }()
+			body, err := c.fetch(ctx, src)
+			if err == nil {
+				found[i], err = Parse(bytes.NewReader(body), w, src.Name)
+			}
+			if err != nil {
+				errs[i] = fmt.Errorf("calendar %d: %w", i+1, err)
+			}
+		}()
+	}
+	wg.Wait()
+	if err := errors.Join(errs...); err != nil {
+		return nil, err
+	}
+	events := []Event{}
+	for _, f := range found {
+		events = append(events, f...)
 	}
 	Sort(events)
 	if len(events) > maxEvents {

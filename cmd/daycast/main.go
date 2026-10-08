@@ -45,6 +45,10 @@ const (
 	// servers are built for clients polling this often.
 	calendarInterval = 10 * time.Minute
 	calendarDays     = 7
+	// A refresh fetches all feeds or all calendars, partly in parallel;
+	// each request may take upstreamTimeout.
+	newsTimeout     = 30 * time.Second
+	calendarTimeout = time.Minute
 	// newsItems is what the server keeps; widgets show a part of it. Ten
 	// short headlines keep a snapshot far below the 64 KB Cast limit.
 	newsItems       = 10

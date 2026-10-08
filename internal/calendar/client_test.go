@@ -88,3 +88,23 @@ func TestUpcomingRejectsServerErrors(t *testing.T) {
 		t.Fatal("Upcoming accepted a 410")
 	}
 }
+
+func TestUpcomingFetchesCalendarsInParallel(t *testing.T) {
+	const delay = 300 * time.Millisecond
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		time.Sleep(delay)
+		w.Write([]byte("BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:x\r\nEND:VCALENDAR\r\n"))
+	}))
+	defer srv.Close()
+	c := &Client{HTTP: &http.Client{Timeout: 5 * time.Second}, Location: time.UTC, Now: time.Now}
+	var sources []Source
+	for i := range parallelFetches {
+		sources = append(sources, Source{Name: "c", URL: srv.URL + "/" + string(rune('a'+i))})
+	}
+	// One after another they would take four times the delay.
+	ctx, cancel := context.WithTimeout(context.Background(), 2*delay)
+	defer cancel()
+	if _, err := c.Upcoming(ctx, sources, 7); err != nil {
+		t.Fatalf("Upcoming of %d slow calendars within twice the delay of one: %v", len(sources), err)
+	}
+}
