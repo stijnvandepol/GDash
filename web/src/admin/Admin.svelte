@@ -7,6 +7,7 @@
   import Displays from './Displays.svelte';
   import Dashboards from './Dashboards.svelte';
   import Settings from './Settings.svelte';
+  import GettingStarted from './GettingStarted.svelte';
 
   type Screen = { name: 'loading' } | { name: 'error'; message: string } | { name: 'setup' } | { name: 'login' } | { name: 'app'; user: User };
 
@@ -68,12 +69,15 @@
     <Setup onDone={(user) => (screen = { name: 'app', user })} />
   {:else if screen.name === 'login'}
     <Login onDone={(user) => (screen = { name: 'app', user })} />
-  {:else if tab === 'displays'}
-    <Displays onSessionEnded={() => (screen = { name: 'login' })} />
-  {:else if tab === 'dashboards'}
-    <Dashboards onSessionEnded={() => (screen = { name: 'login' })} />
   {:else}
-    <Settings onSessionEnded={() => (screen = { name: 'login' })} />
+    <GettingStarted onopen={(next) => (tab = next)} />
+    {#if tab === 'displays'}
+      <Displays onSessionEnded={() => (screen = { name: 'login' })} />
+    {:else if tab === 'dashboards'}
+      <Dashboards onSessionEnded={() => (screen = { name: 'login' })} />
+    {:else}
+      <Settings onSessionEnded={() => (screen = { name: 'login' })} />
+    {/if}
   {/if}
 </main>
 
