@@ -14,6 +14,14 @@ func valid() Dashboard {
 	}}
 }
 
+func note(text string) Widget {
+	return Widget{ID: "note", Type: "text", X: 0, Y: 5, W: 4, H: 3, Settings: map[string]any{"text": text}}
+}
+
+func countdown(label, date string) Widget {
+	return Widget{ID: "holiday", Type: "countdown", X: 0, Y: 5, W: 4, H: 4, Settings: map[string]any{"label": label, "date": date}}
+}
+
 func fields(err error) string {
 	var names []string
 	for _, f := range validation.Fields(err) {
@@ -43,6 +51,23 @@ func TestValidateDashboard(t *testing.T) {
 		{"maxItems too big", func(d *Dashboard) { d.Widgets[1].Settings["maxItems"] = float64(50) }, "widgets[1]: maxItems must be a whole number"},
 		{"maxItems fraction", func(d *Dashboard) { d.Widgets[1].Settings["maxItems"] = 2.5 }, "widgets[1]: maxItems must be a whole number"},
 		{"maxItems text", func(d *Dashboard) { d.Widgets[1].Settings["maxItems"] = "5" }, "widgets[1]: maxItems must be a whole number"},
+		{"note", func(d *Dashboard) { d.Widgets = append(d.Widgets, note("Bins out tonight\nBring a coat")) }, ""},
+		{"empty note", func(d *Dashboard) { d.Widgets = append(d.Widgets, note("   ")) }, "widgets[2]: text must be 1 to 300 characters"},
+		{"note with control character", func(d *Dashboard) { d.Widgets = append(d.Widgets, note("bell\a")) }, "widgets[2]: text must be"},
+		{"note too long", func(d *Dashboard) { d.Widgets = append(d.Widgets, note(strings.Repeat("é", 301))) }, "widgets[2]: text must be"},
+		{"note without text", func(d *Dashboard) {
+			d.Widgets = append(d.Widgets, Widget{ID: "note", Type: "text", X: 0, Y: 5, W: 4, H: 3})
+		}, "widgets[2]: a text widget needs a text"},
+		{"countdown", func(d *Dashboard) { d.Widgets = append(d.Widgets, countdown("Holiday", "2026-12-24")) }, ""},
+		{"countdown bad date", func(d *Dashboard) { d.Widgets = append(d.Widgets, countdown("Holiday", "24-12-2026")) }, "widgets[2]: date must be a date as YYYY-MM-DD"},
+		{"countdown date as number", func(d *Dashboard) {
+			w := countdown("Holiday", "")
+			w.Settings["date"] = float64(20261224)
+			d.Widgets = append(d.Widgets, w)
+		}, "widgets[2]: date must be a date"},
+		{"forecast days", func(d *Dashboard) {
+			d.Widgets = append(d.Widgets, Widget{ID: "fc", Type: "forecast", X: 0, Y: 5, W: 6, H: 4, Settings: map[string]any{"days": float64(8)}})
+		}, "widgets[2]: days must be a whole number from 1 to 7"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

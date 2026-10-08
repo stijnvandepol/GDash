@@ -88,7 +88,8 @@ func TestDashboardRoutesNeedLoginAndWidgetTypesAreListed(t *testing.T) {
 	}
 	env.setUp(t)
 	status, body := env.do(t, "GET", "/api/widget-types", "")
-	if status != http.StatusOK || !strings.Contains(body, `"calendar":{"minW":6,"minH":4,"hasMaxItems":true}`) || !strings.Contains(body, `"columns":24`) || !strings.Contains(body, `"glass"`) {
+	if status != http.StatusOK || !strings.Contains(body, `"calendar":{"minW":6,"minH":4,"settings":{"maxItems":{"kind":"integer","min":1,"max":20,"required":false}}}`) ||
+		!strings.Contains(body, `"clock":{"minW":4,"minH":3,"settings":{}}`) || !strings.Contains(body, `"columns":24`) || !strings.Contains(body, `"glass"`) {
 		t.Fatalf("widget types = %d %s", status, body)
 	}
 }

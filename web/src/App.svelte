@@ -4,6 +4,9 @@
   import Clock from './widgets/Clock.svelte';
   import Weather from './widgets/Weather.svelte';
   import News from './widgets/News.svelte';
+  import Forecast from './widgets/Forecast.svelte';
+  import Note from './widgets/Note.svelte';
+  import Countdown from './widgets/Countdown.svelte';
   import Calendar from './widgets/Calendar.svelte';
 
   // Dashboards are designed on a fixed 1920x1080 stage and scaled to the
@@ -69,6 +72,12 @@
             <Calendar entry={widget.source ? display.snapshot?.data[widget.source] : undefined} settings={widget.settings} />
           {:else if widget.type === 'news'}
             <News entry={widget.source ? display.snapshot?.data[widget.source] : undefined} settings={widget.settings} />
+          {:else if widget.type === 'forecast'}
+            <Forecast entry={widget.source ? display.snapshot?.data[widget.source] : undefined} settings={widget.settings} />
+          {:else if widget.type === 'text'}
+            <Note settings={widget.settings} />
+          {:else if widget.type === 'countdown'}
+            <Countdown settings={widget.settings} />
           {:else}
             <p class="muted">Unknown widget: {widget.type}</p>
           {/if}

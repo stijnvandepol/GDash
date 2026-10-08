@@ -8,8 +8,11 @@ Google TV you already own. No extra hardware, no subscription, no cloud.
 
 ## What works
 
-- **Weather** from [Open-Meteo](https://open-meteo.com) (no API key). The last
-  good value is kept when the internet drops, and stale data is marked.
+- **Weather** from [Open-Meteo](https://open-meteo.com) (no API key): now, and
+  a forecast for up to seven days. The last good value is kept when the
+  internet drops, and stale data is marked.
+- **Notes and countdowns**: a short text for the household, and the days
+  left until a date such as a holiday or a birthday.
 - **Calendar** from secret iCal addresses (Google, Outlook, iCloud,
   Nextcloud): the coming week with recurrences, exceptions and moved
   occurrences, without OAuth. Only paired screens receive it.

@@ -52,7 +52,23 @@ type Report struct {
 	// ObservedAt is the local time of the observation as Open-Meteo reports
 	// it, for example "2026-10-08T13:30".
 	ObservedAt string `json:"observedAt"`
+	// Days is the forecast from today on, at most forecastDays long.
+	Days []Day `json:"days"`
 }
+
+// Day is the forecast for one day.
+type Day struct {
+	// Date is the local date, for example "2026-10-09".
+	Date        string  `json:"date"`
+	WeatherCode int     `json:"weatherCode"`
+	MaxC        float64 `json:"maxC"`
+	MinC        float64 `json:"minC"`
+	// RainChance is the highest chance of precipitation that day, 0 to 100.
+	RainChance int `json:"rainChance"`
+}
+
+// forecastDays covers a week; the forecast widget shows a part of it.
+const forecastDays = 7
 
 // Client fetches reports from Open-Meteo.
 type Client struct {
@@ -70,22 +86,26 @@ type forecastResponse struct {
 		WindSpeed10m  float64  `json:"wind_speed_10m"`
 	} `json:"current"`
 	Daily struct {
-		Temperature2mMax []float64 `json:"temperature_2m_max"`
-		Temperature2mMin []float64 `json:"temperature_2m_min"`
+		Time                        []string  `json:"time"`
+		WeatherCode                 []int     `json:"weather_code"`
+		Temperature2mMax            []float64 `json:"temperature_2m_max"`
+		Temperature2mMin            []float64 `json:"temperature_2m_min"`
+		PrecipitationProbabilityMax []int     `json:"precipitation_probability_max"`
 	} `json:"daily"`
 }
 
 var errIncomplete = errors.New("open-meteo response is missing fields")
 
-// Current returns the current weather and today's range for loc.
+// Current returns the current weather, today's range and the forecast for
+// the coming week for loc, in one request.
 func (c Client) Current(ctx context.Context, loc Location) (Report, error) {
 	query := url.Values{
 		"latitude":      {strconv.FormatFloat(loc.Latitude, 'f', 2, 64)},
 		"longitude":     {strconv.FormatFloat(loc.Longitude, 'f', 2, 64)},
 		"current":       {"temperature_2m,weather_code,is_day,wind_speed_10m"},
-		"daily":         {"temperature_2m_max,temperature_2m_min"},
+		"daily":         {"weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max"},
 		"timezone":      {"auto"},
-		"forecast_days": {"1"},
+		"forecast_days": {strconv.Itoa(forecastDays)},
 	}
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.BaseURL+"?"+query.Encode(), nil)
 	if err != nil {
@@ -105,7 +125,8 @@ func (c Client) Current(ctx context.Context, loc Location) (Report, error) {
 		return Report{}, fmt.Errorf("decode open-meteo response: %w", err)
 	}
 	cur := body.Current
-	if cur.Temperature2m == nil || cur.WeatherCode == nil || len(body.Daily.Temperature2mMax) == 0 || len(body.Daily.Temperature2mMin) == 0 {
+	days := body.days()
+	if cur.Temperature2m == nil || cur.WeatherCode == nil || len(days) == 0 {
 		return Report{}, errIncomplete
 	}
 	return Report{
@@ -113,8 +134,21 @@ func (c Client) Current(ctx context.Context, loc Location) (Report, error) {
 		WeatherCode:  *cur.WeatherCode,
 		IsDay:        cur.IsDay == 1,
 		WindKmh:      cur.WindSpeed10m,
-		TodayMaxC:    body.Daily.Temperature2mMax[0],
-		TodayMinC:    body.Daily.Temperature2mMin[0],
+		TodayMaxC:    days[0].MaxC,
+		TodayMinC:    days[0].MinC,
 		ObservedAt:   cur.Time,
+		Days:         days,
 	}, nil
+}
+
+// days pairs the daily arrays up to the shortest of them, so a response
+// with a missing value never shifts one day's numbers onto another.
+func (r forecastResponse) days() []Day {
+	d := r.Daily
+	n := min(len(d.Time), len(d.WeatherCode), len(d.Temperature2mMax), len(d.Temperature2mMin), len(d.PrecipitationProbabilityMax), forecastDays)
+	days := make([]Day, n)
+	for i := range n {
+		days[i] = Day{Date: d.Time[i], WeatherCode: d.WeatherCode[i], MaxC: d.Temperature2mMax[i], MinC: d.Temperature2mMin[i], RainChance: d.PrecipitationProbabilityMax[i]}
+	}
+	return days
 }

@@ -71,7 +71,22 @@ export interface WidgetCatalogue {
   columns: number;
   rows: number;
   themes: string[];
-  types: Record<string, { minW: number; minH: number; hasMaxItems: boolean }>;
+  types: Record<string, WidgetType>;
+}
+
+export interface WidgetType {
+  minW: number;
+  minH: number;
+  settings: Record<string, SettingRule>;
+}
+
+/** A setting a widget type takes; internal/display validates the same. */
+export interface SettingRule {
+  kind: 'integer' | 'text' | 'date';
+  /** Bounds of an integer, or of a text's length in characters. */
+  min?: number;
+  max?: number;
+  required: boolean;
 }
 
 export interface Location {

@@ -3,6 +3,8 @@
   import { GridStack, type GridStackNode, type GridStackWidget } from 'gridstack';
   import { onDestroy, onMount } from 'svelte';
   import { api, ApiError, type Dashboard, type Widget, type WidgetCatalogue } from './api';
+  import WidgetSettings from './WidgetSettings.svelte';
+  import { WIDGET_LABELS as LABELS, defaultSettings } from './widgetSettings';
 
   let {
     dashboard,
@@ -15,8 +17,6 @@
     onClose: () => void;
     onSessionEnded: () => void;
   } = $props();
-
-  const LABELS: Record<string, string> = { clock: 'Clock', weather: 'Weather', news: 'News', calendar: 'Calendar' };
 
   // Widgets by id; positions live in the grid until saving.
   let widgets = $state<Record<string, Widget>>({});
@@ -105,7 +105,7 @@
       message = `There is no free space for a ${LABELS[type]?.toLowerCase() ?? type} widget. Make room first.`;
       return;
     }
-    widgets[id] = { id, type, x: 0, y: 0, w: t.minW, h: t.minH, settings: t.hasMaxItems ? { maxItems: 5 } : {} };
+    widgets[id] = { id, type, x: 0, y: 0, w: t.minW, h: t.minH, settings: defaultSettings(t) };
     grid.addWidget(node);
     selected = id;
     message = '';
@@ -121,10 +121,10 @@
     dirty = true;
   }
 
-  function setMaxItems(value: number) {
+  function setSettings(settings: Record<string, unknown>) {
     const w = selected ? widgets[selected] : undefined;
     if (!w) return;
-    w.settings = { maxItems: value };
+    w.settings = settings;
     dirty = true;
   }
 
@@ -198,17 +198,8 @@
   {#if selectedWidget}
     <div class="inspector">
       <strong>{LABELS[selectedWidget.type] ?? selectedWidget.type}</strong>
-      {#if selectedType?.hasMaxItems}
-        <label class="inline-label">
-          Items
-          <input
-            type="number"
-            min="1"
-            max="20"
-            value={Number(selectedWidget.settings?.maxItems ?? 5)}
-            onchange={(e) => setMaxItems(Number((e.target as HTMLInputElement).value))}
-          />
-        </label>
+      {#if selectedType}
+        <WidgetSettings type={selectedType} settings={selectedWidget.settings ?? {}} onchange={setSettings} />
       {/if}
       <button class="link danger" onclick={removeSelected}>Remove widget</button>
     </div>
@@ -269,14 +260,5 @@
     padding: 10px 12px;
     border: 1px solid var(--border);
     border-radius: 8px;
-  }
-  .inline-label {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-weight: 400;
-  }
-  .inline-label input {
-    width: 4.5em;
   }
 </style>

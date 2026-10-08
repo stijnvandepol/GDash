@@ -16,17 +16,21 @@ type dashboardBody struct {
 }
 
 // getWidgetTypes handles GET /api/widget-types: the widget catalogue with
-// minimum sizes and whether a widget takes "maxItems", the grid size and
-// the themes.
+// minimum sizes and the settings each type takes, the grid size and the
+// themes.
 func (s *Server) getWidgetTypes(w http.ResponseWriter, _ *http.Request) {
 	type widgetType struct {
-		MinW        int  `json:"minW"`
-		MinH        int  `json:"minH"`
-		HasMaxItems bool `json:"hasMaxItems"`
+		MinW     int                        `json:"minW"`
+		MinH     int                        `json:"minH"`
+		Settings map[string]display.Setting `json:"settings"`
 	}
 	types := map[string]widgetType{}
 	for name, t := range display.WidgetTypes {
-		types[name] = widgetType{MinW: t.MinW, MinH: t.MinH, HasMaxItems: t.HasMaxItems}
+		settings := t.Settings
+		if settings == nil {
+			settings = map[string]display.Setting{}
+		}
+		types[name] = widgetType{MinW: t.MinW, MinH: t.MinH, Settings: settings}
 	}
 	writeJSON(w, http.StatusOK, map[string]any{
 		"columns": display.GridColumns, "rows": display.GridRows, "types": types, "themes": display.Themes,

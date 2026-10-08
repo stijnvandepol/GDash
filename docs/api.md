@@ -35,7 +35,7 @@ come from another site (cross-site request forgery protection).
 | `POST /api/displays` `{id, name, castDeviceId, activeFrom?, activeUntil?, schedule?}` | admin | `201` display | `401`, `409 conflict`, `422` |
 | `PATCH /api/displays/{id}` `{name?, castDeviceId?, dashboardId?, activeFrom?, activeUntil?, schedule?}` | admin | `200` display | `401`, `404 not_found`, `422` (also for an unknown dashboard) |
 | `DELETE /api/displays/{id}` | admin | `204` | `401`, `404 not_found` |
-| `GET /api/widget-types` | admin | `200 {columns, rows, themes, types: {name: {minW, minH, hasMaxItems}}}` | `401` |
+| `GET /api/widget-types` | admin | `200 {columns, rows, themes, types: {name: {minW, minH, settings: {key: {kind, min?, max?, required}}}}}` | `401` |
 | `GET /api/dashboards` | admin | `200 {"dashboards": [dashboard]}` | `401` |
 | `POST /api/dashboards` `{id, name, theme?, widgets}` | admin | `201` dashboard | `401`, `409 conflict`, `422` |
 | `GET /api/dashboards/{id}` | admin | `200` dashboard | `401`, `404` |
@@ -118,8 +118,21 @@ active hours, but both are required. Deleting a dashboard removes the slots that
 every widget's `source` are set by the server; values sent by a client are ignored.
 
 **widget:** `{"id": "news", "type": "news", "x": 10, "y": 9, "w": 14, "h": 5, "source": "news.default", "settings": {"maxItems": 3}}`.
-Types are `clock`, `weather`, `news` and `calendar`. A layout is rejected with field errors such as `widgets[2]` when a
-widget is outside the grid, smaller than its type allows, overlaps another, or has settings its type does not take.
+A layout is rejected with field errors such as `widgets[2]` when a widget is outside the grid, smaller than its type
+allows, overlaps another, lacks a required setting, or has a setting its type does not take.
+
+| Type | Minimum | Data | Settings |
+|---|---|---|---|
+| `clock` | 4x3 | none | |
+| `weather` | 4x4 | `weather.current` | |
+| `forecast` | 6x4 | `weather.current` | `days`: 1 to 7, default 5 |
+| `news` | 6x4 | `news.default` | `maxItems`: 1 to 20 |
+| `calendar` | 6x4 | `calendar.default` | `maxItems`: 1 to 20 |
+| `text` | 4x3 | none | `text`: 1 to 300 characters, line breaks allowed (required) |
+| `countdown` | 4x4 | none | `label`: 1 to 60 characters, `date`: `YYYY-MM-DD` (both required) |
+
+A setting's `kind` is `integer`, `text` or `date`; `min` and `max` bound an integer, or a text's length in characters.
+Text settings are shown as plain text on the screen, never as HTML.
 
 **settings:** `{"location": {"name": "Oss", "latitude": 51.77, "longitude": 5.52} | null, "newsFeeds": [{"id": 1, "name": "NOS", "url": "https://…"}], "calendars": [{"id": 2, "name": "Family", "host": "calendar.google.com", "unreadable": false}]}`.
 Names are 1 to 60 characters; addresses use http or https, and calendars also webcal.

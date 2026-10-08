@@ -35,3 +35,32 @@ export function fitItems(node: HTMLElement) {
     },
   };
 }
+
+const SHRINK_STEP_PX = 2;
+
+/**
+ * Lowers the font size of a text block until it fits its box, down to
+ * minPx, so a long note in a small tile stays whole. Below minPx the text
+ * would be unreadable across a room; then it is clipped instead.
+ */
+export function shrinkToFit(node: HTMLElement, minPx: number) {
+  const fit = () => {
+    node.style.fontSize = '';
+    let size = parseFloat(getComputedStyle(node).fontSize);
+    while (node.scrollHeight > node.clientHeight + 1 && size > minPx) {
+      size = Math.max(minPx, size - SHRINK_STEP_PX);
+      node.style.fontSize = `${size}px`;
+    }
+  };
+  const resize = new ResizeObserver(fit);
+  resize.observe(node);
+  const content = new MutationObserver(fit);
+  content.observe(node, { childList: true, subtree: true, characterData: true });
+  fit();
+  return {
+    destroy() {
+      resize.disconnect();
+      content.disconnect();
+    },
+  };
+}

@@ -2,9 +2,13 @@ package display
 
 import (
 	"fmt"
+	"maps"
+	"math"
 	"regexp"
 	"slices"
 	"strings"
+	"time"
+	"unicode"
 	"unicode/utf8"
 
 	"github.com/stijnvandepol/daycast/internal/validation"
@@ -19,33 +23,54 @@ const (
 	// DefaultID is the dashboard of displays that have none assigned.
 	DefaultID = "default"
 
-	maxWidgets       = 30
-	maxNameLength    = 60
-	defaultTheme     = "minimal-dark"
-	minMaxItems      = 1
-	maxMaxItemsLimit = 20
+	maxWidgets    = 30
+	maxNameLength = 60
+	defaultTheme  = "minimal-dark"
+	dateLayout    = "2006-01-02"
 )
 
-// WidgetType describes a kind of widget: where its data comes from and how
-// small it may be.
+// Kinds of widget setting.
+const (
+	SettingInteger = "integer"
+	SettingText    = "text"
+	SettingDate    = "date"
+)
+
+// Setting is one setting a widget type takes.
+type Setting struct {
+	Kind string `json:"kind"`
+	// Min and Max bound an integer, or the length of a text in characters.
+	Min      int  `json:"min,omitempty"`
+	Max      int  `json:"max,omitempty"`
+	Required bool `json:"required"`
+}
+
+// WidgetType describes a kind of widget: where its data comes from, how
+// small it may be and what settings it takes.
 type WidgetType struct {
 	// Source is the data hub key the widget shows, or empty for widgets
 	// that need no data, such as the clock.
-	Source string
-	MinW   int
-	MinH   int
-	// HasMaxItems marks widgets that show a list and take a "maxItems"
-	// setting.
-	HasMaxItems bool
+	Source   string
+	MinW     int
+	MinH     int
+	Settings map[string]Setting
 }
+
+var maxItems = map[string]Setting{"maxItems": {Kind: SettingInteger, Min: 1, Max: 20}}
 
 // WidgetTypes is the catalogue of widgets. A widget's data source follows
 // from its type, so a dashboard cannot point a widget at arbitrary data.
 var WidgetTypes = map[string]WidgetType{
 	"clock":    {MinW: 4, MinH: 3},
 	"weather":  {Source: "weather.current", MinW: 4, MinH: 4},
-	"news":     {Source: "news.default", MinW: 6, MinH: 4, HasMaxItems: true},
-	"calendar": {Source: "calendar.default", MinW: 6, MinH: 4, HasMaxItems: true},
+	"forecast": {Source: "weather.current", MinW: 6, MinH: 4, Settings: map[string]Setting{"days": {Kind: SettingInteger, Min: 1, Max: 7}}},
+	"news":     {Source: "news.default", MinW: 6, MinH: 4, Settings: maxItems},
+	"calendar": {Source: "calendar.default", MinW: 6, MinH: 4, Settings: maxItems},
+	"text":     {MinW: 4, MinH: 3, Settings: map[string]Setting{"text": {Kind: SettingText, Min: 1, Max: 300, Required: true}}},
+	"countdown": {MinW: 4, MinH: 4, Settings: map[string]Setting{
+		"label": {Kind: SettingText, Min: 1, Max: 60, Required: true},
+		"date":  {Kind: SettingDate, Required: true},
+	}},
 }
 
 // Themes are the built-in themes; web/src/theme.css defines their tokens.
@@ -129,23 +154,56 @@ func widgetProblem(w Widget, seen map[string]bool) string {
 	return settingsProblem(w, kind)
 }
 
+// settingsProblem returns the first problem with a widget's settings, in
+// the order of their names, so the same layout always gets the same error.
 func settingsProblem(w Widget, kind WidgetType) string {
-	for key, value := range w.Settings {
-		if key != "maxItems" || !kind.HasMaxItems {
+	for _, key := range slices.Sorted(maps.Keys(w.Settings)) {
+		rule, known := kind.Settings[key]
+		if !known {
 			return fmt.Sprintf("unknown setting %q", key)
 		}
-		// JSON numbers decode as float64.
-		n, ok := value.(float64)
-		if !ok {
-			if i, isInt := value.(int); isInt {
-				n, ok = float64(i), true
-			}
+		if msg := valueProblem(key, w.Settings[key], rule); msg != "" {
+			return msg
 		}
-		if !ok || n != float64(int(n)) || n < minMaxItems || n > maxMaxItemsLimit {
-			return fmt.Sprintf("maxItems must be a whole number from %d to %d", minMaxItems, maxMaxItemsLimit)
+	}
+	for _, key := range slices.Sorted(maps.Keys(kind.Settings)) {
+		if _, set := w.Settings[key]; kind.Settings[key].Required && !set {
+			return fmt.Sprintf("a %s widget needs a %s", w.Type, key)
 		}
 	}
 	return ""
+}
+
+func valueProblem(key string, value any, rule Setting) string {
+	switch rule.Kind {
+	case SettingInteger:
+		// JSON numbers decode as float64.
+		n, ok := value.(float64)
+		if i, isInt := value.(int); isInt {
+			n, ok = float64(i), true
+		}
+		if !ok || n != math.Trunc(n) || n < float64(rule.Min) || n > float64(rule.Max) {
+			return fmt.Sprintf("%s must be a whole number from %d to %d", key, rule.Min, rule.Max)
+		}
+	case SettingText:
+		text, ok := value.(string)
+		n := utf8.RuneCountInString(text)
+		if !ok || n < rule.Min || n > rule.Max || strings.TrimSpace(text) == "" || hasControl(text) {
+			return fmt.Sprintf("%s must be %d to %d characters of text", key, rule.Min, rule.Max)
+		}
+	case SettingDate:
+		text, ok := value.(string)
+		if _, err := time.Parse(dateLayout, text); !ok || err != nil {
+			return fmt.Sprintf("%s must be a date as YYYY-MM-DD", key)
+		}
+	}
+	return ""
+}
+
+// hasControl reports control characters other than a line break, which a
+// note on the screen may use.
+func hasControl(s string) bool {
+	return strings.ContainsFunc(s, func(r rune) bool { return r != '\n' && unicode.IsControl(r) })
 }
 
 func overlaps(cells *[GridColumns][GridRows]bool, w Widget) bool {
