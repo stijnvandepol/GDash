@@ -211,27 +211,25 @@ A change is done when every line is true:
 Fill this in per repository. It is the one section an agent cannot infer, and the one most often left empty. Fill it in before anything else in this file matters.
 
 ```
-Stack:            Go 1.26.6+ (server, standard library first; golang.org/x/net, golang.org/x/crypto for
-                  argon2id, modernc.org/sqlite as pure-Go SQLite). Svelte 5 + TypeScript 6 + Vite 8 (web/).
-                  All UI text, docs and code are in English.
-Run locally:      cd web && npm run build && cd .. && DAYCAST_LATITUDE=51.65 DAYCAST_LONGITUDE=5.95 go run ./cmd/daycast
-Run tests:        go test ./...            (CI adds -race, which needs cgo)
-                  cd web && npm test       (Vitest; pure TypeScript, TZ fixed to Europe/Amsterdam)
+Stack:            Go 1.26.6+, standard library first (x/net, x/crypto for argon2id, modernc.org/sqlite). Svelte 5,
+                  TypeScript 6, Vite 8 in web/. All UI text, docs and code are in English.
+Run locally:      cd web && npm run build && cd .. && go run ./cmd/daycast
+Run tests:        go test ./... (CI adds -race, which needs cgo) && (cd web && npm test)
 Lint / format:    gofmt -l . && go vet ./... && (cd web && npm run check)
 Security scan:    go run golang.org/x/vuln/cmd/govulncheck@v1.8.0 ./... && (cd web && npm audit --audit-level=high)
 Build:            (cd web && npm ci && npm run build) && go build ./cmd/daycast, or docker build .
 CI:               .github/workflows/ci.yml runs all of the above on every push.
-Architecture:     One Go binary (cmd/daycast). internal/datahub fetches external data once for all displays
-                  and keeps the last good value; internal/display validates dashboard layouts and builds one
-                  snapshot per display with only the data its widgets use;
-                  internal/store is the only package with SQL; internal/auth handles accounts and sessions;
-                  internal/pairing decides which screens may show a display; internal/token and
-                  internal/ratelimit are shared by both; internal/news and internal/weather read external
-                  sources; internal/api serves pages, SSE and the JSON API (docs/api.md); internal/cast talks
-                  to Cast devices (mDNS, CASTV2) and keeps a receiver on screen; internal/casting runs one
-                  keeper per display. web/ holds the web interface (/), the display runtime (/d/<id>) and the
-                  receiver.
-                  Research and design decisions: GoogleHome-Dashboard/docs/onderzoek (Dutch).
+Architecture:     One Go binary (cmd/daycast). internal/datahub fetches external data once for all displays,
+                  keeps the last good value and follows the settings at runtime; internal/settings owns the
+                  location, feeds and calendars (secrets sealed by internal/secret, fetched through the
+                  address guard in internal/outbound); internal/news, internal/weather and internal/calendar
+                  read the sources; internal/display validates layouts and builds one snapshot per display
+                  with only the data its widgets use; internal/store is the only package with SQL;
+                  internal/auth (accounts, sessions) and internal/pairing (which screens may show a display)
+                  share internal/token and internal/ratelimit; internal/api serves pages, SSE and the JSON
+                  API (docs/api.md); internal/cast talks CASTV2 and mDNS and keeps a receiver on screen;
+                  internal/casting runs one keeper per display. web/ holds the web interface (/), the display
+                  runtime (/d/<id>) and the receiver. Research (Dutch): GoogleHome-Dashboard/docs/onderzoek.
 Known oddities:   - Plain HTTP on the LAN, against "All transport is TLS". A TV that opens /d/<id> through
                     DashCast cannot be given a certificate it trusts for a LAN address, and Chromecasts reject
                     self-signed ones. TLS is expected from a reverse proxy for the web interface. Open decision.
@@ -244,10 +242,8 @@ Known oddities:   - Plain HTTP on the LAN, against "All transport is TLS". A TV 
                   - The receiver loads the Cast framework from gstatic without SRI: Google requires that URL
                     and updates the file in place, so a hash would break it.
                   - CastMessage protobuf is encoded by hand (7 fields) instead of adding a protobuf dependency.
-                  - The keeper retries forever with backoff: it is a supervisor for a TV that may be off for
-                    hours, not a request retry.
-                  - The keeper restarts the cast every 15 minutes (9 on a Nest Hub): measured workaround for
-                    the Google TV screensaver, see docs/progress.md.
-                  - Keeper tests use short real timers (50 to 300 ms); the behaviour under test is timing.
+                  - The keeper retries forever with backoff (a supervisor for a TV that is off for hours), restarts
+                    the cast every 15 minutes (9 on a Nest Hub) against the Google TV screensaver, see
+                    docs/progress.md, and its tests use short real timers (50 to 300 ms): timing is under test.
 Do not touch:     web/dist (build output; only .gitkeep is committed so go:embed compiles).
 ```
