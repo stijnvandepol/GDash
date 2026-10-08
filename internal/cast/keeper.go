@@ -30,17 +30,27 @@ var startupResends = []time.Duration{2 * time.Second, 5 * time.Second}
 // messages. It reconnects with backoff and relaunches the app when it
 // disappears, within the limits of ShouldRelaunch.
 type Keeper struct {
-	// Resolve returns the device's current address. Looking it up for every
-	// session survives an IP change after a router restart.
-	Resolve   func(ctx context.Context) (string, error)
+	// Resolve finds the device. Looking it up for every session survives an
+	// IP change after a router restart.
+	Resolve   func(ctx context.Context) (Device, error)
 	AppID     string
 	Namespace string
 	// Messages returns the messages for the receiver: the current one at
-	// once, then every change. localIP is this server's address as seen
-	// from the device, for receivers that need a URL back to the server.
+	// once, then every change. localIP is an address of this server that
+	// the device can reach, for receivers that need a URL back to it.
 	// The channel closes when ctx ends.
 	Messages func(ctx context.Context, localIP string) <-chan []byte
-	Logger   *slog.Logger
+	// Refresh returns how often the receiver is stopped and started again,
+	// or 0 for never. Google TV covers a running cast with its screensaver
+	// after about 19 minutes while still reporting the app as running; on
+	// real hardware a restart brought the dashboard back.
+	Refresh func(Device) time.Duration
+	// FirstMessageOnly marks a receiver that handles only the first message
+	// after it starts. DashCast replaces itself with the page it opens, so
+	// a DashCast session found already running cannot take a new URL and
+	// is restarted instead.
+	FirstMessageOnly bool
+	Logger           *slog.Logger
 }
 
 // Run keeps the receiver alive until ctx is cancelled.
@@ -66,11 +76,11 @@ func (k *Keeper) Run(ctx context.Context) {
 }
 
 func (k *Keeper) session(ctx context.Context) error {
-	addr, err := k.Resolve(ctx)
+	device, err := k.Resolve(ctx)
 	if err != nil {
 		return err
 	}
-	client, err := Dial(ctx, addr)
+	client, err := Dial(ctx, device.Addr)
 	if err != nil {
 		return err
 	}
@@ -78,7 +88,7 @@ func (k *Keeper) session(ctx context.Context) error {
 
 	sessionCtx, cancel := context.WithCancel(ctx)
 	defer cancel()
-	messages := k.Messages(sessionCtx, client.LocalIP())
+	messages := k.Messages(sessionCtx, ReachableIP(device.Addr, client.LocalIP()))
 
 	s := &keeperSession{keeper: k, client: client, resend: time.NewTimer(0)}
 	<-s.resend.C
@@ -94,6 +104,12 @@ func (k *Keeper) session(ctx context.Context) error {
 
 	poll := time.NewTicker(statusPollInterval)
 	defer poll.Stop()
+	var refresh <-chan time.Time
+	if every := k.refreshInterval(device); every > 0 {
+		ticker := time.NewTicker(every)
+		defer ticker.Stop()
+		refresh = ticker.C
+	}
 	for {
 		select {
 		case <-ctx.Done():
@@ -108,7 +124,15 @@ func (k *Keeper) session(ctx context.Context) error {
 			if err := s.sendLatest(); err != nil {
 				return err
 			}
-		case status := <-client.StatusUpdates():
+		case <-client.StatusUpdates():
+			// An unsolicited update can be stale: after a STOP the device
+			// reports "no apps" even when the keeper has already launched
+			// again. On real hardware that caused a second launch. The
+			// update is only a trigger to ask for the current state.
+			status, err := client.Status(ctx)
+			if err != nil {
+				return err
+			}
 			if err := s.reconcile(ctx, status); err != nil {
 				return err
 			}
@@ -117,6 +141,10 @@ func (k *Keeper) session(ctx context.Context) error {
 				if err := s.sendLatest(); err != nil {
 					return err
 				}
+			}
+		case <-refresh:
+			if err := s.restart(ctx); err != nil {
+				return err
 			}
 		case <-s.resend.C:
 			if err := s.sendLatest(); err != nil {
@@ -141,17 +169,50 @@ func (k *Keeper) session(ctx context.Context) error {
 type keeperSession struct {
 	keeper    *Keeper
 	client    *Client
+	app       Application
 	transport string
+	standby   bool
 	latest    []byte
 	resend    *time.Timer
 	resendIdx int
+}
+
+func (k *Keeper) refreshInterval(d Device) time.Duration {
+	if k.Refresh == nil {
+		return 0
+	}
+	return k.Refresh(d)
+}
+
+// restart stops the receiver and launches it again. It does nothing while
+// another app is on screen, and nothing while the TV is in standby, because
+// launching would switch the TV on through HDMI-CEC.
+func (s *keeperSession) restart(ctx context.Context) error {
+	if s.transport == "" || s.standby {
+		return nil
+	}
+	s.keeper.Logger.Info("restarting receiver to keep it in front of the screensaver")
+	if err := s.client.Stop(ctx, s.app.SessionID); err != nil {
+		return err
+	}
+	s.transport = ""
+	return s.reconcile(ctx, ReceiverStatus{})
 }
 
 // reconcile makes sure the receiver runs and is connected, launching it when
 // ShouldRelaunch allows that.
 func (s *keeperSession) reconcile(ctx context.Context, status ReceiverStatus) error {
 	k := s.keeper
+	s.standby = status.IsStandBy
 	app, running := status.App(k.AppID)
+	if running && k.FirstMessageOnly && s.transport == "" {
+		k.Logger.Info("restarting receiver that was already running, so it takes the current page")
+		if err := s.client.Stop(ctx, app.SessionID); err != nil {
+			return err
+		}
+		running = false
+		status = ReceiverStatus{}
+	}
 	if !running {
 		s.transport = ""
 		if !ShouldRelaunch(status) {
@@ -170,6 +231,7 @@ func (s *keeperSession) reconcile(ctx context.Context, status ReceiverStatus) er
 	if err := s.client.Connect(app.TransportID); err != nil {
 		return err
 	}
+	s.app = app
 	s.transport = app.TransportID
 	s.resendIdx = 0
 	s.scheduleNextResend()

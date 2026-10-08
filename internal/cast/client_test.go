@@ -132,7 +132,7 @@ func TestKeeperLaunchesOnIdleDeviceAndForwardsState(t *testing.T) {
 
 	localIPs := make(chan string, 1)
 	keeper := &Keeper{
-		Resolve:   func(context.Context) (string, error) { return device.addr(), nil },
+		Resolve:   func(context.Context) (Device, error) { return Device{Addr: device.addr()}, nil },
 		AppID:     "ABCD1234",
 		Namespace: "urn:x-cast:app.daycast.display",
 		Messages: func(ctx context.Context, localIP string) <-chan []byte {
@@ -168,6 +168,93 @@ func TestKeeperLaunchesOnIdleDeviceAndForwardsState(t *testing.T) {
 	}
 	if n := device.launchCount(); n != 1 {
 		t.Fatalf("launches = %d, want 1", n)
+	}
+}
+
+func newRefreshingKeeper(device *fakeDevice, every time.Duration) *Keeper {
+	return &Keeper{
+		Resolve:   func(context.Context) (Device, error) { return Device{Addr: device.addr()}, nil },
+		AppID:     "ABCD1234",
+		Namespace: "urn:x-cast:app.daycast.display",
+		Messages: func(ctx context.Context, _ string) <-chan []byte {
+			ch := make(chan []byte, 1)
+			ch <- []byte(`{"type":"snapshot"}`)
+			return ch
+		},
+		Refresh: func(Device) time.Duration { return every },
+		Logger:  slog.New(slog.NewTextHandler(io.Discard, nil)),
+	}
+}
+
+func waitForLaunches(t *testing.T, device *fakeDevice, want int) {
+	t.Helper()
+	deadline := time.Now().Add(testTimeout)
+	for device.launchCount() < want {
+		if time.Now().After(deadline) {
+			t.Fatalf("launches = %d, want at least %d", device.launchCount(), want)
+		}
+		time.Sleep(20 * time.Millisecond)
+	}
+}
+
+func TestKeeperRestartsReceiverPeriodically(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), testTimeout)
+	defer cancel()
+	device := newFakeDevice(t)
+	go newRefreshingKeeper(device, 100*time.Millisecond).Run(ctx)
+	waitForLaunches(t, device, 3)
+}
+
+func TestKeeperDoesNotRestartDuringStandby(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), testTimeout)
+	defer cancel()
+	device := newFakeDevice(t)
+	device.standby = true
+	go newRefreshingKeeper(device, 50*time.Millisecond).Run(ctx)
+
+	waitForLaunches(t, device, 1)
+	time.Sleep(300 * time.Millisecond)
+	if n := device.launchCount(); n != 1 {
+		t.Fatalf("launches = %d during standby, want only the first", n)
+	}
+}
+
+func TestKeeperRestartsFirstMessageOnlyReceiverFoundRunning(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), testTimeout)
+	defer cancel()
+	device := newFakeDevice(t, Application{AppID: "ABCD1234", SessionID: "old", TransportID: "web-0"})
+	keeper := newRefreshingKeeper(device, 0)
+	keeper.FirstMessageOnly = true
+	go keeper.Run(ctx)
+
+	waitForLaunches(t, device, 1)
+	select {
+	case m := <-device.appMessages:
+		if m.DestinationID != "web-1" {
+			t.Fatalf("message went to %s, want the relaunched receiver web-1", m.DestinationID)
+		}
+	case <-ctx.Done():
+		t.Fatal("relaunched receiver never got the message")
+	}
+}
+
+func TestKeeperIgnoresStaleStatusUpdate(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), testTimeout)
+	defer cancel()
+	device := newFakeDevice(t)
+	go newRefreshingKeeper(device, 0).Run(ctx)
+	waitForLaunches(t, device, 1)
+
+	// The device reports "no apps" on its own while the app still runs,
+	// as a late update after a STOP does.
+	stale := Message{SourceID: receiverID, DestinationID: senderID, Namespace: nsReceiver,
+		Payload: `{"type":"RECEIVER_STATUS","requestId":0,"status":{"applications":[]}}`}
+	if err := writeFrame(<-device.conns, stale); err != nil {
+		t.Fatal(err)
+	}
+	time.Sleep(300 * time.Millisecond)
+	if n := device.launchCount(); n != 1 {
+		t.Fatalf("launches = %d after a stale update, want 1", n)
 	}
 }
 

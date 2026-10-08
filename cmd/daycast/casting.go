@@ -6,6 +6,8 @@ import (
 	"log/slog"
 	"net"
 	"net/url"
+	"strings"
+	"time"
 
 	"github.com/stijnvandepol/daycast/internal/cast"
 	"github.com/stijnvandepol/daycast/internal/casting"
@@ -23,12 +25,13 @@ func newCastManager(cfg config, db *store.Store, snapshots *display.Broadcaster,
 		return nil, fmt.Errorf("DAYCAST_ADDR %q has no port: %w", cfg.addr, err)
 	}
 	runDisplay := func(ctx context.Context, d displays.Display) {
-		keeper := &cast.Keeper{Resolve: resolveDevice(d.CastDeviceID), Logger: logger.With("display", d.ID)}
+		keeper := &cast.Keeper{Resolve: resolveDevice(d.CastDeviceID), Refresh: refreshInterval, Logger: logger.With("display", d.ID)}
 		if cfg.castAppID != "" {
 			keeper.AppID, keeper.Namespace = cfg.castAppID, display.CastNamespace
 			keeper.Messages = func(ctx context.Context, _ string) <-chan []byte { return snapshots.Subscribe(ctx) }
 		} else {
 			keeper.AppID, keeper.Namespace = cast.DashCastAppID, cast.DashCastNamespace
+			keeper.FirstMessageOnly = true
 			keeper.Messages = func(ctx context.Context, localIP string) <-chan []byte {
 				return single(ctx, cast.DashCastLoad(displayURL(localIP, port, d.ID)))
 			}
@@ -38,20 +41,37 @@ func newCastManager(cfg config, db *store.Store, snapshots *display.Broadcaster,
 	return &casting.Manager{List: db.Displays, RunDisplay: runDisplay, Logger: logger}, nil
 }
 
-// resolveDevice finds a Cast device's current address by its device ID.
-func resolveDevice(deviceID string) func(ctx context.Context) (string, error) {
-	return func(ctx context.Context) (string, error) {
+// resolveDevice finds a Cast device by its device ID.
+func resolveDevice(deviceID string) func(ctx context.Context) (cast.Device, error) {
+	return func(ctx context.Context) (cast.Device, error) {
 		devices, err := cast.Discover(ctx)
 		if err != nil {
-			return "", err
+			return cast.Device{}, err
 		}
 		for _, d := range devices {
 			if d.ID == deviceID {
-				return d.Addr, nil
+				return d, nil
 			}
 		}
-		return "", fmt.Errorf("cast device %s not found on the network; is it switched on?", deviceID)
+		return cast.Device{}, fmt.Errorf("cast device %s not found on the network; is it switched on?", deviceID)
 	}
+}
+
+const (
+	// Google TV put its screensaver over a running cast after 19 minutes
+	// in a test at home; 15 minutes stays ahead of it.
+	defaultRefreshInterval = 15 * time.Minute
+	// Nest Hubs close a receiver without media after about 10 minutes.
+	nestHubRefreshInterval = 9 * time.Minute
+)
+
+// refreshInterval is how often the receiver is restarted on a device. Each
+// restart reloads the screen for a few seconds.
+func refreshInterval(d cast.Device) time.Duration {
+	if strings.Contains(d.Model, "Nest Hub") {
+		return nestHubRefreshInterval
+	}
+	return defaultRefreshInterval
 }
 
 // displayURL is the display page as the TV reaches it: through the address

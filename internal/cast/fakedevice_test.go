@@ -24,6 +24,7 @@ type fakeDevice struct {
 	mu       sync.Mutex
 	apps     []Application
 	launches []string
+	standby  bool
 
 	appMessages chan Message
 	pongs       chan struct{}
@@ -118,7 +119,7 @@ func (d *fakeDevice) statusPayload(requestID any) string {
 	body, _ := json.Marshal(map[string]any{
 		"type":      "RECEIVER_STATUS",
 		"requestId": requestID,
-		"status":    map[string]any{"applications": d.apps},
+		"status":    map[string]any{"applications": d.apps, "isStandBy": d.standby},
 	})
 	return string(body)
 }
