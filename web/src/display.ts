@@ -2,6 +2,7 @@
 import { mount } from 'svelte';
 import App from './App.svelte';
 import { ensureAccess, useLaunchToken } from './pairing';
+import { t } from './i18n.svelte';
 import { isSnapshot } from './protocol';
 import { applySnapshot, display, forgetSnapshot, restoreSnapshot } from './state.svelte';
 
@@ -22,7 +23,7 @@ async function start(): Promise<void> {
       forgetData: () => forgetSnapshot(displayId),
     });
     if (access.kind === 'unknown-display') {
-      display.problem = `There is no display "${displayId}". Check the address in the Daycast web interface.`;
+      display.problem = t('noDisplay', { id: displayId });
       return;
     }
     if (access.kind !== 'offline') break;

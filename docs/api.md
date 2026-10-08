@@ -45,6 +45,7 @@ come from another site (cross-site request forgery protection).
 | `DELETE /api/dashboards/{id}` | admin | `204`; its displays fall back to the default | `401`, `404`, `409` for `default` |
 | `GET /api/settings` | admin | `200 {"settings": settings, "status": {key: {updatedAt?, failing}}}` | `401` |
 | `PUT /api/settings/location` `{name, latitude, longitude}` | admin | `200` location | `401`, `422` |
+| `PUT /api/settings/language` `{language}` | admin | `200`; screens switch at once | `401`, `422` for a language other than `en` or `nl` |
 | `DELETE /api/settings/location` | admin | `204`; weather widgets show that no location is set | `401` |
 | `GET /api/places?name=Oss` | admin | `200 {"places": [place]}` | `401`, `422`, `502 upstream_unavailable` |
 | `POST /api/news-feeds` `{name, url}` | admin | `201` news feed | `401`, `409` at 5 feeds, `422` |
@@ -140,15 +141,16 @@ allows, overlaps another, lacks a required setting, or has a setting its type do
 A setting's `kind` is `integer`, `text` or `date`; `min` and `max` bound an integer, or a text's length in characters.
 Text settings are shown as plain text on the screen, never as HTML.
 
-**settings:** `{"location": {"name": "Oss", "latitude": 51.77, "longitude": 5.52} | null, "newsFeeds": [{"id": 1, "name": "NOS", "url": "https://…"}], "calendars": [{"id": 2, "name": "Family", "host": "calendar.google.com", "unreadable": false}]}`.
+**settings:** `{"language": "nl", "location": {"name": "Oss", "latitude": 51.77, "longitude": 5.52} | null, "newsFeeds": [{"id": 1, "name": "NOS", "url": "https://…"}], "calendars": [{"id": 2, "name": "Family", "host": "calendar.google.com", "unreadable": false}]}`.
 Names are 1 to 60 characters; addresses use http or https, and calendars also webcal.
-Several news feeds are merged into one list, newest first, each headline with `source` set to its feed's name.
+Several news feeds are merged into one list, newest first, each headline with `source` set to its feed's name and
+an empty `title`, which the screen fills in in its own language.
 
 **place:** `{"name": "Oss", "region": "North Brabant, Netherlands", "latitude": 51.765, "longitude": 5.518}`
 
 **device:** `{"id": "e542…", "name": "tv woonkamer", "model": "Chromecast HD", "addr": "192.168.1.160:8009", "hasScreen": true}`
 
-**snapshot event:** `{"type": "snapshot", "version": 3, "serverTime": "…", "dashboard": {…}, "data": {"weather.current": {"value": {…}, "fetchedAt": "…", "staleAfter": "…", "failing": false}}}`.
+**snapshot event:** `{"type": "snapshot", "version": 3, "serverTime": "…", "language": "nl", "dashboard": {…}, "data": {"weather.current": {"value": {…}, "fetchedAt": "…", "staleAfter": "…", "failing": false}}}`.
 Each display gets the dashboard for the current time (its schedule or its own), and `data` only holds the sources its widgets use. `active` is false outside the
 display's active hours; `data` is then empty.
 See `internal/display/display.go` and `web/src/protocol.ts`.

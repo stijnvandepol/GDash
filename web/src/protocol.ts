@@ -38,6 +38,8 @@ export interface Snapshot {
   active?: boolean;
   dashboard: Dashboard;
   data: Record<string, Entry>;
+  /** The household's display language, "en" or "nl". */
+  language?: string;
 }
 
 function isRecord(v: unknown): v is Record<string, unknown> {

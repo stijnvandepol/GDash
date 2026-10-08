@@ -2,7 +2,7 @@
   import type { Entry } from '../protocol';
   import { waitingText } from './waiting';
   import { clock } from '../state.svelte';
-  import { LOCALE } from '../format';
+  import { currentLanguage, locale, t } from '../i18n.svelte';
   import { describeWeather } from './wmo';
 
   interface WeatherReport {
@@ -18,7 +18,7 @@
   const report = $derived(isReport(entry?.value) ? entry.value : undefined);
   // The server decides how old data may get; the display only compares.
   const stale = $derived(entry !== undefined && clock.now.getTime() > Date.parse(entry.staleAfter));
-  const updatedAt = new Intl.DateTimeFormat(LOCALE, { hour: '2-digit', minute: '2-digit' });
+  const updatedAt = $derived(new Intl.DateTimeFormat(locale(), { hour: '2-digit', minute: '2-digit' }));
 
   function isReport(v: unknown): v is WeatherReport {
     if (typeof v !== 'object' || v === null) return false;
@@ -30,14 +30,14 @@
 <div class="weather">
   {#if report && entry}
     <span class="temperature">{Math.round(report.temperatureC)}°</span>
-    <span class="description">{describeWeather(report.weatherCode)}</span>
+    <span class="description">{describeWeather(report.weatherCode, currentLanguage()) ?? t('unknownWeather')}</span>
     <span class="range">{Math.round(report.todayMinC)}° / {Math.round(report.todayMaxC)}°</span>
-    <span class="wind">Wind {Math.round(report.windKmh)} km/h</span>
+    <span class="wind">{t('wind', { speed: Math.round(report.windKmh) })}</span>
     <span class="updated" class:stale>
-      Updated {updatedAt.format(new Date(entry.fetchedAt))}
+      {t('updated', { time: updatedAt.format(new Date(entry.fetchedAt)) })}
     </span>
   {:else}
-    <span class="description muted">{waitingText(entry, 'weather', 'No location set. Choose one under Settings.')}</span>
+    <span class="description muted">{waitingText(entry, 'weather')}</span>
   {/if}
 </div>
 

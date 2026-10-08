@@ -20,6 +20,18 @@
 
   const handle = (err: unknown) => errorMessage(err, onSessionEnded);
 
+  let languageError = $state('');
+
+  async function chooseLanguage(language: string) {
+    languageError = '';
+    try {
+      await api.setLanguage(language);
+      await load();
+    } catch (err) {
+      languageError = handle(err);
+    }
+  }
+
   onMount(() => {
     void load();
     const timer = setInterval(() => void load(), STATUS_REFRESH_MS);
@@ -40,6 +52,20 @@
 
 {#if loadError}<p class="error">{loadError}</p>{/if}
 {#if settings}
+  <section class="card">
+    <h2>Language on the TVs</h2>
+    <p class="muted">Days, dates, weather and other texts on the screens. This web interface stays in English.</p>
+    <select
+      aria-label="Language on the TVs"
+      value={settings.language}
+      onchange={(e) => chooseLanguage((e.target as HTMLSelectElement).value)}
+    >
+      <option value="en">English</option>
+      <option value="nl">Nederlands</option>
+    </select>
+    {#if languageError}<p class="error">{languageError}</p>{/if}
+  </section>
+
   <LocationSetting location={settings.location} status={status['weather.current']} onchanged={load} onerror={handle} />
 
   <SourceList

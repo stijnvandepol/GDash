@@ -48,6 +48,7 @@ func startData(ctx context.Context, cfg config, db *store.Store, svc *settings.S
 		Broadcaster: broadcaster,
 		Views:       db.DisplayViews,
 		Data:        func() map[string]datahub.Entry { return hub.Entries() },
+		Language:    svc.Language,
 		Now:         time.Now,
 		Logger:      logger,
 	}

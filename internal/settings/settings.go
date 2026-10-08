@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/url"
+	"slices"
 	"strings"
 	"time"
 	"unicode/utf8"
@@ -30,6 +31,9 @@ const (
 
 const (
 	keyLocation = "location"
+	keyLanguage = "language"
+	// DefaultLanguage is the display language until one is chosen.
+	DefaultLanguage = "en"
 	// keySeeded marks that the environment was read once; after that the
 	// web interface owns the settings.
 	keySeeded     = "seeded"
@@ -68,7 +72,13 @@ type Settings struct {
 	Location  *Location  `json:"location"`
 	NewsFeeds []NewsFeed `json:"newsFeeds"`
 	Calendars []Calendar `json:"calendars"`
+	// Language is what TVs show their texts and dates in.
+	Language string `json:"language"`
 }
+
+// Languages are the display languages; web/src/i18n.svelte.ts has their
+// texts.
+var Languages = []string{"en", "nl"}
 
 // Sources is what the data hub needs to fetch, with calendar addresses
 // decrypted. It never leaves the server.
@@ -92,7 +102,11 @@ func (s *Service) Get(ctx context.Context) (Settings, error) {
 	if err != nil {
 		return Settings{}, err
 	}
-	out := Settings{Location: loc, NewsFeeds: []NewsFeed{}, Calendars: []Calendar{}}
+	language, err := s.Language(ctx)
+	if err != nil {
+		return Settings{}, err
+	}
+	out := Settings{Location: loc, NewsFeeds: []NewsFeed{}, Calendars: []Calendar{}, Language: language}
 	feeds, err := s.Store.Sources(ctx, store.SourceNews)
 	if err != nil {
 		return Settings{}, err
@@ -169,6 +183,26 @@ func (s *Service) SetLocation(ctx context.Context, loc Location) error {
 		return err
 	}
 	return s.Store.SetSetting(ctx, keyLocation, string(value))
+}
+
+// Language returns the display language, or DefaultLanguage.
+func (s *Service) Language(ctx context.Context) (string, error) {
+	value, ok, err := s.Store.Setting(ctx, keyLanguage)
+	if err != nil || !ok {
+		return DefaultLanguage, err
+	}
+	return value, nil
+}
+
+// SetLanguage chooses the display language. It returns a
+// *validation.Error for a language Daycast has no texts for.
+func (s *Service) SetLanguage(ctx context.Context, language string) error {
+	if !slices.Contains(Languages, language) {
+		var errs validation.Collector
+		errs.Add("language", "choose one of: "+strings.Join(Languages, ", "))
+		return errs.Err()
+	}
+	return s.Store.SetSetting(ctx, keyLanguage, language)
 }
 
 // ClearLocation removes the weather location; weather widgets then show

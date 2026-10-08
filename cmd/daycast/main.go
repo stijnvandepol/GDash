@@ -201,6 +201,8 @@ func serve(ctx context.Context, logger *slog.Logger) error {
 			if err := sources.sync(ctx); err != nil {
 				logger.Error("could not apply the new settings; restart Daycast", "error", err)
 			}
+			// The display language travels in the snapshots.
+			publisher.Refresh(ctx)
 		},
 		SourceStatus: sources.hub.Entries,
 		Version:      currentVersion(),

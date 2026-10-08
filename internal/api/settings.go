@@ -58,6 +58,23 @@ func (s *Server) putLocation(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, loc)
 }
 
+// putLanguage handles PUT /api/settings/language {language}: the language
+// of the texts and dates on the TVs, "en" or "nl". 422 for another one.
+func (s *Server) putLanguage(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		Language string `json:"language"`
+	}
+	if !decodeJSON(w, r, &body) {
+		return
+	}
+	if err := s.Settings.SetLanguage(r.Context(), body.Language); err != nil {
+		s.writeSettingsError(w, "set language", err)
+		return
+	}
+	s.SettingsChanged()
+	writeJSON(w, http.StatusOK, body)
+}
+
 // deleteLocation handles DELETE /api/settings/location: 204.
 func (s *Server) deleteLocation(w http.ResponseWriter, r *http.Request) {
 	if err := s.Settings.ClearLocation(r.Context()); err != nil {

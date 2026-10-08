@@ -27,7 +27,7 @@ func kitchenOnly() map[string]View {
 
 func TestSubscriberGetsCurrentSnapshotFirst(t *testing.T) {
 	b := NewBroadcaster()
-	if err := b.Publish(now, kitchenOnly(), nil); err != nil {
+	if err := b.Publish(now, kitchenOnly(), nil, "en"); err != nil {
 		t.Fatal(err)
 	}
 	ctx, cancel := context.WithCancel(context.Background())
@@ -46,7 +46,7 @@ func TestSlowSubscriberOnlyGetsNewestSnapshot(t *testing.T) {
 	ch := b.Subscribe(ctx, "kitchen")
 
 	for range 5 {
-		if err := b.Publish(now, kitchenOnly(), nil); err != nil {
+		if err := b.Publish(now, kitchenOnly(), nil, "en"); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -69,7 +69,7 @@ func TestEachDisplayGetsItsDashboardAndOnlyItsData(t *testing.T) {
 		"calendar.default": {Value: []byte(`["Dentist"]`)},
 		"news.default":     {Value: []byte(`[]`)},
 	}
-	if err := b.Publish(now, map[string]View{"kitchen": {Dashboard: withCalendar}, "hall": {Dashboard: withoutCalendar}}, data); err != nil {
+	if err := b.Publish(now, map[string]View{"kitchen": {Dashboard: withCalendar}, "hall": {Dashboard: withoutCalendar}}, data, "en"); err != nil {
 		t.Fatal(err)
 	}
 	ctx, cancel := context.WithCancel(context.Background())
@@ -101,7 +101,7 @@ func TestDisplayOutsideActiveHoursGetsNoData(t *testing.T) {
 	night := schedule.Hours{From: "08:00", Until: "23:00"}
 	views := map[string]View{"kitchen": {Dashboard: Normalize(DefaultDashboard(false)), Hours: night}}
 	data := map[string]datahub.Entry{"weather.current": {Value: []byte(`14`)}}
-	if err := b.Publish(now, views, data); err != nil {
+	if err := b.Publish(now, views, data, "en"); err != nil {
 		t.Fatal(err)
 	}
 	ctx, cancel := context.WithCancel(context.Background())
@@ -110,7 +110,7 @@ func TestDisplayOutsideActiveHoursGetsNoData(t *testing.T) {
 	if got.Active || len(got.Data) != 0 {
 		t.Fatalf("snapshot outside active hours = active %v, data %v", got.Active, got.Data)
 	}
-	if err := b.Publish(now.Add(time.Hour), views, data); err != nil {
+	if err := b.Publish(now.Add(time.Hour), views, data, "en"); err != nil {
 		t.Fatal(err)
 	}
 	got = decode(t, <-b.Subscribe(ctx, "kitchen"))
@@ -143,7 +143,7 @@ func TestScheduleSwitchesDashboardAndData(t *testing.T) {
 		{now.Add(2 * time.Hour), "evening", "weather.current"},
 		{now.Add(-2 * time.Hour), DefaultID, ""}, // 05:30, outside every slot
 	} {
-		if err := b.Publish(tt.at, views, data); err != nil {
+		if err := b.Publish(tt.at, views, data, "en"); err != nil {
 			t.Fatal(err)
 		}
 		got := decode(t, <-b.Subscribe(ctx, "kitchen"))
@@ -153,6 +153,18 @@ func TestScheduleSwitchesDashboardAndData(t *testing.T) {
 		if _, ok := got.Data[tt.wantData]; tt.wantData != "" && (!ok || len(got.Data) != 1) {
 			t.Fatalf("at %s: data = %v, want only %s", tt.at.Format("15:04"), got.Data, tt.wantData)
 		}
+	}
+}
+
+func TestSnapshotCarriesTheLanguage(t *testing.T) {
+	b := NewBroadcaster()
+	if err := b.Publish(now, kitchenOnly(), nil, "nl"); err != nil {
+		t.Fatal(err)
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	if got := decode(t, <-b.Subscribe(ctx, "kitchen")); got.Language != "nl" {
+		t.Fatalf("language = %q, want nl", got.Language)
 	}
 }
 

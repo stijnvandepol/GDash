@@ -180,3 +180,20 @@ func TestSeedErrorHidesCalendarAddress(t *testing.T) {
 		t.Fatalf("err = %v; want an error without the address", err)
 	}
 }
+
+func TestLanguage(t *testing.T) {
+	ctx := context.Background()
+	s := newService(t)
+	if got, err := s.Language(ctx); err != nil || got != DefaultLanguage {
+		t.Fatalf("default language = %q, %v", got, err)
+	}
+	if err := s.SetLanguage(ctx, "fr"); fieldNames(err) != "language" {
+		t.Fatalf("unknown language: fields = %q", fieldNames(err))
+	}
+	if err := s.SetLanguage(ctx, "nl"); err != nil {
+		t.Fatal(err)
+	}
+	if got, _ := s.Get(ctx); got.Language != "nl" {
+		t.Fatalf("Get language = %q, want nl", got.Language)
+	}
+}

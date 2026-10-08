@@ -152,3 +152,20 @@ func TestChangePassword(t *testing.T) {
 		t.Fatalf("own session after the change = %d, want it kept", status)
 	}
 }
+
+func TestLanguageSetting(t *testing.T) {
+	env := newTestEnv(t, nil)
+	env.setUp(t)
+	if _, body := env.do(t, "GET", "/api/settings", ""); !strings.Contains(body, `"language":"en"`) {
+		t.Fatalf("default = %s", body)
+	}
+	if status, body := env.do(t, "PUT", "/api/settings/language", `{"language":"klingon"}`); status != http.StatusUnprocessableEntity || !strings.Contains(body, `"field":"language"`) {
+		t.Fatalf("unknown language = %d %s", status, body)
+	}
+	if status, body := env.do(t, "PUT", "/api/settings/language", `{"language":"nl"}`); status != http.StatusOK || env.settingsChanges.Load() != 1 {
+		t.Fatalf("set nl = %d %s, %d changes", status, body, env.settingsChanges.Load())
+	}
+	if _, body := env.do(t, "GET", "/api/settings", ""); !strings.Contains(body, `"language":"nl"`) {
+		t.Fatalf("after setting nl = %s", body)
+	}
+}

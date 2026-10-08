@@ -1,9 +1,9 @@
 <script lang="ts">
   import { clock } from '../state.svelte';
-  import { LOCALE } from '../format';
+  import { locale } from '../i18n.svelte';
 
-  const time = new Intl.DateTimeFormat(LOCALE, { hour: '2-digit', minute: '2-digit' });
-  const date = new Intl.DateTimeFormat(LOCALE, { weekday: 'long', day: 'numeric', month: 'long' });
+  const time = $derived(new Intl.DateTimeFormat(locale(), { hour: '2-digit', minute: '2-digit' }));
+  const date = $derived(new Intl.DateTimeFormat(locale(), { weekday: 'long', day: 'numeric', month: 'long' }));
 </script>
 
 <div class="clock">

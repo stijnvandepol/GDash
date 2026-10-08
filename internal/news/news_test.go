@@ -162,7 +162,7 @@ func TestHeadlinesMergesFeedsNewestFirst(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if merged.Title != "News" || len(merged.Items) != 2 {
+	if merged.Title != "" || len(merged.Items) != 2 {
 		t.Fatalf("merged = %+v", merged)
 	}
 	if merged.Items[0].Title != "B new" || merged.Items[0].Source != "Feed B" || merged.Items[1].Title != "A old" {

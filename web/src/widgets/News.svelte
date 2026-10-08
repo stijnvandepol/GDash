@@ -3,7 +3,7 @@
   import { waitingText } from './waiting';
   import { fitItems } from './fit';
   import { clock } from '../state.svelte';
-  import { LOCALE } from '../format';
+  import { locale, t } from '../i18n.svelte';
 
   interface Headline {
     title: string;
@@ -23,7 +23,7 @@
   const feed = $derived(isFeed(entry?.value) ? entry.value : undefined);
   const maxItems = $derived(typeof settings?.maxItems === 'number' ? settings.maxItems : DEFAULT_ITEMS);
   const stale = $derived(entry !== undefined && clock.now.getTime() > Date.parse(entry.staleAfter));
-  const time = new Intl.DateTimeFormat(LOCALE, { hour: '2-digit', minute: '2-digit' });
+  const time = $derived(new Intl.DateTimeFormat(locale(), { hour: '2-digit', minute: '2-digit' }));
 
   function isFeed(v: unknown): v is Feed {
     if (typeof v !== 'object' || v === null) return false;
@@ -44,7 +44,7 @@
 
 <div class="news" use:fitItems>
   {#if feed && entry}
-    <h2 class="source" class:stale>{feed.title}</h2>
+    <h2 class="source" class:stale>{feed.title || t('news')}</h2>
     <ol class="headlines">
       {#each feed.items.slice(0, maxItems) as item, i (i)}
         <li>
@@ -56,7 +56,7 @@
       {/each}
     </ol>
   {:else}
-    <span class="muted">{waitingText(entry, 'news', 'No news feed. Add one under Settings.')}</span>
+    <span class="muted">{waitingText(entry, 'news')}</span>
   {/if}
 </div>
 

@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Entry } from '../protocol';
-  import { LOCALE } from '../format';
+  import { currentLanguage, locale, t } from '../i18n.svelte';
   import { parseLocalDate } from './dates';
   import { waitingText } from './waiting';
   import { describeWeather } from './wmo';
@@ -19,7 +19,7 @@
 
   const wanted = $derived(typeof settings?.days === 'number' ? settings.days : DEFAULT_DAYS);
   const days = $derived(forecastDays(entry?.value).slice(0, wanted));
-  const weekday = new Intl.DateTimeFormat(LOCALE, { weekday: 'short' });
+  const weekday = $derived(new Intl.DateTimeFormat(locale(), { weekday: 'short' }));
 
   function forecastDays(v: unknown): Day[] {
     if (typeof v !== 'object' || v === null) return [];
@@ -36,7 +36,7 @@
 
   /** "Today" for the first day, else the short weekday of the local date. */
   function dayName(date: string, index: number): string {
-    if (index === 0) return 'Today';
+    if (index === 0) return t('today');
     // A date without time is the forecast's local day, not UTC midnight.
     const local = parseLocalDate(date);
     return local ? weekday.format(local) : '';
@@ -46,7 +46,7 @@
 {#if days.length > 0}
   <ol class="forecast" style:grid-template-columns="repeat({days.length}, 1fr)" style:--days={days.length}>
     {#each days as day, i (day.date)}
-      <li title={describeWeather(day.weatherCode)}>
+      <li title={describeWeather(day.weatherCode, currentLanguage()) ?? t('unknownWeather')}>
         <span class="day">{dayName(day.date, i)}</span>
         <span class="max">{Math.round(day.maxC)}°</span>
         <span class="min">{Math.round(day.minC)}°</span>
@@ -55,7 +55,7 @@
     {/each}
   </ol>
 {:else}
-  <span class="muted">{waitingText(entry, 'forecast', 'No location set. Choose one under Settings.')}</span>
+  <span class="muted">{waitingText(entry, 'forecast')}</span>
 {/if}
 
 <style>

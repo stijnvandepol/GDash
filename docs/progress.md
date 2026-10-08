@@ -5,6 +5,7 @@ State of the project on 8 October 2026, so work can continue on any machine.
 ## What works
 
 - **Backups:** a consistent copy of the database every day in `backups/`, the last seven kept, made while Daycast runs.
+- **Language on the TV:** English or Dutch for days, dates, weather words and every other text on the screens, chosen under Settings. The pairing screen follows the device's own language, because it shows before the first snapshot. Tested in the browser with both dashboards.
 - **Cast status:** the display list says per TV whether the dashboard is on screen and since when, whether the TV sleeps, another app is on it, or the device cannot be reached and why. It refreshes every 15 seconds. Tested with a display linked to a device that does not exist.
 - **Account:** change the password under Settings. The current password is checked with the same rate limit as logins, and every other logged-in browser is logged out.
 - **Server (Go):** weather from Open-Meteo without an API key; a data hub with cache, last-known-good on disk and stale markers; an SSE stream per display; SQLite with migrations and backups; accounts with argon2id, sessions and login rate limiting; a JSON API for displays.

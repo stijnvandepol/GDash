@@ -1,6 +1,7 @@
 <script lang="ts">
   import { clock } from '../state.svelte';
   import { daysUntil } from './dates';
+  import { t } from '../i18n.svelte';
 
   let { settings }: { settings: Record<string, unknown> | undefined } = $props();
 
@@ -14,14 +15,14 @@
     <span class="when">–</span>
   {:else if days > 1}
     <span class="number">{days}</span>
-    <span class="when">days to go</span>
+    <span class="when">{t('daysToGo')}</span>
   {:else if days === 1}
     <span class="number">1</span>
-    <span class="when">day to go</span>
+    <span class="when">{t('dayToGo')}</span>
   {:else if days === 0}
-    <span class="number">Today</span>
+    <span class="number">{t('today')}</span>
   {:else}
-    <span class="when">Has passed</span>
+    <span class="when">{t('hasPassed')}</span>
   {/if}
 </div>
 

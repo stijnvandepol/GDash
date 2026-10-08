@@ -1,6 +1,7 @@
 <script lang="ts">
   import './theme.css';
   import { clock, display } from './state.svelte';
+  import { t } from './i18n.svelte';
   import Clock from './widgets/Clock.svelte';
   import Weather from './widgets/Weather.svelte';
   import News from './widgets/News.svelte';
@@ -43,11 +44,9 @@
     <p class="message">{display.problem}</p>
   {:else if display.pairingCode}
     <div class="pairing">
-      <p class="pairing-title">Pair this screen</p>
+      <p class="pairing-title">{t('pairTitle')}</p>
       <p class="pairing-code">{display.pairingCode.code}</p>
-      <p class="pairing-help">
-        Open Daycast on your phone or computer, choose this display and enter the code. It is valid for 10 minutes.
-      </p>
+      <p class="pairing-help">{t('pairHelp')}</p>
     </div>
   {:else if dashboard}
     <div
@@ -79,17 +78,17 @@
           {:else if widget.type === 'countdown'}
             <Countdown settings={widget.settings} />
           {:else}
-            <p class="muted">Unknown widget: {widget.type}</p>
+            <p class="muted">{t('unknownWidget', { type: widget.type })}</p>
           {/if}
         </section>
       {/each}
     </div>
   {:else}
-    <p class="message">Connecting to Daycast…</p>
+    <p class="message">{t('connecting')}</p>
   {/if}
 
   {#if display.connection === 'offline' && !asleep}
-    <div class="offline" title="No connection to the Daycast server"></div>
+    <div class="offline" title={t('offline')}></div>
   {/if}
 </main>
 

@@ -79,6 +79,9 @@ type Snapshot struct {
 	Active    bool                     `json:"active"`
 	Dashboard Dashboard                `json:"dashboard"`
 	Data      map[string]datahub.Entry `json:"data"`
+	// Language is what the screen shows its texts and dates in: "en" or
+	// "nl".
+	Language string `json:"language"`
 }
 
 // View is what one display shows and when.
@@ -126,7 +129,7 @@ func NewBroadcaster() *Broadcaster {
 // carries the data its widgets use, so a hall screen without a calendar
 // never receives calendar entries, and a display outside its active hours
 // receives none at all.
-func (b *Broadcaster) Publish(now time.Time, views map[string]View, data map[string]datahub.Entry) error {
+func (b *Broadcaster) Publish(now time.Time, views map[string]View, data map[string]datahub.Entry, language string) error {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 	b.version++
@@ -140,7 +143,7 @@ func (b *Broadcaster) Publish(now time.Time, views map[string]View, data map[str
 		}
 		msg, err := json.Marshal(Snapshot{
 			Type: "snapshot", Version: b.version, ServerTime: now, Active: active,
-			Dashboard: dashboard, Data: used,
+			Dashboard: dashboard, Data: used, Language: language,
 		})
 		if err != nil {
 			return fmt.Errorf("encode snapshot for display %s: %w", displayID, err)
@@ -205,10 +208,12 @@ func replaceLatest(ch chan []byte, msg []byte) {
 type Publisher struct {
 	Broadcaster *Broadcaster
 	// Views returns, per display ID, what it shows and when.
-	Views  func(ctx context.Context) (map[string]View, error)
-	Data   func() map[string]datahub.Entry
-	Now    func() time.Time
-	Logger *slog.Logger
+	Views func(ctx context.Context) (map[string]View, error)
+	Data  func() map[string]datahub.Entry
+	// Language returns the display language from the settings.
+	Language func(ctx context.Context) (string, error)
+	Now      func() time.Time
+	Logger   *slog.Logger
 
 	mu sync.Mutex
 }
@@ -223,7 +228,12 @@ func (p *Publisher) Refresh(ctx context.Context) {
 		p.Logger.Error("could not read dashboards; displays keep their last state", "error", err)
 		return
 	}
-	if err := p.Broadcaster.Publish(p.Now(), views, p.Data()); err != nil {
+	language, err := p.Language(ctx)
+	if err != nil {
+		p.Logger.Error("could not read the display language; displays keep their last state", "error", err)
+		return
+	}
+	if err := p.Broadcaster.Publish(p.Now(), views, p.Data(), language); err != nil {
 		p.Logger.Error("could not publish display state", "error", err)
 	}
 }

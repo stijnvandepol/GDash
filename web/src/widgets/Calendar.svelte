@@ -3,7 +3,7 @@
   import { waitingText } from './waiting';
   import { fitItems } from './fit';
   import { clock } from '../state.svelte';
-  import { LOCALE } from '../format';
+  import { locale, t } from '../i18n.svelte';
 
   interface CalendarEvent {
     title: string;
@@ -27,8 +27,8 @@
   const stale = $derived(entry !== undefined && clock.now.getTime() > Date.parse(entry.staleAfter));
   const days = $derived(events ? groupByDay(events.slice(0, maxItems), clock.now) : []);
 
-  const time = new Intl.DateTimeFormat(LOCALE, { hour: '2-digit', minute: '2-digit' });
-  const weekday = new Intl.DateTimeFormat(LOCALE, { weekday: 'long', day: 'numeric', month: 'long' });
+  const time = $derived(new Intl.DateTimeFormat(locale(), { hour: '2-digit', minute: '2-digit' }));
+  const weekday = $derived(new Intl.DateTimeFormat(locale(), { weekday: 'long', day: 'numeric', month: 'long' }));
 
   function isEventList(v: unknown): v is CalendarEvent[] {
     return (
@@ -60,7 +60,7 @@
       // An event that began before today but still runs is listed today.
       let key = dateKey(parseDate(e.start, e.allDay));
       if (key < today) key = today;
-      const label = key === today ? 'Today' : key === tomorrow ? 'Tomorrow' : weekday.format(parseDate(key, true));
+      const label = key === today ? t('today') : key === tomorrow ? t('tomorrow') : weekday.format(parseDate(key, true));
       const day = byDay.get(key) ?? { key, label, events: [] };
       day.events.push(e);
       byDay.set(key, day);
@@ -69,7 +69,7 @@
   }
 
   function when(e: CalendarEvent): string {
-    return e.allDay ? 'All day' : time.format(new Date(e.start));
+    return e.allDay ? t('allDay') : time.format(new Date(e.start));
   }
 
   function isPast(e: CalendarEvent, now: Date): boolean {
@@ -80,7 +80,7 @@
 <div class="calendar" use:fitItems>
   {#if events && entry}
     {#if days.length === 0}
-      <p class="empty" class:stale>Nothing planned this week.</p>
+      <p class="empty" class:stale>{t('nothingPlanned')}</p>
     {/if}
     {#each days as day (day.key)}
       <section class="day" data-fit-group>
@@ -96,7 +96,7 @@
       </section>
     {/each}
   {:else}
-    <span class="empty">{waitingText(entry, 'calendar', 'No calendar. Add one under Settings.')}</span>
+    <span class="empty">{waitingText(entry, 'calendar')}</span>
   {/if}
 </div>
 

@@ -123,6 +123,8 @@ export interface Settings {
   location: Location | null;
   newsFeeds: NewsFeed[];
   calendars: Calendar[];
+  /** What the TVs show their texts and dates in. */
+  language: 'en' | 'nl';
 }
 
 /** Whether a data source works, by data key such as "weather.current". */
@@ -192,6 +194,7 @@ export const api = {
   settings: () => request<{ settings: Settings; status: Record<string, SourceStatus> }>('GET', '/api/settings'),
   setLocation: (loc: Location) => request<Location>('PUT', '/api/settings/location', loc),
   clearLocation: () => request<void>('DELETE', '/api/settings/location'),
+  setLanguage: (language: string) => request<{ language: string }>('PUT', '/api/settings/language', { language }),
   places: (name: string) =>
     request<{ places: Place[] }>('GET', `/api/places?name=${encodeURIComponent(name)}`).then((r) => r.places),
   addNewsFeed: (name: string, url: string) => request<NewsFeed>('POST', '/api/news-feeds', { name, url }),
