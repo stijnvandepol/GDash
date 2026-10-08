@@ -44,11 +44,11 @@ type Dashboard struct {
 // calendar when calendars are configured.
 func DefaultDashboard(withCalendar bool) Dashboard {
 	d := Dashboard{
-		ID:      "default",
+		ID:      DefaultID,
 		Name:    "Default",
-		Theme:   "minimal-dark",
-		Columns: 24,
-		Rows:    14,
+		Theme:   defaultTheme,
+		Columns: GridColumns,
+		Rows:    GridRows,
 		Widgets: []Widget{
 			{ID: "clock", Type: "clock", X: 0, Y: 0, W: 14, H: 6},
 			{ID: "weather", Type: "weather", X: 14, Y: 0, W: 10, H: 14, Source: "weather.current"},

@@ -25,6 +25,10 @@ var ErrNotFound = errors.New("not found")
 // ErrConflict is returned when a record with the same key already exists.
 var ErrConflict = errors.New("already exists")
 
+// ErrUnknownDashboard is returned when a display refers to a dashboard that
+// does not exist.
+var ErrUnknownDashboard = errors.New("unknown dashboard")
+
 // Store is an open Daycast database.
 type Store struct {
 	db *sql.DB

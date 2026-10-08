@@ -8,6 +8,7 @@ import (
 	"time"
 	"unicode/utf8"
 
+	"github.com/stijnvandepol/daycast/internal/display"
 	"github.com/stijnvandepol/daycast/internal/validation"
 )
 
@@ -29,8 +30,11 @@ type Display struct {
 	Name string `json:"name"`
 	// CastDeviceID links the display to a Cast device. Empty for browser
 	// and kiosk displays.
-	CastDeviceID string    `json:"castDeviceId"`
-	CreatedAt    time.Time `json:"createdAt"`
+	CastDeviceID string `json:"castDeviceId"`
+	// DashboardID is the dashboard the display shows; empty means the
+	// default dashboard.
+	DashboardID string    `json:"dashboardId"`
+	CreatedAt   time.Time `json:"createdAt"`
 }
 
 // Validate checks a display before it is stored. It returns a
@@ -46,6 +50,9 @@ func Validate(d Display) error {
 	}
 	if d.CastDeviceID != "" && !validCastDeviceID.MatchString(d.CastDeviceID) {
 		errs.Add("castDeviceId", "must be the 32-character device ID from Cast discovery")
+	}
+	if d.DashboardID != "" && !display.ValidDashboardID(d.DashboardID) {
+		errs.Add("dashboardId", "must be the id of a dashboard")
 	}
 	return errs.Err()
 }

@@ -13,7 +13,7 @@ import (
 // Displays returns all displays ordered by name.
 func (s *Store) Displays(ctx context.Context) ([]displays.Display, error) {
 	rows, err := s.db.QueryContext(ctx,
-		"SELECT id, name, cast_device_id, created_at FROM displays ORDER BY name LIMIT ?", displays.MaxDisplays)
+		"SELECT id, name, cast_device_id, dashboard_id, created_at FROM displays ORDER BY name LIMIT ?", displays.MaxDisplays)
 	if err != nil {
 		return nil, fmt.Errorf("list displays: %w", err)
 	}
@@ -31,7 +31,7 @@ func (s *Store) Displays(ctx context.Context) ([]displays.Display, error) {
 
 // Display returns one display, or ErrNotFound.
 func (s *Store) Display(ctx context.Context, id string) (displays.Display, error) {
-	row := s.db.QueryRowContext(ctx, "SELECT id, name, cast_device_id, created_at FROM displays WHERE id = ?", id)
+	row := s.db.QueryRowContext(ctx, "SELECT id, name, cast_device_id, dashboard_id, created_at FROM displays WHERE id = ?", id)
 	d, err := scanDisplay(row)
 	if errors.Is(err, sql.ErrNoRows) {
 		return displays.Display{}, ErrNotFound
@@ -54,9 +54,12 @@ func (s *Store) CreateDisplay(ctx context.Context, d displays.Display) error {
 	if count >= displays.MaxDisplays {
 		return fmt.Errorf("%w: limit of %d displays reached", ErrConflict, displays.MaxDisplays)
 	}
+	if err := requireDashboard(ctx, tx, d.DashboardID); err != nil {
+		return err
+	}
 	_, err = tx.ExecContext(ctx,
-		"INSERT INTO displays (id, name, cast_device_id, created_at) VALUES (?, ?, ?, ?)",
-		d.ID, d.Name, d.CastDeviceID, formatTime(d.CreatedAt))
+		"INSERT INTO displays (id, name, cast_device_id, dashboard_id, created_at) VALUES (?, ?, ?, ?, ?)",
+		d.ID, d.Name, d.CastDeviceID, nullable(d.DashboardID), formatTime(d.CreatedAt))
 	if err != nil {
 		if isUniqueViolation(err) {
 			return fmt.Errorf("%w: display %q", ErrConflict, d.ID)
@@ -66,14 +69,52 @@ func (s *Store) CreateDisplay(ctx context.Context, d displays.Display) error {
 	return tx.Commit()
 }
 
-// UpdateDisplay changes the name and Cast device of an existing display.
+// UpdateDisplay changes the name, Cast device and dashboard of an existing
+// display.
 func (s *Store) UpdateDisplay(ctx context.Context, d displays.Display) error {
-	res, err := s.db.ExecContext(ctx,
-		"UPDATE displays SET name = ?, cast_device_id = ? WHERE id = ?", d.Name, d.CastDeviceID, d.ID)
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+	if err := requireDashboard(ctx, tx, d.DashboardID); err != nil {
+		return err
+	}
+	res, err := tx.ExecContext(ctx,
+		"UPDATE displays SET name = ?, cast_device_id = ?, dashboard_id = ? WHERE id = ?",
+		d.Name, d.CastDeviceID, nullable(d.DashboardID), d.ID)
 	if err != nil {
 		return fmt.Errorf("update display: %w", err)
 	}
-	return requireOneRow(res)
+	if err := requireOneRow(res); err != nil {
+		return err
+	}
+	return tx.Commit()
+}
+
+// requireDashboard returns ErrUnknownDashboard when id is set and no such
+// dashboard exists, so the API can name the field instead of failing on
+// the foreign key.
+func requireDashboard(ctx context.Context, tx *sql.Tx, id string) error {
+	if id == "" {
+		return nil
+	}
+	var exists bool
+	if err := tx.QueryRowContext(ctx, "SELECT EXISTS (SELECT 1 FROM dashboards WHERE id = ?)", id).Scan(&exists); err != nil {
+		return fmt.Errorf("check dashboard: %w", err)
+	}
+	if !exists {
+		return ErrUnknownDashboard
+	}
+	return nil
+}
+
+// nullable stores an empty string as NULL, for optional references.
+func nullable(s string) any {
+	if s == "" {
+		return nil
+	}
+	return s
 }
 
 // DeleteDisplay removes a display, or returns ErrNotFound.
@@ -90,9 +131,11 @@ type scanner interface{ Scan(dest ...any) error }
 func scanDisplay(row scanner) (displays.Display, error) {
 	var d displays.Display
 	var created string
-	if err := row.Scan(&d.ID, &d.Name, &d.CastDeviceID, &created); err != nil {
+	var dashboard sql.NullString
+	if err := row.Scan(&d.ID, &d.Name, &d.CastDeviceID, &dashboard, &created); err != nil {
 		return displays.Display{}, err
 	}
+	d.DashboardID = dashboard.String
 	t, err := parseTime(created)
 	if err != nil {
 		return displays.Display{}, fmt.Errorf("display %q has invalid created_at: %w", d.ID, err)
