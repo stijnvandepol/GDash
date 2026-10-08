@@ -22,9 +22,11 @@ import (
 	"time"
 
 	"github.com/stijnvandepol/daycast/internal/api"
+	"github.com/stijnvandepol/daycast/internal/auth"
 	"github.com/stijnvandepol/daycast/internal/cast"
 	"github.com/stijnvandepol/daycast/internal/datahub"
 	"github.com/stijnvandepol/daycast/internal/display"
+	"github.com/stijnvandepol/daycast/internal/store"
 	"github.com/stijnvandepol/daycast/internal/weather"
 	"github.com/stijnvandepol/daycast/web"
 )
@@ -105,6 +107,28 @@ func status(ctx context.Context, device string) error {
 	return w.Flush()
 }
 
+// newAuthService prepares login. On a fresh install it prints a one-time
+// setup token to the log: whoever can read the log (the person who started
+// Daycast) can create the first account, nobody else on the network.
+func newAuthService(ctx context.Context, db *store.Store, logger *slog.Logger) (*auth.Service, error) {
+	token, err := auth.NewSetupToken()
+	if err != nil {
+		return nil, err
+	}
+	service, err := auth.NewService(db, token)
+	if err != nil {
+		return nil, err
+	}
+	needed, err := service.SetupNeeded(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if needed {
+		logger.Warn("Daycast is not set up yet. Open the web interface and enter this setup token.", "setup_token", token)
+	}
+	return service, nil
+}
+
 func serve(ctx context.Context, logger *slog.Logger) error {
 	cfg, err := loadConfig(os.Getenv)
 	if err != nil {
@@ -114,7 +138,16 @@ func serve(ctx context.Context, logger *slog.Logger) error {
 	if err != nil {
 		return err
 	}
-	store, err := datahub.NewFileStore(filepath.Join(cfg.dataDir, "cache"))
+	cache, err := datahub.NewFileStore(filepath.Join(cfg.dataDir, "cache"))
+	if err != nil {
+		return err
+	}
+	db, err := store.Open(ctx, filepath.Join(cfg.dataDir, "daycast.db"))
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+	authService, err := newAuthService(ctx, db, logger)
 	if err != nil {
 		return err
 	}
@@ -127,7 +160,7 @@ func serve(ctx context.Context, logger *slog.Logger) error {
 			logger.Error("could not publish display state", "error", err)
 		}
 	}
-	hub = datahub.New(store, logger, publish)
+	hub = datahub.New(cache, logger, publish)
 	publish()
 
 	weatherClient := weather.Client{BaseURL: weather.DefaultBaseURL, HTTP: &http.Client{Timeout: upstreamTimeout}}
@@ -151,10 +184,13 @@ func serve(ctx context.Context, logger *slog.Logger) error {
 	srv := &http.Server{
 		Addr: cfg.addr,
 		Handler: (&api.Server{
-			Displays: broadcaster,
-			Web:      frontend,
-			Discover: cast.Discover,
-			Logger:   logger,
+			Snapshots: broadcaster,
+			Auth:      authService,
+			Store:     db,
+			Web:       frontend,
+			Discover:  cast.Discover,
+			Now:       time.Now,
+			Logger:    logger,
 		}).Handler(),
 		ReadHeaderTimeout: 10 * time.Second,
 		// No WriteTimeout: display event streams stay open for days.

@@ -1,6 +1,7 @@
 // Package api serves the display pages, the Cast receiver page and the HTTP
-// API. The prototype has no authentication yet; it must only run on a
-// trusted network until v0.5 adds accounts and display pairing.
+// API. Every API route that reads configuration or changes anything needs a
+// logged-in user. Display pages and their event streams are still open until
+// display pairing exists (v0.5).
 package api
 
 import (
@@ -13,7 +14,10 @@ import (
 	"regexp"
 	"time"
 
+	"github.com/stijnvandepol/daycast/internal/auth"
 	"github.com/stijnvandepol/daycast/internal/cast"
+	"github.com/stijnvandepol/daycast/internal/store"
+	"github.com/stijnvandepol/daycast/internal/validation"
 )
 
 const (
@@ -33,11 +37,14 @@ type Subscriber interface {
 
 // Server wires the HTTP routes.
 type Server struct {
-	Displays Subscriber
+	Snapshots Subscriber
+	Auth      *auth.Service
+	Store     *store.Store
 	// Web holds the built frontend: display/index.html, receiver/index.html
 	// and assets/.
 	Web      fs.FS
 	Discover func(ctx context.Context) ([]cast.Device, error)
+	Now      func() time.Time
 	Logger   *slog.Logger
 }
 
@@ -47,10 +54,25 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusNoContent) })
 	mux.HandleFunc("GET /d/{display}", s.displayPage)
 	mux.HandleFunc("GET /receiver/", s.receiverPage)
-	mux.HandleFunc("GET /api/displays/{display}/events", s.displayEvents)
-	mux.HandleFunc("GET /api/cast-devices", s.castDevices)
 	mux.Handle("GET /assets/", http.FileServerFS(s.Web))
-	return withSecurityHeaders(mux)
+	mux.HandleFunc("GET /api/displays/{display}/events", s.displayEvents)
+
+	mux.HandleFunc("GET /api/setup", s.getSetup)
+	mux.HandleFunc("POST /api/setup", s.postSetup)
+	mux.HandleFunc("POST /api/sessions", s.postSession)
+	mux.Handle("DELETE /api/sessions/current", s.requireUser(s.deleteSession))
+	mux.Handle("GET /api/me", s.requireUser(s.getMe))
+
+	mux.Handle("GET /api/cast-devices", s.requireUser(s.castDevices))
+	mux.Handle("GET /api/displays", s.requireUser(s.listDisplays))
+	mux.Handle("POST /api/displays", s.requireUser(s.createDisplay))
+	mux.Handle("PATCH /api/displays/{display}", s.requireUser(s.updateDisplay))
+	mux.Handle("DELETE /api/displays/{display}", s.requireUser(s.deleteDisplay))
+
+	// Rejects state-changing requests that a browser sends from another
+	// site (CSRF), based on Sec-Fetch-Site and Origin.
+	var csrf http.CrossOriginProtection
+	return withSecurityHeaders(csrf.Handler(mux))
 }
 
 func withSecurityHeaders(next http.Handler) http.Handler {
@@ -115,7 +137,7 @@ func (s *Server) displayEvents(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	messages := s.Displays.Subscribe(r.Context())
+	messages := s.Snapshots.Subscribe(r.Context())
 	ping := time.NewTicker(ssePingInterval)
 	defer ping.Stop()
 	for {
@@ -153,12 +175,45 @@ func (s *Server) castDevices(w http.ResponseWriter, r *http.Request) {
 }
 
 type apiError struct {
-	Code    string `json:"code"`
-	Message string `json:"message"`
+	Code    string                  `json:"code"`
+	Message string                  `json:"message"`
+	Fields  []validation.FieldError `json:"fields,omitempty"`
 }
 
 func writeError(w http.ResponseWriter, status int, code, message string) {
 	writeJSON(w, status, map[string]apiError{"error": {Code: code, Message: message}})
+}
+
+// writeValidationError reports every invalid field of a request at once.
+func writeValidationError(w http.ResponseWriter, fields []validation.FieldError) {
+	writeJSON(w, http.StatusUnprocessableEntity, map[string]apiError{"error": {
+		Code: "invalid_input", Message: "Some fields are not valid.", Fields: fields,
+	}})
+}
+
+// maxRequestBody is far above any valid request; it stops a client from
+// making the server read an endless body.
+const maxRequestBody = 64 << 10
+
+// decodeJSON reads one JSON object into dst and rejects unknown fields, so a
+// typo in a field name is an error instead of being silently ignored.
+func decodeJSON(w http.ResponseWriter, r *http.Request, dst any) bool {
+	dec := json.NewDecoder(http.MaxBytesReader(w, r.Body, maxRequestBody))
+	dec.DisallowUnknownFields()
+	if err := dec.Decode(dst); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid_json", "The request body is not valid JSON for this endpoint.")
+		return false
+	}
+	if dec.More() {
+		writeError(w, http.StatusBadRequest, "invalid_json", "The request body must contain one JSON object.")
+		return false
+	}
+	return true
+}
+
+func (s *Server) internalError(w http.ResponseWriter, op string, err error) {
+	s.Logger.Error("request failed", "operation", op, "error", err)
+	writeError(w, http.StatusInternalServerError, "internal", "Something went wrong on the server. Check the Daycast log.")
 }
 
 func writeJSON(w http.ResponseWriter, status int, body any) {
