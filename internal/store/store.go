@@ -91,12 +91,16 @@ func (s *Store) migrate(ctx context.Context, path string, scripts []string) erro
 	if version == len(scripts) {
 		return nil
 	}
-	if version > 0 {
-		if err := s.backup(ctx, path, version); err != nil {
-			return err
-		}
-	}
+	// An existing database is copied before every step, so each migration's
+	// rollback note ("restore daycast.db.bak-v<N>") holds, also when one
+	// upgrade applies several. A new database has nothing to save.
+	existing := version > 0
 	for i := version; i < len(scripts); i++ {
+		if existing {
+			if err := s.backup(ctx, path, i); err != nil {
+				return err
+			}
+		}
 		if err := s.apply(ctx, i+1, scripts[i]); err != nil {
 			return err
 		}

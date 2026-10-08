@@ -152,7 +152,8 @@ func TestMigrationBacksUpExistingDatabase(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	next := append(scripts, "CREATE TABLE extra (x INTEGER) STRICT;")
+	// Two new migrations in one upgrade: each gets its own backup.
+	next := append(scripts, "CREATE TABLE extra (x INTEGER) STRICT;", "CREATE TABLE more (y INTEGER) STRICT;")
 	if err := s.migrate(ctx, path, next); err != nil {
 		t.Fatalf("migrate: %v", err)
 	}
@@ -164,6 +165,11 @@ func TestMigrationBacksUpExistingDatabase(t *testing.T) {
 	defer backup.Close()
 	if _, err := backup.Display(ctx, "keuken"); err != nil {
 		t.Fatalf("backup does not contain the data from before the migration: %v", err)
+	}
+	// This build cannot open the second copy, which is one version newer
+	// than its own migrations; it only has to exist.
+	if _, err := os.Stat(fmt.Sprintf("%s.bak-v%d", path, len(scripts)+1)); err != nil {
+		t.Fatalf("no backup before the second migration: %v", err)
 	}
 	var version int
 	if err := s.db.QueryRowContext(ctx, "PRAGMA user_version").Scan(&version); err != nil || version != len(next) {
