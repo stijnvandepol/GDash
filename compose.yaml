@@ -4,14 +4,11 @@ services:
     # Host networking lets Daycast find Cast devices with mDNS, which does
     # not cross Docker's bridge network.
     network_mode: host
+    # Location, news feeds and calendars are set under Settings in the web
+    # interface.
     environment:
-      DAYCAST_LATITUDE: "51.65"
-      DAYCAST_LONGITUDE: "5.95"
       # The time zone for "today" in the calendar and for times without a zone.
       TZ: "Europe/Amsterdam"
-      # Optional: secret iCal addresses, comma-separated. They give read
-      # access to your calendar, so keep this file private.
-      # DAYCAST_CALENDAR_URLS: "https://calendar.google.com/calendar/ical/.../basic.ics"
       # Optional: the app ID of an own registered receiver, see
       # docs/receiver.md. Without it Daycast uses the public DashCast receiver.
       # DAYCAST_CAST_APP_ID: "ABCD1234"

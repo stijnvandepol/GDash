@@ -74,6 +74,44 @@ export interface WidgetCatalogue {
   types: Record<string, { minW: number; minH: number; hasMaxItems: boolean }>;
 }
 
+export interface Location {
+  name: string;
+  latitude: number;
+  longitude: number;
+}
+
+export interface NewsFeed {
+  id: number;
+  name: string;
+  url: string;
+}
+
+/** A calendar; its secret address never leaves the server. */
+export interface Calendar {
+  id: number;
+  name: string;
+  host: string;
+  /** True when the address cannot be decrypted with this server's key. */
+  unreadable: boolean;
+}
+
+export interface Settings {
+  location: Location | null;
+  newsFeeds: NewsFeed[];
+  calendars: Calendar[];
+}
+
+/** Whether a data source works, by data key such as "weather.current". */
+export interface SourceStatus {
+  updatedAt?: string;
+  failing: boolean;
+}
+
+export interface Place extends Location {
+  /** Province or state and country, for telling places apart. */
+  region: string;
+}
+
 export interface CastDevice {
   id: string;
   name: string;
@@ -124,6 +162,15 @@ export const api = {
     },
   ) =>
     request<Display>('PATCH', `/api/displays/${encodeURIComponent(id)}`, changes),
+  settings: () => request<{ settings: Settings; status: Record<string, SourceStatus> }>('GET', '/api/settings'),
+  setLocation: (loc: Location) => request<Location>('PUT', '/api/settings/location', loc),
+  clearLocation: () => request<void>('DELETE', '/api/settings/location'),
+  places: (name: string) =>
+    request<{ places: Place[] }>('GET', `/api/places?name=${encodeURIComponent(name)}`).then((r) => r.places),
+  addNewsFeed: (name: string, url: string) => request<NewsFeed>('POST', '/api/news-feeds', { name, url }),
+  deleteNewsFeed: (id: number) => request<void>('DELETE', `/api/news-feeds/${id}`),
+  addCalendar: (name: string, url: string) => request<Calendar>('POST', '/api/calendars', { name, url }),
+  deleteCalendar: (id: number) => request<void>('DELETE', `/api/calendars/${id}`),
   deleteDisplay: (id: string) => request<void>('DELETE', `/api/displays/${encodeURIComponent(id)}`),
   pairScreen: (id: string, code: string) =>
     request<void>('POST', `/api/displays/${encodeURIComponent(id)}/pairings`, { code }),

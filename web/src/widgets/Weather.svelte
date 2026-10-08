@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { Entry } from '../protocol';
+  import { waitingText } from './waiting';
   import { clock } from '../state.svelte';
   import { LOCALE } from '../format';
   import { describeWeather } from './wmo';
@@ -36,7 +37,7 @@
       Updated {updatedAt.format(new Date(entry.fetchedAt))}
     </span>
   {:else}
-    <span class="description muted">Loading weather…</span>
+    <span class="description muted">{waitingText(entry, 'weather', 'No location set. Choose one under Settings.')}</span>
   {/if}
 </div>
 

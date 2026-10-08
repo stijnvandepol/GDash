@@ -1,11 +1,14 @@
 <script lang="ts">
   import type { Entry } from '../protocol';
+  import { waitingText } from './waiting';
   import { clock } from '../state.svelte';
   import { LOCALE } from '../format';
 
   interface Headline {
     title: string;
     published?: string;
+    /** The feed's name, when headlines of several feeds are merged. */
+    source?: string;
   }
   interface Feed {
     title: string;
@@ -45,12 +48,14 @@
       {#each feed.items.slice(0, maxItems) as item, i (i)}
         <li>
           <span class="when">{publishedAt(item)}</span>
-          <span class="title">{item.title}</span>
+          <span class="title">
+            {#if item.source}<span class="feed">{item.source}</span>{/if}{item.title}
+          </span>
         </li>
       {/each}
     </ol>
   {:else}
-    <span class="muted">Loading news…</span>
+    <span class="muted">{waitingText(entry, 'news', 'No news feed. Add one under Settings.')}</span>
   {/if}
 </div>
 
@@ -100,6 +105,10 @@
     overflow: hidden;
     text-overflow: ellipsis;
     min-width: 0;
+  }
+  .feed {
+    margin-right: 0.5em;
+    color: var(--text-muted);
   }
   .muted {
     color: var(--text-muted);

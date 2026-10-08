@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { Entry } from '../protocol';
+  import { waitingText } from './waiting';
   import { clock } from '../state.svelte';
   import { LOCALE } from '../format';
 
@@ -94,7 +95,7 @@
       </section>
     {/each}
   {:else}
-    <span class="empty">Loading calendar…</span>
+    <span class="empty">{waitingText(entry, 'calendar', 'No calendar. Add one under Settings.')}</span>
   {/if}
 </div>
 

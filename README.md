@@ -13,11 +13,12 @@ Google TV you already own. No extra hardware, no subscription, no cloud.
 - **Calendar** from secret iCal addresses (Google, Outlook, iCloud,
   Nextcloud): the coming week with recurrences, exceptions and moved
   occurrences, without OAuth. Only paired screens receive it.
-- **News headlines** from any RSS or Atom feed (default: NOS). Fetched once by
-  the server for all TVs, with conditional requests; only plain-text titles
-  reach the screen.
-- **A web interface** at `/` to set up the first account, log in and manage
-  displays.
+- **News headlines** from up to five RSS or Atom feeds (default: NOS), merged
+  newest first. Fetched once by the server for all TVs, with conditional
+  requests; only plain-text titles reach the screen.
+- **A web interface** at `/` to set up the first account, log in, manage
+  displays and set the location, news feeds and calendars. Calendar addresses
+  are stored encrypted and never shown again.
 - **A dashboard editor**: drag and resize widgets on the TV's 16:9 grid, make
   several dashboards, pick a theme (Minimal dark, Minimal light, Glass) and
   choose a dashboard per display. Saving updates the TVs within
@@ -51,26 +52,33 @@ Requirements: Go 1.26 and Node.js 24.
 ```bash
 cd web && npm ci && npm run build && cd ..
 go build -o daycast ./cmd/daycast
-DAYCAST_LATITUDE=51.65 DAYCAST_LONGITUDE=5.95 ./daycast
+./daycast
 ```
 
 On first start Daycast logs a **setup token**. Open `http://<server>:8420/`,
-enter the token and create your account. Then add a display and pick your TV.
+enter the token and create your account. Under **Settings**, choose the
+location for the weather and add news feeds and calendars. Then add a
+display and pick your TV.
 
-With Docker: set the location in `compose.yaml`, run `docker compose up -d`
-and read the token with `docker compose logs daycast`.
+With Docker: run `docker compose up -d` and read the token with
+`docker compose logs daycast`.
+
+Back up the whole data directory: `secret.key` next to the database is
+needed to read the stored calendar addresses.
 
 ## Configuration
 
 | Variable | Default | Meaning |
 |---|---|---|
-| `DAYCAST_LATITUDE`, `DAYCAST_LONGITUDE` | required | Location for the weather, rounded to about 1 km before it leaves the server |
 | `DAYCAST_ADDR` | `:8420` | Listen address |
-| `DAYCAST_DATA_DIR` | `data` | Database and cached data |
-| `DAYCAST_NEWS_FEED` | NOS general news | RSS or Atom URL for the news widget |
-| `DAYCAST_CALENDAR_URLS` | none | Comma-separated secret iCal (ICS) addresses; adds the calendar widget. Treat them as passwords |
+| `DAYCAST_DATA_DIR` | `data` | Database, secret key and cached data |
 | `TZ` | system | Time zone for "today" in the calendar, for example `Europe/Amsterdam` |
 | `DAYCAST_CAST_APP_ID` | none | App ID of an own registered receiver ([docs/receiver.md](docs/receiver.md)); without it Daycast uses DashCast |
+
+Location, news feeds and calendars are set in the web interface. For an
+installation from before that existed, Daycast copies `DAYCAST_LATITUDE`,
+`DAYCAST_LONGITUDE`, `DAYCAST_NEWS_FEED` and `DAYCAST_CALENDAR_URLS` into the
+settings on the first start and ignores them afterwards.
 
 ## Command line
 

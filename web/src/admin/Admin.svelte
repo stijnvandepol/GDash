@@ -6,11 +6,12 @@
   import Login from './Login.svelte';
   import Displays from './Displays.svelte';
   import Dashboards from './Dashboards.svelte';
+  import Settings from './Settings.svelte';
 
   type Screen = { name: 'loading' } | { name: 'error'; message: string } | { name: 'setup' } | { name: 'login' } | { name: 'app'; user: User };
 
   let screen = $state<Screen>({ name: 'loading' });
-  let tab = $state<'displays' | 'dashboards'>('displays');
+  let tab = $state<'displays' | 'dashboards' | 'settings'>('displays');
 
   onMount(async () => {
     try {
@@ -40,6 +41,7 @@
     <nav class="tabs">
       <button class="tab" class:active={tab === 'displays'} onclick={() => (tab = 'displays')}>Displays</button>
       <button class="tab" class:active={tab === 'dashboards'} onclick={() => (tab = 'dashboards')}>Dashboards</button>
+      <button class="tab" class:active={tab === 'settings'} onclick={() => (tab = 'settings')}>Settings</button>
     </nav>
     <span class="spacer"></span>
     <span class="muted">{screen.user.username}</span>
@@ -58,7 +60,9 @@
     <Login onDone={(user) => (screen = { name: 'app', user })} />
   {:else if tab === 'displays'}
     <Displays onSessionEnded={() => (screen = { name: 'login' })} />
-  {:else}
+  {:else if tab === 'dashboards'}
     <Dashboards onSessionEnded={() => (screen = { name: 'login' })} />
+  {:else}
+    <Settings onSessionEnded={() => (screen = { name: 'login' })} />
   {/if}
 </main>
