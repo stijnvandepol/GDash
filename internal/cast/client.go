@@ -21,6 +21,7 @@ const (
 	receiverID = "receiver-0"
 
 	heartbeatInterval = 5 * time.Second
+	dialTimeout       = 10 * time.Second
 	// A device answers every PING within a few seconds; three missed
 	// intervals means the connection is dead even if TCP has not noticed.
 	readTimeout  = 3 * heartbeatInterval
@@ -54,7 +55,7 @@ type Client struct {
 
 // Dial opens a CASTV2 connection to addr (host:port, normally port 8009).
 func Dial(ctx context.Context, addr string) (*Client, error) {
-	dialer := tls.Dialer{Config: &tls.Config{
+	dialer := tls.Dialer{NetDialer: &net.Dialer{Timeout: dialTimeout}, Config: &tls.Config{
 		// Cast devices present a certificate issued by Google's device CA,
 		// which is not in any system trust store. Verifying it requires the
 		// device-auth challenge, which is out of scope for the prototype.
