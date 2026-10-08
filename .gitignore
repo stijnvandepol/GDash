@@ -4,3 +4,5 @@
 !/web/dist/.gitkeep
 /daycast
 /daycast.exe
+/data-dev/
+/daycast-dev.exe

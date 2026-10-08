@@ -52,6 +52,7 @@ type Server struct {
 func (s *Server) Handler() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusNoContent) })
+	mux.HandleFunc("GET /{$}", s.adminPage)
 	mux.HandleFunc("GET /d/{display}", s.displayPage)
 	mux.HandleFunc("GET /receiver/", s.receiverPage)
 	mux.Handle("GET /assets/", http.FileServerFS(s.Web))
@@ -84,9 +85,16 @@ func withSecurityHeaders(next http.Handler) http.Handler {
 	})
 }
 
-// displayCSP allows nothing from outside the server: no CDN, no fonts from
+// displayCSP (also used for the web interface) allows nothing from outside the server: no CDN, no fonts from
 // Google, no inline scripts.
 const displayCSP = "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; font-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'"
+
+// adminPage is the web interface. It loads without a session; the API it
+// calls requires one.
+func (s *Server) adminPage(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Security-Policy", displayCSP)
+	s.servePage(w, r, "admin/index.html")
+}
 
 func (s *Server) displayPage(w http.ResponseWriter, r *http.Request) {
 	if !validDisplayID.MatchString(r.PathValue("display")) {

@@ -53,6 +53,7 @@ func newTestEnv(t *testing.T, discover func(context.Context) ([]cast.Device, err
 		Auth:      authService,
 		Store:     st,
 		Web: fstest.MapFS{
+			"admin/index.html":    {Data: []byte("<html>admin</html>")},
 			"display/index.html":  {Data: []byte("<html>display</html>")},
 			"receiver/index.html": {Data: []byte("<html>receiver</html>")},
 			"assets/app.js":       {Data: []byte("console.log(1)")},
@@ -106,6 +107,16 @@ func TestDisplayPageHasStrictCSP(t *testing.T) {
 	}
 	if csp := resp.Header.Get("Content-Security-Policy"); !strings.Contains(csp, "default-src 'self'") {
 		t.Fatalf("CSP = %q", csp)
+	}
+}
+
+func TestAdminPageIsServedAtRoot(t *testing.T) {
+	env := newTestEnv(t, nil)
+	if status, body := env.do(t, "GET", "/", ""); status != http.StatusOK || body != "<html>admin</html>" {
+		t.Fatalf("GET / = %d %q", status, body)
+	}
+	if status, _ := env.do(t, "GET", "/does-not-exist", ""); status != http.StatusNotFound {
+		t.Fatalf("GET /does-not-exist = %d, want 404", status)
 	}
 }
 

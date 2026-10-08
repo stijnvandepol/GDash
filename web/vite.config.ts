@@ -11,6 +11,7 @@ export default defineConfig({
     target: 'es2020',
     rollupOptions: {
       input: {
+        admin: 'admin/index.html',
         display: 'display/index.html',
         receiver: 'receiver/index.html',
       },

@@ -1,0 +1,190 @@
+<script lang="ts">
+  import { onMount } from 'svelte';
+  import { api, ApiError, slugify, type CastDevice, type Display } from './api';
+
+  let { onSessionEnded }: { onSessionEnded: () => void } = $props();
+
+  let displays = $state<Display[]>([]);
+  let devices = $state<CastDevice[]>([]);
+  let searching = $state(false);
+  let searchMessage = $state('');
+  let loadError = $state('');
+
+  let newName = $state('');
+  let newId = $state('');
+  let idEdited = $state(false);
+  let newDevice = $state('');
+  let createError = $state<ApiError | null>(null);
+  let creating = $state(false);
+
+  let editingId = $state<string | null>(null);
+  let editName = $state('');
+  let rowError = $state('');
+
+  const deviceNames = $derived(new Map(devices.map((d) => [d.id, d.name])));
+  const screens = $derived(devices.filter((d) => d.hasScreen));
+  const speakers = $derived(devices.filter((d) => !d.hasScreen));
+
+  onMount(() => {
+    void load();
+    void search();
+  });
+
+  /** Sends the user back to the login screen when the session has ended. */
+  function handle(err: unknown): string {
+    if (err instanceof ApiError && err.status === 401) {
+      onSessionEnded();
+      return '';
+    }
+    return err instanceof Error ? err.message : 'Er ging iets mis.';
+  }
+
+  async function load() {
+    try {
+      displays = await api.displays();
+      loadError = '';
+    } catch (err) {
+      loadError = handle(err);
+    }
+  }
+
+  async function search() {
+    searching = true;
+    searchMessage = '';
+    try {
+      devices = await api.castDevices();
+      if (devices.length === 0) searchMessage = 'Geen Cast-apparaten gevonden. Staat de TV aan en zit hij op hetzelfde netwerk?';
+    } catch (err) {
+      searchMessage = handle(err);
+    } finally {
+      searching = false;
+    }
+  }
+
+  function nameChanged() {
+    if (!idEdited) newId = slugify(newName);
+  }
+
+  async function create(event: SubmitEvent) {
+    event.preventDefault();
+    creating = true;
+    createError = null;
+    try {
+      await api.createDisplay({ id: newId, name: newName.trim(), castDeviceId: newDevice });
+      newName = '';
+      newId = '';
+      idEdited = false;
+      newDevice = '';
+      await load();
+    } catch (err) {
+      const message = handle(err);
+      createError = err instanceof ApiError ? err : new ApiError(0, 'unknown', message);
+    } finally {
+      creating = false;
+    }
+  }
+
+  function startRename(d: Display) {
+    editingId = d.id;
+    editName = d.name;
+    rowError = '';
+  }
+
+  async function saveRename(event: SubmitEvent, id: string) {
+    event.preventDefault();
+    try {
+      await api.updateDisplay(id, { name: editName.trim() });
+      editingId = null;
+      await load();
+    } catch (err) {
+      rowError = err instanceof ApiError ? (err.fieldMessage('name') ?? err.message) : handle(err);
+    }
+  }
+
+  async function remove(d: Display) {
+    if (!confirm(`Display "${d.name}" verwijderen?`)) return;
+    try {
+      await api.deleteDisplay(d.id);
+      await load();
+    } catch (err) {
+      rowError = handle(err);
+    }
+  }
+
+  function describeDevice(id: string): string {
+    if (!id) return 'Browser of kiosk';
+    return deviceNames.get(id) ?? 'Cast-apparaat (nu niet gevonden)';
+  }
+</script>
+
+<section class="card">
+  <h1>Displays</h1>
+  {#if loadError}<p class="error">{loadError}</p>{/if}
+  {#if displays.length === 0 && !loadError}
+    <p class="muted">Nog geen displays. Voeg hieronder je eerste TV toe.</p>
+  {:else}
+    <ul class="list">
+      {#each displays as d (d.id)}
+        <li>
+          {#if editingId === d.id}
+            <form class="inline" onsubmit={(e) => saveRename(e, d.id)}>
+              <input bind:value={editName} aria-label="Nieuwe naam" required />
+              <button type="submit">Opslaan</button>
+              <button type="button" class="link" onclick={() => (editingId = null)}>Annuleren</button>
+            </form>
+          {:else}
+            <div class="grow">
+              <strong>{d.name}</strong>
+              <span class="muted">{describeDevice(d.castDeviceId)}</span>
+            </div>
+            <a href="/d/{d.id}" target="_blank" rel="noopener">Openen</a>
+            <button class="link" onclick={() => startRename(d)}>Hernoemen</button>
+            <button class="link danger" onclick={() => remove(d)}>Verwijderen</button>
+          {/if}
+        </li>
+      {/each}
+    </ul>
+    {#if rowError}<p class="error">{rowError}</p>{/if}
+  {/if}
+</section>
+
+<form class="card" onsubmit={create}>
+  <h2>Display toevoegen</h2>
+  <label>
+    Naam
+    <input bind:value={newName} oninput={nameChanged} placeholder="Keuken" required />
+    {#if createError?.fieldMessage('name')}<span class="field-error">{createError.fieldMessage('name')}</span>{/if}
+  </label>
+  <label>
+    Adres van de displaypagina
+    <span class="with-prefix">
+      <span class="prefix">/d/</span>
+      <input bind:value={newId} oninput={() => (idEdited = true)} required spellcheck="false" />
+    </span>
+    {#if createError?.fieldMessage('id')}<span class="field-error">{createError.fieldMessage('id')}</span>{/if}
+  </label>
+  <label>
+    TV
+    <select bind:value={newDevice}>
+      <option value="">Geen Cast: ik open de pagina zelf in een browser of kiosk</option>
+      {#each screens as dev (dev.id)}
+        <option value={dev.id}>{dev.name} ({dev.model})</option>
+      {/each}
+      {#if speakers.length > 0}
+        <optgroup label="Zonder scherm, kan geen dashboard tonen">
+          {#each speakers as dev (dev.id)}
+            <option value={dev.id} disabled>{dev.name} ({dev.model})</option>
+          {/each}
+        </optgroup>
+      {/if}
+    </select>
+  </label>
+  <p class="muted small">
+    {#if searching}Zoeken naar Cast-apparaten…{:else}
+      {searchMessage || `${screens.length} TV's en schermen gevonden.`}
+      <button type="button" class="link" onclick={search}>Opnieuw zoeken</button>
+    {/if}
+  </p>
+  {#if createError && createError.fields.length === 0}<p class="error">{createError.message}</p>{/if}
+  <button type="submit" disabled={creating}>{creating ? 'Bezig…' : 'Toevoegen'}</button>
+</form>
