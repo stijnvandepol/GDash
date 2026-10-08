@@ -20,6 +20,7 @@ import (
 
 	"github.com/stijnvandepol/daycast/internal/auth"
 	"github.com/stijnvandepol/daycast/internal/cast"
+	"github.com/stijnvandepol/daycast/internal/casting"
 	"github.com/stijnvandepol/daycast/internal/datahub"
 	"github.com/stijnvandepol/daycast/internal/pairing"
 	"github.com/stijnvandepol/daycast/internal/secret"
@@ -46,6 +47,7 @@ type fakeSources struct {
 	places  []weather.Place
 	err     error
 	entries map[string]datahub.Entry
+	cast    map[string]casting.Status
 }
 
 func (f *fakeSources) Search(context.Context, string) ([]weather.Place, error) {
@@ -58,6 +60,12 @@ func (f *fakeSources) Entries() map[string]datahub.Entry {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	return f.entries
+}
+
+func (f *fakeSources) CastStatus() map[string]casting.Status {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return f.cast
 }
 
 func (f *fakeSources) set(places []weather.Place, err error, entries map[string]datahub.Entry) {
@@ -116,6 +124,7 @@ func newTestEnv(t *testing.T, discover func(context.Context) ([]cast.Device, err
 		SettingsChanged:   func() { settingsChanges.Add(1) },
 		SourceStatus:      sources.Entries,
 		Version:           "v1.2.3",
+		CastStatus:        sources.CastStatus,
 		PingInterval:      50 * time.Millisecond,
 		Now:               now,
 		Logger:            logger,

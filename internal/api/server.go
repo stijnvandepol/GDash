@@ -16,6 +16,7 @@ import (
 
 	"github.com/stijnvandepol/daycast/internal/auth"
 	"github.com/stijnvandepol/daycast/internal/cast"
+	"github.com/stijnvandepol/daycast/internal/casting"
 	"github.com/stijnvandepol/daycast/internal/datahub"
 	"github.com/stijnvandepol/daycast/internal/pairing"
 	"github.com/stijnvandepol/daycast/internal/settings"
@@ -63,6 +64,8 @@ type Server struct {
 	SourceStatus func() map[string]datahub.Entry
 	// Version is the running release, shown in the web interface.
 	Version string
+	// CastStatus returns what each display's cast keeper last found.
+	CastStatus func() map[string]casting.Status
 	// PingInterval is how often an open display stream sends a keep-alive
 	// and re-checks that it may still show the display. Zero means 20
 	// seconds.

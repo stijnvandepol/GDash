@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/stijnvandepol/daycast/internal/casting"
 	"github.com/stijnvandepol/daycast/internal/displays"
 	"github.com/stijnvandepol/daycast/internal/schedule"
 	"github.com/stijnvandepol/daycast/internal/store"
@@ -11,7 +12,8 @@ import (
 )
 
 // listDisplays handles GET /api/displays: {"displays": [...]}, at most
-// displays.MaxDisplays, each with the number of screens paired by code.
+// displays.MaxDisplays, each with the number of screens paired by code and,
+// for a display on a Cast device, what its keeper last found there.
 func (s *Server) listDisplays(w http.ResponseWriter, r *http.Request) {
 	list, err := s.Store.Displays(r.Context())
 	if err != nil {
@@ -25,11 +27,16 @@ func (s *Server) listDisplays(w http.ResponseWriter, r *http.Request) {
 	}
 	type listed struct {
 		displays.Display
-		PairedScreens int `json:"pairedScreens"`
+		PairedScreens int             `json:"pairedScreens"`
+		Cast          *casting.Status `json:"cast,omitempty"`
 	}
+	statuses := s.CastStatus()
 	out := make([]listed, len(list))
 	for i, d := range list {
 		out[i] = listed{Display: d, PairedScreens: counts[d.ID]}
+		if st, ok := statuses[d.ID]; ok {
+			out[i].Cast = &st
+		}
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"displays": out})
 }

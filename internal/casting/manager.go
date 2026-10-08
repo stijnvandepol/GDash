@@ -5,9 +5,11 @@ package casting
 import (
 	"context"
 	"log/slog"
+	"maps"
 	"sync"
 	"time"
 
+	"github.com/stijnvandepol/daycast/internal/cast"
 	"github.com/stijnvandepol/daycast/internal/displays"
 )
 
@@ -16,15 +18,68 @@ import (
 const reconcileInterval = time.Minute
 
 // Manager keeps the set of running keepers equal to the displays that have
-// a Cast device.
+// a Cast device, and remembers what each keeper last reported.
 type Manager struct {
 	List func(ctx context.Context) ([]displays.Display, error)
-	// RunDisplay keeps one display on its Cast device until ctx ends.
-	RunDisplay func(ctx context.Context, d displays.Display)
-	Logger     *slog.Logger
+	// RunDisplay keeps one display on its Cast device until ctx ends,
+	// passing every state it finds to report.
+	RunDisplay func(ctx context.Context, d displays.Display, report func(cast.State, error))
+	// Now is the clock for Status.Since; nil means time.Now.
+	Now    func() time.Time
+	Logger *slog.Logger
 
 	triggerOnce sync.Once
 	trigger     chan struct{}
+
+	mu       sync.Mutex
+	statuses map[string]Status
+}
+
+// Status is what the keeper of a display last reported.
+type Status struct {
+	State cast.State `json:"state"`
+	// Since is when the display entered this state.
+	Since time.Time `json:"since"`
+	// Problem explains an unreachable device.
+	Problem string `json:"problem,omitempty"`
+}
+
+// Statuses returns the latest status by display ID, for displays with a
+// running keeper.
+func (m *Manager) Statuses() map[string]Status {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return maps.Clone(m.statuses)
+}
+
+// reporter records the states of one display's keeper. Since only moves
+// when the state or its problem changes, not on every status poll.
+func (m *Manager) reporter(displayID string) func(cast.State, error) {
+	return func(state cast.State, err error) {
+		problem := ""
+		if err != nil {
+			problem = err.Error()
+		}
+		m.mu.Lock()
+		defer m.mu.Unlock()
+		if current, ok := m.statuses[displayID]; ok && current.State == state && current.Problem == problem {
+			return
+		}
+		now := time.Now
+		if m.Now != nil {
+			now = m.Now
+		}
+		if m.statuses == nil {
+			m.statuses = map[string]Status{}
+		}
+		m.statuses[displayID] = Status{State: state, Since: now(), Problem: problem}
+	}
+}
+
+func (m *Manager) forget(displayID string) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	delete(m.statuses, displayID)
 }
 
 type running struct {
@@ -89,6 +144,7 @@ func (m *Manager) reconcile(ctx context.Context, active map[string]running) {
 			r.cancel()
 			<-r.done
 			delete(active, id)
+			m.forget(id)
 		}
 	}
 	for id, d := range wanted {
@@ -99,7 +155,7 @@ func (m *Manager) reconcile(ctx context.Context, active map[string]running) {
 		done := make(chan struct{})
 		go func() {
 			defer close(done)
-			m.RunDisplay(keeperCtx, d)
+			m.RunDisplay(keeperCtx, d, m.reporter(d.ID))
 		}()
 		active[id] = running{castDeviceID: d.CastDeviceID, cancel: cancel, done: done}
 	}

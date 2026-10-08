@@ -1,4 +1,4 @@
-import type { SourceStatus } from './api';
+import type { CastStatus, SourceStatus } from './api';
 
 const MINUTE = 60_000;
 
@@ -18,4 +18,26 @@ function describeAge(minutes: number): string {
   if (minutes === 1) return '1 minute ago';
   if (minutes < 120) return `${minutes} minutes ago`;
   return `${Math.round(minutes / 60)} hours ago`;
+}
+
+const TIME = new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit' });
+
+/** What a display's TV is doing, for the display list. */
+export function describeCast(status: CastStatus | undefined): string {
+  if (!status) return '';
+  const since = TIME.format(new Date(status.since));
+  switch (status.state) {
+    case 'showing':
+      return `On screen since ${since}`;
+    case 'standby':
+      return `TV in standby since ${since}`;
+    case 'other_app':
+      return 'Another app is on the TV; Daycast waits until it stops';
+    case 'resting':
+      return 'Outside active hours';
+    case 'unreachable':
+      return 'Cannot reach the TV; retrying';
+    default:
+      return 'Connecting to the TV…';
+  }
 }

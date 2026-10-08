@@ -33,7 +33,7 @@ come from another site (cross-site request forgery protection).
 | `GET /api/me` | admin | `200` user | `401` |
 | `PUT /api/me/password` `{currentPassword, newPassword}` | admin | `204`; every other session of the account ends | `401`, `422` (wrong current or too short new password), `429 rate_limited` |
 | `GET /api/system` | admin | `200 {"version"}` | `401` |
-| `GET /api/displays` | admin | `200 {"displays": [display + pairedScreens]}` | `401` |
+| `GET /api/displays` | admin | `200 {"displays": [display + pairedScreens + cast?]}` | `401` |
 | `POST /api/displays` `{id, name, castDeviceId, activeFrom?, activeUntil?, schedule?}` | admin | `201` display | `401`, `409 conflict`, `422` |
 | `PATCH /api/displays/{id}` `{name?, castDeviceId?, dashboardId?, activeFrom?, activeUntil?, schedule?}` | admin | `200` display | `401`, `404 not_found`, `422` (also for an unknown dashboard) |
 | `DELETE /api/displays/{id}` | admin | `204` | `401`, `404 not_found` |
@@ -109,6 +109,10 @@ uses GeoNames data; the coordinates can also be entered by hand.
 `activeFrom`/`activeUntil` are HH:MM in the server's time zone (`TZ`), may wrap past midnight, and are both empty for
 always on. Outside them the page is dark, the snapshot has no data and the cast is stopped.
 `schedule` holds at most 6 slots and is replaced as a whole by a `PATCH`; it is always a list, empty when unused.
+
+**cast:** `{"state": "showing", "since": "2026-10-09T08:31:00Z", "problem"?: "…"}`, only for a display on a Cast
+device. `state` is `connecting`, `showing`, `standby` (the receiver runs but the TV sleeps), `other_app` (someone else
+is casting; Daycast waits), `resting` (outside active hours) or `unreachable`, with `problem` saying why.
 
 **slot:** `{"from": "06:30", "until": "09:00", "dashboardId": "morning"}`. During the slot the display shows that
 dashboard instead of its own; the first slot that contains the current time wins. Times follow the same rules as

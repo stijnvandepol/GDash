@@ -4,6 +4,10 @@ import (
 	"net/http"
 	"strings"
 	"testing"
+	"time"
+
+	"github.com/stijnvandepol/daycast/internal/cast"
+	"github.com/stijnvandepol/daycast/internal/casting"
 )
 
 func TestDisplayActiveHours(t *testing.T) {
@@ -64,5 +68,19 @@ func TestDisplaySchedule(t *testing.T) {
 
 	if _, body = env.do(t, "PATCH", "/api/displays/keuken", `{"schedule":[]}`); !strings.Contains(body, `"schedule":[]`) {
 		t.Fatalf("clear = %s", body)
+	}
+}
+
+func TestDisplayListShowsCastStatus(t *testing.T) {
+	env := newTestEnv(t, nil)
+	env.setUp(t)
+	env.createKitchen(t)
+	since := time.Date(2026, 10, 9, 7, 0, 0, 0, time.UTC)
+	env.sources.mu.Lock()
+	env.sources.cast = map[string]casting.Status{"keuken": {State: cast.StateStandby, Since: since}}
+	env.sources.mu.Unlock()
+	_, body := env.do(t, "GET", "/api/displays", "")
+	if !strings.Contains(body, `"cast":{"state":"standby","since":"2026-10-09T07:00:00Z"}`) {
+		t.Fatalf("list = %s", body)
 	}
 }

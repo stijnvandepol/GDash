@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { describeStatus } from './status';
+import { describeCast, describeStatus } from './status';
 
 const now = Date.parse('2026-10-09T10:00:00Z');
 
@@ -21,5 +21,23 @@ describe('describeStatus', () => {
     expect(describeStatus({ updatedAt: '2026-10-09T09:30:00Z', failing: true }, now)).toBe(
       'The last update failed; showing data from 30 minutes ago.',
     );
+  });
+});
+
+describe('describeCast', () => {
+  // TZ is Europe/Amsterdam in the test run, so 08:31 UTC shows as 10:31.
+  const since = '2026-10-09T08:31:00Z';
+
+  it('describes each state', () => {
+    expect(describeCast({ state: 'showing', since })).toBe('On screen since 10:31');
+    expect(describeCast({ state: 'standby', since })).toBe('TV in standby since 10:31');
+    expect(describeCast({ state: 'other_app', since })).toBe('Another app is on the TV; Daycast waits until it stops');
+    expect(describeCast({ state: 'resting', since })).toBe('Outside active hours');
+    expect(describeCast({ state: 'unreachable', since, problem: 'i/o timeout' })).toBe('Cannot reach the TV; retrying');
+    expect(describeCast({ state: 'connecting', since })).toBe('Connecting to the TV…');
+  });
+
+  it('says nothing for a display without a Cast device', () => {
+    expect(describeCast(undefined)).toBe('');
   });
 });

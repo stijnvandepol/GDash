@@ -41,6 +41,15 @@ export interface Display {
   activeUntil: string;
   /** Other dashboards during parts of the day; the first matching slot wins. */
   schedule: Slot[];
+  /** What Daycast last found on the Cast device; only in the display list. */
+  cast?: CastStatus;
+}
+
+export interface CastStatus {
+  state: 'connecting' | 'unreachable' | 'showing' | 'standby' | 'other_app' | 'resting';
+  since: string;
+  /** Why the device cannot be reached. */
+  problem?: string;
 }
 
 /** A dashboard shown from one time of day until another, as HH:MM. */

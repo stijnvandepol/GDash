@@ -57,12 +57,16 @@ type Keeper struct {
 	// after about 19 minutes while still reporting the app as running; on
 	// real hardware a restart brought the dashboard back.
 	Refresh func(Device) time.Duration
-	Logger  *slog.Logger
+	// Status, if set, receives every state the keeper finds, for the web
+	// interface. It must not block.
+	Status func(State, error)
+	Logger *slog.Logger
 }
 
 // Run keeps the receiver alive until ctx is cancelled.
 func (k *Keeper) Run(ctx context.Context) {
 	delay := minRetryDelay
+	k.report(StateConnecting, nil)
 	for {
 		started := time.Now()
 		err := k.session(ctx)
@@ -73,6 +77,7 @@ func (k *Keeper) Run(ctx context.Context) {
 			delay = minRetryDelay
 		}
 		k.Logger.Warn("cast session ended, retrying", "retry_in", delay, "error", err)
+		k.report(StateUnreachable, err)
 		select {
 		case <-ctx.Done():
 			return
@@ -224,6 +229,7 @@ func (s *keeperSession) reconcile(ctx context.Context, status ReceiverStatus) er
 	s.standby = status.IsStandBy
 	app, running := status.App(k.AppID)
 	if k.Active != nil && !k.Active() {
+		k.report(StateResting, nil)
 		return s.rest(ctx, app, running)
 	}
 	if running && k.LaunchMessage != nil && s.transport == "" {
@@ -237,6 +243,7 @@ func (s *keeperSession) reconcile(ctx context.Context, status ReceiverStatus) er
 	if !running {
 		s.transport = ""
 		if !ShouldRelaunch(status) {
+			k.report(StateOtherApp, nil)
 			return nil
 		}
 		k.Logger.Info("launching receiver", "app_id", k.AppID)
@@ -246,6 +253,7 @@ func (s *keeperSession) reconcile(ctx context.Context, status ReceiverStatus) er
 		}
 		app = launched
 	}
+	s.reportShowing()
 	if app.TransportID == s.transport {
 		return nil
 	}
@@ -264,6 +272,15 @@ func (s *keeperSession) reconcile(ctx context.Context, status ReceiverStatus) er
 	s.resendIdx = 0
 	s.scheduleNextResend()
 	return s.sendLatest()
+}
+
+// reportShowing reports that the receiver runs, or that the TV sleeps.
+func (s *keeperSession) reportShowing() {
+	if s.standby {
+		s.keeper.report(StateStandby, nil)
+	} else {
+		s.keeper.report(StateShowing, nil)
+	}
 }
 
 func (s *keeperSession) scheduleNextResend() {

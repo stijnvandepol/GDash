@@ -2,9 +2,12 @@
   import { onMount } from 'svelte';
   import { api, ApiError, slugify, type CastDevice, type Dashboard, type Display } from './api';
   import { errorMessage } from './errors';
+  import { describeCast } from './status';
   import ScheduleEditor from './ScheduleEditor.svelte';
 
   let { onSessionEnded }: { onSessionEnded: () => void } = $props();
+
+  const STATUS_REFRESH_MS = 15_000;
 
   let displays = $state<Display[]>([]);
   let dashboards = $state<Dashboard[]>([]);
@@ -34,6 +37,9 @@
   onMount(() => {
     void load();
     void search();
+    // Keeps "On screen since" and similar current while the page is open.
+    const timer = setInterval(() => void load(), STATUS_REFRESH_MS);
+    return () => clearInterval(timer);
   });
 
   /** Sends the user back to the login screen when the session has ended. */
@@ -203,6 +209,11 @@
             <div class="grow">
               <strong>{d.name}</strong>
               <span class="muted">{describeDevice(d.castDeviceId)} · {describeScreens(d)} · {describeHours(d)}</span>
+              {#if d.cast}
+                <span class="small" class:error={d.cast.state === 'unreachable'} title={d.cast.problem ?? ''}>
+                  {describeCast(d.cast)}
+                </span>
+              {/if}
             </div>
             <select
               aria-label="Dashboard for {d.name}"

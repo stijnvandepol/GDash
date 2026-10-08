@@ -34,11 +34,12 @@ func newCastManager(cfg config, deps castDeps) (*casting.Manager, error) {
 	if err != nil {
 		return nil, fmt.Errorf("DAYCAST_ADDR %q has no port: %w", cfg.addr, err)
 	}
-	runDisplay := func(ctx context.Context, d displays.Display) {
+	runDisplay := func(ctx context.Context, d displays.Display, report func(cast.State, error)) {
 		keeper := &cast.Keeper{
 			Resolve: resolveDevice(d.CastDeviceID),
 			Refresh: refreshInterval,
 			Active:  activeNow(ctx, db, d.ID, logger),
+			Status:  report,
 			Logger:  logger.With("display", d.ID),
 		}
 		if cfg.castAppID != "" {

@@ -204,6 +204,7 @@ func serve(ctx context.Context, logger *slog.Logger) error {
 		},
 		SourceStatus: sources.hub.Entries,
 		Version:      currentVersion(),
+		CastStatus:   castManager.Statuses,
 		Now:          time.Now,
 		Logger:       logger,
 	}).Handler()
