@@ -51,15 +51,32 @@ type Display struct {
 
 // Slot shows a dashboard during part of the day, such as a morning
 // dashboard from 06:30 to 09:00. Times are HH:MM in the server's time zone
-// and may wrap past midnight.
+// and may wrap past midnight. Days limits the slot to some days of the
+// week, such as a weekend dashboard; none means every day.
 type Slot struct {
-	From        string `json:"from"`
-	Until       string `json:"until"`
-	DashboardID string `json:"dashboardId"`
+	From        string   `json:"from"`
+	Until       string   `json:"until"`
+	Days        []string `json:"days"`
+	DashboardID string   `json:"dashboardId"`
 }
 
-// Hours returns the slot's daily window.
-func (s Slot) Hours() schedule.Hours { return schedule.Hours{From: s.From, Until: s.Until} }
+// NormalizeSchedule returns slots with empty lists instead of nil, so the
+// API always sends a list for the schedule and for each slot's days.
+func NormalizeSchedule(slots []Slot) []Slot {
+	out := make([]Slot, len(slots))
+	for i, s := range slots {
+		if s.Days == nil {
+			s.Days = []string{}
+		}
+		out[i] = s
+	}
+	return out
+}
+
+// Window returns when the slot applies.
+func (s Slot) Window() schedule.Window {
+	return schedule.Window{Hours: schedule.Hours{From: s.From, Until: s.Until}, Days: s.Days}
+}
 
 // Validate checks a display before it is stored. It returns a
 // *validation.Error listing every invalid field.
@@ -94,9 +111,13 @@ func Validate(d Display) error {
 }
 
 func slotProblem(s Slot) string {
-	// A slot always has a window: "all day" is what DashboardID is for.
-	if hours := s.Hours(); hours.Always() || hours.Validate() != nil {
+	// A slot always has hours: "all day" is what DashboardID is for.
+	window := s.Window()
+	if window.Always() || window.Hours.Validate() != nil {
 		return "use two different times as HH:MM"
+	}
+	if err := window.Validate(); err != nil {
+		return err.Error()
 	}
 	if !display.ValidDashboardID(s.DashboardID) {
 		return "choose a dashboard"

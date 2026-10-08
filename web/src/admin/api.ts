@@ -56,6 +56,8 @@ export interface CastStatus {
 export interface Slot {
   from: string;
   until: string;
+  /** mon to sun; empty means every day. */
+  days: string[];
   dashboardId: string;
 }
 

@@ -92,9 +92,9 @@ type View struct {
 	Schedule []ScheduledDashboard
 }
 
-// ScheduledDashboard is a dashboard shown during a daily window.
+// ScheduledDashboard is a dashboard shown during a window of the week.
 type ScheduledDashboard struct {
-	Hours     schedule.Hours
+	Window    schedule.Window
 	Dashboard Dashboard
 }
 
@@ -102,7 +102,7 @@ type ScheduledDashboard struct {
 // of its schedule that contains t, or else its own dashboard.
 func (v View) DashboardAt(t time.Time) Dashboard {
 	for _, slot := range v.Schedule {
-		if slot.Hours.Contains(t) {
+		if slot.Window.Contains(t) {
 			return slot.Dashboard
 		}
 	}

@@ -3,6 +3,7 @@ package store
 import (
 	"context"
 	"errors"
+	"reflect"
 	"testing"
 
 	"github.com/stijnvandepol/daycast/internal/display"
@@ -130,22 +131,22 @@ func TestDisplaySchedule(t *testing.T) {
 		}
 	}
 	d := displays.Display{ID: "kitchen", Name: "Kitchen", CreatedAt: created, Schedule: []displays.Slot{
-		{From: "18:00", Until: "23:00", DashboardID: "evening"},
-		{From: "06:30", Until: "09:00", DashboardID: "morning"},
+		{From: "18:00", Until: "23:00", Days: []string{"sat", "sun"}, DashboardID: "evening"},
+		{From: "06:30", Until: "09:00", Days: []string{}, DashboardID: "morning"},
 	}}
 	if err := s.CreateDisplay(ctx, d); err != nil {
 		t.Fatal(err)
 	}
 	got, err := s.Display(ctx, "kitchen")
-	if err != nil || len(got.Schedule) != 2 || got.Schedule[0] != d.Schedule[0] || got.Schedule[1] != d.Schedule[1] {
-		t.Fatalf("Display = %+v, %v; want the schedule in its stored order", got.Schedule, err)
+	if err != nil || !reflect.DeepEqual(got.Schedule, d.Schedule) {
+		t.Fatalf("Display = %+v, %v; want the schedule with its days, in its stored order", got.Schedule, err)
 	}
 	views, err := s.DisplayViews(ctx)
 	if err != nil {
 		t.Fatal(err)
 	}
 	v := views["kitchen"]
-	if v.Dashboard.ID != display.DefaultID || len(v.Schedule) != 2 || v.Schedule[1].Dashboard.ID != "morning" || v.Schedule[1].Hours.From != "06:30" {
+	if v.Dashboard.ID != display.DefaultID || len(v.Schedule) != 2 || v.Schedule[1].Dashboard.ID != "morning" || v.Schedule[1].Window.From != "06:30" {
 		t.Fatalf("view = %+v", v)
 	}
 

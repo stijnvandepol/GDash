@@ -141,7 +141,7 @@ func (s *Store) DisplayViews(ctx context.Context) (map[string]display.View, erro
 		v := display.View{Dashboard: dashboard, Hours: d.Hours}
 		for _, slot := range d.Schedule {
 			if b, ok := byID[slot.DashboardID]; ok {
-				v.Schedule = append(v.Schedule, display.ScheduledDashboard{Hours: slot.Hours(), Dashboard: b})
+				v.Schedule = append(v.Schedule, display.ScheduledDashboard{Window: slot.Window(), Dashboard: b})
 			}
 		}
 		result[d.ID] = v

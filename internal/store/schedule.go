@@ -5,9 +5,19 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/stijnvandepol/daycast/internal/displays"
 )
+
+// splitDays reads the stored day list; empty means every day and is
+// returned as an empty list, never nil, so the API always sends a list.
+func splitDays(stored string) []string {
+	if stored == "" {
+		return []string{}
+	}
+	return strings.Split(stored, ",")
+}
 
 // ErrUnknownScheduleDashboard is returned when a slot of a display's
 // schedule refers to a dashboard that does not exist.
@@ -20,7 +30,7 @@ type querier interface {
 // schedules returns the slots of every display, or of one display when
 // displayID is set, in their stored order.
 func schedules(ctx context.Context, q querier, displayID string) (map[string][]displays.Slot, error) {
-	query := "SELECT display_id, starts, ends, dashboard_id FROM display_schedule"
+	query := "SELECT display_id, starts, ends, days, dashboard_id FROM display_schedule"
 	args := []any{}
 	if displayID != "" {
 		query += " WHERE display_id = ?"
@@ -35,11 +45,12 @@ func schedules(ctx context.Context, q querier, displayID string) (map[string][]d
 	defer rows.Close()
 	result := map[string][]displays.Slot{}
 	for rows.Next() {
-		var id string
+		var id, days string
 		var slot displays.Slot
-		if err := rows.Scan(&id, &slot.From, &slot.Until, &slot.DashboardID); err != nil {
+		if err := rows.Scan(&id, &slot.From, &slot.Until, &days, &slot.DashboardID); err != nil {
 			return nil, err
 		}
+		slot.Days = splitDays(days)
 		result[id] = append(result[id], slot)
 	}
 	return result, rows.Err()
@@ -58,8 +69,8 @@ func replaceSchedule(ctx context.Context, tx *sql.Tx, displayID string, slots []
 			return err
 		}
 		_, err := tx.ExecContext(ctx,
-			"INSERT INTO display_schedule (display_id, position, starts, ends, dashboard_id) VALUES (?, ?, ?, ?, ?)",
-			displayID, i, slot.From, slot.Until, slot.DashboardID)
+			"INSERT INTO display_schedule (display_id, position, starts, ends, days, dashboard_id) VALUES (?, ?, ?, ?, ?, ?)",
+			displayID, i, slot.From, slot.Until, strings.Join(slot.Days, ","), slot.DashboardID)
 		if err != nil {
 			return fmt.Errorf("store schedule: %w", err)
 		}

@@ -127,8 +127,8 @@ func TestScheduleSwitchesDashboardAndData(t *testing.T) {
 	views := map[string]View{"kitchen": {
 		Dashboard: Normalize(DefaultDashboard(false)),
 		Schedule: []ScheduledDashboard{
-			{Hours: schedule.Hours{From: "06:30", Until: "09:00"}, Dashboard: morning},
-			{Hours: schedule.Hours{From: "07:00", Until: "23:00"}, Dashboard: evening},
+			{Window: schedule.Window{Hours: schedule.Hours{From: "06:30", Until: "09:00"}}, Dashboard: morning},
+			{Window: schedule.Window{Hours: schedule.Hours{From: "07:00", Until: "23:00"}}, Dashboard: evening},
 		},
 	}}
 	data := map[string]datahub.Entry{"weather.current": {Value: []byte(`14`)}, "news.default": {Value: []byte(`[]`)}}

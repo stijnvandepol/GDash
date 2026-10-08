@@ -27,6 +27,12 @@ func TestValidate(t *testing.T) {
 		{"slot past midnight", func(d *Display) { d.Schedule = []Slot{{From: "22:00", Until: "01:00", DashboardID: "night"}} }, nil},
 		{"slot without times", func(d *Display) { d.Schedule = []Slot{{DashboardID: "morning"}} }, []string{"schedule[0]"}},
 		{"slot with one time", func(d *Display) { d.Schedule = []Slot{{From: "06:30", DashboardID: "morning"}} }, []string{"schedule[0]"}},
+		{"weekend slot", func(d *Display) {
+			d.Schedule = []Slot{{From: "08:00", Until: "12:00", Days: []string{"sat", "sun"}, DashboardID: "weekend"}}
+		}, nil},
+		{"slot with an unknown day", func(d *Display) {
+			d.Schedule = []Slot{{From: "08:00", Until: "12:00", Days: []string{"zaterdag"}, DashboardID: "weekend"}}
+		}, []string{"schedule[0]"}},
 		{"slot without dashboard", func(d *Display) { d.Schedule = []Slot{{From: "06:30", Until: "09:00"}} }, []string{"schedule[0]"}},
 		{"too many slots", func(d *Display) { d.Schedule = make([]Slot, MaxSlots+1) }, []string{"schedule"}},
 		{"everything wrong", func(d *Display) { d.ID = ""; d.Name = ""; d.CastDeviceID = "x" }, []string{"id", "name", "castDeviceId"}},

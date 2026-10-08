@@ -6,6 +6,7 @@ package schedule
 import (
 	"errors"
 	"fmt"
+	"slices"
 	"time"
 )
 
@@ -58,4 +59,58 @@ func minutes(hhmm string) (int, error) {
 		return 0, fmt.Errorf("invalid time %q", hhmm)
 	}
 	return t.Hour()*60 + t.Minute(), nil
+}
+
+// Weekdays are the day names a Window uses, Monday first.
+var Weekdays = []string{"mon", "tue", "wed", "thu", "fri", "sat", "sun"}
+
+// Window is daily hours on some days of the week. No days means every day.
+type Window struct {
+	Hours
+	Days []string
+}
+
+// Validate checks the days; the hours are checked by their own rules.
+func (w Window) Validate() error {
+	seen := map[string]bool{}
+	for _, d := range w.Days {
+		if !slices.Contains(Weekdays, d) || seen[d] {
+			return errors.New("use each of mon, tue, wed, thu, fri, sat and sun at most once")
+		}
+		seen[d] = true
+	}
+	return nil
+}
+
+// Contains reports whether t falls in the window. A window that wraps past
+// midnight belongs to the day it starts: Friday 22:00 to 01:00 includes
+// Saturday 00:30.
+func (w Window) Contains(t time.Time) bool {
+	if !w.Hours.Contains(t) {
+		return false
+	}
+	if len(w.Days) == 0 {
+		return true
+	}
+	started := t
+	if w.startedYesterday(t) {
+		started = t.AddDate(0, 0, -1)
+	}
+	return slices.Contains(w.Days, weekdayName(started.Weekday()))
+}
+
+// startedYesterday reports whether t lies in the part of a wrapping window
+// after midnight. It assumes Hours.Contains(t).
+func (w Window) startedYesterday(t time.Time) bool {
+	from, errFrom := minutes(w.From)
+	until, errUntil := minutes(w.Until)
+	if errFrom != nil || errUntil != nil || from <= until {
+		return false
+	}
+	return t.Hour()*60+t.Minute() < until
+}
+
+func weekdayName(d time.Weekday) string {
+	// time.Weekday counts from Sunday; Weekdays starts on Monday.
+	return Weekdays[(int(d)+6)%7]
 }

@@ -26,13 +26,28 @@
   // svelte-ignore state_referenced_locally
   let until = $state(display.activeUntil || '23:00');
   // svelte-ignore state_referenced_locally
-  let slots = $state<Slot[]>(display.schedule.map((s) => ({ ...s })));
+  let slots = $state<Slot[]>(display.schedule.map((s) => ({ ...s, days: [...s.days] })));
+
+  // The day names the server uses, with their labels; Monday first.
+  const DAYS = [
+    ['mon', 'Mo'],
+    ['tue', 'Tu'],
+    ['wed', 'We'],
+    ['thu', 'Th'],
+    ['fri', 'Fr'],
+    ['sat', 'Sa'],
+    ['sun', 'Su'],
+  ] as const;
+
+  function toggleDay(slot: Slot, day: string) {
+    slot.days = slot.days.includes(day) ? slot.days.filter((d) => d !== day) : [...slot.days, day];
+  }
   let error = $state('');
   let saving = $state(false);
 
   function add() {
     const other = dashboards.find((b) => b.id !== (display.dashboardId || 'default')) ?? dashboards[0];
-    slots.push({ from: '06:30', until: '09:00', dashboardId: other?.id ?? 'default' });
+    slots.push({ from: '06:30', until: '09:00', days: [], dashboardId: other?.id ?? 'default' });
   }
 
   async function save(event: SubmitEvent) {
@@ -74,7 +89,7 @@
   </div>
   <p class="muted">Outside its active hours the cast stops and the screen stays dark.</p>
   <p class="muted">
-    Show another dashboard during part of the day. Outside these times the display shows its own dashboard. When
+    Show another dashboard during part of the day, on every day or only on the days you pick. Outside these times the display shows its own dashboard. When
     slots overlap, the first one wins.
   </p>
   {#each slots as slot, i (i)}
@@ -87,6 +102,18 @@
         {/each}
       </select>
       <button type="button" class="link danger" onclick={() => slots.splice(i, 1)}>Remove</button>
+    </div>
+    <div class="days" role="group" aria-label="Days for time slot {i + 1}">
+      {#each DAYS as [day, label] (day)}
+        <button
+          type="button"
+          class="day"
+          class:on={slot.days.includes(day)}
+          aria-pressed={slot.days.includes(day)}
+          onclick={() => toggleDay(slot, day)}>{label}</button
+        >
+      {/each}
+      <span class="muted small">{slot.days.length === 0 ? 'every day' : ''}</span>
     </div>
   {:else}
     <p class="muted">No time slots: the display shows its own dashboard all day.</p>
@@ -109,5 +136,23 @@
   }
   .schedule p {
     margin: 0;
+  }
+  .days {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    align-items: center;
+  }
+  .day {
+    min-width: 2.6em;
+    padding: 4px 6px;
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--border);
+  }
+  .day.on {
+    background: var(--accent);
+    color: var(--accent-text);
+    border-color: var(--accent);
   }
 </style>

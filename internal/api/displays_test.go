@@ -48,7 +48,7 @@ func TestDisplaySchedule(t *testing.T) {
 
 	slot := `{"schedule":[{"from":"06:30","until":"09:00","dashboardId":"morning"}]}`
 	status, body = env.do(t, "PATCH", "/api/displays/keuken", slot)
-	if status != http.StatusOK || !strings.Contains(body, `"schedule":[{"from":"06:30","until":"09:00","dashboardId":"morning"}]`) {
+	if status != http.StatusOK || !strings.Contains(body, `"schedule":[{"from":"06:30","until":"09:00","days":[],"dashboardId":"morning"}]`) {
 		t.Fatalf("set schedule = %d %s", status, body)
 	}
 
@@ -64,6 +64,14 @@ func TestDisplaySchedule(t *testing.T) {
 		if status, body := env.do(t, "PATCH", "/api/displays/keuken", tt.body); status != http.StatusUnprocessableEntity || !strings.Contains(body, tt.field) {
 			t.Fatalf("PATCH %s = %d %s, want 422 with %s", tt.body, status, body, tt.field)
 		}
+	}
+
+	weekend := `{"schedule":[{"from":"08:00","until":"12:00","days":["sat","sun"],"dashboardId":"morning"}]}`
+	if status, body = env.do(t, "PATCH", "/api/displays/keuken", weekend); status != http.StatusOK || !strings.Contains(body, `"days":["sat","sun"]`) {
+		t.Fatalf("weekend slot = %d %s", status, body)
+	}
+	if status, body = env.do(t, "PATCH", "/api/displays/keuken", `{"schedule":[{"from":"08:00","until":"12:00","days":["zondag"],"dashboardId":"morning"}]}`); status != http.StatusUnprocessableEntity {
+		t.Fatalf("unknown day = %d %s", status, body)
 	}
 
 	if _, body = env.do(t, "PATCH", "/api/displays/keuken", `{"schedule":[]}`); !strings.Contains(body, `"schedule":[]`) {

@@ -33,8 +33,9 @@ Google TV you already own. No extra hardware, no subscription, no cloud.
   minutes, because Google TV covers a running cast with its screensaver after
   about 19 minutes. No Home Assistant, no HTTPS and no Cast developer account
   needed.
-- **Schedules**: show another dashboard during part of the day, such as the
-  calendar and the school run in the morning and a calm clock at night.
+- **Schedules**: show another dashboard during part of the day or week, such
+  as the calendar and the school run on weekday mornings and a calm clock at
+  night.
   Displays switch by themselves within a minute.
 - **Active hours and burn-in protection**: outside a display's hours Daycast
   stops casting and the page goes dark, so the TV can sleep. The dashboard

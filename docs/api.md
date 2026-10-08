@@ -115,8 +115,10 @@ always on. Outside them the page is dark, the snapshot has no data and the cast 
 device. `state` is `connecting`, `showing`, `standby` (the receiver runs but the TV sleeps), `other_app` (someone else
 is casting; Daycast waits), `resting` (outside active hours) or `unreachable`, with `problem` saying why.
 
-**slot:** `{"from": "06:30", "until": "09:00", "dashboardId": "morning"}`. During the slot the display shows that
-dashboard instead of its own; the first slot that contains the current time wins. Times follow the same rules as
+**slot:** `{"from": "06:30", "until": "09:00", "days": ["mon", "tue"], "dashboardId": "morning"}`. During the slot the
+display shows that dashboard instead of its own; the first slot that contains the current time wins. `days` holds
+`mon` to `sun`; empty means every day. A slot past midnight belongs to the day it starts, so Friday 22:00 to 01:00
+still applies at 00:30 on Saturday. Times follow the same rules as
 active hours, but both are required. Deleting a dashboard removes the slots that use it. Field errors are named
 `schedule[i]`, and `schedule` for a slot with an unknown dashboard.
 

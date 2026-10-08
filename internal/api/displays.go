@@ -59,10 +59,7 @@ func (s *Server) createDisplay(w http.ResponseWriter, r *http.Request) {
 	d := displays.Display{
 		ID: body.ID, Name: body.Name, CastDeviceID: body.CastDeviceID,
 		Hours:    schedule.Hours{From: body.ActiveFrom, Until: body.ActiveUntil},
-		Schedule: body.Schedule, CreatedAt: s.Now().UTC(),
-	}
-	if d.Schedule == nil {
-		d.Schedule = []displays.Slot{}
+		Schedule: displays.NormalizeSchedule(body.Schedule), CreatedAt: s.Now().UTC(),
 	}
 	if err := displays.Validate(d); err != nil {
 		writeValidationError(w, validation.Fields(err))
@@ -115,7 +112,7 @@ func (s *Server) updateDisplay(w http.ResponseWriter, r *http.Request) {
 		d.Until = *body.ActiveUntil
 	}
 	if body.Schedule != nil {
-		d.Schedule = *body.Schedule
+		d.Schedule = displays.NormalizeSchedule(*body.Schedule)
 	}
 	if err := displays.Validate(d); err != nil {
 		writeValidationError(w, validation.Fields(err))
