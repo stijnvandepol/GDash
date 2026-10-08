@@ -225,7 +225,9 @@ func (s *Service) ChangePassword(ctx context.Context, session, current, next, cl
 	if err != nil {
 		return err
 	}
-	s.limiter.Reset(keys...)
+	// Only the account's own count: the address may have failed logins
+	// for other usernames that must keep counting.
+	s.limiter.Reset("user|" + strings.ToLower(user.Username))
 	return s.store.ChangePassword(ctx, stored.ID, hash, token.Hash(session))
 }
 

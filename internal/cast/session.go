@@ -144,8 +144,8 @@ func (s *keeperSession) reconcile(ctx context.Context, status ReceiverStatus) er
 		}
 		app = launched
 	}
-	s.reportShowing()
 	if app.TransportID == s.transport {
+		s.reportShowing()
 		return nil
 	}
 	if err := s.client.Connect(app.TransportID); err != nil {
@@ -153,6 +153,7 @@ func (s *keeperSession) reconcile(ctx context.Context, status ReceiverStatus) er
 	}
 	s.app = app
 	s.transport = app.TransportID
+	s.reportShowing()
 	if k.LaunchMessage != nil {
 		msg, err := k.LaunchMessage(s.localIP)
 		if err != nil {
