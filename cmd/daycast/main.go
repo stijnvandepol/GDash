@@ -26,12 +26,11 @@ import (
 
 	"github.com/stijnvandepol/daycast/internal/api"
 	"github.com/stijnvandepol/daycast/internal/auth"
-	"github.com/stijnvandepol/daycast/internal/calendar"
 	"github.com/stijnvandepol/daycast/internal/cast"
-	"github.com/stijnvandepol/daycast/internal/datahub"
 	"github.com/stijnvandepol/daycast/internal/display"
-	"github.com/stijnvandepol/daycast/internal/news"
 	"github.com/stijnvandepol/daycast/internal/pairing"
+	"github.com/stijnvandepol/daycast/internal/secret"
+	"github.com/stijnvandepol/daycast/internal/settings"
 	"github.com/stijnvandepol/daycast/internal/store"
 	"github.com/stijnvandepol/daycast/internal/weather"
 	"github.com/stijnvandepol/daycast/web"
@@ -154,11 +153,11 @@ func serve(ctx context.Context, logger *slog.Logger) error {
 	if err != nil {
 		return err
 	}
-	// A fresh install starts with the default layout; later edits survive.
-	if err := db.EnsureDashboard(ctx, display.DefaultDashboard(len(cfg.calendars) > 0), time.Now()); err != nil {
+	settingsService, err := newSettingsService(ctx, cfg, db, logger)
+	if err != nil {
 		return err
 	}
-	snapshots, publisher, err := startData(ctx, cfg, db, logger)
+	snapshots, publisher, sources, err := startData(ctx, cfg, db, settingsService, logger)
 	if err != nil {
 		return err
 	}
@@ -178,6 +177,8 @@ func serve(ctx context.Context, logger *slog.Logger) error {
 		Auth:      authService,
 		Pairing:   pairings,
 		Store:     db,
+		Settings:  settingsService,
+		Places:    weather.Geocoder{BaseURL: weather.DefaultGeocodingURL, HTTP: &http.Client{Timeout: upstreamTimeout}},
 		Web:       frontend,
 		Discover:  cast.Discover,
 		DisplaysChanged: func() {
@@ -185,70 +186,43 @@ func serve(ctx context.Context, logger *slog.Logger) error {
 			castManager.Changed()
 		},
 		DashboardsChanged: func() { publisher.Refresh(ctx) },
-		Now:               time.Now,
-		Logger:            logger,
+		SettingsChanged: func() {
+			if err := sources.sync(ctx); err != nil {
+				logger.Error("could not apply the new settings; restart Daycast", "error", err)
+			}
+		},
+		SourceStatus: sources.hub.Entries,
+		Now:          time.Now,
+		Logger:       logger,
 	}).Handler()
 	return listen(ctx, cfg.addr, handler, logger)
 }
 
-// startData starts fetching dashboard data. The publisher turns every data
-// or configuration change into new display snapshots on the broadcaster.
-func startData(ctx context.Context, cfg config, db *store.Store, logger *slog.Logger) (*display.Broadcaster, *display.Publisher, error) {
-	cache, err := datahub.NewFileStore(filepath.Join(cfg.dataDir, "cache"))
+// newSettingsService opens the secret key and, on the first start, fills
+// the settings from the environment. A fresh install also gets the default
+// dashboard, with a calendar when one was configured.
+func newSettingsService(ctx context.Context, cfg config, db *store.Store, logger *slog.Logger) (*settings.Service, error) {
+	box, err := secret.LoadOrCreateKey(filepath.Join(cfg.dataDir, "secret.key"))
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	broadcaster := display.NewBroadcaster()
-	var hub *datahub.Hub
-	publisher := &display.Publisher{
-		Broadcaster: broadcaster,
-		Views:       db.DisplayViews,
-		Data:        func() map[string]datahub.Entry { return hub.Entries() },
-		Now:         time.Now,
-		Logger:      logger,
+	svc := &settings.Service{Store: db, Box: box, Now: time.Now, Logger: logger}
+	seeded, err := svc.SeedOnce(ctx, cfg.seed)
+	if err != nil {
+		return nil, err
 	}
-	hub = datahub.New(cache, logger, func() { publisher.Refresh(ctx) })
-	publisher.Refresh(ctx)
-	go republishEveryMinute(ctx, publisher)
-
-	weatherClient := weather.Client{BaseURL: weather.DefaultBaseURL, HTTP: &http.Client{Timeout: upstreamTimeout}}
-	newsClient := &news.Client{HTTP: &http.Client{Timeout: upstreamTimeout}}
-	sources := []datahub.Source{{
-		Key:      "weather.current",
-		Interval: weatherInterval,
-		Fetch:    func(ctx context.Context) (any, error) { return weatherClient.Current(ctx, cfg.location) },
-	}, {
-		Key:      "news.default",
-		Interval: newsInterval,
-		Fetch:    func(ctx context.Context) (any, error) { return newsClient.Fetch(ctx, cfg.newsFeed, newsItems) },
-	}}
-	if len(cfg.calendars) > 0 {
-		calendarClient := &calendar.Client{HTTP: &http.Client{Timeout: upstreamTimeout}, Location: time.Local, Now: time.Now}
-		sources = append(sources, datahub.Source{
-			Key:      "calendar.default",
-			Interval: calendarInterval,
-			Fetch: func(ctx context.Context) (any, error) {
-				return calendarClient.Upcoming(ctx, cfg.calendars, calendarDays)
-			},
-		})
+	if seeded {
+		logger.Info("data sources copied from the environment; from now on, change them under Settings in the web interface")
 	}
-	go hub.Run(ctx, sources)
-	return broadcaster, publisher, nil
-}
-
-// republishEveryMinute lets displays cross the edge of their active hours on
-// time, even when no data changes.
-func republishEveryMinute(ctx context.Context, publisher *display.Publisher) {
-	ticker := time.NewTicker(time.Minute)
-	defer ticker.Stop()
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case <-ticker.C:
-			publisher.Refresh(ctx)
-		}
+	current, err := svc.Get(ctx)
+	if err != nil {
+		return nil, err
 	}
+	// Later edits to the default dashboard survive restarts.
+	if err := db.EnsureDashboard(ctx, display.DefaultDashboard(len(current.Calendars) > 0), time.Now()); err != nil {
+		return nil, err
+	}
+	return svc, nil
 }
 
 // listen serves HTTP until ctx ends, then shuts down gracefully.

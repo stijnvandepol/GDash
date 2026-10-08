@@ -132,3 +132,47 @@ func TestFetchRejectsErrorsAndHugeFeeds(t *testing.T) {
 		t.Fatalf("Fetch of a huge feed: err = %v, want errFeedTooLarge", err)
 	}
 }
+
+func TestHeadlinesMergesFeedsNewestFirst(t *testing.T) {
+	feeds := map[string]string{
+		"/a": `<rss><channel><title>A</title>
+			<item><title>A old</title><pubDate>Thu, 08 Oct 2026 08:00:00 +0000</pubDate></item>
+			<item><title>A undated</title></item></channel></rss>`,
+		"/b": `<rss><channel><title>B</title>
+			<item><title>B new</title><pubDate>Thu, 08 Oct 2026 09:00:00 +0000</pubDate></item></channel></rss>`,
+	}
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		body, ok := feeds[r.URL.Path]
+		if !ok {
+			http.NotFound(w, r)
+			return
+		}
+		w.Write([]byte(body))
+	}))
+	defer srv.Close()
+	c := &Client{HTTP: &http.Client{Timeout: 5 * time.Second}}
+	ctx := context.Background()
+
+	single, err := c.Headlines(ctx, []Source{{Name: "Mine", URL: srv.URL + "/a"}}, 5)
+	if err != nil || single.Title != "A" || single.Items[0].Source != "" {
+		t.Fatalf("one feed = %+v, %v; want its own title and no source labels", single, err)
+	}
+
+	merged, err := c.Headlines(ctx, []Source{{Name: "Feed A", URL: srv.URL + "/a"}, {Name: "Feed B", URL: srv.URL + "/b"}}, 2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if merged.Title != "News" || len(merged.Items) != 2 {
+		t.Fatalf("merged = %+v", merged)
+	}
+	if merged.Items[0].Title != "B new" || merged.Items[0].Source != "Feed B" || merged.Items[1].Title != "A old" {
+		t.Fatalf("order = %q (%s), %q; want newest first with its feed name", merged.Items[0].Title, merged.Items[0].Source, merged.Items[1].Title)
+	}
+
+	if _, err := c.Headlines(ctx, []Source{{Name: "A", URL: srv.URL + "/a"}, {Name: "Gone", URL: srv.URL + "/gone"}}, 5); err == nil {
+		t.Fatal("Headlines succeeded with a failing feed")
+	}
+	if _, cached := c.cached(srv.URL + "/b"); cached {
+		t.Fatal("a removed feed is still cached")
+	}
+}

@@ -81,3 +81,15 @@ func (s *FileStore) Save(key string, entry Entry) error {
 	}
 	return nil
 }
+
+// Delete removes the stored entry for key; a missing entry is fine.
+func (s *FileStore) Delete(key string) error {
+	path, err := s.path(key)
+	if err != nil {
+		return err
+	}
+	if err := os.Remove(path); err != nil && !errors.Is(err, fs.ErrNotExist) {
+		return fmt.Errorf("delete %s: %w", key, err)
+	}
+	return nil
+}

@@ -88,7 +88,7 @@ func TestRecoveryClearsFailing(t *testing.T) {
 	}
 }
 
-func TestRunRestoresPersistedValueBeforeFirstFetch(t *testing.T) {
+func TestConfigureRestoresPersistedValueBeforeFirstFetch(t *testing.T) {
 	h, store, _ := newTestHub(t)
 	saved := Entry{Value: []byte(`12.5`), FetchedAt: fixedNow.Add(-time.Hour), StaleAfter: fixedNow.Add(-44 * time.Minute)}
 	if err := store.Save("weather.current", saved); err != nil {
@@ -102,15 +102,105 @@ func TestRunRestoresPersistedValueBeforeFirstFetch(t *testing.T) {
 		<-ctx.Done()
 		return nil, ctx.Err()
 	})
-	done := make(chan struct{})
-	go func() { h.Run(ctx, []Source{src}); close(done) }()
+	h.Configure(ctx, []Source{src})
 
 	<-fetched
 	if got := h.Entries()["weather.current"]; string(got.Value) != "12.5" {
 		t.Fatalf("entry during first fetch = %+v, want restored value", got)
 	}
 	cancel()
-	<-done
+}
+
+// counting returns a source that counts its fetches and returns value.
+func counting(key, version string, value any, fetches *atomic.Int32) Source {
+	return Source{Key: key, Version: version, Interval: time.Hour, Fetch: func(context.Context) (any, error) {
+		fetches.Add(1)
+		return value, nil
+	}}
+}
+
+func waitFor(t *testing.T, what string, cond func() bool) {
+	t.Helper()
+	deadline := time.Now().Add(2 * time.Second)
+	for !cond() {
+		if time.Now().After(deadline) {
+			t.Fatalf("timed out waiting for %s", what)
+		}
+		time.Sleep(5 * time.Millisecond)
+	}
+}
+
+func TestConfigureRestartsOnlyChangedSources(t *testing.T) {
+	h, _, _ := newTestHub(t)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	var weatherFetches, newsFetches atomic.Int32
+	h.Configure(ctx, []Source{
+		counting("weather.current", "oss", 14, &weatherFetches),
+		counting("news.default", "nos", "v1", &newsFetches),
+	})
+	waitFor(t, "first fetches", func() bool { return weatherFetches.Load() == 1 && newsFetches.Load() == 1 })
+
+	// Same weather version, new news version: only news fetches again.
+	h.Configure(ctx, []Source{
+		counting("weather.current", "oss", 14, &weatherFetches),
+		counting("news.default", "nos+tweakers", "v2", &newsFetches),
+	})
+	waitFor(t, "news refetch", func() bool { return string(h.Entries()["news.default"].Value) == `"v2"` })
+	if n := weatherFetches.Load(); n != 1 {
+		t.Fatalf("weather fetched %d times, want once: its configuration did not change", n)
+	}
+}
+
+func TestConfigureDropsRemovedSources(t *testing.T) {
+	h, store, changes := newTestHub(t)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	var fetches atomic.Int32
+	h.Configure(ctx, []Source{counting("calendar.default", "a", []string{"dentist"}, &fetches)})
+	waitFor(t, "calendar entry", func() bool { _, ok := h.Entries()["calendar.default"]; return ok })
+	before := changes.Load()
+
+	h.Configure(ctx, nil)
+	if _, ok := h.Entries()["calendar.default"]; ok {
+		t.Fatal("a removed source still has an entry")
+	}
+	if _, ok, _ := store.Load("calendar.default"); ok {
+		t.Fatal("a removed source is still cached on disk")
+	}
+	if changes.Load() == before {
+		t.Fatal("removing a source did not notify the displays")
+	}
+}
+
+func TestConfigureAddsEmptyEntryUntilFirstFetch(t *testing.T) {
+	h, _, changes := newTestHub(t)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	release := make(chan struct{})
+	h.Configure(ctx, []Source{{Key: "weather.current", Interval: time.Hour, Fetch: func(context.Context) (any, error) {
+		<-release
+		return 14, nil
+	}}})
+	got, ok := h.Entries()["weather.current"]
+	if !ok || got.Value != nil || changes.Load() != 1 {
+		t.Fatalf("entry before the first fetch = %+v (present %v, changes %d); want an empty entry and a notification", got, ok, changes.Load())
+	}
+	close(release)
+	waitFor(t, "first value", func() bool { return string(h.Entries()["weather.current"].Value) == "14" })
+}
+
+func TestStoppedLoopCannotOverwriteEntry(t *testing.T) {
+	h, _, _ := newTestHub(t)
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	src := source(func(context.Context) (any, error) { return "late result", nil })
+	if err := h.refresh(ctx, src); err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := h.Entries()["weather.current"]; ok {
+		t.Fatal("a refresh from a stopped loop was stored")
+	}
 }
 
 func TestFileStoreRejectsUnsafeKey(t *testing.T) {

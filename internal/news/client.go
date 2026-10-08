@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"slices"
 	"sync"
 )
 
@@ -34,6 +35,54 @@ type cachedFeed struct {
 	etag         string
 	lastModified string
 	feed         Feed
+}
+
+// Source is a feed as the admin added it.
+type Source struct {
+	Name string
+	URL  string
+}
+
+// mergedTitle heads a list with headlines from more than one feed.
+const mergedTitle = "News"
+
+// Headlines returns the newest maxItems headlines of all sources. One
+// source keeps its own title; several are merged newest first, each item
+// naming its feed. Any failing feed fails the whole list, so the dashboard
+// keeps the last complete one instead of quietly dropping a feed.
+func (c *Client) Headlines(ctx context.Context, sources []Source, maxItems int) (Feed, error) {
+	c.forgetExcept(sources)
+	if len(sources) == 1 {
+		return c.Fetch(ctx, sources[0].URL, maxItems)
+	}
+	merged := Feed{Title: mergedTitle, Items: []Item{}}
+	for i, src := range sources {
+		feed, err := c.Fetch(ctx, src.URL, maxItems)
+		if err != nil {
+			return Feed{}, fmt.Errorf("feed %d: %w", i+1, err)
+		}
+		for _, item := range feed.Items {
+			item.Source = src.Name
+			merged.Items = append(merged.Items, item)
+		}
+	}
+	// Stable, so items without a date keep their feed's order at the end.
+	slices.SortStableFunc(merged.Items, func(a, b Item) int { return b.Published.Compare(a.Published) })
+	if len(merged.Items) > maxItems {
+		merged.Items = merged.Items[:maxItems]
+	}
+	return merged, nil
+}
+
+// forgetExcept drops the conditional-request state of removed feeds.
+func (c *Client) forgetExcept(sources []Source) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	for url := range c.cache {
+		if !slices.ContainsFunc(sources, func(s Source) bool { return s.URL == url }) {
+			delete(c.cache, url)
+		}
+	}
 }
 
 // Fetch returns the newest maxItems headlines of the feed at url.

@@ -16,7 +16,9 @@ import (
 
 	"github.com/stijnvandepol/daycast/internal/auth"
 	"github.com/stijnvandepol/daycast/internal/cast"
+	"github.com/stijnvandepol/daycast/internal/datahub"
 	"github.com/stijnvandepol/daycast/internal/pairing"
+	"github.com/stijnvandepol/daycast/internal/settings"
 	"github.com/stijnvandepol/daycast/internal/store"
 	"github.com/stijnvandepol/daycast/internal/validation"
 )
@@ -52,6 +54,13 @@ type Server struct {
 	// DashboardsChanged is called after a dashboard is created, changed or
 	// deleted, so screens showing it update at once.
 	DashboardsChanged func()
+	Settings          *settings.Service
+	Places            PlaceSearcher
+	// SettingsChanged is called after a data source setting changes, so
+	// the data hub fetches what is configured now.
+	SettingsChanged func()
+	// SourceStatus returns the data hub's entries, for the Settings page.
+	SourceStatus func() map[string]datahub.Entry
 	// PingInterval is how often an open display stream sends a keep-alive
 	// and re-checks that it may still show the display. Zero means 20
 	// seconds.
@@ -88,6 +97,15 @@ func (s *Server) Handler() http.Handler {
 	mux.Handle("GET /api/dashboards/{dashboard}", s.requireUser(s.getDashboard))
 	mux.Handle("PUT /api/dashboards/{dashboard}", s.requireUser(s.updateDashboard))
 	mux.Handle("DELETE /api/dashboards/{dashboard}", s.requireUser(s.deleteDashboard))
+
+	mux.Handle("GET /api/settings", s.requireUser(s.getSettings))
+	mux.Handle("PUT /api/settings/location", s.requireUser(s.putLocation))
+	mux.Handle("DELETE /api/settings/location", s.requireUser(s.deleteLocation))
+	mux.Handle("POST /api/news-feeds", s.requireUser(s.postNewsFeed))
+	mux.Handle("DELETE /api/news-feeds/{id}", s.requireUser(s.deleteNewsFeed))
+	mux.Handle("POST /api/calendars", s.requireUser(s.postCalendar))
+	mux.Handle("DELETE /api/calendars/{id}", s.requireUser(s.deleteCalendar))
+	mux.Handle("GET /api/places", s.requireUser(s.getPlaces))
 
 	mux.Handle("GET /api/cast-devices", s.requireUser(s.castDevices))
 	mux.Handle("GET /api/displays", s.requireUser(s.listDisplays))

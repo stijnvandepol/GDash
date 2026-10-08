@@ -41,6 +41,14 @@ come from another site (cross-site request forgery protection).
 | `GET /api/dashboards/{id}` | admin | `200` dashboard | `401`, `404` |
 | `PUT /api/dashboards/{id}` `{name, theme?, widgets}` | admin | `200` dashboard; screens update at once | `401`, `404`, `422` |
 | `DELETE /api/dashboards/{id}` | admin | `204`; its displays fall back to the default | `401`, `404`, `409` for `default` |
+| `GET /api/settings` | admin | `200 {"settings": settings, "status": {key: {updatedAt?, failing}}}` | `401` |
+| `PUT /api/settings/location` `{name, latitude, longitude}` | admin | `200` location | `401`, `422` |
+| `DELETE /api/settings/location` | admin | `204`; weather widgets show that no location is set | `401` |
+| `GET /api/places?name=Oss` | admin | `200 {"places": [place]}` | `401`, `422`, `502 upstream_unavailable` |
+| `POST /api/news-feeds` `{name, url}` | admin | `201` news feed | `401`, `409` at 5 feeds, `422` |
+| `DELETE /api/news-feeds/{id}` | admin | `204` | `401`, `404` |
+| `POST /api/calendars` `{name, url}` | admin | `201` calendar, without its address | `401`, `409` at 10 calendars, `422` |
+| `DELETE /api/calendars/{id}` | admin | `204` | `401`, `404` |
 | `GET /api/cast-devices` | admin | `200 {"devices": [device]}` | `401`, `500 discovery_failed` |
 | `GET /api/displays/{id}/events` | paired screen or admin | `text/event-stream`, `snapshot` events | `401 not_paired`, `404` for an invalid id |
 | `POST /api/pairing-requests` `{displayId}` | no | `201 {code, pollToken, expiresAt}` | `404`, `429 rate_limited` |
@@ -65,6 +73,30 @@ replaced on every launch.
 Open streams re-check their access every 20 seconds, so unpairing stops a
 screen within that time. Deleting a display unpairs all its screens.
 
+## Settings
+
+The weather location, news feeds and calendars are managed here instead of
+in environment variables. On the very first start Daycast copies
+`DAYCAST_LATITUDE`, `DAYCAST_LONGITUDE`, `DAYCAST_NEWS_FEED` (default: NOS)
+and `DAYCAST_CALENDAR_URLS` into the settings; later starts ignore them.
+
+A calendar's iCal address gives read access to everyone who has it. It is
+stored encrypted with `secret.key` in the data directory and never returned
+by the API: the web interface only sees its name and host. A calendar whose
+address cannot be decrypted (the database was moved without its key) is
+reported with `"unreadable": true` and skipped until it is added again.
+
+Feeds and calendars may point at the LAN or at localhost, so a Nextcloud or
+Radicale at home works. Link-local addresses (169.254.0.0/16, fe80::/10),
+where cloud hosts serve instance metadata, are refused when connecting.
+
+Changes apply at once: a changed source is fetched again, a removed one
+disappears from the displays. `status` has an entry per configured source by
+data key (`weather.current`, `news.default`, `calendar.default`).
+
+Place search sends the typed name to Open-Meteo's geocoding service, which
+uses GeoNames data; the coordinates can also be entered by hand.
+
 ## Objects
 
 **user:** `{"id": 1, "username": "stijn"}`
@@ -88,6 +120,12 @@ every widget's `source` are set by the server; values sent by a client are ignor
 **widget:** `{"id": "news", "type": "news", "x": 10, "y": 9, "w": 14, "h": 5, "source": "news.default", "settings": {"maxItems": 3}}`.
 Types are `clock`, `weather`, `news` and `calendar`. A layout is rejected with field errors such as `widgets[2]` when a
 widget is outside the grid, smaller than its type allows, overlaps another, or has settings its type does not take.
+
+**settings:** `{"location": {"name": "Oss", "latitude": 51.77, "longitude": 5.52} | null, "newsFeeds": [{"id": 1, "name": "NOS", "url": "https://…"}], "calendars": [{"id": 2, "name": "Family", "host": "calendar.google.com", "unreadable": false}]}`.
+Names are 1 to 60 characters; addresses use http or https, and calendars also webcal.
+Several news feeds are merged into one list, newest first, each headline with `source` set to its feed's name.
+
+**place:** `{"name": "Oss", "region": "North Brabant, Netherlands", "latitude": 51.765, "longitude": 5.518}`
 
 **device:** `{"id": "e542…", "name": "tv woonkamer", "model": "Chromecast HD", "addr": "192.168.1.160:8009", "hasScreen": true}`
 

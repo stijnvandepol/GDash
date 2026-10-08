@@ -12,6 +12,7 @@ import (
 	"net/http/httptest"
 	"path/filepath"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"testing"
 	"testing/fstest"
@@ -19,8 +20,12 @@ import (
 
 	"github.com/stijnvandepol/daycast/internal/auth"
 	"github.com/stijnvandepol/daycast/internal/cast"
+	"github.com/stijnvandepol/daycast/internal/datahub"
 	"github.com/stijnvandepol/daycast/internal/pairing"
+	"github.com/stijnvandepol/daycast/internal/secret"
+	"github.com/stijnvandepol/daycast/internal/settings"
 	"github.com/stijnvandepol/daycast/internal/store"
+	"github.com/stijnvandepol/daycast/internal/weather"
 )
 
 const testSetupToken = "test-setup-token"
@@ -34,12 +39,42 @@ func (f fixedSubscriber) Subscribe(ctx context.Context, _ string) <-chan []byte 
 	return ch
 }
 
+// fakeSources stands in for the place search and the data hub. Tests change
+// its answers while the server runs, hence the lock.
+type fakeSources struct {
+	mu      sync.Mutex
+	places  []weather.Place
+	err     error
+	entries map[string]datahub.Entry
+}
+
+func (f *fakeSources) Search(context.Context, string) ([]weather.Place, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return f.places, f.err
+}
+
+func (f *fakeSources) Entries() map[string]datahub.Entry {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return f.entries
+}
+
+func (f *fakeSources) set(places []weather.Place, err error, entries map[string]datahub.Entry) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.places, f.err, f.entries = places, err, entries
+}
+
 type testEnv struct {
 	srv     *httptest.Server
 	client  *http.Client
 	changes *atomic.Int32
-	pairing *pairing.Service
-	store   *store.Store
+	// settingsChanges counts SettingsChanged calls.
+	settingsChanges *atomic.Int32
+	pairing         *pairing.Service
+	store           *store.Store
+	sources         *fakeSources
 }
 
 func newTestEnv(t *testing.T, discover func(context.Context) ([]cast.Device, error)) *testEnv {
@@ -53,8 +88,15 @@ func newTestEnv(t *testing.T, discover func(context.Context) ([]cast.Device, err
 	if err != nil {
 		t.Fatal(err)
 	}
-	changes := &atomic.Int32{}
+	changes, settingsChanges := &atomic.Int32{}, &atomic.Int32{}
 	pairingService := pairing.New(st)
+	box, err := secret.LoadOrCreateKey(filepath.Join(t.TempDir(), "secret.key"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
+	now := func() time.Time { return time.Date(2026, 10, 8, 17, 0, 0, 0, time.UTC) }
+	sources := &fakeSources{}
 	s := &Server{
 		Snapshots: fixedSubscriber(`{"type":"snapshot","version":1}`),
 		Auth:      authService,
@@ -69,14 +111,21 @@ func newTestEnv(t *testing.T, discover func(context.Context) ([]cast.Device, err
 		Discover:          discover,
 		DisplaysChanged:   func() { changes.Add(1) },
 		DashboardsChanged: func() { changes.Add(1) },
+		Settings:          &settings.Service{Store: st, Box: box, Now: now, Logger: logger},
+		Places:            sources,
+		SettingsChanged:   func() { settingsChanges.Add(1) },
+		SourceStatus:      sources.Entries,
 		PingInterval:      50 * time.Millisecond,
-		Now:               func() time.Time { return time.Date(2026, 10, 8, 17, 0, 0, 0, time.UTC) },
-		Logger:            slog.New(slog.NewTextHandler(io.Discard, nil)),
+		Now:               now,
+		Logger:            logger,
 	}
 	srv := httptest.NewServer(s.Handler())
 	t.Cleanup(srv.Close)
 	jar, _ := cookiejar.New(nil)
-	return &testEnv{srv: srv, client: &http.Client{Jar: jar}, changes: changes, pairing: pairingService, store: st}
+	return &testEnv{
+		srv: srv, client: &http.Client{Jar: jar}, changes: changes, settingsChanges: settingsChanges,
+		pairing: pairingService, store: st, sources: sources,
+	}
 }
 
 // do sends a request with a JSON body and returns status and body.

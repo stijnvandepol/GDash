@@ -17,14 +17,28 @@ func TestLoadConfigDefaults(t *testing.T) {
 	if cfg.addr != ":8420" || cfg.dataDir != "data" || cfg.castAppID != "" {
 		t.Fatalf("cfg = %+v", cfg)
 	}
-	if len(cfg.calendars) != 0 {
-		t.Fatalf("calendars = %+v, want none by default", cfg.calendars)
+	if len(cfg.seed.Calendars) != 0 {
+		t.Fatalf("calendars = %+v, want none by default", cfg.seed.Calendars)
 	}
-	if cfg.newsFeed != defaultNewsFeed {
-		t.Fatalf("newsFeed = %q, want the default", cfg.newsFeed)
+	if len(cfg.seed.NewsFeeds) != 1 || cfg.seed.NewsFeeds[0].URL != defaultNewsFeed || cfg.seed.NewsFeeds[0].Name != "feeds.nos.nl" {
+		t.Fatalf("news feeds = %+v, want the default", cfg.seed.NewsFeeds)
 	}
-	if cfg.location.Latitude != 51.65 || cfg.location.Longitude != 5.94 {
-		t.Fatalf("location = %+v, want rounded to 2 decimals", cfg.location)
+	if loc := cfg.seed.Location; loc == nil || loc.Latitude != 51.65 || loc.Longitude != 5.94 {
+		t.Fatalf("location = %+v, want rounded to 2 decimals", loc)
+	}
+}
+
+func TestLoadConfigWithoutLocation(t *testing.T) {
+	cfg, err := loadConfig(env(map[string]string{}))
+	if err != nil || cfg.seed.Location != nil {
+		t.Fatalf("loadConfig = %+v, %v; want no location and no error", cfg.seed.Location, err)
+	}
+}
+
+func TestLoadConfigCalendarsAreSeeded(t *testing.T) {
+	cfg, err := loadConfig(env(map[string]string{"DAYCAST_CALENDAR_URLS": "webcal://example.org/a.ics, https://example.org/b.ics"}))
+	if err != nil || len(cfg.seed.Calendars) != 2 || cfg.seed.Calendars[0].URL != "https://example.org/a.ics" {
+		t.Fatalf("calendars = %+v, %v", cfg.seed.Calendars, err)
 	}
 }
 
@@ -55,7 +69,7 @@ func TestLoadConfigErrors(t *testing.T) {
 		env     map[string]string
 		wantErr string
 	}{
-		{"missing location", map[string]string{}, "DAYCAST_LATITUDE"},
+		{"half a location", map[string]string{"DAYCAST_LATITUDE": "51"}, "DAYCAST_LONGITUDE"},
 		{"latitude not a number", map[string]string{"DAYCAST_LATITUDE": "noord", "DAYCAST_LONGITUDE": "5"}, "not a number"},
 		{"latitude out of range", map[string]string{"DAYCAST_LATITUDE": "95", "DAYCAST_LONGITUDE": "5"}, "invalid location"},
 		{"news feed not http", map[string]string{"DAYCAST_LATITUDE": "51", "DAYCAST_LONGITUDE": "5", "DAYCAST_NEWS_FEED": "file:///etc/passwd"}, "DAYCAST_NEWS_FEED"},
