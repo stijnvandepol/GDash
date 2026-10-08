@@ -114,12 +114,11 @@ func (s *Server) postSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	token, user, err := s.Auth.Login(r.Context(), auth.Credentials{Username: body.Username, Password: body.Password}, clientIP(r))
-	switch {
-	case errors.Is(err, auth.ErrInvalidCredentials):
-		// No username: people sometimes type their password there.
+	// No username: people sometimes type their password there. A login
+	// refused by the rate limit is not recorded: the failures before it
+	// are, and recording each refusal would let anyone flood the log.
+	if errors.Is(err, auth.ErrInvalidCredentials) {
 		s.audit(r, "", auditLoginFailed, "wrong username or password")
-	case errors.Is(err, auth.ErrRateLimited):
-		s.audit(r, "", auditLoginFailed, "blocked after too many attempts")
 	}
 	if !s.writeAuthError(w, "login", err) {
 		return

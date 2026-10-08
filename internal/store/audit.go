@@ -9,6 +9,10 @@ import (
 const (
 	auditRetention = 90 * 24 * time.Hour
 	maxAuditEvents = 5000
+	// maxAnonymousEvents caps events without a logged-in user, such as
+	// failed logins, so requests from anyone on the network can never push
+	// the events of admins out of the log.
+	maxAnonymousEvents = 1000
 	// MaxAuditPage bounds one read of the audit log.
 	MaxAuditPage = 200
 )
@@ -24,8 +28,9 @@ type AuditEvent struct {
 	IP     string `json:"ip"`
 }
 
-// AddAuditEvent records e and drops events older than 90 days or beyond the
-// newest 5000, so the log stays bounded without a separate job.
+// AddAuditEvent records e and drops events older than 90 days, anonymous
+// events beyond the newest 1000, and any beyond the newest 5000, so the log
+// stays bounded without a separate job.
 func (s *Store) AddAuditEvent(ctx context.Context, e AuditEvent) error {
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -38,6 +43,11 @@ func (s *Store) AddAuditEvent(ctx context.Context, e AuditEvent) error {
 	}
 	if _, err := tx.ExecContext(ctx, "DELETE FROM audit_log WHERE at < ?", formatTime(e.At.Add(-auditRetention))); err != nil {
 		return fmt.Errorf("expire audit events: %w", err)
+	}
+	if _, err := tx.ExecContext(ctx,
+		"DELETE FROM audit_log WHERE actor = '' AND id <= (SELECT id FROM audit_log WHERE actor = '' ORDER BY id DESC LIMIT 1 OFFSET ?)",
+		maxAnonymousEvents); err != nil {
+		return fmt.Errorf("trim anonymous audit events: %w", err)
 	}
 	if _, err := tx.ExecContext(ctx,
 		"DELETE FROM audit_log WHERE id <= (SELECT id FROM audit_log ORDER BY id DESC LIMIT 1 OFFSET ?)", maxAuditEvents); err != nil {

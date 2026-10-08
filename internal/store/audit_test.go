@@ -38,12 +38,33 @@ func TestAuditLogKeepsAtMostMaxEvents(t *testing.T) {
 	ctx := context.Background()
 	s, _ := openTestStore(t)
 	for i := range maxAuditEvents + 3 {
-		if err := s.AddAuditEvent(ctx, AuditEvent{At: created.Add(time.Duration(i) * time.Second), Action: "login"}); err != nil {
+		if err := s.AddAuditEvent(ctx, AuditEvent{At: created.Add(time.Duration(i) * time.Second), Actor: "stijn", Action: "login"}); err != nil {
 			t.Fatal(err)
 		}
 	}
 	var n int
 	if err := s.db.QueryRowContext(ctx, "SELECT count(*) FROM audit_log").Scan(&n); err != nil || n != maxAuditEvents {
 		t.Fatalf("events kept = %d, %v; want %d", n, err, maxAuditEvents)
+	}
+}
+
+func TestAnonymousEventsCannotPushOutAdminEvents(t *testing.T) {
+	ctx := context.Background()
+	s, _ := openTestStore(t)
+	admin := AuditEvent{At: created, Actor: "stijn", Action: "display_updated", Detail: "keuken"}
+	if err := s.AddAuditEvent(ctx, admin); err != nil {
+		t.Fatal(err)
+	}
+	for i := range maxAuditEvents + 10 {
+		e := AuditEvent{At: created.Add(time.Duration(i+1) * time.Second), Action: "login_failed"}
+		if err := s.AddAuditEvent(ctx, e); err != nil {
+			t.Fatal(err)
+		}
+	}
+	var admins, anonymous int
+	s.db.QueryRowContext(ctx, "SELECT count(*) FROM audit_log WHERE actor = 'stijn'").Scan(&admins)
+	s.db.QueryRowContext(ctx, "SELECT count(*) FROM audit_log WHERE actor = ''").Scan(&anonymous)
+	if admins != 1 || anonymous != maxAnonymousEvents {
+		t.Fatalf("admin events = %d, anonymous = %d; want the admin event kept and %d anonymous", admins, anonymous, maxAnonymousEvents)
 	}
 }
