@@ -33,6 +33,7 @@ come from another site (cross-site request forgery protection).
 | `GET /api/me` | admin | `200` user | `401` |
 | `PUT /api/me/password` `{currentPassword, newPassword}` | admin | `204`; every other session of the account ends | `401`, `422` (wrong current or too short new password), `429 rate_limited` |
 | `GET /api/system` | admin | `200 {"version"}` | `401` |
+| `GET /api/audit-events?limit=100` | admin | `200 {"events": [{at, actor, action, detail, ip}]}`, newest first, at most 200 | `400`, `401` |
 | `GET /api/displays` | admin | `200 {"displays": [display + pairedScreens + cast?]}` | `401` |
 | `POST /api/displays` `{id, name, castDeviceId, activeFrom?, activeUntil?, schedule?}` | admin | `201` display | `401`, `409 conflict`, `422` |
 | `PATCH /api/displays/{id}` `{name?, castDeviceId?, dashboardId?, activeFrom?, activeUntil?, schedule?}` | admin | `200` display | `401`, `404 not_found`, `422` (also for an unknown dashboard) |

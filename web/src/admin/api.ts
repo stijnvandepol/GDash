@@ -1,5 +1,6 @@
 // Small client for the Daycast API. Every error response has the shape
 // {"error": {"code", "message", "fields"?}}, see internal/api/server.go.
+import type { AuditEvent } from './audit';
 
 export interface FieldError {
   field: string;
@@ -177,6 +178,8 @@ export const api = {
   logout: () => request<void>('DELETE', '/api/sessions/current'),
   me: () => request<User>('GET', '/api/me'),
   system: () => request<{ version: string }>('GET', '/api/system'),
+  auditEvents: (limit: number) =>
+    request<{ events: AuditEvent[] }>('GET', `/api/audit-events?limit=${limit}`).then((r) => r.events),
   changePassword: (currentPassword: string, newPassword: string) =>
     request<void>('PUT', '/api/me/password', { currentPassword, newPassword }),
   displays: () => request<{ displays: Display[] }>('GET', '/api/displays').then((r) => r.displays),

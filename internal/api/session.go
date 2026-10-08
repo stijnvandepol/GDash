@@ -97,6 +97,7 @@ func (s *Server) postSetup(w http.ResponseWriter, r *http.Request) {
 	if !s.writeAuthError(w, "setup", err) {
 		return
 	}
+	s.audit(r, user.Username, auditAccountCreated, "")
 	setSessionCookie(w, r, token)
 	writeJSON(w, http.StatusCreated, user)
 }
@@ -113,9 +114,17 @@ func (s *Server) postSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	token, user, err := s.Auth.Login(r.Context(), auth.Credentials{Username: body.Username, Password: body.Password}, clientIP(r))
+	switch {
+	case errors.Is(err, auth.ErrInvalidCredentials):
+		// No username: people sometimes type their password there.
+		s.audit(r, "", auditLoginFailed, "wrong username or password")
+	case errors.Is(err, auth.ErrRateLimited):
+		s.audit(r, "", auditLoginFailed, "blocked after too many attempts")
+	}
 	if !s.writeAuthError(w, "login", err) {
 		return
 	}
+	s.audit(r, user.Username, auditLogin, "")
 	setSessionCookie(w, r, token)
 	writeJSON(w, http.StatusCreated, user)
 }
@@ -129,6 +138,7 @@ func (s *Server) deleteSession(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+	s.auditUser(r, auditLogout, "")
 	clearSessionCookie(w, r)
 	w.WriteHeader(http.StatusNoContent)
 }
@@ -157,10 +167,12 @@ func (s *Server) putPassword(w http.ResponseWriter, r *http.Request) {
 	err = s.Auth.ChangePassword(r.Context(), cookie.Value, body.CurrentPassword, body.NewPassword, clientIP(r))
 	switch {
 	case errors.Is(err, auth.ErrWrongPassword):
+		s.auditUser(r, auditPasswordWrong, "wrong current password")
 		writeValidationError(w, []validation.FieldError{{Field: "currentPassword", Message: "this is not your current password"}})
 	case errors.Is(err, auth.ErrNoSession):
 		writeError(w, http.StatusUnauthorized, "not_logged_in", "Your session has ended. Log in again.")
 	case s.writeAuthError(w, "change password", err):
+		s.auditUser(r, auditPasswordChanged, "other sessions logged out")
 		w.WriteHeader(http.StatusNoContent)
 	}
 }

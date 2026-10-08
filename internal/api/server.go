@@ -91,6 +91,7 @@ func (s *Server) Handler() http.Handler {
 	mux.Handle("GET /api/me", s.requireUser(s.getMe))
 	mux.Handle("PUT /api/me/password", s.requireUser(s.putPassword))
 	mux.Handle("GET /api/system", s.requireUser(s.getSystem))
+	mux.Handle("GET /api/audit-events", s.requireUser(s.getAuditEvents))
 
 	mux.HandleFunc("POST /api/pairing-requests", s.postPairingRequest)
 	mux.HandleFunc("POST /api/display-sessions", s.postDisplaySession)

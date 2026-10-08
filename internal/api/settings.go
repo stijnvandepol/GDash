@@ -54,6 +54,7 @@ func (s *Server) putLocation(w http.ResponseWriter, r *http.Request) {
 		s.writeSettingsError(w, "set location", err)
 		return
 	}
+	s.auditUser(r, auditLocationChanged, loc.Name)
 	s.SettingsChanged()
 	writeJSON(w, http.StatusOK, loc)
 }
@@ -71,6 +72,7 @@ func (s *Server) putLanguage(w http.ResponseWriter, r *http.Request) {
 		s.writeSettingsError(w, "set language", err)
 		return
 	}
+	s.auditUser(r, auditLanguageChanged, body.Language)
 	s.SettingsChanged()
 	writeJSON(w, http.StatusOK, body)
 }
@@ -81,6 +83,7 @@ func (s *Server) deleteLocation(w http.ResponseWriter, r *http.Request) {
 		s.internalError(w, "clear location", err)
 		return
 	}
+	s.auditUser(r, auditLocationCleared, "")
 	s.SettingsChanged()
 	w.WriteHeader(http.StatusNoContent)
 }
@@ -101,6 +104,7 @@ func (s *Server) postNewsFeed(w http.ResponseWriter, r *http.Request) {
 		s.writeSettingsError(w, "add news feed", err)
 		return
 	}
+	s.auditUser(r, auditNewsFeedAdded, feed.Name)
 	s.SettingsChanged()
 	writeJSON(w, http.StatusCreated, feed)
 }
@@ -117,21 +121,23 @@ func (s *Server) postCalendar(w http.ResponseWriter, r *http.Request) {
 		s.writeSettingsError(w, "add calendar", err)
 		return
 	}
+	// The name only: the address is a secret.
+	s.auditUser(r, auditCalendarAdded, cal.Name)
 	s.SettingsChanged()
 	writeJSON(w, http.StatusCreated, cal)
 }
 
 // deleteNewsFeed handles DELETE /api/news-feeds/{id}: 204, or 404.
 func (s *Server) deleteNewsFeed(w http.ResponseWriter, r *http.Request) {
-	s.deleteSource(w, r, s.Settings.DeleteNewsFeed)
+	s.deleteSource(w, r, s.Settings.DeleteNewsFeed, auditNewsFeedRemoved)
 }
 
 // deleteCalendar handles DELETE /api/calendars/{id}: 204, or 404.
 func (s *Server) deleteCalendar(w http.ResponseWriter, r *http.Request) {
-	s.deleteSource(w, r, s.Settings.DeleteCalendar)
+	s.deleteSource(w, r, s.Settings.DeleteCalendar, auditCalendarRemoved)
 }
 
-func (s *Server) deleteSource(w http.ResponseWriter, r *http.Request, remove func(context.Context, int64) error) {
+func (s *Server) deleteSource(w http.ResponseWriter, r *http.Request, remove func(context.Context, int64) error, action string) {
 	id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
 	if err != nil {
 		writeError(w, http.StatusNotFound, "not_found", "This source does not exist.")
@@ -141,6 +147,7 @@ func (s *Server) deleteSource(w http.ResponseWriter, r *http.Request, remove fun
 		s.writeSettingsError(w, "delete source", err)
 		return
 	}
+	s.auditUser(r, action, "id "+strconv.FormatInt(id, 10))
 	s.SettingsChanged()
 	w.WriteHeader(http.StatusNoContent)
 }

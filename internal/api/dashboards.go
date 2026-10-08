@@ -78,6 +78,7 @@ func (s *Server) createDashboard(w http.ResponseWriter, r *http.Request) {
 		s.writeDashboardError(w, "create dashboard", err)
 		return
 	}
+	s.auditUser(r, auditDashboardCreated, d.ID)
 	s.DashboardsChanged()
 	writeJSON(w, http.StatusCreated, d)
 }
@@ -97,6 +98,7 @@ func (s *Server) updateDashboard(w http.ResponseWriter, r *http.Request) {
 		s.writeDashboardError(w, "update dashboard", err)
 		return
 	}
+	s.auditUser(r, auditDashboardUpdated, d.ID)
 	s.DashboardsChanged()
 	writeJSON(w, http.StatusOK, d)
 }
@@ -108,6 +110,7 @@ func (s *Server) deleteDashboard(w http.ResponseWriter, r *http.Request) {
 		s.writeDashboardError(w, "delete dashboard", err)
 		return
 	}
+	s.auditUser(r, auditDashboardDeleted, r.PathValue("dashboard"))
 	s.DashboardsChanged()
 	w.WriteHeader(http.StatusNoContent)
 }

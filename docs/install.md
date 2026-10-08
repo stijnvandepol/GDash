@@ -110,6 +110,9 @@ and `daycast.db-shm`, copy the backup to `daycast.db` and start Daycast.
 
 ## Security
 
+Under Settings, "Recent activity" lists logins, failed logins, pairings and
+changes for 90 days, with the address they came from.
+
 Daycast serves plain HTTP on the LAN, because a TV that opens the dashboard
 through Cast cannot be given a certificate it trusts for a LAN address. The
 web interface carries your login: if you open it from outside your home

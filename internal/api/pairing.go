@@ -2,6 +2,7 @@ package api
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/stijnvandepol/daycast/internal/auth"
@@ -99,6 +100,7 @@ func (s *Server) postPairing(w http.ResponseWriter, r *http.Request) {
 	if !s.writePairingError(w, "approve pairing", err) {
 		return
 	}
+	s.auditUser(r, auditScreenPaired, displayID)
 	writeJSON(w, http.StatusCreated, map[string]string{"displayId": displayID})
 }
 
@@ -110,6 +112,7 @@ func (s *Server) deletePairings(w http.ResponseWriter, r *http.Request) {
 		s.internalError(w, "unpair screens", err)
 		return
 	}
+	s.auditUser(r, auditScreensUnpaired, fmt.Sprintf("%s: %d screens", r.PathValue("display"), n))
 	writeJSON(w, http.StatusOK, map[string]int64{"removed": n})
 }
 

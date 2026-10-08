@@ -69,6 +69,7 @@ func (s *Server) createDisplay(w http.ResponseWriter, r *http.Request) {
 		s.writeStoreError(w, "create display", err)
 		return
 	}
+	s.auditUser(r, auditDisplayCreated, d.ID)
 	s.DisplaysChanged()
 	writeJSON(w, http.StatusCreated, d)
 }
@@ -122,6 +123,7 @@ func (s *Server) updateDisplay(w http.ResponseWriter, r *http.Request) {
 		s.writeStoreError(w, "update display", err)
 		return
 	}
+	s.auditUser(r, auditDisplayUpdated, d.ID)
 	s.DisplaysChanged()
 	writeJSON(w, http.StatusOK, d)
 }
@@ -132,6 +134,7 @@ func (s *Server) deleteDisplay(w http.ResponseWriter, r *http.Request) {
 		s.writeStoreError(w, "delete display", err)
 		return
 	}
+	s.auditUser(r, auditDisplayDeleted, r.PathValue("display"))
 	s.DisplaysChanged()
 	w.WriteHeader(http.StatusNoContent)
 }
