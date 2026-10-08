@@ -45,11 +45,28 @@ func (s *Server) getSettings(w http.ResponseWriter, r *http.Request) {
 }
 
 // putLocation handles PUT /api/settings/location {name, latitude, longitude}.
+// A missing or null coordinate is a 422, not 0: 0, 0 is a real place.
 func (s *Server) putLocation(w http.ResponseWriter, r *http.Request) {
-	var loc settings.Location
-	if !decodeJSON(w, r, &loc) {
+	var body struct {
+		Name      string   `json:"name"`
+		Latitude  *float64 `json:"latitude"`
+		Longitude *float64 `json:"longitude"`
+	}
+	if !decodeJSON(w, r, &body) {
 		return
 	}
+	var missing []validation.FieldError
+	if body.Latitude == nil {
+		missing = append(missing, validation.FieldError{Field: "latitude", Message: "use a number from -90 to 90"})
+	}
+	if body.Longitude == nil {
+		missing = append(missing, validation.FieldError{Field: "longitude", Message: "use a number from -180 to 180"})
+	}
+	if missing != nil {
+		writeValidationError(w, missing)
+		return
+	}
+	loc := settings.Location{Name: body.Name, Latitude: *body.Latitude, Longitude: *body.Longitude}
 	if err := s.Settings.SetLocation(r.Context(), loc); err != nil {
 		s.writeSettingsError(w, "set location", err)
 		return

@@ -197,3 +197,37 @@ func TestLanguage(t *testing.T) {
 		t.Fatalf("Get language = %q, want nl", got.Language)
 	}
 }
+
+func TestSeedWritesNothingWhenAnyPartIsInvalid(t *testing.T) {
+	ctx := context.Background()
+	s := newService(t)
+	seed := Seed{
+		Location:  &Location{Name: "Home", Latitude: 51.65, Longitude: 5.95},
+		Calendars: []SeedCalendar{{Name: "Calendar 1", URL: secretURL}, {Name: "Calendar 2", URL: "ftp://secret-token@host/x"}},
+	}
+	if _, err := s.SeedOnce(ctx, seed); err == nil {
+		t.Fatal("SeedOnce accepted an invalid calendar")
+	}
+	if got, _ := s.Get(ctx); got.Location != nil || len(got.Calendars) != 0 {
+		t.Fatalf("settings after a failed seed = %+v; want nothing written, so the next start tries again", got)
+	}
+	seed.Calendars = seed.Calendars[:1]
+	if seeded, err := s.SeedOnce(ctx, seed); err != nil || !seeded {
+		t.Fatalf("SeedOnce after fixing the environment = %v, %v", seeded, err)
+	}
+}
+
+func TestSeedKeepsAtMostTheLimit(t *testing.T) {
+	ctx := context.Background()
+	s := newService(t)
+	var seed Seed
+	for i := range MaxCalendars + 2 {
+		seed.Calendars = append(seed.Calendars, SeedCalendar{Name: "Calendar", URL: secretURL + "?n=" + string(rune('a'+i))})
+	}
+	if _, err := s.SeedOnce(ctx, seed); err != nil {
+		t.Fatal(err)
+	}
+	if got, _ := s.Get(ctx); len(got.Calendars) != MaxCalendars {
+		t.Fatalf("calendars = %d, want %d", len(got.Calendars), MaxCalendars)
+	}
+}

@@ -82,7 +82,7 @@ func loadSeed(getenv func(string) string) (settings.Seed, error) {
 	if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
 		return settings.Seed{}, fmt.Errorf("DAYCAST_NEWS_FEED %q is not an http(s) URL", feed)
 	}
-	seed.NewsFeeds = []settings.NewsFeed{{Name: u.Hostname(), URL: feed}}
+	seed.NewsFeeds = []settings.NewsFeed{{Name: feedName(u.Hostname()), URL: feed}}
 
 	calendars, err := calendar.ParseSources(getenv("DAYCAST_CALENDAR_URLS"))
 	if err != nil {
@@ -92,6 +92,16 @@ func loadSeed(getenv func(string) string) (settings.Seed, error) {
 		seed.Calendars = append(seed.Calendars, settings.SeedCalendar{Name: c.Name, URL: c.URL})
 	}
 	return seed, nil
+}
+
+// feedName names a feed from the environment after its host, cut to the
+// longest name settings accept.
+func feedName(host string) string {
+	const maxRunes = 60
+	if r := []rune(host); len(r) > maxRunes {
+		return string(r[:maxRunes])
+	}
+	return host
 }
 
 func valueOr(value, fallback string) string {

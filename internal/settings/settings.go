@@ -165,17 +165,7 @@ func (s *Service) Sources(ctx context.Context) (Sources, error) {
 // SetLocation stores the weather location. It returns a *validation.Error
 // for an invalid name or coordinate.
 func (s *Service) SetLocation(ctx context.Context, loc Location) error {
-	var errs validation.Collector
-	if msg := nameProblem(loc.Name); msg != "" {
-		errs.Add("name", msg)
-	}
-	if _, err := weather.NewLocation(loc.Latitude, 0); err != nil {
-		errs.Add("latitude", "use a number from -90 to 90")
-	}
-	if _, err := weather.NewLocation(0, loc.Longitude); err != nil {
-		errs.Add("longitude", "use a number from -180 to 180")
-	}
-	if err := errs.Err(); err != nil {
+	if err := checkLocation(loc); err != nil {
 		return err
 	}
 	value, err := json.Marshal(loc)
@@ -268,6 +258,20 @@ func (s *Service) location(ctx context.Context) (*Location, error) {
 		return nil, fmt.Errorf("stored location is invalid: %w", err)
 	}
 	return &loc, nil
+}
+
+func checkLocation(loc Location) error {
+	var errs validation.Collector
+	if msg := nameProblem(loc.Name); msg != "" {
+		errs.Add("name", msg)
+	}
+	if _, err := weather.NewLocation(loc.Latitude, 0); err != nil {
+		errs.Add("latitude", "use a number from -90 to 90")
+	}
+	if _, err := weather.NewLocation(0, loc.Longitude); err != nil {
+		errs.Add("longitude", "use a number from -180 to 180")
+	}
+	return errs.Err()
 }
 
 // checkSource validates a name and an http(s) address. Calendars also take

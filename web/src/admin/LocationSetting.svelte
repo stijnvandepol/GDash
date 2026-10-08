@@ -55,9 +55,20 @@
     }
   }
 
+  /** A coordinate as typed, with a comma or a point as decimal separator. */
+  function coordinate(text: string): number {
+    return Number(text.trim().replace(',', '.'));
+  }
+
   function chooseManual(event: SubmitEvent) {
     event.preventDefault();
-    void choose({ name: name.trim(), latitude: Number(latitude), longitude: Number(longitude) });
+    const lat = coordinate(latitude);
+    const lon = coordinate(longitude);
+    if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
+      error = 'Enter the latitude and longitude as numbers, for example 51.77 and 5.52.';
+      return;
+    }
+    void choose({ name: name.trim(), latitude: lat, longitude: lon });
   }
 
   async function clear() {

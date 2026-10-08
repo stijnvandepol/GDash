@@ -34,6 +34,11 @@ func TestLocationSetting(t *testing.T) {
 	if status != http.StatusUnprocessableEntity || !strings.Contains(body, `"field":"latitude"`) {
 		t.Fatalf("invalid location = %d %s", status, body)
 	}
+	// A field a browser could not parse arrives as null: that is not 0, 0.
+	status, body = env.do(t, "PUT", "/api/settings/location", `{"name":"Oss","latitude":null,"longitude":5.5}`)
+	if status != http.StatusUnprocessableEntity || !strings.Contains(body, `"field":"latitude"`) {
+		t.Fatalf("null latitude = %d %s", status, body)
+	}
 	if status, body = env.do(t, "PUT", "/api/settings/location", `{"name":"Oss","latitude":51.765,"longitude":5.518}`); status != http.StatusOK {
 		t.Fatalf("set location = %d %s", status, body)
 	}
