@@ -1,0 +1,26 @@
+/*
+ * Minimal Dark, the first theme. Widgets only use these semantic tokens, so
+ * a later theme can restyle everything without touching widget code.
+ * System fonts only: no web fonts, so nothing is loaded from outside.
+ */
+:root {
+  --surface-0: #0b0c0e;
+  --surface-1: #16181c;
+  --text-primary: #f2f3f5;
+  --text-muted: #9aa0a8;
+  --warning: #f0b429;
+  --radius-widget: 28px;
+  --space-gap: 24px;
+  --space-widget: 48px;
+  --font-ui: system-ui, Roboto, 'Segoe UI', 'Noto Sans', sans-serif;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  background: var(--surface-0);
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  cursor: none;
+}
