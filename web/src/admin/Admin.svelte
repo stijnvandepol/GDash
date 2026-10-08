@@ -5,10 +5,12 @@
   import Setup from './Setup.svelte';
   import Login from './Login.svelte';
   import Displays from './Displays.svelte';
+  import Dashboards from './Dashboards.svelte';
 
   type Screen = { name: 'loading' } | { name: 'error'; message: string } | { name: 'setup' } | { name: 'login' } | { name: 'app'; user: User };
 
   let screen = $state<Screen>({ name: 'loading' });
+  let tab = $state<'displays' | 'dashboards'>('displays');
 
   onMount(async () => {
     try {
@@ -35,6 +37,10 @@
 <header class="topbar">
   <span class="brand">Daycast</span>
   {#if screen.name === 'app'}
+    <nav class="tabs">
+      <button class="tab" class:active={tab === 'displays'} onclick={() => (tab = 'displays')}>Displays</button>
+      <button class="tab" class:active={tab === 'dashboards'} onclick={() => (tab = 'dashboards')}>Dashboards</button>
+    </nav>
     <span class="spacer"></span>
     <span class="muted">{screen.user.username}</span>
     <button class="link" onclick={logout}>Log out</button>
@@ -50,7 +56,9 @@
     <Setup onDone={(user) => (screen = { name: 'app', user })} />
   {:else if screen.name === 'login'}
     <Login onDone={(user) => (screen = { name: 'app', user })} />
-  {:else}
+  {:else if tab === 'displays'}
     <Displays onSessionEnded={() => (screen = { name: 'login' })} />
+  {:else}
+    <Dashboards onSessionEnded={() => (screen = { name: 'login' })} />
   {/if}
 </main>

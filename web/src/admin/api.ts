@@ -34,6 +34,30 @@ export interface Display {
   createdAt: string;
   /** Screens paired by code; only present in the display list. */
   pairedScreens?: number;
+  /** Empty means the default dashboard. */
+  dashboardId: string;
+}
+
+export interface Widget {
+  id: string;
+  type: string;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  settings?: Record<string, unknown>;
+}
+
+export interface Dashboard {
+  id: string;
+  name: string;
+  widgets: Widget[];
+}
+
+export interface WidgetCatalogue {
+  columns: number;
+  rows: number;
+  types: Record<string, { minW: number; minH: number; hasMaxItems: boolean }>;
 }
 
 export interface CastDevice {
@@ -74,13 +98,19 @@ export const api = {
   me: () => request<User>('GET', '/api/me'),
   displays: () => request<{ displays: Display[] }>('GET', '/api/displays').then((r) => r.displays),
   createDisplay: (d: { id: string; name: string; castDeviceId: string }) => request<Display>('POST', '/api/displays', d),
-  updateDisplay: (id: string, changes: { name?: string; castDeviceId?: string }) =>
+  updateDisplay: (id: string, changes: { name?: string; castDeviceId?: string; dashboardId?: string }) =>
     request<Display>('PATCH', `/api/displays/${encodeURIComponent(id)}`, changes),
   deleteDisplay: (id: string) => request<void>('DELETE', `/api/displays/${encodeURIComponent(id)}`),
   pairScreen: (id: string, code: string) =>
     request<void>('POST', `/api/displays/${encodeURIComponent(id)}/pairings`, { code }),
   unpairScreens: (id: string) =>
     request<{ removed: number }>('DELETE', `/api/displays/${encodeURIComponent(id)}/pairings`),
+  widgetTypes: () => request<WidgetCatalogue>('GET', '/api/widget-types'),
+  dashboards: () => request<{ dashboards: Dashboard[] }>('GET', '/api/dashboards').then((r) => r.dashboards),
+  createDashboard: (d: Dashboard) => request<Dashboard>('POST', '/api/dashboards', d),
+  saveDashboard: (d: Dashboard) =>
+    request<Dashboard>('PUT', `/api/dashboards/${encodeURIComponent(d.id)}`, { name: d.name, widgets: d.widgets }),
+  deleteDashboard: (id: string) => request<void>('DELETE', `/api/dashboards/${encodeURIComponent(id)}`),
   castDevices: () => request<{ devices: CastDevice[] }>('GET', '/api/cast-devices').then((r) => r.devices),
 };
 

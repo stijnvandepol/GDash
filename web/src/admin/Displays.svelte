@@ -1,10 +1,11 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { api, ApiError, slugify, type CastDevice, type Display } from './api';
+  import { api, ApiError, slugify, type CastDevice, type Dashboard, type Display } from './api';
 
   let { onSessionEnded }: { onSessionEnded: () => void } = $props();
 
   let displays = $state<Display[]>([]);
+  let dashboards = $state<Dashboard[]>([]);
   let devices = $state<CastDevice[]>([]);
   let searching = $state(false);
   let searchMessage = $state('');
@@ -43,7 +44,7 @@
 
   async function load() {
     try {
-      displays = await api.displays();
+      [displays, dashboards] = await Promise.all([api.displays(), api.dashboards()]);
       loadError = '';
     } catch (err) {
       loadError = handle(err);
@@ -110,6 +111,15 @@
       await load();
     } catch (err) {
       rowError = handle(err);
+    }
+  }
+
+  async function chooseDashboard(d: Display, dashboardId: string) {
+    try {
+      await api.updateDisplay(d.id, { dashboardId: dashboardId === 'default' ? '' : dashboardId });
+      await load();
+    } catch (err) {
+      rowError = err instanceof ApiError ? (err.fieldMessage('dashboardId') ?? err.message) : handle(err);
     }
   }
 
@@ -184,6 +194,15 @@
               <strong>{d.name}</strong>
               <span class="muted">{describeDevice(d.castDeviceId)} · {describeScreens(d)}</span>
             </div>
+            <select
+              aria-label="Dashboard for {d.name}"
+              value={d.dashboardId || 'default'}
+              onchange={(e) => chooseDashboard(d, (e.target as HTMLSelectElement).value)}
+            >
+              {#each dashboards as b (b.id)}
+                <option value={b.id}>{b.name}</option>
+              {/each}
+            </select>
             <a href="/d/{d.id}" target="_blank" rel="noopener">Open</a>
             <button class="link" onclick={() => startPairing(d)}>Pair a screen</button>
             {#if (d.pairedScreens ?? 0) > 0}

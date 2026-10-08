@@ -33,6 +33,7 @@ body {
 
 .topbar {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 12px;
   padding: 14px 20px;
@@ -46,9 +47,22 @@ body {
 .spacer {
   flex: 1;
 }
+.tabs {
+  display: flex;
+  gap: 4px;
+}
+button.tab {
+  background: none;
+  color: var(--muted);
+  padding: 6px 10px;
+}
+button.tab.active {
+  color: var(--text);
+  background: var(--bg);
+}
 
 .content {
-  max-width: 720px;
+  max-width: 960px;
   margin: 0 auto;
   padding: 24px 16px 64px;
   display: grid;
