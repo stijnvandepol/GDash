@@ -3,6 +3,8 @@ package displays
 import (
 	"strings"
 	"testing"
+
+	"github.com/stijnvandepol/daycast/internal/validation"
 )
 
 func TestValidate(t *testing.T) {
@@ -34,13 +36,12 @@ func TestValidate(t *testing.T) {
 				}
 				return
 			}
-			var verr *ValidationError
-			if !IsValidationError(err) {
-				t.Fatalf("Validate = %v, want a ValidationError", err)
+			fields := validation.Fields(err)
+			if fields == nil {
+				t.Fatalf("Validate = %v, want a validation error", err)
 			}
-			verr = err.(*ValidationError)
 			var got []string
-			for _, f := range verr.Fields {
+			for _, f := range fields {
 				got = append(got, f.Field)
 			}
 			if strings.Join(got, ",") != strings.Join(tt.wantFields, ",") {

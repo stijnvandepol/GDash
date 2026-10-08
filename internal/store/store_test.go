@@ -3,6 +3,7 @@ package store
 import (
 	"context"
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
@@ -118,8 +119,12 @@ func TestReopenKeepsDataAndSkipsMigrations(t *testing.T) {
 	if _, err := reopened.Display(ctx, "keuken"); err != nil {
 		t.Fatalf("display lost after reopen: %v", err)
 	}
-	if _, err := os.Stat(path + ".bak-v1"); !errors.Is(err, os.ErrNotExist) {
-		t.Fatalf("backup written although no migration ran: %v", err)
+	backups, _ := filepath.Glob(path + ".bak-*")
+	if len(backups) != 0 {
+		t.Fatalf("backup written although no migration ran: %v", backups)
+	}
+	if _, err := os.Stat(path); err != nil {
+		t.Fatalf("database missing after reopen: %v", err)
 	}
 }
 
@@ -150,7 +155,7 @@ func TestMigrationBacksUpExistingDatabase(t *testing.T) {
 		t.Fatalf("migrate: %v", err)
 	}
 
-	backup, err := Open(ctx, path+".bak-v1")
+	backup, err := Open(ctx, fmt.Sprintf("%s.bak-v%d", path, len(scripts)))
 	if err != nil {
 		t.Fatalf("open backup: %v", err)
 	}
@@ -159,8 +164,8 @@ func TestMigrationBacksUpExistingDatabase(t *testing.T) {
 		t.Fatalf("backup does not contain the data from before the migration: %v", err)
 	}
 	var version int
-	if err := s.db.QueryRowContext(ctx, "PRAGMA user_version").Scan(&version); err != nil || version != 2 {
-		t.Fatalf("schema version = %d (err %v), want 2", version, err)
+	if err := s.db.QueryRowContext(ctx, "PRAGMA user_version").Scan(&version); err != nil || version != len(next) {
+		t.Fatalf("schema version = %d (err %v), want %d", version, err, len(next))
 	}
 }
 
@@ -176,7 +181,7 @@ func TestFailedMigrationLeavesVersionUnchanged(t *testing.T) {
 		t.Fatal("migrate accepted invalid SQL")
 	}
 	var version int
-	if err := s.db.QueryRowContext(ctx, "PRAGMA user_version").Scan(&version); err != nil || version != 1 {
-		t.Fatalf("schema version = %d (err %v), want 1", version, err)
+	if err := s.db.QueryRowContext(ctx, "PRAGMA user_version").Scan(&version); err != nil || version != len(scripts) {
+		t.Fatalf("schema version = %d (err %v), want %d", version, err, len(scripts))
 	}
 }

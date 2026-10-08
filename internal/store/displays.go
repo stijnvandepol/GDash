@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/stijnvandepol/daycast/internal/displays"
 )
@@ -57,7 +56,7 @@ func (s *Store) CreateDisplay(ctx context.Context, d displays.Display) error {
 	}
 	_, err = tx.ExecContext(ctx,
 		"INSERT INTO displays (id, name, cast_device_id, created_at) VALUES (?, ?, ?, ?)",
-		d.ID, d.Name, d.CastDeviceID, d.CreatedAt.UTC().Format(time.RFC3339Nano))
+		d.ID, d.Name, d.CastDeviceID, formatTime(d.CreatedAt))
 	if err != nil {
 		if isUniqueViolation(err) {
 			return fmt.Errorf("%w: display %q", ErrConflict, d.ID)
@@ -94,7 +93,7 @@ func scanDisplay(row scanner) (displays.Display, error) {
 	if err := row.Scan(&d.ID, &d.Name, &d.CastDeviceID, &created); err != nil {
 		return displays.Display{}, err
 	}
-	t, err := time.Parse(time.RFC3339Nano, created)
+	t, err := parseTime(created)
 	if err != nil {
 		return displays.Display{}, fmt.Errorf("display %q has invalid created_at: %w", d.ID, err)
 	}
