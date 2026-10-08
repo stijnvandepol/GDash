@@ -18,6 +18,7 @@ type Error struct {
 	Fields []FieldError
 }
 
+// Error lists the invalid fields in one line, for logs.
 func (e *Error) Error() string {
 	parts := make([]string, len(e.Fields))
 	for i, f := range e.Fields {

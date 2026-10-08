@@ -88,7 +88,7 @@ func (s *Server) postSetup(w http.ResponseWriter, r *http.Request) {
 	if !decodeJSON(w, r, &body) {
 		return
 	}
-	token, user, err := s.Auth.Setup(r.Context(), body.SetupToken, body.Username, body.Password, clientIP(r))
+	token, user, err := s.Auth.Setup(r.Context(), body.SetupToken, auth.Credentials{Username: body.Username, Password: body.Password}, clientIP(r))
 	if !s.writeAuthError(w, "setup", err) {
 		return
 	}
@@ -104,7 +104,7 @@ func (s *Server) postSession(w http.ResponseWriter, r *http.Request) {
 	if !decodeJSON(w, r, &body) {
 		return
 	}
-	token, user, err := s.Auth.Login(r.Context(), body.Username, body.Password, clientIP(r))
+	token, user, err := s.Auth.Login(r.Context(), auth.Credentials{Username: body.Username, Password: body.Password}, clientIP(r))
 	if !s.writeAuthError(w, "login", err) {
 		return
 	}

@@ -44,6 +44,12 @@ var (
 
 var validUsername = regexp.MustCompile(`^[A-Za-z0-9._-]{1,32}$`)
 
+// Credentials is a username and password as a person typed them.
+type Credentials struct {
+	Username string
+	Password string
+}
+
 // User is the logged-in account as the rest of Daycast sees it.
 type User struct {
 	ID       int64  `json:"id"`
@@ -89,7 +95,7 @@ func (s *Service) SetupNeeded(ctx context.Context) (bool, error) {
 
 // Setup creates the first account and logs it in. It returns the session
 // token to put in a cookie.
-func (s *Service) Setup(ctx context.Context, setupToken, username, password, clientIP string) (string, User, error) {
+func (s *Service) Setup(ctx context.Context, setupToken string, c Credentials, clientIP string) (string, User, error) {
 	key := "setup|" + clientIP
 	if !s.limiter.allowed(key) {
 		return "", User{}, ErrRateLimited
@@ -98,14 +104,14 @@ func (s *Service) Setup(ctx context.Context, setupToken, username, password, cli
 		s.limiter.fail(key)
 		return "", User{}, ErrInvalidSetupToken
 	}
-	if err := validateAccount(username, password); err != nil {
+	if err := validateAccount(c); err != nil {
 		return "", User{}, err
 	}
-	hash, err := hashPassword(password)
+	hash, err := hashPassword(c.Password)
 	if err != nil {
 		return "", User{}, err
 	}
-	u, err := s.store.CreateFirstUser(ctx, username, hash, s.now())
+	u, err := s.store.CreateFirstUser(ctx, c.Username, hash, s.now())
 	if errors.Is(err, store.ErrConflict) {
 		return "", User{}, ErrSetupDone
 	}
@@ -117,23 +123,23 @@ func (s *Service) Setup(ctx context.Context, setupToken, username, password, cli
 }
 
 // Login checks credentials and starts a session.
-func (s *Service) Login(ctx context.Context, username, password, clientIP string) (string, User, error) {
-	keys := []string{"ip|" + clientIP, "user|" + strings.ToLower(username)}
+func (s *Service) Login(ctx context.Context, c Credentials, clientIP string) (string, User, error) {
+	keys := []string{"ip|" + clientIP, "user|" + strings.ToLower(c.Username)}
 	if !s.limiter.allowed(keys...) {
 		return "", User{}, ErrRateLimited
 	}
-	if len(password) > maxPasswordBytes {
+	if len(c.Password) > maxPasswordBytes {
 		s.limiter.fail(keys...)
 		return "", User{}, ErrInvalidCredentials
 	}
-	u, err := s.store.UserByName(ctx, username)
+	u, err := s.store.UserByName(ctx, c.Username)
 	hash := u.PasswordHash
 	if errors.Is(err, store.ErrNotFound) {
 		hash = s.dummyHash
 	} else if err != nil {
 		return "", User{}, err
 	}
-	ok, err := verifyPassword(hash, password)
+	ok, err := verifyPassword(hash, c.Password)
 	if err != nil {
 		return "", User{}, fmt.Errorf("verify password of user %d: %w", u.ID, err)
 	}
@@ -198,14 +204,14 @@ func hashToken(token string) string {
 	return hex.EncodeToString(sum[:])
 }
 
-func validateAccount(username, password string) error {
+func validateAccount(c Credentials) error {
 	var errs validation.Collector
-	if !validUsername.MatchString(username) {
+	if !validUsername.MatchString(c.Username) {
 		errs.Add("username", "use 1 to 32 letters, digits, dots, dashes or underscores")
 	}
-	if len([]rune(password)) < minPasswordLength {
+	if len([]rune(c.Password)) < minPasswordLength {
 		errs.Add("password", fmt.Sprintf("use at least %d characters", minPasswordLength))
-	} else if len(password) > maxPasswordBytes {
+	} else if len(c.Password) > maxPasswordBytes {
 		errs.Add("password", fmt.Sprintf("use at most %d bytes", maxPasswordBytes))
 	}
 	return errs.Err()

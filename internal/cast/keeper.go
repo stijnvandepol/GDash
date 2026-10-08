@@ -3,7 +3,7 @@ package cast
 import (
 	"context"
 	"encoding/json"
-	"fmt"
+	"errors"
 	"log/slog"
 	"net"
 	"time"
@@ -88,20 +88,18 @@ func (k *Keeper) session(ctx context.Context) error {
 
 	sessionCtx, cancel := context.WithCancel(ctx)
 	defer cancel()
-	messages := k.Messages(sessionCtx, ReachableIP(device.Addr, client.LocalIP()))
-
-	s := &keeperSession{keeper: k, client: client, resend: time.NewTimer(0)}
+	s := &keeperSession{
+		keeper:   k,
+		client:   client,
+		messages: k.Messages(sessionCtx, ReachableIP(device.Addr, client.LocalIP())),
+		resend:   time.NewTimer(0),
+	}
 	<-s.resend.C
 	defer s.resend.Stop()
 
-	status, err := client.Status(ctx)
-	if err != nil {
+	if err := s.syncStatus(ctx); err != nil {
 		return err
 	}
-	if err := s.reconcile(ctx, status); err != nil {
-		return err
-	}
-
 	poll := time.NewTicker(statusPollInterval)
 	defer poll.Stop()
 	var refresh <-chan time.Time
@@ -111,64 +109,62 @@ func (k *Keeper) session(ctx context.Context) error {
 		refresh = ticker.C
 	}
 	for {
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		case <-client.Done():
-			return client.Err()
-		case msg, ok := <-messages:
-			if !ok {
-				return fmt.Errorf("receiver message stream closed")
-			}
-			s.latest = msg
-			if err := s.sendLatest(); err != nil {
-				return err
-			}
-		case <-client.StatusUpdates():
-			// An unsolicited update can be stale: after a STOP the device
-			// reports "no apps" even when the keeper has already launched
-			// again. On real hardware that caused a second launch. The
-			// update is only a trigger to ask for the current state.
-			status, err := client.Status(ctx)
-			if err != nil {
-				return err
-			}
-			if err := s.reconcile(ctx, status); err != nil {
-				return err
-			}
-		case m := <-client.AppMessages():
-			if m.Namespace == k.Namespace && isReadySignal(m.Payload) {
-				if err := s.sendLatest(); err != nil {
-					return err
-				}
-			}
-		case <-refresh:
-			if err := s.restart(ctx); err != nil {
-				return err
-			}
-		case <-s.resend.C:
-			if err := s.sendLatest(); err != nil {
-				return err
-			}
-			s.scheduleNextResend()
-		case <-poll.C:
-			status, err := client.Status(ctx)
-			if err != nil {
-				return err
-			}
-			if err := s.reconcile(ctx, status); err != nil {
-				return err
-			}
-			if err := s.sendLatest(); err != nil {
-				return err
-			}
+		if err := s.step(ctx, poll.C, refresh); err != nil {
+			return err
 		}
 	}
+}
+
+// step waits for the next event of the session and handles it.
+func (s *keeperSession) step(ctx context.Context, poll, refresh <-chan time.Time) error {
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case <-s.client.Done():
+		return s.client.Err()
+	case msg, ok := <-s.messages:
+		if !ok {
+			return errors.New("receiver message stream closed")
+		}
+		s.latest = msg
+		return s.sendLatest()
+	case <-s.client.StatusUpdates():
+		// An unsolicited update can be stale: after a STOP the device
+		// reports "no apps" even when the keeper has already launched
+		// again. On real hardware that caused a second launch. The update
+		// is only a trigger to ask for the current state.
+		return s.syncStatus(ctx)
+	case m := <-s.client.AppMessages():
+		if m.Namespace == s.keeper.Namespace && isReadySignal(m.Payload) {
+			return s.sendLatest()
+		}
+		return nil
+	case <-refresh:
+		return s.restart(ctx)
+	case <-s.resend.C:
+		s.scheduleNextResend()
+		return s.sendLatest()
+	case <-poll:
+		if err := s.syncStatus(ctx); err != nil {
+			return err
+		}
+		return s.sendLatest()
+	}
+}
+
+// syncStatus asks the device for its current state and reconciles.
+func (s *keeperSession) syncStatus(ctx context.Context) error {
+	status, err := s.client.Status(ctx)
+	if err != nil {
+		return err
+	}
+	return s.reconcile(ctx, status)
 }
 
 type keeperSession struct {
 	keeper    *Keeper
 	client    *Client
+	messages  <-chan []byte
 	app       Application
 	transport string
 	standby   bool

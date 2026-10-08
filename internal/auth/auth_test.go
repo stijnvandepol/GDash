@@ -37,7 +37,7 @@ func newTestService(t *testing.T) (*Service, *testClock) {
 
 func setUp(t *testing.T, s *Service) string {
 	t.Helper()
-	token, _, err := s.Setup(context.Background(), testToken, "stijn", "correct horse battery", "192.168.1.109")
+	token, _, err := s.Setup(context.Background(), testToken, Credentials{"stijn", "correct horse battery"}, "192.168.1.109")
 	if err != nil {
 		t.Fatalf("Setup: %v", err)
 	}
@@ -63,7 +63,7 @@ func TestSetupCreatesAccountAndSession(t *testing.T) {
 func TestSetupOnlyOnce(t *testing.T) {
 	s, _ := newTestService(t)
 	setUp(t, s)
-	_, _, err := s.Setup(context.Background(), testToken, "attacker", "another long password", "192.168.1.66")
+	_, _, err := s.Setup(context.Background(), testToken, Credentials{"attacker", "another long password"}, "192.168.1.66")
 	if !errors.Is(err, ErrSetupDone) {
 		t.Fatalf("second Setup: err = %v, want ErrSetupDone", err)
 	}
@@ -72,12 +72,12 @@ func TestSetupOnlyOnce(t *testing.T) {
 func TestSetupRejectsWrongTokenAndRateLimits(t *testing.T) {
 	s, _ := newTestService(t)
 	for range maxFailures {
-		_, _, err := s.Setup(context.Background(), "guess", "stijn", "correct horse battery", "192.168.1.66")
+		_, _, err := s.Setup(context.Background(), "guess", Credentials{"stijn", "correct horse battery"}, "192.168.1.66")
 		if !errors.Is(err, ErrInvalidSetupToken) {
 			t.Fatalf("Setup with wrong token: err = %v", err)
 		}
 	}
-	_, _, err := s.Setup(context.Background(), testToken, "stijn", "correct horse battery", "192.168.1.66")
+	_, _, err := s.Setup(context.Background(), testToken, Credentials{"stijn", "correct horse battery"}, "192.168.1.66")
 	if !errors.Is(err, ErrRateLimited) {
 		t.Fatalf("Setup after %d failures: err = %v, want ErrRateLimited", maxFailures, err)
 	}
@@ -85,7 +85,7 @@ func TestSetupRejectsWrongTokenAndRateLimits(t *testing.T) {
 
 func TestSetupValidatesAccount(t *testing.T) {
 	s, _ := newTestService(t)
-	_, _, err := s.Setup(context.Background(), testToken, "stijn van de pol", "short", "192.168.1.109")
+	_, _, err := s.Setup(context.Background(), testToken, Credentials{"stijn van de pol", "short"}, "192.168.1.109")
 	fields := validation.Fields(err)
 	if len(fields) != 2 || fields[0].Field != "username" || fields[1].Field != "password" {
 		t.Fatalf("Setup error = %v, want username and password field errors", err)
@@ -97,16 +97,16 @@ func TestLogin(t *testing.T) {
 	s, _ := newTestService(t)
 	setUp(t, s)
 
-	if _, _, err := s.Login(ctx, "STIJN", "correct horse battery", "192.168.1.109"); err != nil {
+	if _, _, err := s.Login(ctx, Credentials{"STIJN", "correct horse battery"}, "192.168.1.109"); err != nil {
 		t.Fatalf("Login with other case of username: %v", err)
 	}
-	if _, _, err := s.Login(ctx, "stijn", "wrong password!", "192.168.1.109"); !errors.Is(err, ErrInvalidCredentials) {
+	if _, _, err := s.Login(ctx, Credentials{"stijn", "wrong password!"}, "192.168.1.109"); !errors.Is(err, ErrInvalidCredentials) {
 		t.Fatalf("Login with wrong password: err = %v", err)
 	}
-	if _, _, err := s.Login(ctx, "nobody", "correct horse battery", "192.168.1.109"); !errors.Is(err, ErrInvalidCredentials) {
+	if _, _, err := s.Login(ctx, Credentials{"nobody", "correct horse battery"}, "192.168.1.109"); !errors.Is(err, ErrInvalidCredentials) {
 		t.Fatalf("Login of unknown user: err = %v", err)
 	}
-	if _, _, err := s.Login(ctx, "stijn", strings.Repeat("x", 500), "192.168.1.109"); !errors.Is(err, ErrInvalidCredentials) {
+	if _, _, err := s.Login(ctx, Credentials{"stijn", strings.Repeat("x", 500)}, "192.168.1.109"); !errors.Is(err, ErrInvalidCredentials) {
 		t.Fatalf("Login with oversized password: err = %v", err)
 	}
 }
@@ -116,13 +116,13 @@ func TestLoginRateLimitPerIPAndExpiry(t *testing.T) {
 	s, clock := newTestService(t)
 	setUp(t, s)
 	for range maxFailures {
-		_, _, _ = s.Login(ctx, "stijn", "wrong password!", "192.168.1.66")
+		_, _, _ = s.Login(ctx, Credentials{"stijn", "wrong password!"}, "192.168.1.66")
 	}
-	if _, _, err := s.Login(ctx, "stijn", "correct horse battery", "192.168.1.66"); !errors.Is(err, ErrRateLimited) {
+	if _, _, err := s.Login(ctx, Credentials{"stijn", "correct horse battery"}, "192.168.1.66"); !errors.Is(err, ErrRateLimited) {
 		t.Fatalf("Login after failures: err = %v, want ErrRateLimited", err)
 	}
 	clock.t = clock.t.Add(failureWindow + time.Second)
-	if _, _, err := s.Login(ctx, "stijn", "correct horse battery", "192.168.1.66"); err != nil {
+	if _, _, err := s.Login(ctx, Credentials{"stijn", "correct horse battery"}, "192.168.1.66"); err != nil {
 		t.Fatalf("Login after the window passed: %v", err)
 	}
 }

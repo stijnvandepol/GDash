@@ -1,0 +1,83 @@
+package cast
+
+import (
+	"context"
+	"fmt"
+)
+
+// Application is one app running on a Cast device, as reported in a
+// RECEIVER_STATUS message.
+type Application struct {
+	AppID        string `json:"appId"`
+	DisplayName  string `json:"displayName"`
+	SessionID    string `json:"sessionId"`
+	TransportID  string `json:"transportId"`
+	IsIdleScreen bool   `json:"isIdleScreen"`
+}
+
+// ReceiverStatus is the state of a Cast device. IsActiveInput and IsStandBy
+// are only meaningful when the TV supports HDMI-CEC.
+type ReceiverStatus struct {
+	Applications  []Application `json:"applications"`
+	IsActiveInput bool          `json:"isActiveInput"`
+	IsStandBy     bool          `json:"isStandBy"`
+}
+
+// App returns the running application with the given app ID, if any.
+func (s ReceiverStatus) App(appID string) (Application, bool) {
+	for _, app := range s.Applications {
+		if app.AppID == appID {
+			return app, true
+		}
+	}
+	return Application{}, false
+}
+
+// Status asks the device which apps are running.
+func (c *Client) Status(ctx context.Context) (ReceiverStatus, error) {
+	resp, err := c.request(ctx, map[string]any{"type": "GET_STATUS"})
+	if err != nil {
+		return ReceiverStatus{}, fmt.Errorf("get receiver status: %w", err)
+	}
+	return resp.Status, nil
+}
+
+// Launch starts appID on the device and returns the running application.
+func (c *Client) Launch(ctx context.Context, appID string) (Application, error) {
+	resp, err := c.request(ctx, map[string]any{"type": "LAUNCH", "appId": appID})
+	if err != nil {
+		return Application{}, fmt.Errorf("launch app %s: %w", appID, err)
+	}
+	if resp.Type == "LAUNCH_ERROR" {
+		return Application{}, fmt.Errorf("launch app %s: device refused: %s", appID, resp.Reason)
+	}
+	app, ok := resp.Status.App(appID)
+	if !ok {
+		return Application{}, fmt.Errorf("launch app %s: app not running after launch", appID)
+	}
+	return app, nil
+}
+
+// Stop ends the app session with the given ID. The device returns to its
+// idle screen, unless a new app is launched right after.
+func (c *Client) Stop(ctx context.Context, sessionID string) error {
+	resp, err := c.request(ctx, map[string]any{"type": "STOP", "sessionId": sessionID})
+	if err != nil {
+		return fmt.Errorf("stop session %s: %w", sessionID, err)
+	}
+	if resp.Type != "RECEIVER_STATUS" {
+		return fmt.Errorf("stop session %s: device answered %s", sessionID, resp.Type)
+	}
+	return nil
+}
+
+// Connect opens a virtual connection to a running app, which is required
+// before sending it messages.
+func (c *Client) Connect(transportID string) error {
+	return c.sendJSON(transportID, nsConnection, map[string]any{"type": "CONNECT"})
+}
+
+// Send delivers a JSON payload to a running app on the given namespace.
+func (c *Client) Send(transportID, namespace string, payload []byte) error {
+	return c.write(Message{SourceID: senderID, DestinationID: transportID, Namespace: namespace, Payload: string(payload)})
+}
