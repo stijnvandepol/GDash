@@ -1,0 +1,18 @@
+services:
+  daycast:
+    build: .
+    # Host networking lets Daycast find Cast devices with mDNS, which does
+    # not cross Docker's bridge network.
+    network_mode: host
+    environment:
+      DAYCAST_LATITUDE: "51.65"
+      DAYCAST_LONGITUDE: "5.95"
+      # Keep the receiver on one TV. See docs/receiver.md for the app ID.
+      # DAYCAST_CAST_DEVICE: "192.168.1.40"
+      # DAYCAST_CAST_APP_ID: "ABCD1234"
+    volumes:
+      - daycast-data:/data
+    restart: unless-stopped
+
+volumes:
+  daycast-data:
