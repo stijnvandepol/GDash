@@ -30,3 +30,39 @@ func TestDisplayActiveHours(t *testing.T) {
 		t.Fatalf("list = %s", list)
 	}
 }
+
+func TestDisplaySchedule(t *testing.T) {
+	env := newTestEnv(t, nil)
+	env.setUp(t)
+	if status, body := env.do(t, "POST", "/api/dashboards", `{"id":"morning","name":"Morning","widgets":[]}`); status != http.StatusCreated {
+		t.Fatalf("create dashboard = %d %s", status, body)
+	}
+	status, body := env.do(t, "POST", "/api/displays", `{"id":"keuken","name":"Keuken"}`)
+	if status != http.StatusCreated || !strings.Contains(body, `"schedule":[]`) {
+		t.Fatalf("create = %d %s, want an empty schedule", status, body)
+	}
+
+	slot := `{"schedule":[{"from":"06:30","until":"09:00","dashboardId":"morning"}]}`
+	status, body = env.do(t, "PATCH", "/api/displays/keuken", slot)
+	if status != http.StatusOK || !strings.Contains(body, `"schedule":[{"from":"06:30","until":"09:00","dashboardId":"morning"}]`) {
+		t.Fatalf("set schedule = %d %s", status, body)
+	}
+
+	// Changing another field keeps the schedule.
+	if _, body = env.do(t, "PATCH", "/api/displays/keuken", `{"name":"Kitchen"}`); !strings.Contains(body, `"dashboardId":"morning"}]`) {
+		t.Fatalf("rename dropped the schedule: %s", body)
+	}
+
+	for _, tt := range []struct{ body, field string }{
+		{`{"schedule":[{"from":"06:30","until":"","dashboardId":"morning"}]}`, `"field":"schedule[0]"`},
+		{`{"schedule":[{"from":"06:30","until":"09:00","dashboardId":"missing"}]}`, `"field":"schedule"`},
+	} {
+		if status, body := env.do(t, "PATCH", "/api/displays/keuken", tt.body); status != http.StatusUnprocessableEntity || !strings.Contains(body, tt.field) {
+			t.Fatalf("PATCH %s = %d %s, want 422 with %s", tt.body, status, body, tt.field)
+		}
+	}
+
+	if _, body = env.do(t, "PATCH", "/api/displays/keuken", `{"schedule":[]}`); !strings.Contains(body, `"schedule":[]`) {
+		t.Fatalf("clear = %s", body)
+	}
+}

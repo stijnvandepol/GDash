@@ -23,6 +23,12 @@ func TestValidate(t *testing.T) {
 		{"name too long", func(d *Display) { d.Name = strings.Repeat("é", 61) }, []string{"name"}},
 		{"name of 60 multibyte chars", func(d *Display) { d.Name = strings.Repeat("é", 60) }, nil},
 		{"cast id is an IP", func(d *Display) { d.CastDeviceID = "192.168.1.160" }, []string{"castDeviceId"}},
+		{"morning slot", func(d *Display) { d.Schedule = []Slot{{From: "06:30", Until: "09:00", DashboardID: "morning"}} }, nil},
+		{"slot past midnight", func(d *Display) { d.Schedule = []Slot{{From: "22:00", Until: "01:00", DashboardID: "night"}} }, nil},
+		{"slot without times", func(d *Display) { d.Schedule = []Slot{{DashboardID: "morning"}} }, []string{"schedule[0]"}},
+		{"slot with one time", func(d *Display) { d.Schedule = []Slot{{From: "06:30", DashboardID: "morning"}} }, []string{"schedule[0]"}},
+		{"slot without dashboard", func(d *Display) { d.Schedule = []Slot{{From: "06:30", Until: "09:00"}} }, []string{"schedule[0]"}},
+		{"too many slots", func(d *Display) { d.Schedule = make([]Slot, MaxSlots+1) }, []string{"schedule"}},
 		{"everything wrong", func(d *Display) { d.ID = ""; d.Name = ""; d.CastDeviceID = "x" }, []string{"id", "name", "castDeviceId"}},
 	}
 	for _, tt := range tests {

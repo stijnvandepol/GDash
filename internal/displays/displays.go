@@ -3,6 +3,7 @@
 package displays
 
 import (
+	"fmt"
 	"regexp"
 	"strings"
 	"time"
@@ -16,6 +17,10 @@ import (
 // MaxDisplays bounds how many displays one server manages. A home has a
 // handful; the limit keeps every list query bounded.
 const MaxDisplays = 50
+
+// MaxSlots bounds the day plan of one display. Morning, afternoon, evening
+// and a weekend-style exception fit easily.
+const MaxSlots = 6
 
 const maxNameLength = 60
 
@@ -37,8 +42,24 @@ type Display struct {
 	DashboardID string `json:"dashboardId"`
 	// Hours are the display's active hours; outside them it is left dark.
 	schedule.Hours
+	// Schedule shows other dashboards during parts of the day. The first
+	// slot that contains the current time wins; outside every slot the
+	// display shows DashboardID.
+	Schedule  []Slot    `json:"schedule"`
 	CreatedAt time.Time `json:"createdAt"`
 }
+
+// Slot shows a dashboard during part of the day, such as a morning
+// dashboard from 06:30 to 09:00. Times are HH:MM in the server's time zone
+// and may wrap past midnight.
+type Slot struct {
+	From        string `json:"from"`
+	Until       string `json:"until"`
+	DashboardID string `json:"dashboardId"`
+}
+
+// Hours returns the slot's daily window.
+func (s Slot) Hours() schedule.Hours { return schedule.Hours{From: s.From, Until: s.Until} }
 
 // Validate checks a display before it is stored. It returns a
 // *validation.Error listing every invalid field.
@@ -60,5 +81,25 @@ func Validate(d Display) error {
 	if err := d.Hours.Validate(); err != nil {
 		errs.Add("activeHours", err.Error())
 	}
+	if len(d.Schedule) > MaxSlots {
+		errs.Add("schedule", fmt.Sprintf("use at most %d time slots", MaxSlots))
+		return errs.Err()
+	}
+	for i, slot := range d.Schedule {
+		if msg := slotProblem(slot); msg != "" {
+			errs.Add(fmt.Sprintf("schedule[%d]", i), msg)
+		}
+	}
 	return errs.Err()
+}
+
+func slotProblem(s Slot) string {
+	// A slot always has a window: "all day" is what DashboardID is for.
+	if hours := s.Hours(); hours.Always() || hours.Validate() != nil {
+		return "use two different times as HH:MM"
+	}
+	if !display.ValidDashboardID(s.DashboardID) {
+		return "choose a dashboard"
+	}
+	return ""
 }

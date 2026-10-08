@@ -26,7 +26,26 @@ func (s *Store) Displays(ctx context.Context) ([]displays.Display, error) {
 		}
 		list = append(list, d)
 	}
-	return list, rows.Err()
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	slots, err := schedules(ctx, s.db, "")
+	if err != nil {
+		return nil, err
+	}
+	for i := range list {
+		list[i].Schedule = withSlots(slots[list[i].ID])
+	}
+	return list, nil
+}
+
+// withSlots returns an empty schedule instead of nil, so the API always
+// sends a list.
+func withSlots(slots []displays.Slot) []displays.Slot {
+	if slots == nil {
+		return []displays.Slot{}
+	}
+	return slots
 }
 
 // Display returns one display, or ErrNotFound.
@@ -36,7 +55,15 @@ func (s *Store) Display(ctx context.Context, id string) (displays.Display, error
 	if errors.Is(err, sql.ErrNoRows) {
 		return displays.Display{}, ErrNotFound
 	}
-	return d, err
+	if err != nil {
+		return displays.Display{}, err
+	}
+	slots, err := schedules(ctx, s.db, id)
+	if err != nil {
+		return displays.Display{}, err
+	}
+	d.Schedule = withSlots(slots[id])
+	return d, nil
 }
 
 // CreateDisplay stores a new display. It returns ErrConflict when the id is
@@ -66,11 +93,14 @@ func (s *Store) CreateDisplay(ctx context.Context, d displays.Display) error {
 		}
 		return fmt.Errorf("create display: %w", err)
 	}
+	if err := replaceSchedule(ctx, tx, d.ID, d.Schedule); err != nil {
+		return err
+	}
 	return tx.Commit()
 }
 
-// UpdateDisplay changes the name, Cast device, dashboard and active hours of
-// an existing display.
+// UpdateDisplay changes the name, Cast device, dashboard, active hours and
+// schedule of an existing display.
 func (s *Store) UpdateDisplay(ctx context.Context, d displays.Display) error {
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -87,6 +117,9 @@ func (s *Store) UpdateDisplay(ctx context.Context, d displays.Display) error {
 		return fmt.Errorf("update display: %w", err)
 	}
 	if err := requireOneRow(res); err != nil {
+		return err
+	}
+	if err := replaceSchedule(ctx, tx, d.ID, d.Schedule); err != nil {
 		return err
 	}
 	return tx.Commit()

@@ -116,6 +116,78 @@ func TestDisplayDashboards(t *testing.T) {
 	}
 }
 
+func TestDisplaySchedule(t *testing.T) {
+	ctx := context.Background()
+	s, _ := openTestStore(t)
+	if err := s.EnsureDashboard(ctx, display.DefaultDashboard(false), created); err != nil {
+		t.Fatal(err)
+	}
+	evening := morning()
+	evening.ID, evening.Name = "evening", "Evening"
+	for _, b := range []display.Dashboard{morning(), evening} {
+		if err := s.CreateDashboard(ctx, b, created); err != nil {
+			t.Fatal(err)
+		}
+	}
+	d := displays.Display{ID: "kitchen", Name: "Kitchen", CreatedAt: created, Schedule: []displays.Slot{
+		{From: "18:00", Until: "23:00", DashboardID: "evening"},
+		{From: "06:30", Until: "09:00", DashboardID: "morning"},
+	}}
+	if err := s.CreateDisplay(ctx, d); err != nil {
+		t.Fatal(err)
+	}
+	got, err := s.Display(ctx, "kitchen")
+	if err != nil || len(got.Schedule) != 2 || got.Schedule[0] != d.Schedule[0] || got.Schedule[1] != d.Schedule[1] {
+		t.Fatalf("Display = %+v, %v; want the schedule in its stored order", got.Schedule, err)
+	}
+	views, err := s.DisplayViews(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	v := views["kitchen"]
+	if v.Dashboard.ID != display.DefaultID || len(v.Schedule) != 2 || v.Schedule[1].Dashboard.ID != "morning" || v.Schedule[1].Hours.From != "06:30" {
+		t.Fatalf("view = %+v", v)
+	}
+
+	// A slot with an unknown dashboard is refused and changes nothing.
+	d.Schedule = []displays.Slot{{From: "06:30", Until: "09:00", DashboardID: "missing"}}
+	if err := s.UpdateDisplay(ctx, d); !errors.Is(err, ErrUnknownScheduleDashboard) {
+		t.Fatalf("update: err = %v, want ErrUnknownScheduleDashboard", err)
+	}
+	if got, _ := s.Display(ctx, "kitchen"); len(got.Schedule) != 2 {
+		t.Fatalf("failed update changed the schedule to %+v", got.Schedule)
+	}
+
+	// Deleting a dashboard removes its slot; the others stay.
+	if err := s.DeleteDashboard(ctx, "evening"); err != nil {
+		t.Fatal(err)
+	}
+	if got, _ := s.Display(ctx, "kitchen"); len(got.Schedule) != 1 || got.Schedule[0].DashboardID != "morning" {
+		t.Fatalf("after deleting evening: schedule = %+v", got.Schedule)
+	}
+
+	// An update with an empty schedule clears it; deleting the display
+	// removes its slots with it.
+	d.Schedule = nil
+	if err := s.UpdateDisplay(ctx, d); err != nil {
+		t.Fatal(err)
+	}
+	if got, _ := s.Display(ctx, "kitchen"); got.Schedule == nil || len(got.Schedule) != 0 {
+		t.Fatalf("cleared schedule = %#v, want an empty list", got.Schedule)
+	}
+	d.Schedule = []displays.Slot{{From: "06:30", Until: "09:00", DashboardID: "morning"}}
+	if err := s.UpdateDisplay(ctx, d); err != nil {
+		t.Fatal(err)
+	}
+	if err := s.DeleteDisplay(ctx, "kitchen"); err != nil {
+		t.Fatal(err)
+	}
+	var left int
+	if err := s.db.QueryRowContext(ctx, "SELECT count(*) FROM display_schedule").Scan(&left); err != nil || left != 0 {
+		t.Fatalf("slots left after deleting the display = %d, %v", left, err)
+	}
+}
+
 func TestDisplayWithUnknownDashboard(t *testing.T) {
 	ctx := context.Background()
 	s, _ := openTestStore(t)

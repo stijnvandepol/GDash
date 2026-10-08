@@ -1,0 +1,68 @@
+package store
+
+import (
+	"context"
+	"database/sql"
+	"errors"
+	"fmt"
+
+	"github.com/stijnvandepol/daycast/internal/displays"
+)
+
+// ErrUnknownScheduleDashboard is returned when a slot of a display's
+// schedule refers to a dashboard that does not exist.
+var ErrUnknownScheduleDashboard = errors.New("schedule refers to an unknown dashboard")
+
+type querier interface {
+	QueryContext(ctx context.Context, query string, args ...any) (*sql.Rows, error)
+}
+
+// schedules returns the slots of every display, or of one display when
+// displayID is set, in their stored order.
+func schedules(ctx context.Context, q querier, displayID string) (map[string][]displays.Slot, error) {
+	query := "SELECT display_id, starts, ends, dashboard_id FROM display_schedule"
+	args := []any{}
+	if displayID != "" {
+		query += " WHERE display_id = ?"
+		args = append(args, displayID)
+	}
+	query += " ORDER BY display_id, position LIMIT ?"
+	args = append(args, displays.MaxDisplays*displays.MaxSlots)
+	rows, err := q.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("list schedules: %w", err)
+	}
+	defer rows.Close()
+	result := map[string][]displays.Slot{}
+	for rows.Next() {
+		var id string
+		var slot displays.Slot
+		if err := rows.Scan(&id, &slot.From, &slot.Until, &slot.DashboardID); err != nil {
+			return nil, err
+		}
+		result[id] = append(result[id], slot)
+	}
+	return result, rows.Err()
+}
+
+// replaceSchedule stores slots as the whole schedule of a display.
+func replaceSchedule(ctx context.Context, tx *sql.Tx, displayID string, slots []displays.Slot) error {
+	if _, err := tx.ExecContext(ctx, "DELETE FROM display_schedule WHERE display_id = ?", displayID); err != nil {
+		return fmt.Errorf("clear schedule: %w", err)
+	}
+	for i, slot := range slots {
+		if err := requireDashboard(ctx, tx, slot.DashboardID); err != nil {
+			if errors.Is(err, ErrUnknownDashboard) {
+				return ErrUnknownScheduleDashboard
+			}
+			return err
+		}
+		_, err := tx.ExecContext(ctx,
+			"INSERT INTO display_schedule (display_id, position, starts, ends, dashboard_id) VALUES (?, ?, ?, ?, ?)",
+			displayID, i, slot.From, slot.Until, slot.DashboardID)
+		if err != nil {
+			return fmt.Errorf("store schedule: %w", err)
+		}
+	}
+	return nil
+}

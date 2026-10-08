@@ -34,23 +34,28 @@ func (s *Server) listDisplays(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{"displays": out})
 }
 
-// createDisplay handles POST /api/displays {id, name, castDeviceId}: 201 with
-// the display, 409 when the id is taken or the limit reached, 422 for
-// invalid fields.
+// createDisplay handles POST /api/displays {id, name, castDeviceId,
+// activeFrom, activeUntil, schedule}: 201 with the display, 409 when the id
+// is taken or the limit reached, 422 for invalid fields.
 func (s *Server) createDisplay(w http.ResponseWriter, r *http.Request) {
 	var body struct {
-		ID           string `json:"id"`
-		Name         string `json:"name"`
-		CastDeviceID string `json:"castDeviceId"`
-		ActiveFrom   string `json:"activeFrom"`
-		ActiveUntil  string `json:"activeUntil"`
+		ID           string          `json:"id"`
+		Name         string          `json:"name"`
+		CastDeviceID string          `json:"castDeviceId"`
+		ActiveFrom   string          `json:"activeFrom"`
+		ActiveUntil  string          `json:"activeUntil"`
+		Schedule     []displays.Slot `json:"schedule"`
 	}
 	if !decodeJSON(w, r, &body) {
 		return
 	}
 	d := displays.Display{
 		ID: body.ID, Name: body.Name, CastDeviceID: body.CastDeviceID,
-		Hours: schedule.Hours{From: body.ActiveFrom, Until: body.ActiveUntil}, CreatedAt: s.Now().UTC(),
+		Hours:    schedule.Hours{From: body.ActiveFrom, Until: body.ActiveUntil},
+		Schedule: body.Schedule, CreatedAt: s.Now().UTC(),
+	}
+	if d.Schedule == nil {
+		d.Schedule = []displays.Slot{}
 	}
 	if err := displays.Validate(d); err != nil {
 		writeValidationError(w, validation.Fields(err))
@@ -65,17 +70,19 @@ func (s *Server) createDisplay(w http.ResponseWriter, r *http.Request) {
 }
 
 // updateDisplay handles PATCH /api/displays/{display} {name?, castDeviceId?,
-// dashboardId?, activeFrom?, activeUntil?}; an empty dashboardId means the
-// default dashboard, empty active hours mean always on:
-// changes only the fields present and answers 200 with the display. The
-// id is fixed, because it is part of the display's URL.
+// dashboardId?, activeFrom?, activeUntil?, schedule?}; an empty dashboardId
+// means the default dashboard, empty active hours mean always on, and a
+// schedule replaces the whole day plan. It changes only the fields present
+// and answers 200 with the display. The id is fixed, because it is part of
+// the display's URL.
 func (s *Server) updateDisplay(w http.ResponseWriter, r *http.Request) {
 	var body struct {
-		Name         *string `json:"name"`
-		CastDeviceID *string `json:"castDeviceId"`
-		DashboardID  *string `json:"dashboardId"`
-		ActiveFrom   *string `json:"activeFrom"`
-		ActiveUntil  *string `json:"activeUntil"`
+		Name         *string          `json:"name"`
+		CastDeviceID *string          `json:"castDeviceId"`
+		DashboardID  *string          `json:"dashboardId"`
+		ActiveFrom   *string          `json:"activeFrom"`
+		ActiveUntil  *string          `json:"activeUntil"`
+		Schedule     *[]displays.Slot `json:"schedule"`
 	}
 	if !decodeJSON(w, r, &body) {
 		return
@@ -99,6 +106,9 @@ func (s *Server) updateDisplay(w http.ResponseWriter, r *http.Request) {
 	}
 	if body.ActiveUntil != nil {
 		d.Until = *body.ActiveUntil
+	}
+	if body.Schedule != nil {
+		d.Schedule = *body.Schedule
 	}
 	if err := displays.Validate(d); err != nil {
 		writeValidationError(w, validation.Fields(err))
@@ -126,6 +136,8 @@ func (s *Server) writeStoreError(w http.ResponseWriter, op string, err error) {
 	switch {
 	case errors.Is(err, store.ErrUnknownDashboard):
 		writeValidationError(w, []validation.FieldError{{Field: "dashboardId", Message: "this dashboard does not exist"}})
+	case errors.Is(err, store.ErrUnknownScheduleDashboard):
+		writeValidationError(w, []validation.FieldError{{Field: "schedule", Message: "a time slot uses a dashboard that does not exist"}})
 	case errors.Is(err, store.ErrNotFound):
 		writeError(w, http.StatusNotFound, "not_found", "This display does not exist.")
 	case errors.Is(err, store.ErrConflict):

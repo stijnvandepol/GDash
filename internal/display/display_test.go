@@ -119,6 +119,43 @@ func TestDisplayOutsideActiveHoursGetsNoData(t *testing.T) {
 	}
 }
 
+func TestScheduleSwitchesDashboardAndData(t *testing.T) {
+	b := NewBroadcaster()
+	// now is 07:30: inside the morning slot, before the evening one.
+	morning := Dashboard{ID: "morning", Widgets: []Widget{{ID: "news", Type: "news", Source: "news.default"}}}
+	evening := Dashboard{ID: "evening", Widgets: []Widget{{ID: "weather", Type: "weather", Source: "weather.current"}}}
+	views := map[string]View{"kitchen": {
+		Dashboard: Normalize(DefaultDashboard(false)),
+		Schedule: []ScheduledDashboard{
+			{Hours: schedule.Hours{From: "06:30", Until: "09:00"}, Dashboard: morning},
+			{Hours: schedule.Hours{From: "07:00", Until: "23:00"}, Dashboard: evening},
+		},
+	}}
+	data := map[string]datahub.Entry{"weather.current": {Value: []byte(`14`)}, "news.default": {Value: []byte(`[]`)}}
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	for _, tt := range []struct {
+		at       time.Time
+		want     string
+		wantData string
+	}{
+		{now, "morning", "news.default"}, // both slots match: the first wins
+		{now.Add(2 * time.Hour), "evening", "weather.current"},
+		{now.Add(-2 * time.Hour), DefaultID, ""}, // 05:30, outside every slot
+	} {
+		if err := b.Publish(tt.at, views, data); err != nil {
+			t.Fatal(err)
+		}
+		got := decode(t, <-b.Subscribe(ctx, "kitchen"))
+		if got.Dashboard.ID != tt.want {
+			t.Fatalf("at %s: dashboard = %q, want %q", tt.at.Format("15:04"), got.Dashboard.ID, tt.want)
+		}
+		if _, ok := got.Data[tt.wantData]; tt.wantData != "" && (!ok || len(got.Data) != 1) {
+			t.Fatalf("at %s: data = %v, want only %s", tt.at.Format("15:04"), got.Data, tt.wantData)
+		}
+	}
+}
+
 func TestSubscriptionClosesWithContext(t *testing.T) {
 	b := NewBroadcaster()
 	ctx, cancel := context.WithCancel(context.Background())

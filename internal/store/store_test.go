@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"reflect"
 	"testing"
 	"time"
 
@@ -26,7 +27,8 @@ func openTestStore(t *testing.T) (*Store, string) {
 }
 
 func kitchen() displays.Display {
-	return displays.Display{ID: "keuken", Name: "Keuken TV", CastDeviceID: "e542c41e4d94baa86e46f36dfdebf26e", CreatedAt: created}
+	return displays.Display{ID: "keuken", Name: "Keuken TV", CastDeviceID: "e542c41e4d94baa86e46f36dfdebf26e",
+		Schedule: []displays.Slot{}, CreatedAt: created}
 }
 
 func TestDisplayLifecycle(t *testing.T) {
@@ -40,7 +42,7 @@ func TestDisplayLifecycle(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Display: %v", err)
 	}
-	if got != kitchen() {
+	if !reflect.DeepEqual(got, kitchen()) {
 		t.Fatalf("Display = %+v, want %+v", got, kitchen())
 	}
 
@@ -54,7 +56,7 @@ func TestDisplayLifecycle(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Displays: %v", err)
 	}
-	if len(list) != 1 || list[0] != renamed {
+	if len(list) != 1 || !reflect.DeepEqual(list[0], renamed) {
 		t.Fatalf("Displays = %+v, want [%+v]", list, renamed)
 	}
 

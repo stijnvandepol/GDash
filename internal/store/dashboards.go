@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/stijnvandepol/daycast/internal/display"
-	"github.com/stijnvandepol/daycast/internal/displays"
 )
 
 // MaxDashboards bounds how many dashboards one server keeps.
@@ -112,32 +111,42 @@ func (s *Store) EnsureDashboard(ctx context.Context, d display.Dashboard, now ti
 	return err
 }
 
-// DisplayViews returns, for every display, the dashboard it shows and its
-// active hours.
+// DisplayViews returns, for every display, the dashboard it shows, its
+// schedule and its active hours.
 func (s *Store) DisplayViews(ctx context.Context) (map[string]display.View, error) {
-	rows, err := s.db.QueryContext(ctx, `
-		SELECT d.id, d.active_from, d.active_until, b.id, b.name, b.theme, b.widgets
-		FROM displays d
-		JOIN dashboards b ON b.id = COALESCE(d.dashboard_id, ?)
-		LIMIT ?`, display.DefaultID, displays.MaxDisplays)
+	boards, err := s.Dashboards(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("list display dashboards: %w", err)
+		return nil, err
 	}
-	defer rows.Close()
-	result := map[string]display.View{}
-	for rows.Next() {
-		var displayID, widgets string
-		var v display.View
-		if err := rows.Scan(&displayID, &v.Hours.From, &v.Hours.Until, &v.Dashboard.ID, &v.Dashboard.Name, &v.Dashboard.Theme, &widgets); err != nil {
-			return nil, err
-		}
-		if err := json.Unmarshal([]byte(widgets), &v.Dashboard.Widgets); err != nil {
-			return nil, fmt.Errorf("dashboard %q has invalid widgets: %w", v.Dashboard.ID, err)
-		}
-		v.Dashboard = display.Normalize(v.Dashboard)
-		result[displayID] = v
+	byID := make(map[string]display.Dashboard, len(boards))
+	for _, b := range boards {
+		byID[b.ID] = b
 	}
-	return result, rows.Err()
+	list, err := s.Displays(ctx)
+	if err != nil {
+		return nil, err
+	}
+	// The two reads are not one transaction. A change in between is
+	// harmless: every change triggers another publish with fresh views.
+	result := make(map[string]display.View, len(list))
+	for _, d := range list {
+		own := d.DashboardID
+		if own == "" {
+			own = display.DefaultID
+		}
+		dashboard, ok := byID[own]
+		if !ok {
+			continue
+		}
+		v := display.View{Dashboard: dashboard, Hours: d.Hours}
+		for _, slot := range d.Schedule {
+			if b, ok := byID[slot.DashboardID]; ok {
+				v.Schedule = append(v.Schedule, display.ScheduledDashboard{Hours: slot.Hours(), Dashboard: b})
+			}
+		}
+		result[d.ID] = v
+	}
+	return result, nil
 }
 
 func scanDashboard(row scanner) (display.Dashboard, error) {

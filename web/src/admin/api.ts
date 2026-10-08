@@ -39,6 +39,15 @@ export interface Display {
   /** Active hours as HH:MM; both empty means always on. */
   activeFrom: string;
   activeUntil: string;
+  /** Other dashboards during parts of the day; the first matching slot wins. */
+  schedule: Slot[];
+}
+
+/** A dashboard shown from one time of day until another, as HH:MM. */
+export interface Slot {
+  from: string;
+  until: string;
+  dashboardId: string;
 }
 
 export interface Widget {
@@ -105,7 +114,14 @@ export const api = {
   createDisplay: (d: { id: string; name: string; castDeviceId: string }) => request<Display>('POST', '/api/displays', d),
   updateDisplay: (
     id: string,
-    changes: { name?: string; castDeviceId?: string; dashboardId?: string; activeFrom?: string; activeUntil?: string },
+    changes: {
+      name?: string;
+      castDeviceId?: string;
+      dashboardId?: string;
+      activeFrom?: string;
+      activeUntil?: string;
+      schedule?: Slot[];
+    },
   ) =>
     request<Display>('PATCH', `/api/displays/${encodeURIComponent(id)}`, changes),
   deleteDisplay: (id: string) => request<void>('DELETE', `/api/displays/${encodeURIComponent(id)}`),

@@ -85,6 +85,25 @@ type Snapshot struct {
 type View struct {
 	Dashboard Dashboard
 	Hours     schedule.Hours
+	// Schedule replaces Dashboard during parts of the day.
+	Schedule []ScheduledDashboard
+}
+
+// ScheduledDashboard is a dashboard shown during a daily window.
+type ScheduledDashboard struct {
+	Hours     schedule.Hours
+	Dashboard Dashboard
+}
+
+// DashboardAt returns the dashboard the display shows at t: the first slot
+// of its schedule that contains t, or else its own dashboard.
+func (v View) DashboardAt(t time.Time) Dashboard {
+	for _, slot := range v.Schedule {
+		if slot.Hours.Contains(t) {
+			return slot.Dashboard
+		}
+	}
+	return v.Dashboard
 }
 
 // Broadcaster holds the latest encoded snapshot of every display and hands
@@ -114,13 +133,14 @@ func (b *Broadcaster) Publish(now time.Time, views map[string]View, data map[str
 	latest := make(map[string][]byte, len(views))
 	for displayID, view := range views {
 		active := view.Hours.Contains(now)
+		dashboard := view.DashboardAt(now)
 		used := map[string]datahub.Entry{}
 		if active {
-			used = dataFor(view.Dashboard, data)
+			used = dataFor(dashboard, data)
 		}
 		msg, err := json.Marshal(Snapshot{
 			Type: "snapshot", Version: b.version, ServerTime: now, Active: active,
-			Dashboard: view.Dashboard, Data: used,
+			Dashboard: dashboard, Data: used,
 		})
 		if err != nil {
 			return fmt.Errorf("encode snapshot for display %s: %w", displayID, err)
