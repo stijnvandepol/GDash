@@ -1,7 +1,8 @@
 <script lang="ts">
   import type { Entry } from '../protocol';
   import { currentLanguage, locale, t } from '../i18n.svelte';
-  import { parseLocalDate } from './dates';
+  import { clock } from '../state.svelte';
+  import { daysUntil, parseLocalDate } from './dates';
   import { waitingText } from './waiting';
   import { describeWeather } from './wmo';
 
@@ -18,7 +19,14 @@
   let { entry, settings }: { entry: Entry | undefined; settings: Record<string, unknown> | undefined } = $props();
 
   const wanted = $derived(typeof settings?.days === 'number' ? settings.days : DEFAULT_DAYS);
-  const days = $derived(forecastDays(entry?.value).slice(0, wanted));
+  // The forecast starts today, but the last good value may be from
+  // yesterday when fetching fails: days that have passed are left out.
+  const days = $derived(
+    forecastDays(entry?.value)
+      .map((day) => ({ ...day, offset: daysUntil(day.date, clock.now) }))
+      .filter((day) => day.offset !== null && day.offset >= 0)
+      .slice(0, wanted),
+  );
   const weekday = $derived(new Intl.DateTimeFormat(locale(), { weekday: 'short' }));
 
   function forecastDays(v: unknown): Day[] {
@@ -34,9 +42,9 @@
     );
   }
 
-  /** "Today" for the first day, else the short weekday of the local date. */
-  function dayName(date: string, index: number): string {
-    if (index === 0) return t('today');
+  /** "Today" for today, else the short weekday of the local date. */
+  function dayName(date: string, offset: number | null): string {
+    if (offset === 0) return t('today');
     // A date without time is the forecast's local day, not UTC midnight.
     const local = parseLocalDate(date);
     return local ? weekday.format(local) : '';
@@ -45,9 +53,9 @@
 
 {#if days.length > 0}
   <ol class="forecast" style:grid-template-columns="repeat({days.length}, 1fr)" style:--days={days.length}>
-    {#each days as day, i (day.date)}
+    {#each days as day, i (i)}
       <li title={describeWeather(day.weatherCode, currentLanguage()) ?? t('unknownWeather')}>
-        <span class="day">{dayName(day.date, i)}</span>
+        <span class="day">{dayName(day.date, day.offset)}</span>
         <span class="max">{Math.round(day.maxC)}°</span>
         <span class="min">{Math.round(day.minC)}°</span>
         <span class="rain">{day.rainChance}%</span>

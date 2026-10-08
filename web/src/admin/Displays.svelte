@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import { api, ApiError, slugify, type CastDevice, type Dashboard, type Display } from './api';
   import { errorMessage } from './errors';
+  import { newestOnly } from './newest';
   import { describeCast } from './status';
   import ScheduleEditor from './ScheduleEditor.svelte';
 
@@ -45,9 +46,13 @@
   /** Sends the user back to the login screen when the session has ended. */
   const handle = (err: unknown) => errorMessage(err, onSessionEnded);
 
+  const fetchLists = newestOnly(() => Promise.all([api.displays(), api.dashboards()]));
+
   async function load() {
     try {
-      [displays, dashboards] = await Promise.all([api.displays(), api.dashboards()]);
+      const newest = await fetchLists();
+      if (!newest) return;
+      [displays, dashboards] = newest.value;
       loadError = '';
     } catch (err) {
       loadError = handle(err);

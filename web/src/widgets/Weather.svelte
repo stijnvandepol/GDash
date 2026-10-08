@@ -33,9 +33,11 @@
     <span class="description">{describeWeather(report.weatherCode, currentLanguage()) ?? t('unknownWeather')}</span>
     <span class="range">{Math.round(report.todayMinC)}° / {Math.round(report.todayMaxC)}°</span>
     <span class="wind">{t('wind', { speed: Math.round(report.windKmh) })}</span>
-    <span class="updated" class:stale>
-      {t('updated', { time: updatedAt.format(new Date(entry.fetchedAt)) })}
-    </span>
+    {#if !Number.isNaN(Date.parse(entry.fetchedAt))}
+      <span class="updated" class:stale>
+        {t('updated', { time: updatedAt.format(new Date(entry.fetchedAt)) })}
+      </span>
+    {/if}
   {:else}
     <span class="description muted">{waitingText(entry, 'weather')}</span>
   {/if}

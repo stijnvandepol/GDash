@@ -42,6 +42,9 @@ jobs:
             --title "Daycast $GITHUB_REF_NAME" --generate-notes
 
   image:
+    # The archives job checks the version format first; a tag such as
+    # "vnext" must not push an image or move "latest".
+    needs: archives
     runs-on: ubuntu-24.04
     permissions:
       contents: read

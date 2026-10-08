@@ -103,9 +103,12 @@
       </label>
       <label>
         Address
+        <!-- Not type="password": browsers offer to save those, which would
+             put the secret calendar address in a password manager. -->
         <input
           bind:value={url}
-          type={secret ? 'password' : 'url'}
+          type={secret ? 'text' : 'url'}
+          class:masked={secret}
           placeholder={urlPlaceholder}
           autocomplete="off"
           spellcheck="false"
@@ -125,5 +128,8 @@
   .address {
     display: block;
     overflow-wrap: anywhere;
+  }
+  .masked {
+    -webkit-text-security: disc;
   }
 </style>

@@ -92,7 +92,8 @@ export function currentLanguage(): Language {
 /** The text for key in the current language, with {name} placeholders filled in. */
 export function t(key: TextKey, values: Record<string, string | number> = {}): string {
   let text = TEXTS[currentLanguage()][key];
-  for (const [name, value] of Object.entries(values)) text = text.replace(`{${name}}`, String(value));
+  // A function as replacement: a value such as "$&" is inserted as it is.
+  for (const [name, value] of Object.entries(values)) text = text.replace(`{${name}}`, () => String(value));
   return text;
 }
 

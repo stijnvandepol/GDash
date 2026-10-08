@@ -43,6 +43,10 @@ describe('i18n', () => {
     expect(t('wind', { speed: 14 })).toBe('Wind 14 km/u');
   });
 
+  it('inserts values literally', () => {
+    expect(t('unknownWidget', { type: '$&x' })).toBe('Unknown widget: $&x');
+  });
+
   it('has Dutch words for every weather code', () => {
     for (const code of [0, 1, 2, 3, 45, 48, 51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 71, 73, 75, 77, 80, 81, 82, 85, 86, 95, 96, 99]) {
       expect(describeWeather(code, 'nl'), `code ${code}`).toBeTruthy();

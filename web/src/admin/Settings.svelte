@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import { api, type Settings, type SourceStatus } from './api';
   import { errorMessage } from './errors';
+  import { newestOnly } from './newest';
   import AccountSetting from './AccountSetting.svelte';
   import ActivityLog from './ActivityLog.svelte';
   import LocationSetting from './LocationSetting.svelte';
@@ -39,11 +40,14 @@
     return () => clearInterval(timer);
   });
 
+  const fetchSettings = newestOnly(() => api.settings());
+
   async function load() {
     try {
-      const result = await api.settings();
-      settings = result.settings;
-      status = result.status;
+      const newest = await fetchSettings();
+      if (!newest) return;
+      settings = newest.value.settings;
+      status = newest.value.status;
       loadError = '';
     } catch (err) {
       loadError = handle(err);
