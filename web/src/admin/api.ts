@@ -18,8 +18,7 @@ export class ApiError extends Error {
 
   /** The message for one form field, if the server rejected it. */
   fieldMessage(field: string): string | undefined {
-    const rejected = this.fields.find((f) => f.field === field);
-    return rejected ? (fieldMessages[field] ?? rejected.message) : undefined;
+    return this.fields.find((f) => f.field === field)?.message;
   }
 }
 
@@ -43,29 +42,6 @@ export interface CastDevice {
   hasScreen: boolean;
 }
 
-// The API answers in English; the interface translates by error code and
-// falls back to the server's message for codes it does not know.
-const messages: Record<string, string> = {
-  invalid_credentials: 'De gebruikersnaam of het wachtwoord klopt niet.',
-  rate_limited: 'Te veel mislukte pogingen. Wacht 15 minuten en probeer het opnieuw.',
-  invalid_setup_token: 'De setup-token klopt niet. Je vindt hem in de log van Daycast.',
-  setup_done: 'Daycast is al ingesteld. Log in.',
-  not_logged_in: 'Je sessie is verlopen. Log opnieuw in.',
-  not_found: 'Dit display bestaat niet (meer).',
-  conflict: 'Er bestaat al een display met dit adres, of het maximum aantal displays is bereikt.',
-  discovery_failed: 'Zoeken naar Cast-apparaten lukte niet. Draait Daycast met host-networking?',
-  invalid_input: 'Niet alle velden zijn goed ingevuld.',
-  internal: 'Er ging iets mis op de server. Kijk in de log van Daycast.',
-};
-
-const fieldMessages: Record<string, string> = {
-  id: 'Gebruik 1 tot 32 kleine letters, cijfers of streepjes.',
-  name: 'Gebruik 1 tot 60 tekens, zonder spaties aan het begin of eind.',
-  castDeviceId: 'Kies een Cast-apparaat uit de lijst.',
-  username: 'Gebruik 1 tot 32 letters, cijfers, punten, streepjes of underscores.',
-  password: 'Gebruik minstens 10 tekens.',
-};
-
 async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
   const response = await fetch(path, {
     method,
@@ -78,12 +54,11 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
   try {
     payload = await response.json();
   } catch {
-    throw new ApiError(response.status, 'invalid_response', 'De server gaf een onverwacht antwoord.');
+    throw new ApiError(response.status, 'invalid_response', 'The server sent an unexpected response.');
   }
   if (!response.ok) {
     const err = (payload as { error?: { code?: string; message?: string; fields?: FieldError[] } }).error;
-    const code = err?.code ?? 'unknown';
-    throw new ApiError(response.status, code, messages[code] ?? err?.message ?? 'Er ging iets mis.', err?.fields ?? []);
+    throw new ApiError(response.status, err?.code ?? 'unknown', err?.message ?? 'Something went wrong.', err?.fields ?? []);
   }
   return payload as T;
 }
@@ -103,7 +78,7 @@ export const api = {
   castDevices: () => request<{ devices: CastDevice[] }>('GET', '/api/cast-devices').then((r) => r.devices),
 };
 
-/** Turns "Keuken TV" into "keuken-tv", the form display ids must have. */
+/** Turns "Kitchen TV" into "kitchen-tv", the form display ids must have. */
 export function slugify(name: string): string {
   return name
     .normalize('NFD')

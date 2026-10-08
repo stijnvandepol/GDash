@@ -16,7 +16,7 @@
     try {
       onDone(await api.setup(setupToken.trim(), username, password));
     } catch (err) {
-      error = err instanceof ApiError ? err : new ApiError(0, 'network', 'De server is niet bereikbaar.');
+      error = err instanceof ApiError ? err : new ApiError(0, 'network', 'The server cannot be reached.');
     } finally {
       busy = false;
     }
@@ -24,27 +24,27 @@
 </script>
 
 <form class="card narrow" onsubmit={submit}>
-  <h1>Daycast instellen</h1>
+  <h1>Set up Daycast</h1>
   <p class="muted">
-    Maak het beheerdersaccount aan. De setup-token staat in de log van Daycast, bijvoorbeeld in Container Manager op je NAS
-    of in het terminalvenster. Zo kan alleen jij deze server instellen.
+    Create the administrator account. The setup token is printed in the Daycast log, for example in Container Manager on
+    your NAS or in the terminal window. That way only you can set up this server.
   </p>
 
   <label>
-    Setup-token
+    Setup token
     <input bind:value={setupToken} autocomplete="off" spellcheck="false" required />
   </label>
   <label>
-    Gebruikersnaam
+    Username
     <input bind:value={username} autocomplete="username" required />
     {#if error?.fieldMessage('username')}<span class="field-error">{error.fieldMessage('username')}</span>{/if}
   </label>
   <label>
-    Wachtwoord
+    Password
     <input type="password" bind:value={password} autocomplete="new-password" required minlength="10" />
     {#if error?.fieldMessage('password')}<span class="field-error">{error.fieldMessage('password')}</span>{/if}
   </label>
 
   {#if error && error.fields.length === 0}<p class="error">{error.message}</p>{/if}
-  <button type="submit" disabled={busy}>{busy ? 'Bezig…' : 'Account aanmaken'}</button>
+  <button type="submit" disabled={busy}>{busy ? 'Working…' : 'Create account'}</button>
 </form>

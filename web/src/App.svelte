@@ -39,17 +39,17 @@
           {:else if widget.type === 'weather'}
             <Weather entry={widget.source ? display.snapshot?.data[widget.source] : undefined} />
           {:else}
-            <p class="muted">Onbekende widget: {widget.type}</p>
+            <p class="muted">Unknown widget: {widget.type}</p>
           {/if}
         </section>
       {/each}
     </div>
   {:else}
-    <p class="waiting">Verbinden met Daycast…</p>
+    <p class="waiting">Connecting to Daycast…</p>
   {/if}
 
   {#if display.connection === 'offline'}
-    <div class="offline" title="Geen verbinding met de Daycast-server"></div>
+    <div class="offline" title="No connection to the Daycast server"></div>
   {/if}
 </main>
 

@@ -3,24 +3,27 @@
 Your day on every TV in the house. Self-hosted, casts to the Chromecast or
 Google TV you already own. No extra hardware, no subscription, no cloud.
 
-> **Status: v0.1 prototype.** This version exists to prove the risky parts of
-> the design on real hardware. It has no setup wizard, no editor and **no
-> authentication**: only run it on a network you trust.
+> **Status: prototype.** It works on real hardware at home, but there is no
+> dashboard editor yet and the TV pages are not paired. Run it only on a
+> network you trust.
 
 ## What works
 
-- A Go server that fetches the weather from [Open-Meteo](https://open-meteo.com)
-  (no API key), keeps the last good value when the internet drops, and marks
-  data as stale.
-- A display page at `/d/<name>` for any browser, kiosk or Raspberry Pi, updated
-  live over Server-Sent Events. It keeps working when the server restarts.
-- A Cast receiver and a built-in Cast sender: Daycast finds Chromecasts with
-  mDNS, launches its receiver and keeps it on screen, without Home Assistant,
-  without HTTPS and without a cloud service.
+- **Weather** from [Open-Meteo](https://open-meteo.com) (no API key). The last
+  good value is kept when the internet drops, and stale data is marked.
+- **A web interface** at `/` to set up the first account, log in and manage
+  displays.
+- **Displays**: link a display to a Cast device found on your network, and
+  Daycast keeps the dashboard on that TV. It restarts the cast every 15
+  minutes, because Google TV covers a running cast with its screensaver after
+  about 19 minutes. No Home Assistant, no HTTPS and no Cast developer account
+  needed.
+- **Browser displays**: any browser, kiosk or Raspberry Pi can open
+  `/d/<display>` instead.
 
-The research behind the design is in
-[GoogleHome-Dashboard/docs/onderzoek](https://github.com/stijnvandepol/GoogleHome-Dashboard/tree/main/docs/onderzoek)
-(Dutch).
+Progress and test results: [docs/progress.md](docs/progress.md). The research
+behind the design (Dutch) is in
+[GoogleHome-Dashboard/docs/onderzoek](https://github.com/stijnvandepol/GoogleHome-Dashboard/tree/main/docs/onderzoek).
 
 ## Run it
 
@@ -32,11 +35,11 @@ go build -o daycast ./cmd/daycast
 DAYCAST_LATITUDE=51.65 DAYCAST_LONGITUDE=5.95 ./daycast
 ```
 
-Open `http://<server>:8420/d/kitchen` in a browser.
+On first start Daycast logs a **setup token**. Open `http://<server>:8420/`,
+enter the token and create your account. Then add a display and pick your TV.
 
-Or with Docker: edit the location in `compose.yaml`, then `docker compose up -d`.
-
-To show the dashboard on a TV, follow [docs/receiver.md](docs/receiver.md).
+With Docker: set the location in `compose.yaml`, run `docker compose up -d`
+and read the token with `docker compose logs daycast`.
 
 ## Configuration
 
@@ -44,9 +47,16 @@ To show the dashboard on a TV, follow [docs/receiver.md](docs/receiver.md).
 |---|---|---|
 | `DAYCAST_LATITUDE`, `DAYCAST_LONGITUDE` | required | Location for the weather, rounded to about 1 km before it leaves the server |
 | `DAYCAST_ADDR` | `:8420` | Listen address |
-| `DAYCAST_DATA_DIR` | `data` | Where the last known data is kept |
-| `DAYCAST_CAST_DEVICE` | none | Cast device to keep the dashboard on (`192.168.1.40` or `host:port`) |
-| `DAYCAST_CAST_APP_ID` | none | App ID of the registered receiver |
+| `DAYCAST_DATA_DIR` | `data` | Database and cached data |
+| `DAYCAST_CAST_APP_ID` | none | App ID of an own registered receiver ([docs/receiver.md](docs/receiver.md)); without it Daycast uses DashCast |
+
+## Command line
+
+```bash
+daycast                    # start the server
+daycast discover           # list Cast devices on the network
+daycast status <address>   # show what a Cast device is doing, without changing it
+```
 
 ## Development
 
@@ -57,7 +67,8 @@ cd web && npm run check       # Svelte and TypeScript checks
 cd web && npm run dev         # frontend with hot reload, proxies /api to :8420
 ```
 
-The code follows [CODE_GUIDELINES.md](CODE_GUIDELINES.md).
+The code follows [CODE_GUIDELINES.md](CODE_GUIDELINES.md). The API is described
+in [docs/api.md](docs/api.md).
 
 ## License
 

@@ -7,8 +7,8 @@ services:
     environment:
       DAYCAST_LATITUDE: "51.65"
       DAYCAST_LONGITUDE: "5.95"
-      # Keep the receiver on one TV. See docs/receiver.md for the app ID.
-      # DAYCAST_CAST_DEVICE: "192.168.1.40"
+      # Optional: the app ID of an own registered receiver, see
+      # docs/receiver.md. Without it Daycast uses the public DashCast receiver.
       # DAYCAST_CAST_APP_ID: "ABCD1234"
     volumes:
       - daycast-data:/data

@@ -44,7 +44,7 @@ type Dashboard struct {
 func DefaultDashboard() Dashboard {
 	return Dashboard{
 		ID:      "default",
-		Name:    "Standaard",
+		Name:    "Default",
 		Theme:   "minimal-dark",
 		Columns: 24,
 		Rows:    14,

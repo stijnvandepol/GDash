@@ -21,7 +21,7 @@
       if (err instanceof ApiError && err.status === 401) {
         screen = { name: 'login' };
       } else {
-        screen = { name: 'error', message: err instanceof Error ? err.message : 'Onbekende fout' };
+        screen = { name: 'error', message: err instanceof Error ? err.message : 'Unknown error' };
       }
     }
   });
@@ -37,15 +37,15 @@
   {#if screen.name === 'app'}
     <span class="spacer"></span>
     <span class="muted">{screen.user.username}</span>
-    <button class="link" onclick={logout}>Uitloggen</button>
+    <button class="link" onclick={logout}>Log out</button>
   {/if}
 </header>
 
 <main class="content">
   {#if screen.name === 'loading'}
-    <p class="muted">Laden…</p>
+    <p class="muted">Loading…</p>
   {:else if screen.name === 'error'}
-    <p class="error">Daycast is niet bereikbaar: {screen.message}</p>
+    <p class="error">Daycast cannot be reached: {screen.message}</p>
   {:else if screen.name === 'setup'}
     <Setup onDone={(user) => (screen = { name: 'app', user })} />
   {:else if screen.name === 'login'}

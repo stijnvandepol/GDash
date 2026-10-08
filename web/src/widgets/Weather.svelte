@@ -31,12 +31,12 @@
     <span class="temperature">{Math.round(report.temperatureC)}°</span>
     <span class="description">{describeWeather(report.weatherCode)}</span>
     <span class="range">{Math.round(report.todayMinC)}° / {Math.round(report.todayMaxC)}°</span>
-    <span class="wind">Wind {Math.round(report.windKmh)} km/u</span>
+    <span class="wind">Wind {Math.round(report.windKmh)} km/h</span>
     <span class="updated" class:stale>
-      Bijgewerkt {updatedAt.format(new Date(entry.fetchedAt))}
+      Updated {updatedAt.format(new Date(entry.fetchedAt))}
     </span>
   {:else}
-    <span class="description muted">Weer wordt opgehaald…</span>
+    <span class="description muted">Loading weather…</span>
   {/if}
 </div>
 

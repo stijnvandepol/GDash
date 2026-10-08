@@ -36,7 +36,7 @@
       onSessionEnded();
       return '';
     }
-    return err instanceof Error ? err.message : 'Er ging iets mis.';
+    return err instanceof Error ? err.message : 'Something went wrong.';
   }
 
   async function load() {
@@ -53,7 +53,7 @@
     searchMessage = '';
     try {
       devices = await api.castDevices();
-      if (devices.length === 0) searchMessage = 'Geen Cast-apparaten gevonden. Staat de TV aan en zit hij op hetzelfde netwerk?';
+      if (devices.length === 0) searchMessage = 'No Cast devices found. Is the TV switched on and on the same network?';
     } catch (err) {
       searchMessage = handle(err);
     } finally {
@@ -102,7 +102,7 @@
   }
 
   async function remove(d: Display) {
-    if (!confirm(`Display "${d.name}" verwijderen?`)) return;
+    if (!confirm(`Remove display "${d.name}"?`)) return;
     try {
       await api.deleteDisplay(d.id);
       await load();
@@ -112,8 +112,8 @@
   }
 
   function describeDevice(id: string): string {
-    if (!id) return 'Browser of kiosk';
-    return deviceNames.get(id) ?? 'Cast-apparaat (nu niet gevonden)';
+    if (!id) return 'Browser or kiosk';
+    return deviceNames.get(id) ?? 'Cast device (not found right now)';
   }
 </script>
 
@@ -121,25 +121,25 @@
   <h1>Displays</h1>
   {#if loadError}<p class="error">{loadError}</p>{/if}
   {#if displays.length === 0 && !loadError}
-    <p class="muted">Nog geen displays. Voeg hieronder je eerste TV toe.</p>
+    <p class="muted">No displays yet. Add your first TV below.</p>
   {:else}
     <ul class="list">
       {#each displays as d (d.id)}
         <li>
           {#if editingId === d.id}
             <form class="inline" onsubmit={(e) => saveRename(e, d.id)}>
-              <input bind:value={editName} aria-label="Nieuwe naam" required />
-              <button type="submit">Opslaan</button>
-              <button type="button" class="link" onclick={() => (editingId = null)}>Annuleren</button>
+              <input bind:value={editName} aria-label="New name" required />
+              <button type="submit">Save</button>
+              <button type="button" class="link" onclick={() => (editingId = null)}>Cancel</button>
             </form>
           {:else}
             <div class="grow">
               <strong>{d.name}</strong>
               <span class="muted">{describeDevice(d.castDeviceId)}</span>
             </div>
-            <a href="/d/{d.id}" target="_blank" rel="noopener">Openen</a>
-            <button class="link" onclick={() => startRename(d)}>Hernoemen</button>
-            <button class="link danger" onclick={() => remove(d)}>Verwijderen</button>
+            <a href="/d/{d.id}" target="_blank" rel="noopener">Open</a>
+            <button class="link" onclick={() => startRename(d)}>Rename</button>
+            <button class="link danger" onclick={() => remove(d)}>Remove</button>
           {/if}
         </li>
       {/each}
@@ -149,14 +149,14 @@
 </section>
 
 <form class="card" onsubmit={create}>
-  <h2>Display toevoegen</h2>
+  <h2>Add a display</h2>
   <label>
-    Naam
-    <input bind:value={newName} oninput={nameChanged} placeholder="Keuken" required />
+    Name
+    <input bind:value={newName} oninput={nameChanged} placeholder="Kitchen" required />
     {#if createError?.fieldMessage('name')}<span class="field-error">{createError.fieldMessage('name')}</span>{/if}
   </label>
   <label>
-    Adres van de displaypagina
+    Display page address
     <span class="with-prefix">
       <span class="prefix">/d/</span>
       <input bind:value={newId} oninput={() => (idEdited = true)} required spellcheck="false" />
@@ -166,12 +166,12 @@
   <label>
     TV
     <select bind:value={newDevice}>
-      <option value="">Geen Cast: ik open de pagina zelf in een browser of kiosk</option>
+      <option value="">No Cast: I open the page myself in a browser or kiosk</option>
       {#each screens as dev (dev.id)}
         <option value={dev.id}>{dev.name} ({dev.model})</option>
       {/each}
       {#if speakers.length > 0}
-        <optgroup label="Zonder scherm, kan geen dashboard tonen">
+        <optgroup label="No screen, cannot show a dashboard">
           {#each speakers as dev (dev.id)}
             <option value={dev.id} disabled>{dev.name} ({dev.model})</option>
           {/each}
@@ -180,11 +180,11 @@
     </select>
   </label>
   <p class="muted small">
-    {#if searching}Zoeken naar Cast-apparaten…{:else}
-      {searchMessage || `${screens.length} TV's en schermen gevonden.`}
-      <button type="button" class="link" onclick={search}>Opnieuw zoeken</button>
+    {#if searching}Searching for Cast devices…{:else}
+      {searchMessage || `Found ${screens.length} TVs and screens.`}
+      <button type="button" class="link" onclick={search}>Search again</button>
     {/if}
   </p>
   {#if createError && createError.fields.length === 0}<p class="error">{createError.message}</p>{/if}
-  <button type="submit" disabled={creating}>{creating ? 'Bezig…' : 'Toevoegen'}</button>
+  <button type="submit" disabled={creating}>{creating ? 'Working…' : 'Add display'}</button>
 </form>

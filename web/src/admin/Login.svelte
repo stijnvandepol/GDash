@@ -15,7 +15,7 @@
     try {
       onDone(await api.login(username, password));
     } catch (err) {
-      error = err instanceof ApiError ? err.message : 'De server is niet bereikbaar.';
+      error = err instanceof ApiError ? err.message : 'The server cannot be reached.';
     } finally {
       busy = false;
     }
@@ -23,15 +23,15 @@
 </script>
 
 <form class="card narrow" onsubmit={submit}>
-  <h1>Inloggen</h1>
+  <h1>Log in</h1>
   <label>
-    Gebruikersnaam
+    Username
     <input bind:value={username} autocomplete="username" required />
   </label>
   <label>
-    Wachtwoord
+    Password
     <input type="password" bind:value={password} autocomplete="current-password" required />
   </label>
   {#if error}<p class="error">{error}</p>{/if}
-  <button type="submit" disabled={busy}>{busy ? 'Bezig…' : 'Inloggen'}</button>
+  <button type="submit" disabled={busy}>{busy ? 'Working…' : 'Log in'}</button>
 </form>
