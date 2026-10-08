@@ -133,7 +133,9 @@
     saving = true;
     message = '';
     errors = [];
-    const nodes = grid.save(false) as GridStackNode[];
+    // The engine's nodes, not grid.save(): save() leaves out a width or
+    // height that equals the widget's minimum, as a default to omit.
+    const nodes: GridStackNode[] = grid.engine.nodes;
     const layout: Widget[] = nodes.map((n) => {
       const w = widgets[String(n.id)]!;
       const settings = w.settings && Object.keys(w.settings).length > 0 ? w.settings : undefined;
@@ -213,7 +215,7 @@
   {/if}
 
   {#if message}<p class="muted">{message}</p>{/if}
-  {#each errors as e (e)}<p class="error">{e}</p>{/each}
+  {#each errors as e, i (i)}<p class="error">{e}</p>{/each}
 </section>
 
 <style>

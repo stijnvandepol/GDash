@@ -67,7 +67,7 @@
         <li>
           <div class="grow">
             <strong>{d.name}</strong>
-            <span class="muted">{d.widgets.length} widgets{d.id === 'default' ? ' · shown on displays without a choice' : ''}</span>
+            <span class="muted">{d.widgets.length === 1 ? '1 widget' : `${d.widgets.length} widgets`}{d.id === 'default' ? ' · shown on displays without a choice' : ''}</span>
           </div>
           <button class="link" onclick={() => (editing = d)}>Edit</button>
           {#if d.id !== 'default'}
