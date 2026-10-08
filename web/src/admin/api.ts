@@ -36,6 +36,9 @@ export interface Display {
   pairedScreens?: number;
   /** Empty means the default dashboard. */
   dashboardId: string;
+  /** Active hours as HH:MM; both empty means always on. */
+  activeFrom: string;
+  activeUntil: string;
 }
 
 export interface Widget {
@@ -98,7 +101,10 @@ export const api = {
   me: () => request<User>('GET', '/api/me'),
   displays: () => request<{ displays: Display[] }>('GET', '/api/displays').then((r) => r.displays),
   createDisplay: (d: { id: string; name: string; castDeviceId: string }) => request<Display>('POST', '/api/displays', d),
-  updateDisplay: (id: string, changes: { name?: string; castDeviceId?: string; dashboardId?: string }) =>
+  updateDisplay: (
+    id: string,
+    changes: { name?: string; castDeviceId?: string; dashboardId?: string; activeFrom?: string; activeUntil?: string },
+  ) =>
     request<Display>('PATCH', `/api/displays/${encodeURIComponent(id)}`, changes),
   deleteDisplay: (id: string) => request<void>('DELETE', `/api/displays/${encodeURIComponent(id)}`),
   pairScreen: (id: string, code: string) =>

@@ -7,6 +7,7 @@ import (
 
 	"github.com/stijnvandepol/daycast/internal/display"
 	"github.com/stijnvandepol/daycast/internal/displays"
+	"github.com/stijnvandepol/daycast/internal/schedule"
 )
 
 func morning() display.Dashboard {
@@ -84,19 +85,23 @@ func TestDisplayDashboards(t *testing.T) {
 	if err := s.CreateDashboard(ctx, morning(), created); err != nil {
 		t.Fatal(err)
 	}
-	kitchen := displays.Display{ID: "kitchen", Name: "Kitchen", DashboardID: "morning", CreatedAt: created}
+	kitchen := displays.Display{ID: "kitchen", Name: "Kitchen", DashboardID: "morning", CreatedAt: created,
+		Hours: schedule.Hours{From: "06:30", Until: "23:00"}}
 	hall := displays.Display{ID: "hall", Name: "Hall", CreatedAt: created}
 	for _, d := range []displays.Display{kitchen, hall} {
 		if err := s.CreateDisplay(ctx, d); err != nil {
 			t.Fatal(err)
 		}
 	}
-	got, err := s.DisplayDashboards(ctx)
+	got, err := s.DisplayViews(ctx)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got["kitchen"].ID != "morning" || got["hall"].ID != display.DefaultID {
-		t.Fatalf("DisplayDashboards = kitchen:%s hall:%s", got["kitchen"].ID, got["hall"].ID)
+	if got["kitchen"].Hours.From != "06:30" || !got["hall"].Hours.Always() {
+		t.Fatalf("hours = kitchen:%+v hall:%+v", got["kitchen"].Hours, got["hall"].Hours)
+	}
+	if got["kitchen"].Dashboard.ID != "morning" || got["hall"].Dashboard.ID != display.DefaultID {
+		t.Fatalf("DisplayViews = kitchen:%s hall:%s", got["kitchen"].Dashboard.ID, got["hall"].Dashboard.ID)
 	}
 
 	// Deleting a dashboard sends its displays back to the default.
@@ -106,8 +111,8 @@ func TestDisplayDashboards(t *testing.T) {
 	if d, _ := s.Display(ctx, "kitchen"); d.DashboardID != "" {
 		t.Fatalf("display still points at a deleted dashboard: %q", d.DashboardID)
 	}
-	if got, _ := s.DisplayDashboards(ctx); got["kitchen"].ID != display.DefaultID {
-		t.Fatalf("kitchen shows %q after its dashboard was deleted", got["kitchen"].ID)
+	if got, _ := s.DisplayViews(ctx); got["kitchen"].Dashboard.ID != display.DefaultID {
+		t.Fatalf("kitchen shows %q after its dashboard was deleted", got["kitchen"].Dashboard.ID)
 	}
 }
 

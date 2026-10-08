@@ -1,6 +1,6 @@
 <script lang="ts">
   import './theme.css';
-  import { display } from './state.svelte';
+  import { clock, display } from './state.svelte';
   import Clock from './widgets/Clock.svelte';
   import Weather from './widgets/Weather.svelte';
   import News from './widgets/News.svelte';
@@ -16,12 +16,27 @@
   const scale = $derived(Math.min(innerWidth / STAGE_WIDTH, innerHeight / STAGE_HEIGHT));
 
   const dashboard = $derived(display.snapshot?.dashboard);
+  const asleep = $derived(display.snapshot?.active === false);
+
+  // Pixel shift against burn-in: every few minutes the whole stage moves a
+  // few pixels, so no edge stays lit on the same OLED pixels all day.
+  const SHIFT_EVERY_MINUTES = 3;
+  const SHIFTS: [number, number][] = [
+    [0, 0],
+    [6, 3],
+    [-4, 6],
+    [-6, -3],
+    [4, -6],
+  ];
+  const shift = $derived(SHIFTS[Math.floor(clock.now.getTime() / 60000 / SHIFT_EVERY_MINUTES) % SHIFTS.length] ?? [0, 0]);
 </script>
 
 <svelte:window bind:innerWidth bind:innerHeight />
 
 <main class="screen">
-  {#if display.problem}
+  {#if asleep}
+    <!-- Outside active hours: nothing lit, so the TV can idle and OLED pixels rest. -->
+  {:else if display.problem}
     <p class="message">{display.problem}</p>
   {:else if display.pairingCode}
     <div class="pairing">
@@ -36,7 +51,7 @@
       class="stage"
       style:width="{STAGE_WIDTH}px"
       style:height="{STAGE_HEIGHT}px"
-      style:transform="translate(-50%, -50%) scale({scale})"
+      style:transform="translate(-50%, -50%) scale({scale}) translate({shift[0]}px, {shift[1]}px)"
       style:grid-template-columns="repeat({dashboard.columns}, 1fr)"
       style:grid-template-rows="repeat({dashboard.rows}, 1fr)"
     >
@@ -64,7 +79,7 @@
     <p class="message">Connecting to Daycast…</p>
   {/if}
 
-  {#if display.connection === 'offline'}
+  {#if display.connection === 'offline' && !asleep}
     <div class="offline" title="No connection to the Daycast server"></div>
   {/if}
 </main>

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/stijnvandepol/daycast/internal/datahub"
+	"github.com/stijnvandepol/daycast/internal/schedule"
 )
 
 var now = time.Date(2026, 10, 8, 7, 30, 0, 0, time.UTC)
@@ -20,8 +21,8 @@ func decode(t *testing.T, msg []byte) Snapshot {
 	return s
 }
 
-func kitchenOnly() map[string]Dashboard {
-	return map[string]Dashboard{"kitchen": Normalize(DefaultDashboard(false))}
+func kitchenOnly() map[string]View {
+	return map[string]View{"kitchen": {Dashboard: Normalize(DefaultDashboard(false))}}
 }
 
 func TestSubscriberGetsCurrentSnapshotFirst(t *testing.T) {
@@ -68,7 +69,7 @@ func TestEachDisplayGetsItsDashboardAndOnlyItsData(t *testing.T) {
 		"calendar.default": {Value: []byte(`["Dentist"]`)},
 		"news.default":     {Value: []byte(`[]`)},
 	}
-	if err := b.Publish(now, map[string]Dashboard{"kitchen": withCalendar, "hall": withoutCalendar}, data); err != nil {
+	if err := b.Publish(now, map[string]View{"kitchen": {Dashboard: withCalendar}, "hall": {Dashboard: withoutCalendar}}, data); err != nil {
 		t.Fatal(err)
 	}
 	ctx, cancel := context.WithCancel(context.Background())
@@ -91,6 +92,30 @@ func TestEachDisplayGetsItsDashboardAndOnlyItsData(t *testing.T) {
 	case msg := <-unknown:
 		t.Fatalf("a display without a dashboard got %s", msg)
 	default:
+	}
+}
+
+func TestDisplayOutsideActiveHoursGetsNoData(t *testing.T) {
+	b := NewBroadcaster()
+	// now is 07:30 UTC; the window opens at 08:00 in the same zone.
+	night := schedule.Hours{From: "08:00", Until: "23:00"}
+	views := map[string]View{"kitchen": {Dashboard: Normalize(DefaultDashboard(false)), Hours: night}}
+	data := map[string]datahub.Entry{"weather.current": {Value: []byte(`14`)}}
+	if err := b.Publish(now, views, data); err != nil {
+		t.Fatal(err)
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	got := decode(t, <-b.Subscribe(ctx, "kitchen"))
+	if got.Active || len(got.Data) != 0 {
+		t.Fatalf("snapshot outside active hours = active %v, data %v", got.Active, got.Data)
+	}
+	if err := b.Publish(now.Add(time.Hour), views, data); err != nil {
+		t.Fatal(err)
+	}
+	got = decode(t, <-b.Subscribe(ctx, "kitchen"))
+	if !got.Active || len(got.Data) != 1 {
+		t.Fatalf("snapshot inside active hours = active %v, data %v", got.Active, got.Data)
 	}
 }
 

@@ -22,6 +22,9 @@
   let editName = $state('');
   let pairingId = $state<string | null>(null);
   let pairCode = $state('');
+  let hoursId = $state<string | null>(null);
+  let hoursFrom = $state('');
+  let hoursUntil = $state('');
   let rowError = $state('');
 
   const deviceNames = $derived(new Map(devices.map((d) => [d.id, d.name])));
@@ -123,6 +126,28 @@
     }
   }
 
+  function startHours(d: Display) {
+    hoursId = d.id;
+    hoursFrom = d.activeFrom || '06:30';
+    hoursUntil = d.activeUntil || '23:00';
+    rowError = '';
+  }
+
+  async function saveHours(event: SubmitEvent | null, id: string, always = false) {
+    event?.preventDefault();
+    try {
+      await api.updateDisplay(id, always ? { activeFrom: '', activeUntil: '' } : { activeFrom: hoursFrom, activeUntil: hoursUntil });
+      hoursId = null;
+      await load();
+    } catch (err) {
+      rowError = err instanceof ApiError ? (err.fieldMessage('activeHours') ?? err.message) : handle(err);
+    }
+  }
+
+  function describeHours(d: Display): string {
+    return d.activeFrom ? `on ${d.activeFrom}–${d.activeUntil}` : 'always on';
+  }
+
   function startPairing(d: Display) {
     pairingId = d.id;
     pairCode = '';
@@ -176,6 +201,14 @@
               <button type="submit">Save</button>
               <button type="button" class="link" onclick={() => (editingId = null)}>Cancel</button>
             </form>
+          {:else if hoursId === d.id}
+            <form class="inline" onsubmit={(e) => saveHours(e, d.id)}>
+              <label class="inline-time">On from <input type="time" bind:value={hoursFrom} required /></label>
+              <label class="inline-time">until <input type="time" bind:value={hoursUntil} required /></label>
+              <button type="submit">Save</button>
+              <button type="button" class="link" onclick={() => saveHours(null, d.id, true)}>Always on</button>
+              <button type="button" class="link" onclick={() => (hoursId = null)}>Cancel</button>
+            </form>
           {:else if pairingId === d.id}
             <form class="inline" onsubmit={(e) => pair(e, d.id)}>
               <input
@@ -192,7 +225,7 @@
           {:else}
             <div class="grow">
               <strong>{d.name}</strong>
-              <span class="muted">{describeDevice(d.castDeviceId)} · {describeScreens(d)}</span>
+              <span class="muted">{describeDevice(d.castDeviceId)} · {describeScreens(d)} · {describeHours(d)}</span>
             </div>
             <select
               aria-label="Dashboard for {d.name}"
@@ -204,6 +237,7 @@
               {/each}
             </select>
             <a href="/d/{d.id}" target="_blank" rel="noopener">Open</a>
+            <button class="link" onclick={() => startHours(d)}>Active hours</button>
             <button class="link" onclick={() => startPairing(d)}>Pair a screen</button>
             {#if (d.pairedScreens ?? 0) > 0}
               <button class="link" onclick={() => unpair(d)}>Unpair screens</button>

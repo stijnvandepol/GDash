@@ -202,13 +202,14 @@ func startData(ctx context.Context, cfg config, db *store.Store, logger *slog.Lo
 	var hub *datahub.Hub
 	publisher := &display.Publisher{
 		Broadcaster: broadcaster,
-		Dashboards:  db.DisplayDashboards,
+		Views:       db.DisplayViews,
 		Data:        func() map[string]datahub.Entry { return hub.Entries() },
 		Now:         time.Now,
 		Logger:      logger,
 	}
 	hub = datahub.New(cache, logger, func() { publisher.Refresh(ctx) })
 	publisher.Refresh(ctx)
+	go republishEveryMinute(ctx, publisher)
 
 	weatherClient := weather.Client{BaseURL: weather.DefaultBaseURL, HTTP: &http.Client{Timeout: upstreamTimeout}}
 	newsClient := &news.Client{HTTP: &http.Client{Timeout: upstreamTimeout}}
@@ -233,6 +234,21 @@ func startData(ctx context.Context, cfg config, db *store.Store, logger *slog.Lo
 	}
 	go hub.Run(ctx, sources)
 	return broadcaster, publisher, nil
+}
+
+// republishEveryMinute lets displays cross the edge of their active hours on
+// time, even when no data changes.
+func republishEveryMinute(ctx context.Context, publisher *display.Publisher) {
+	ticker := time.NewTicker(time.Minute)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			publisher.Refresh(ctx)
+		}
+	}
 }
 
 // listen serves HTTP until ctx ends, then shuts down gracefully.

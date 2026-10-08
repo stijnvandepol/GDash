@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/stijnvandepol/daycast/internal/datahub"
+	"github.com/stijnvandepol/daycast/internal/schedule"
 )
 
 // CastNamespace is the Cast message namespace between the Daycast server
@@ -70,11 +71,20 @@ func DefaultDashboard(withCalendar bool) Dashboard {
 // Snapshot is the complete state of a display. Version increases with every
 // change, so a display can ignore a snapshot it has already rendered.
 type Snapshot struct {
-	Type       string                   `json:"type"`
-	Version    int64                    `json:"version"`
-	ServerTime time.Time                `json:"serverTime"`
-	Dashboard  Dashboard                `json:"dashboard"`
-	Data       map[string]datahub.Entry `json:"data"`
+	Type       string    `json:"type"`
+	Version    int64     `json:"version"`
+	ServerTime time.Time `json:"serverTime"`
+	// Active is false outside the display's active hours; the page then
+	// stays dark and Data is empty.
+	Active    bool                     `json:"active"`
+	Dashboard Dashboard                `json:"dashboard"`
+	Data      map[string]datahub.Entry `json:"data"`
+}
+
+// View is what one display shows and when.
+type View struct {
+	Dashboard Dashboard
+	Hours     schedule.Hours
 }
 
 // Broadcaster holds the latest encoded snapshot of every display and hands
@@ -92,19 +102,25 @@ func NewBroadcaster() *Broadcaster {
 	return &Broadcaster{latest: map[string][]byte{}, subscribers: map[string]map[chan []byte]struct{}{}}
 }
 
-// Publish builds a snapshot for every display in dashboards (display ID to
-// the dashboard it shows) and sends it to that display's subscribers. Each
-// snapshot only carries the data its widgets use, so a hall screen without
-// a calendar never receives calendar entries.
-func (b *Broadcaster) Publish(now time.Time, dashboards map[string]Dashboard, data map[string]datahub.Entry) error {
+// Publish builds a snapshot for every display in views (display ID to what
+// it shows) and sends it to that display's subscribers. Each snapshot only
+// carries the data its widgets use, so a hall screen without a calendar
+// never receives calendar entries, and a display outside its active hours
+// receives none at all.
+func (b *Broadcaster) Publish(now time.Time, views map[string]View, data map[string]datahub.Entry) error {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 	b.version++
-	latest := make(map[string][]byte, len(dashboards))
-	for displayID, dashboard := range dashboards {
+	latest := make(map[string][]byte, len(views))
+	for displayID, view := range views {
+		active := view.Hours.Contains(now)
+		used := map[string]datahub.Entry{}
+		if active {
+			used = dataFor(view.Dashboard, data)
+		}
 		msg, err := json.Marshal(Snapshot{
-			Type: "snapshot", Version: b.version, ServerTime: now,
-			Dashboard: dashboard, Data: dataFor(dashboard, data),
+			Type: "snapshot", Version: b.version, ServerTime: now, Active: active,
+			Dashboard: view.Dashboard, Data: used,
 		})
 		if err != nil {
 			return fmt.Errorf("encode snapshot for display %s: %w", displayID, err)
@@ -168,11 +184,11 @@ func replaceLatest(ch chan []byte, msg []byte) {
 // changes. Calls are serialized, so snapshots never go out of order.
 type Publisher struct {
 	Broadcaster *Broadcaster
-	// Dashboards returns, per display ID, the dashboard it shows.
-	Dashboards func(ctx context.Context) (map[string]Dashboard, error)
-	Data       func() map[string]datahub.Entry
-	Now        func() time.Time
-	Logger     *slog.Logger
+	// Views returns, per display ID, what it shows and when.
+	Views  func(ctx context.Context) (map[string]View, error)
+	Data   func() map[string]datahub.Entry
+	Now    func() time.Time
+	Logger *slog.Logger
 
 	mu sync.Mutex
 }
@@ -182,12 +198,12 @@ type Publisher struct {
 func (p *Publisher) Refresh(ctx context.Context) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
-	dashboards, err := p.Dashboards(ctx)
+	views, err := p.Views(ctx)
 	if err != nil {
 		p.Logger.Error("could not read dashboards; displays keep their last state", "error", err)
 		return
 	}
-	if err := p.Broadcaster.Publish(p.Now(), dashboards, p.Data()); err != nil {
+	if err := p.Broadcaster.Publish(p.Now(), views, p.Data()); err != nil {
 		p.Logger.Error("could not publish display state", "error", err)
 	}
 }

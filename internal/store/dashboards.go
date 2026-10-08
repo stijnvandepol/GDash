@@ -112,10 +112,11 @@ func (s *Store) EnsureDashboard(ctx context.Context, d display.Dashboard, now ti
 	return err
 }
 
-// DisplayDashboards returns, for every display, the dashboard it shows.
-func (s *Store) DisplayDashboards(ctx context.Context) (map[string]display.Dashboard, error) {
+// DisplayViews returns, for every display, the dashboard it shows and its
+// active hours.
+func (s *Store) DisplayViews(ctx context.Context) (map[string]display.View, error) {
 	rows, err := s.db.QueryContext(ctx, `
-		SELECT d.id, b.id, b.name, b.widgets
+		SELECT d.id, d.active_from, d.active_until, b.id, b.name, b.widgets
 		FROM displays d
 		JOIN dashboards b ON b.id = COALESCE(d.dashboard_id, ?)
 		LIMIT ?`, display.DefaultID, displays.MaxDisplays)
@@ -123,17 +124,18 @@ func (s *Store) DisplayDashboards(ctx context.Context) (map[string]display.Dashb
 		return nil, fmt.Errorf("list display dashboards: %w", err)
 	}
 	defer rows.Close()
-	result := map[string]display.Dashboard{}
+	result := map[string]display.View{}
 	for rows.Next() {
 		var displayID, widgets string
-		var d display.Dashboard
-		if err := rows.Scan(&displayID, &d.ID, &d.Name, &widgets); err != nil {
+		var v display.View
+		if err := rows.Scan(&displayID, &v.Hours.From, &v.Hours.Until, &v.Dashboard.ID, &v.Dashboard.Name, &widgets); err != nil {
 			return nil, err
 		}
-		if err := json.Unmarshal([]byte(widgets), &d.Widgets); err != nil {
-			return nil, fmt.Errorf("dashboard %q has invalid widgets: %w", d.ID, err)
+		if err := json.Unmarshal([]byte(widgets), &v.Dashboard.Widgets); err != nil {
+			return nil, fmt.Errorf("dashboard %q has invalid widgets: %w", v.Dashboard.ID, err)
 		}
-		result[displayID] = display.Normalize(d)
+		v.Dashboard = display.Normalize(v.Dashboard)
+		result[displayID] = v
 	}
 	return result, rows.Err()
 }

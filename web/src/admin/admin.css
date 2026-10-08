@@ -178,6 +178,12 @@ a {
 .inline input {
   flex: 1;
 }
+.inline-time {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 400;
+}
 
 .muted {
   color: var(--muted);

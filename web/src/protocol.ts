@@ -34,6 +34,8 @@ export interface Snapshot {
   type: 'snapshot';
   version: number;
   serverTime: string;
+  /** False outside the display's active hours: the screen stays dark. */
+  active?: boolean;
   dashboard: Dashboard;
   data: Record<string, Entry>;
 }
