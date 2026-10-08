@@ -70,6 +70,7 @@ func clientIP(r *http.Request) string {
 	return host
 }
 
+// getSetup handles GET /api/setup: {"needed": true} while no account exists.
 func (s *Server) getSetup(w http.ResponseWriter, r *http.Request) {
 	needed, err := s.Auth.SetupNeeded(r.Context())
 	if err != nil {
@@ -79,6 +80,10 @@ func (s *Server) getSetup(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]bool{"needed": needed})
 }
 
+// postSetup handles POST /api/setup {setupToken, username, password}: creates
+// the first account, logs it in and answers 201 with the user. 403 for a
+// wrong token, 409 when setup is done, 422 for invalid fields, 429 after
+// too many attempts.
 func (s *Server) postSetup(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		SetupToken string `json:"setupToken"`
@@ -96,6 +101,9 @@ func (s *Server) postSetup(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusCreated, user)
 }
 
+// postSession handles POST /api/sessions {username, password}: logs in, sets
+// the session cookie and answers 201 with the user. 401 for wrong
+// credentials, 429 after too many attempts.
 func (s *Server) postSession(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		Username string `json:"username"`
@@ -112,6 +120,7 @@ func (s *Server) postSession(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusCreated, user)
 }
 
+// deleteSession handles DELETE /api/sessions/current: logs out (204).
 func (s *Server) deleteSession(w http.ResponseWriter, r *http.Request) {
 	cookie, err := r.Cookie(sessionCookie)
 	if err == nil {
@@ -124,6 +133,7 @@ func (s *Server) deleteSession(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
+// getMe handles GET /api/me: the logged-in user.
 func (s *Server) getMe(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, userFrom(r.Context()))
 }

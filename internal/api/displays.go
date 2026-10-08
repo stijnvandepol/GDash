@@ -9,6 +9,8 @@ import (
 	"github.com/stijnvandepol/daycast/internal/validation"
 )
 
+// listDisplays handles GET /api/displays: {"displays": [...]}, at most
+// displays.MaxDisplays.
 func (s *Server) listDisplays(w http.ResponseWriter, r *http.Request) {
 	list, err := s.Store.Displays(r.Context())
 	if err != nil {
@@ -21,6 +23,9 @@ func (s *Server) listDisplays(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{"displays": list})
 }
 
+// createDisplay handles POST /api/displays {id, name, castDeviceId}: 201 with
+// the display, 409 when the id is taken or the limit reached, 422 for
+// invalid fields.
 func (s *Server) createDisplay(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		ID           string `json:"id"`
@@ -43,8 +48,9 @@ func (s *Server) createDisplay(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusCreated, d)
 }
 
-// updateDisplay changes only the fields present in the body. The id is
-// fixed, because it is part of the display's URL.
+// updateDisplay handles PATCH /api/displays/{display} {name?, castDeviceId?}:
+// changes only the fields present and answers 200 with the display. The
+// id is fixed, because it is part of the display's URL.
 func (s *Server) updateDisplay(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		Name         *string `json:"name"`
@@ -76,6 +82,7 @@ func (s *Server) updateDisplay(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, d)
 }
 
+// deleteDisplay handles DELETE /api/displays/{display}: 204, or 404.
 func (s *Server) deleteDisplay(w http.ResponseWriter, r *http.Request) {
 	if err := s.Store.DeleteDisplay(r.Context(), r.PathValue("display")); err != nil {
 		s.writeStoreError(w, "delete display", err)

@@ -125,9 +125,13 @@ func (s *Server) servePage(w http.ResponseWriter, r *http.Request, name string) 
 	}
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.Header().Set("Cache-Control", "no-cache")
-	w.Write(page)
+	if _, err := w.Write(page); err != nil {
+		s.Logger.Debug("client left before the page was sent", "page", name, "error", err)
+	}
 }
 
+// displayEvents handles GET /api/displays/{display}/events: a Server-Sent
+// Events stream with a "snapshot" event for every change of the display.
 func (s *Server) displayEvents(w http.ResponseWriter, r *http.Request) {
 	if !validDisplayID.MatchString(r.PathValue("display")) {
 		http.NotFound(w, r)
@@ -173,6 +177,8 @@ func (s *Server) displayEvents(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// castDevices handles GET /api/cast-devices: {"devices": [...]}, the Cast
+// devices that answered a 3-second mDNS query.
 func (s *Server) castDevices(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), discoveryTimeout)
 	defer cancel()
@@ -227,8 +233,11 @@ func (s *Server) internalError(w http.ResponseWriter, op string, err error) {
 	writeError(w, http.StatusInternalServerError, "internal", "Something went wrong on the server. Check the Daycast log.")
 }
 
+// writeJSON sends body as JSON. The status line is already sent when the
+// body is written, so an encode or write error can only mean the client
+// went away; there is no response left to correct and nothing to log.
 func writeJSON(w http.ResponseWriter, status int, body any) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	json.NewEncoder(w).Encode(body)
+	_ = json.NewEncoder(w).Encode(body)
 }
