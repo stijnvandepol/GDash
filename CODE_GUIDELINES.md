@@ -211,19 +211,36 @@ A change is done when every line is true:
 Fill this in per repository. It is the one section an agent cannot infer, and the one most often left empty. Fill it in before anything else in this file matters.
 
 ```
-Stack:            Go 1.26 (server, standard library first), Svelte 5 + TypeScript 6 + Vite 8 (web/),
-                  golang.org/x/net as the only Go dependency.
+Stack:            Go 1.26.6+ (server, standard library first; golang.org/x/net, golang.org/x/crypto for
+                  argon2id, modernc.org/sqlite as pure-Go SQLite). Svelte 5 + TypeScript 6 + Vite 8 (web/).
+                  All UI text, docs and code are in English.
 Run locally:      cd web && npm run build && cd .. && DAYCAST_LATITUDE=51.65 DAYCAST_LONGITUDE=5.95 go run ./cmd/daycast
-Run tests:        go test ./...
+Run tests:        go test ./...            (CI adds -race, which needs cgo)
 Lint / format:    gofmt -l . && go vet ./... && (cd web && npm run check)
+Security scan:    go run golang.org/x/vuln/cmd/govulncheck@v1.8.0 ./... && (cd web && npm audit --audit-level=high)
 Build:            (cd web && npm ci && npm run build) && go build ./cmd/daycast, or docker build .
-Architecture:     One Go binary. internal/datahub fetches external data once for all displays and keeps the
-                  last good value; internal/display streams snapshots; internal/api serves pages, SSE and the
-                  API; internal/cast finds Cast devices (mDNS) and keeps the receiver on screen (CASTV2).
-                  web/ is the display runtime, used by browser displays (/d/<name>) and the Cast receiver.
-                  Research and design decisions: GoogleHome-Dashboard/docs/onderzoek.
-Known oddities:   internal/cast skips TLS verification: Cast devices use Google's device CA, which no trust
-                  store contains. The receiver loads the Cast framework from gstatic without SRI, because
-                  Google updates that file in place. CastMessage protobuf is encoded by hand (7 fields).
+CI:               .github/workflows/ci.yml runs all of the above on every push.
+Architecture:     One Go binary (cmd/daycast). internal/datahub fetches external data once for all displays
+                  and keeps the last good value; internal/display builds and streams snapshots;
+                  internal/store is the only package with SQL; internal/auth handles accounts and sessions;
+                  internal/api serves pages, SSE and the JSON API (docs/api.md); internal/cast talks to Cast
+                  devices (mDNS, CASTV2) and keeps a receiver on screen; internal/casting runs one keeper per
+                  display. web/ holds the web interface (/), the display runtime (/d/<id>) and the receiver.
+                  Research and design decisions: GoogleHome-Dashboard/docs/onderzoek (Dutch).
+Known oddities:   - Plain HTTP on the LAN, against "All transport is TLS". A TV that opens /d/<id> through
+                    DashCast cannot be given a certificate it trusts for a LAN address, and Chromecasts reject
+                    self-signed ones. TLS is expected from a reverse proxy for the web interface. Open decision.
+                  - The setup token is written to the log, against "never log secrets". It is a one-time
+                    secret that only works while no account exists; the log is the channel by design.
+                  - internal/cast skips TLS verification: Cast devices use Google's device CA, which no trust
+                    store contains (pychromecast and Home Assistant do the same).
+                  - The receiver loads the Cast framework from gstatic without SRI: Google requires that URL
+                    and updates the file in place, so a hash would break it.
+                  - CastMessage protobuf is encoded by hand (7 fields) instead of adding a protobuf dependency.
+                  - The keeper retries forever with backoff: it is a supervisor for a TV that may be off for
+                    hours, not a request retry.
+                  - The keeper restarts the cast every 15 minutes (9 on a Nest Hub): measured workaround for
+                    the Google TV screensaver, see docs/progress.md.
+                  - Keeper tests use short real timers (50 to 300 ms); the behaviour under test is timing.
 Do not touch:     web/dist (build output; only .gitkeep is committed so go:embed compiles).
 ```
