@@ -21,7 +21,7 @@ const (
 
 // Keeper keeps a Daycast receiver on screen on one Cast device and forwards
 // display messages to it. It reconnects with backoff and relaunches the
-// receiver when it disappears, within the limits of shouldRelaunch.
+// receiver when it disappears, within the limits of ShouldRelaunch.
 type Keeper struct {
 	Addr      string
 	AppID     string
@@ -123,13 +123,13 @@ type keeperSession struct {
 }
 
 // reconcile makes sure the receiver runs and is connected, launching it when
-// shouldRelaunch allows that.
+// ShouldRelaunch allows that.
 func (s *keeperSession) reconcile(ctx context.Context, status ReceiverStatus) error {
 	k := s.keeper
 	app, running := status.App(k.AppID)
 	if !running {
 		s.transport = ""
-		if !shouldRelaunch(status) {
+		if !ShouldRelaunch(status) {
 			return nil
 		}
 		k.Logger.Info("launching receiver", "device", k.Addr, "app_id", k.AppID)
@@ -156,13 +156,13 @@ func (s *keeperSession) sendLatest() error {
 	return s.client.Send(s.transport, s.keeper.Namespace, s.latest)
 }
 
-// shouldRelaunch decides whether the keeper may start Daycast on a device
+// ShouldRelaunch decides whether the keeper may start Daycast on a device
 // that is not showing it. Starting an app on a Cast device takes over the
 // screen, and through HDMI-CEC it can also switch the TV on.
 //
 // Current policy: only take over when nothing else is on screen, so the
 // keeper never interrupts someone who casts YouTube to the kitchen TV.
-func shouldRelaunch(status ReceiverStatus) bool {
+func ShouldRelaunch(status ReceiverStatus) bool {
 	for _, app := range status.Applications {
 		if !app.IsIdleScreen {
 			return false

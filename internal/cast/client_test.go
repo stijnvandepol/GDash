@@ -144,8 +144,8 @@ func TestShouldRelaunch(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := shouldRelaunch(tt.status); got != tt.want {
-				t.Fatalf("shouldRelaunch = %v, want %v", got, tt.want)
+			if got := ShouldRelaunch(tt.status); got != tt.want {
+				t.Fatalf("ShouldRelaunch = %v, want %v", got, tt.want)
 			}
 		})
 	}

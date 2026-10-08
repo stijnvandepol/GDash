@@ -5,6 +5,7 @@
 //
 //	daycast            start the server
 //	daycast discover   list Cast devices on the local network
+//	daycast status A   show what the Cast device at address A is doing
 package main
 
 import (
@@ -40,12 +41,15 @@ func main() {
 	defer stop()
 
 	var err error
-	if len(os.Args) > 1 && os.Args[1] == "discover" {
-		err = discover(ctx)
-	} else if len(os.Args) > 1 {
-		err = fmt.Errorf("unknown command %q; use no command to start the server, or \"discover\"", os.Args[1])
-	} else {
+	switch {
+	case len(os.Args) == 1:
 		err = serve(ctx, logger)
+	case os.Args[1] == "discover":
+		err = discover(ctx)
+	case os.Args[1] == "status" && len(os.Args) == 3:
+		err = status(ctx, os.Args[2])
+	default:
+		err = errors.New("usage: daycast | daycast discover | daycast status <device-address>")
 	}
 	if err != nil {
 		logger.Error("daycast stopped", "error", err)
@@ -66,6 +70,37 @@ func discover(ctx context.Context) error {
 	fmt.Fprintln(w, "NAME\tMODEL\tADDRESS\tID")
 	for _, d := range devices {
 		fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", d.Name, d.Model, d.Addr, d.ID)
+	}
+	return w.Flush()
+}
+
+// status shows what a Cast device is doing without changing anything on it,
+// to check the CASTV2 connection and to see how a device reports its state.
+func status(ctx context.Context, device string) error {
+	addr, err := withDefaultPort(device)
+	if err != nil {
+		return err
+	}
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+	client, err := cast.Dial(ctx, addr)
+	if err != nil {
+		return err
+	}
+	defer client.Close()
+	st, err := client.Status(ctx)
+	if err != nil {
+		return err
+	}
+	fmt.Printf("standby: %v  active input: %v  daycast may launch: %v\n", st.IsStandBy, st.IsActiveInput, cast.ShouldRelaunch(st))
+	if len(st.Applications) == 0 {
+		fmt.Println("no apps running")
+		return nil
+	}
+	w := tabwriter.NewWriter(os.Stdout, 0, 4, 2, ' ', 0)
+	fmt.Fprintln(w, "APP ID\tNAME\tIDLE SCREEN")
+	for _, app := range st.Applications {
+		fmt.Fprintf(w, "%s\t%s\t%v\n", app.AppID, app.DisplayName, app.IsIdleScreen)
 	}
 	return w.Flush()
 }
