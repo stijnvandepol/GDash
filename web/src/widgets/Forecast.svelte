@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { Entry } from '../protocol';
   import { LOCALE } from '../format';
+  import { parseLocalDate } from './dates';
   import { waitingText } from './waiting';
   import { describeWeather } from './wmo';
 
@@ -36,9 +37,9 @@
   /** "Today" for the first day, else the short weekday of the local date. */
   function dayName(date: string, index: number): string {
     if (index === 0) return 'Today';
-    const [y, m, d] = date.split('-').map(Number);
     // A date without time is the forecast's local day, not UTC midnight.
-    return weekday.format(new Date(y!, m! - 1, d!));
+    const local = parseLocalDate(date);
+    return local ? weekday.format(local) : '';
   }
 </script>
 

@@ -1,23 +1,11 @@
 <script lang="ts">
   import { clock } from '../state.svelte';
-
-  const DAY_MS = 86_400_000;
+  import { daysUntil } from './dates';
 
   let { settings }: { settings: Record<string, unknown> | undefined } = $props();
 
   const label = $derived(typeof settings?.label === 'string' ? settings.label : '');
-  const days = $derived(daysUntil(settings?.date, clock.now));
-
-  /** Whole days from today until a YYYY-MM-DD date, in the screen's time zone. */
-  function daysUntil(date: unknown, now: Date): number | null {
-    if (typeof date !== 'string') return null;
-    const [y, m, d] = date.split('-').map(Number);
-    if (!y || !m || !d) return null;
-    const target = new Date(y, m - 1, d);
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    // Rounding absorbs the hour that a daylight saving change adds or removes.
-    return Math.round((target.getTime() - today.getTime()) / DAY_MS);
-  }
+  const days = $derived(typeof settings?.date === 'string' ? daysUntil(settings.date, clock.now) : null);
 </script>
 
 <div class="countdown">

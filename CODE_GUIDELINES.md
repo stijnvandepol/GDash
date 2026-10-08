@@ -216,6 +216,7 @@ Stack:            Go 1.26.6+ (server, standard library first; golang.org/x/net, 
                   All UI text, docs and code are in English.
 Run locally:      cd web && npm run build && cd .. && DAYCAST_LATITUDE=51.65 DAYCAST_LONGITUDE=5.95 go run ./cmd/daycast
 Run tests:        go test ./...            (CI adds -race, which needs cgo)
+                  cd web && npm test       (Vitest; pure TypeScript, TZ fixed to Europe/Amsterdam)
 Lint / format:    gofmt -l . && go vet ./... && (cd web && npm run check)
 Security scan:    go run golang.org/x/vuln/cmd/govulncheck@v1.8.0 ./... && (cd web && npm audit --audit-level=high)
 Build:            (cd web && npm ci && npm run build) && go build ./cmd/daycast, or docker build .

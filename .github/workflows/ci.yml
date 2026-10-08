@@ -27,6 +27,8 @@ jobs:
       - run: npm ci
       - name: Type check (zero warnings)
         run: npm run check
+      - name: Unit tests
+        run: npm test
       - name: Vulnerability scan
         run: npm audit --audit-level=high
       - run: npm run build
