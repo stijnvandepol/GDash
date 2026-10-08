@@ -34,8 +34,17 @@ func (s *FileStore) path(key string) (string, error) {
 	return filepath.Join(s.dir, key+".json"), nil
 }
 
-// Load returns the stored entry for key. ok is false when nothing is stored.
-func (s *FileStore) Load(key string) (entry Entry, ok bool, err error) {
+// cached is the file format: an entry and the configuration it was
+// fetched with.
+type cached struct {
+	Version string `json:"version"`
+	Entry   Entry  `json:"entry"`
+}
+
+// Load returns the stored entry for key if it was fetched with the given
+// source version. ok is false when nothing is stored, or when it belongs to
+// another configuration, such as a calendar that has been removed since.
+func (s *FileStore) Load(key, version string) (entry Entry, ok bool, err error) {
 	path, err := s.path(key)
 	if err != nil {
 		return Entry{}, false, err
@@ -47,20 +56,24 @@ func (s *FileStore) Load(key string) (entry Entry, ok bool, err error) {
 	if err != nil {
 		return Entry{}, false, fmt.Errorf("read cached %s: %w", key, err)
 	}
-	if err := json.Unmarshal(data, &entry); err != nil {
+	var c cached
+	if err := json.Unmarshal(data, &c); err != nil {
 		return Entry{}, false, fmt.Errorf("decode cached %s: %w", key, err)
 	}
-	return entry, true, nil
+	if c.Version != version {
+		return Entry{}, false, nil
+	}
+	return c.Entry, true, nil
 }
 
-// Save stores entry for key. It writes a temporary file and renames it, so a
+// Save stores entry for key, fetched with the given source version. It writes a temporary file and renames it, so a
 // crash halfway never leaves a corrupt cache behind.
-func (s *FileStore) Save(key string, entry Entry) error {
+func (s *FileStore) Save(key, version string, entry Entry) error {
 	path, err := s.path(key)
 	if err != nil {
 		return err
 	}
-	data, err := json.Marshal(entry)
+	data, err := json.Marshal(cached{Version: version, Entry: entry})
 	if err != nil {
 		return fmt.Errorf("encode %s: %w", key, err)
 	}

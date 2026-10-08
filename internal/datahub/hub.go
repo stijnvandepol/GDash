@@ -105,9 +105,17 @@ func (h *Hub) Configure(ctx context.Context, sources []Source) {
 			continue
 		}
 		if ok {
+			// The configuration changed: what was fetched before may
+			// include a calendar or feed that is gone now, so displays
+			// show "loading" until the new fetch arrives.
 			running.cancel()
+			h.entries[src.Key] = Entry{}
+			changed = true
+			if err := h.store.Delete(src.Key); err != nil {
+				h.logger.Warn("could not delete cached data", "source", src.Key, "error", err)
+			}
 		} else if _, inMemory := h.entries[src.Key]; !inMemory {
-			h.entries[src.Key] = h.restore(src.Key)
+			h.entries[src.Key] = h.restore(src)
 			changed = true
 		}
 		loopCtx, cancel := context.WithCancel(ctx)
@@ -120,11 +128,12 @@ func (h *Hub) Configure(ctx context.Context, sources []Source) {
 	}
 }
 
-// restore returns a source's last known value from disk, or an empty entry.
-func (h *Hub) restore(key string) Entry {
-	entry, _, err := h.store.Load(key)
+// restore returns a source's last known value from disk if it was fetched
+// with the same configuration, or an empty entry.
+func (h *Hub) restore(src Source) Entry {
+	entry, _, err := h.store.Load(src.Key, src.Version)
 	if err != nil {
-		h.logger.Warn("could not restore cached data", "source", key, "error", err)
+		h.logger.Warn("could not restore cached data", "source", src.Key, "error", err)
 		return Entry{}
 	}
 	return entry
@@ -169,14 +178,7 @@ func (h *Hub) refresh(ctx context.Context, src Source) error {
 	}
 	now := h.now()
 	entry := Entry{Value: raw, FetchedAt: now, StaleAfter: now.Add(src.Interval + staleMargin)}
-	if !h.set(ctx, src.Key, entry) {
-		return nil
-	}
-	if err := h.store.Save(src.Key, entry); err != nil {
-		// The fresh value is already in memory; only the restart
-		// fallback is lost, so this is a warning, not a failed refresh.
-		h.logger.Warn("could not persist data", "source", src.Key, "error", err)
-	}
+	h.set(ctx, src, entry)
 	return nil
 }
 
@@ -197,17 +199,22 @@ func (h *Hub) markFailing(ctx context.Context, key string) {
 	}
 }
 
-// set stores a fresh entry and reports whether it did. Configure cancels a
-// loop while holding h.mu, so checking ctx under the same lock guarantees a
-// stopped loop never overwrites the entry of its replacement.
-func (h *Hub) set(ctx context.Context, key string, entry Entry) bool {
+// set stores a fresh entry in memory and on disk. Configure cancels a loop
+// while holding h.mu, so checking ctx under the same lock guarantees a
+// stopped loop never overwrites the entry of its replacement, nor writes back
+// a cache file that Configure just deleted.
+func (h *Hub) set(ctx context.Context, src Source, entry Entry) {
 	h.mu.Lock()
 	if ctx.Err() != nil {
 		h.mu.Unlock()
-		return false
+		return
 	}
-	h.entries[key] = entry
+	h.entries[src.Key] = entry
+	if err := h.store.Save(src.Key, src.Version, entry); err != nil {
+		// The fresh value is already in memory; only the restart
+		// fallback is lost, so this is a warning, not a failed refresh.
+		h.logger.Warn("could not persist data", "source", src.Key, "error", err)
+	}
 	h.mu.Unlock()
 	h.onChange()
-	return true
 }

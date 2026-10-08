@@ -46,7 +46,7 @@ func TestRefreshStoresValueWithStaleDeadline(t *testing.T) {
 	if n := changes.Load(); n != 1 {
 		t.Fatalf("onChange called %d times, want 1", n)
 	}
-	if _, ok, err := store.Load("weather.current"); err != nil || !ok {
+	if _, ok, err := store.Load("weather.current", ""); err != nil || !ok {
 		t.Fatalf("value not persisted: ok=%v err=%v", ok, err)
 	}
 }
@@ -91,7 +91,7 @@ func TestRecoveryClearsFailing(t *testing.T) {
 func TestConfigureRestoresPersistedValueBeforeFirstFetch(t *testing.T) {
 	h, store, _ := newTestHub(t)
 	saved := Entry{Value: []byte(`12.5`), FetchedAt: fixedNow.Add(-time.Hour), StaleAfter: fixedNow.Add(-44 * time.Minute)}
-	if err := store.Save("weather.current", saved); err != nil {
+	if err := store.Save("weather.current", "", saved); err != nil {
 		t.Fatal(err)
 	}
 
@@ -165,7 +165,7 @@ func TestConfigureDropsRemovedSources(t *testing.T) {
 	if _, ok := h.Entries()["calendar.default"]; ok {
 		t.Fatal("a removed source still has an entry")
 	}
-	if _, ok, _ := store.Load("calendar.default"); ok {
+	if _, ok, _ := store.Load("calendar.default", "a"); ok {
 		t.Fatal("a removed source is still cached on disk")
 	}
 	if changes.Load() == before {
@@ -208,10 +208,59 @@ func TestFileStoreRejectsUnsafeKey(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := store.Save("../escape", Entry{}); err == nil {
+	if err := store.Save("../escape", "", Entry{}); err == nil {
 		t.Fatal("Save accepted a path traversal key")
 	}
-	if _, ok, err := store.Load("missing.key"); err != nil || ok {
+	if _, ok, err := store.Load("missing.key", ""); err != nil || ok {
 		t.Fatalf("Load of missing key = ok %v, err %v", ok, err)
+	}
+}
+
+func TestChangedSourceDropsItsOldValue(t *testing.T) {
+	h, store, _ := newTestHub(t)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	var fetches atomic.Int32
+	h.Configure(ctx, []Source{counting("calendar.default", "family+work", []string{"work meeting"}, &fetches)})
+	waitFor(t, "first fetch", func() bool { return string(h.Entries()["calendar.default"].Value) != "" })
+
+	// The work calendar is removed while the remaining one cannot be
+	// fetched: its events must not stay on screen.
+	h.Configure(ctx, []Source{{Key: "calendar.default", Version: "family", Interval: time.Hour, Fetch: func(ctx context.Context) (any, error) {
+		<-ctx.Done()
+		return nil, ctx.Err()
+	}}})
+	if got := h.Entries()["calendar.default"]; got.Value != nil {
+		t.Fatalf("entry after the change = %s, want no value until the new fetch", got.Value)
+	}
+	if _, ok, _ := store.Load("calendar.default", "family+work"); ok {
+		t.Fatal("the cache of the old configuration is still on disk")
+	}
+}
+
+func TestRestoreIgnoresCacheOfAnotherConfiguration(t *testing.T) {
+	h, store, _ := newTestHub(t)
+	if err := store.Save("weather.current", "oss", Entry{Value: []byte(`14`)}); err != nil {
+		t.Fatal(err)
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	block := func(ctx context.Context) (any, error) { <-ctx.Done(); return nil, ctx.Err() }
+	h.Configure(ctx, []Source{{Key: "weather.current", Version: "uden", Interval: time.Hour, Fetch: block}})
+	if got := h.Entries()["weather.current"]; got.Value != nil {
+		t.Fatalf("restored %s from another location", got.Value)
+	}
+}
+
+func TestStoppedLoopDoesNotWriteTheCache(t *testing.T) {
+	h, store, _ := newTestHub(t)
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	src := source(func(context.Context) (any, error) { return "late", nil })
+	if err := h.refresh(ctx, src); err != nil {
+		t.Fatal(err)
+	}
+	if _, ok, _ := store.Load(src.Key, src.Version); ok {
+		t.Fatal("a stopped loop wrote its result to disk")
 	}
 }
