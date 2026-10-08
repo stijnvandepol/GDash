@@ -21,6 +21,15 @@ const (
 	TokenCast = "cast"
 )
 
+// NewDisplayToken is a token to store for a screen.
+type NewDisplayToken struct {
+	Hash      string
+	DisplayID string
+	// Kind is TokenScreen or TokenCast.
+	Kind    string
+	Created time.Time
+}
+
 // DisplayToken is a paired screen's token, by hash.
 type DisplayToken struct {
 	DisplayID  string
@@ -31,34 +40,34 @@ type DisplayToken struct {
 // replaces the display's previous one. It returns ErrNotFound when the
 // display does not exist and ErrConflict when the display already has
 // MaxScreensPerDisplay screens.
-func (s *Store) CreateDisplayToken(ctx context.Context, tokenHash, displayID, kind string, now time.Time) error {
+func (s *Store) CreateDisplayToken(ctx context.Context, t NewDisplayToken) error {
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
 	}
 	defer tx.Rollback()
 	var exists bool
-	if err := tx.QueryRowContext(ctx, "SELECT EXISTS (SELECT 1 FROM displays WHERE id = ?)", displayID).Scan(&exists); err != nil {
+	if err := tx.QueryRowContext(ctx, "SELECT EXISTS (SELECT 1 FROM displays WHERE id = ?)", t.DisplayID).Scan(&exists); err != nil {
 		return fmt.Errorf("check display: %w", err)
 	}
 	if !exists {
 		return ErrNotFound
 	}
-	if kind == TokenCast {
-		if _, err := tx.ExecContext(ctx, "DELETE FROM display_tokens WHERE display_id = ? AND kind = ?", displayID, TokenCast); err != nil {
+	if t.Kind == TokenCast {
+		if _, err := tx.ExecContext(ctx, "DELETE FROM display_tokens WHERE display_id = ? AND kind = ?", t.DisplayID, TokenCast); err != nil {
 			return fmt.Errorf("replace cast token: %w", err)
 		}
 	}
 	var count int
-	if err := tx.QueryRowContext(ctx, "SELECT count(*) FROM display_tokens WHERE display_id = ?", displayID).Scan(&count); err != nil {
+	if err := tx.QueryRowContext(ctx, "SELECT count(*) FROM display_tokens WHERE display_id = ?", t.DisplayID).Scan(&count); err != nil {
 		return fmt.Errorf("count paired screens: %w", err)
 	}
 	if count >= MaxScreensPerDisplay {
-		return fmt.Errorf("%w: display %q already has %d paired screens", ErrConflict, displayID, count)
+		return fmt.Errorf("%w: display %q already has %d paired screens", ErrConflict, t.DisplayID, count)
 	}
 	_, err = tx.ExecContext(ctx,
 		"INSERT INTO display_tokens (token_hash, display_id, kind, created_at, last_seen_at) VALUES (?, ?, ?, ?, ?)",
-		tokenHash, displayID, kind, formatTime(now), formatTime(now))
+		t.Hash, t.DisplayID, t.Kind, formatTime(t.Created), formatTime(t.Created))
 	if err != nil {
 		return fmt.Errorf("create display token: %w", err)
 	}

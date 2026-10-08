@@ -163,7 +163,7 @@ func serve(ctx context.Context, logger *slog.Logger) error {
 		return err
 	}
 	pairings := pairing.New(db)
-	castManager, err := newCastManager(cfg, db, snapshots, pairings, logger)
+	castManager, err := newCastManager(cfg, castDeps{db: db, snapshots: snapshots, pairings: pairings, logger: logger})
 	if err != nil {
 		return err
 	}

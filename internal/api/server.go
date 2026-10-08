@@ -184,6 +184,12 @@ func (s *Server) displayEvents(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	s.streamSnapshots(w, r, rc, displayID)
+}
+
+// streamSnapshots writes the display's snapshots as events until the client
+// leaves or may no longer see the display.
+func (s *Server) streamSnapshots(w http.ResponseWriter, r *http.Request, rc *http.ResponseController, displayID string) {
 	messages := s.Snapshots.Subscribe(r.Context(), displayID)
 	interval := s.PingInterval
 	if interval == 0 {
@@ -202,14 +208,7 @@ func (s *Server) displayEvents(w http.ResponseWriter, r *http.Request) {
 			// line is a complete event.
 			_, err = fmt.Fprintf(w, "event: snapshot\ndata: %s\n\n", msg)
 		case <-ping.C:
-			// A screen that was unpaired, or an admin whose session ended,
-			// must stop receiving data now, not at its next reconnect.
-			allowed, authErr := s.mayShowDisplay(r, displayID)
-			if authErr != nil {
-				s.Logger.Error("could not re-check display stream", "display", displayID, "error", authErr)
-				return
-			}
-			if !allowed {
+			if !s.stillAllowed(r, displayID) {
 				return
 			}
 			_, err = fmt.Fprint(w, ": ping\n\n")
@@ -221,6 +220,18 @@ func (s *Server) displayEvents(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+}
+
+// stillAllowed re-checks an open stream: a screen that was unpaired, or an
+// admin whose session ended, must stop receiving data now, not at its next
+// reconnect.
+func (s *Server) stillAllowed(r *http.Request, displayID string) bool {
+	allowed, err := s.mayShowDisplay(r, displayID)
+	if err != nil {
+		s.Logger.Error("could not re-check display stream", "display", displayID, "error", err)
+		return false
+	}
+	return allowed
 }
 
 // castDevices handles GET /api/cast-devices: {"devices": [...]}, the Cast

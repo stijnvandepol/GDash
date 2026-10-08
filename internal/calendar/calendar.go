@@ -61,28 +61,7 @@ func Parse(r io.Reader, w Window, fallbackName string) ([]Event, error) {
 		name = strings.TrimSpace(p.Value)
 	}
 
-	// Occurrences moved or cancelled by an override (RECURRENCE-ID) are
-	// skipped when the master's rule is expanded.
-	overridden := map[string]map[int64]bool{}
-	var masters, singles []ical.Event
-	for _, e := range cal.Events() {
-		uid := propValue(e.Props, ical.PropUID)
-		if rid := e.Props.Get(ical.PropRecurrenceID); rid != nil {
-			if t, err := rid.DateTime(w.Location); err == nil {
-				if overridden[uid] == nil {
-					overridden[uid] = map[int64]bool{}
-				}
-				overridden[uid][t.Unix()] = true
-			}
-			singles = append(singles, e)
-			continue
-		}
-		if e.Props.Get(ical.PropRecurrenceRule) != nil || e.Props.Get(ical.PropRecurrenceDates) != nil {
-			masters = append(masters, e)
-		} else {
-			singles = append(singles, e)
-		}
-	}
+	masters, singles, overridden := classify(cal.Events(), w.Location)
 
 	var events []Event
 	for _, e := range singles {
@@ -112,6 +91,36 @@ func Parse(r io.Reader, w Window, fallbackName string) ([]Event, error) {
 	}
 	Sort(events)
 	return events, nil
+}
+
+// classify splits events into recurring masters and single occurrences, and
+// records which occurrences of a master an override (RECURRENCE-ID) moved or
+// cancelled, so expanding the master skips them.
+func classify(all []ical.Event, loc *time.Location) (masters, singles []ical.Event, overridden map[string]map[int64]bool) {
+	overridden = map[string]map[int64]bool{}
+	for _, e := range all {
+		uid := propValue(e.Props, ical.PropUID)
+		if rid := e.Props.Get(ical.PropRecurrenceID); rid != nil {
+			if t, err := rid.DateTime(loc); err == nil {
+				markOverridden(overridden, uid, t)
+			}
+			singles = append(singles, e)
+			continue
+		}
+		if e.Props.Get(ical.PropRecurrenceRule) != nil || e.Props.Get(ical.PropRecurrenceDates) != nil {
+			masters = append(masters, e)
+		} else {
+			singles = append(singles, e)
+		}
+	}
+	return masters, singles, overridden
+}
+
+func markOverridden(overridden map[string]map[int64]bool, uid string, t time.Time) {
+	if overridden[uid] == nil {
+		overridden[uid] = map[int64]bool{}
+	}
+	overridden[uid][t.Unix()] = true
 }
 
 // Sort orders events by start; all-day events come first on their day.

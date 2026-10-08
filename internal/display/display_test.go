@@ -118,14 +118,23 @@ func TestDefaultDashboardsFitGridWithoutOverlap(t *testing.T) {
 			if w.X < 0 || w.Y < 0 || w.W < 1 || w.H < 1 || w.X+w.W > d.Columns || w.Y+w.H > d.Rows {
 				t.Errorf("calendar=%v: widget %s at %d,%d size %dx%d does not fit a %dx%d grid", withCalendar, w.ID, w.X, w.Y, w.W, w.H, d.Columns, d.Rows)
 			}
-			for x := w.X; x < w.X+w.W; x++ {
-				for y := w.Y; y < w.Y+w.H; y++ {
-					if other, ok := taken[[2]int{x, y}]; ok {
-						t.Fatalf("calendar=%v: widgets %s and %s overlap at %d,%d", withCalendar, other, w.ID, x, y)
-					}
-					taken[[2]int{x, y}] = w.ID
-				}
+			if cell, other := claimCells(taken, w); other != "" {
+				t.Fatalf("calendar=%v: widgets %s and %s overlap at %v", withCalendar, other, w.ID, cell)
 			}
 		}
 	}
+}
+
+// claimCells marks the widget's cells as taken and returns the first cell
+// that another widget already held, with that widget's id.
+func claimCells(taken map[[2]int]string, w Widget) ([2]int, string) {
+	for x := w.X; x < w.X+w.W; x++ {
+		for y := w.Y; y < w.Y+w.H; y++ {
+			if other, ok := taken[[2]int{x, y}]; ok {
+				return [2]int{x, y}, other
+			}
+			taken[[2]int{x, y}] = w.ID
+		}
+	}
+	return [2]int{}, ""
 }

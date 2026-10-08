@@ -7,10 +7,7 @@ package pairing
 
 import (
 	"context"
-	"crypto/rand"
 	"errors"
-	"fmt"
-	"strings"
 	"sync"
 	"time"
 
@@ -240,7 +237,7 @@ func (s *Service) issue(ctx context.Context, displayID, kind string) (string, er
 	if err != nil {
 		return "", err
 	}
-	err = s.store.CreateDisplayToken(ctx, token.Hash(issued), displayID, kind, s.now())
+	err = s.store.CreateDisplayToken(ctx, store.NewDisplayToken{Hash: token.Hash(issued), DisplayID: displayID, Kind: kind, Created: s.now()})
 	if errors.Is(err, store.ErrNotFound) {
 		return "", ErrUnknownDisplay
 	}
@@ -275,30 +272,4 @@ func (s *Service) uniqueCodeLocked() (string, error) {
 		}
 	}
 	return "", errors.New("could not find a free pairing code")
-}
-
-func randomCode() (string, error) {
-	b := make([]byte, codeLength)
-	if _, err := rand.Read(b); err != nil {
-		return "", fmt.Errorf("generate pairing code: %w", err)
-	}
-	code := make([]byte, codeLength)
-	for i, v := range b {
-		// 256 is not a multiple of 31, so this is very slightly biased; at
-		// 31^8 possible codes with a 10-minute lifetime that does not matter.
-		code[i] = codeAlphabet[int(v)%len(codeAlphabet)]
-	}
-	return string(code), nil
-}
-
-// formatCode shows a code as two groups of four, easier to read off a TV.
-func formatCode(code string) string { return code[:4] + "-" + code[4:] }
-
-func normalizeCode(code string) string {
-	return strings.Map(func(r rune) rune {
-		if r == '-' || r == ' ' {
-			return -1
-		}
-		return r
-	}, strings.ToUpper(code))
 }

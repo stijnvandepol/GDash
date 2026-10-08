@@ -20,7 +20,16 @@ import (
 // newCastManager keeps the dashboard on every display that is linked to a
 // Cast device. Without an own receiver app ID it uses DashCast, which opens
 // the display page on the TV; with one it pushes snapshots to that receiver.
-func newCastManager(cfg config, db *store.Store, snapshots *display.Broadcaster, pairings *pairing.Service, logger *slog.Logger) (*casting.Manager, error) {
+// castDeps are what the cast manager needs from the rest of the server.
+type castDeps struct {
+	db        *store.Store
+	snapshots *display.Broadcaster
+	pairings  *pairing.Service
+	logger    *slog.Logger
+}
+
+func newCastManager(cfg config, deps castDeps) (*casting.Manager, error) {
+	db, snapshots, pairings, logger := deps.db, deps.snapshots, deps.pairings, deps.logger
 	_, port, err := net.SplitHostPort(cfg.addr)
 	if err != nil {
 		return nil, fmt.Errorf("DAYCAST_ADDR %q has no port: %w", cfg.addr, err)

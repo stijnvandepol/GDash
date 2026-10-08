@@ -14,7 +14,7 @@ func TestDisplayTokenLifecycle(t *testing.T) {
 	if err := s.CreateDisplay(ctx, kitchen()); err != nil {
 		t.Fatal(err)
 	}
-	if err := s.CreateDisplayToken(ctx, "hash-1", "keuken", TokenScreen, created); err != nil {
+	if err := s.CreateDisplayToken(ctx, NewDisplayToken{Hash: "hash-1", DisplayID: "keuken", Kind: TokenScreen, Created: created}); err != nil {
 		t.Fatalf("CreateDisplayToken: %v", err)
 	}
 	tok, err := s.DisplayToken(ctx, "hash-1")
@@ -41,7 +41,7 @@ func TestDisplayTokenLifecycle(t *testing.T) {
 
 func TestDisplayTokenForMissingDisplay(t *testing.T) {
 	s, _ := openTestStore(t)
-	if err := s.CreateDisplayToken(context.Background(), "hash", "missing", TokenScreen, created); !errors.Is(err, ErrNotFound) {
+	if err := s.CreateDisplayToken(context.Background(), NewDisplayToken{Hash: "hash", DisplayID: "missing", Kind: TokenScreen, Created: created}); !errors.Is(err, ErrNotFound) {
 		t.Fatalf("err = %v, want ErrNotFound", err)
 	}
 }
@@ -52,7 +52,7 @@ func TestDeletingDisplayUnpairsScreens(t *testing.T) {
 	if err := s.CreateDisplay(ctx, kitchen()); err != nil {
 		t.Fatal(err)
 	}
-	if err := s.CreateDisplayToken(ctx, "hash", "keuken", TokenScreen, created); err != nil {
+	if err := s.CreateDisplayToken(ctx, NewDisplayToken{Hash: "hash", DisplayID: "keuken", Kind: TokenScreen, Created: created}); err != nil {
 		t.Fatal(err)
 	}
 	if err := s.DeleteDisplay(ctx, "keuken"); err != nil {
@@ -70,11 +70,11 @@ func TestDisplayTokenLimit(t *testing.T) {
 		t.Fatal(err)
 	}
 	for i := range MaxScreensPerDisplay {
-		if err := s.CreateDisplayToken(ctx, fmt.Sprintf("hash-%d", i), "keuken", TokenScreen, created); err != nil {
+		if err := s.CreateDisplayToken(ctx, NewDisplayToken{Hash: fmt.Sprintf("hash-%d", i), DisplayID: "keuken", Kind: TokenScreen, Created: created}); err != nil {
 			t.Fatalf("token %d: %v", i, err)
 		}
 	}
-	if err := s.CreateDisplayToken(ctx, "one-too-many", "keuken", TokenScreen, created); !errors.Is(err, ErrConflict) {
+	if err := s.CreateDisplayToken(ctx, NewDisplayToken{Hash: "one-too-many", DisplayID: "keuken", Kind: TokenScreen, Created: created}); !errors.Is(err, ErrConflict) {
 		t.Fatalf("err = %v, want ErrConflict", err)
 	}
 }
@@ -85,11 +85,11 @@ func TestCastTokenReplacesPreviousCastToken(t *testing.T) {
 	if err := s.CreateDisplay(ctx, kitchen()); err != nil {
 		t.Fatal(err)
 	}
-	if err := s.CreateDisplayToken(ctx, "screen", "keuken", TokenScreen, created); err != nil {
+	if err := s.CreateDisplayToken(ctx, NewDisplayToken{Hash: "screen", DisplayID: "keuken", Kind: TokenScreen, Created: created}); err != nil {
 		t.Fatal(err)
 	}
 	for i := range 3 {
-		if err := s.CreateDisplayToken(ctx, fmt.Sprintf("cast-%d", i), "keuken", TokenCast, created); err != nil {
+		if err := s.CreateDisplayToken(ctx, NewDisplayToken{Hash: fmt.Sprintf("cast-%d", i), DisplayID: "keuken", Kind: TokenCast, Created: created}); err != nil {
 			t.Fatalf("cast token %d: %v", i, err)
 		}
 	}
