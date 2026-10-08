@@ -26,6 +26,9 @@ Google TV you already own. No extra hardware, no subscription, no cloud.
   minutes, because Google TV covers a running cast with its screensaver after
   about 19 minutes. No Home Assistant, no HTTPS and no Cast developer account
   needed.
+- **Active hours and burn-in protection**: outside a display's hours Daycast
+  stops casting and the page goes dark, so the TV can sleep. The dashboard
+  shifts a few pixels every three minutes to protect OLED screens.
 - **Browser displays**: any browser, kiosk or Raspberry Pi can open
   `/d/<display>` instead. The page shows a code; enter it in the web
   interface to pair the screen.

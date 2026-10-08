@@ -10,6 +10,7 @@ State of the project on 8 October 2026, so work can continue on any machine.
 - **News:** headlines from any RSS or Atom feed (default NOS), fetched once by the server.
 - **Calendar:** the coming week from secret iCal addresses, with recurrences, exceptions and moved occurrences, grouped by day on the TV. Tested with a synthetic calendar; a real Google or iCloud calendar is still to try.
 - **Dashboard editor:** dashboards are stored in SQLite and edited by dragging and resizing widgets on the 24x14 grid; each display picks one. Saving reaches open screens within seconds. A display only receives the data its widgets use.
+- **Active hours:** per display, for example 06:30 to 23:00. Outside them the cast is stopped and the page is dark without data. The dashboard shifts a few pixels every three minutes against burn-in.
 - **TV page:** clock, weather, calendar and news on a fixed 16:9 stage, an offline indicator, and reconnection without a reload. About 20 KB of JavaScript (gzip).
 - **Casting:** for every display linked to a Cast device, a keeper finds the device by ID, starts the receiver and keeps it on screen. Without an own receiver it uses the public DashCast receiver, which needs no Cast developer account.
 
@@ -44,7 +45,7 @@ gofmt, go vet, the Go tests with the race detector, govulncheck, svelte-check wi
 
 ## Not deployed to the TV yet
 
-The living room TV still runs the version from before the dashboard editor. Restarting the server restarts the cast, which can switch a TV on through HDMI-CEC, so that waits until someone is home and awake.
+The living room TV still runs the version from before the dashboard editor and active hours. Restarting the server restarts the cast, which can switch a TV on through HDMI-CEC, so that waits until someone is home and awake.
 
 ## Next
 
