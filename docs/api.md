@@ -32,8 +32,8 @@ come from another site (cross-site request forgery protection).
 | `DELETE /api/sessions/current` | admin | `204` | `401` |
 | `GET /api/me` | admin | `200` user | `401` |
 | `GET /api/displays` | admin | `200 {"displays": [display + pairedScreens]}` | `401` |
-| `POST /api/displays` `{id, name, castDeviceId, activeFrom?, activeUntil?}` | admin | `201` display | `401`, `409 conflict`, `422` |
-| `PATCH /api/displays/{id}` `{name?, castDeviceId?, dashboardId?, activeFrom?, activeUntil?}` | admin | `200` display | `401`, `404 not_found`, `422` (also for an unknown `dashboardId`) |
+| `POST /api/displays` `{id, name, castDeviceId, activeFrom?, activeUntil?, schedule?}` | admin | `201` display | `401`, `409 conflict`, `422` |
+| `PATCH /api/displays/{id}` `{name?, castDeviceId?, dashboardId?, activeFrom?, activeUntil?, schedule?}` | admin | `200` display | `401`, `404 not_found`, `422` (also for an unknown dashboard) |
 | `DELETE /api/displays/{id}` | admin | `204` | `401`, `404 not_found` |
 | `GET /api/widget-types` | admin | `200 {columns, rows, themes, types: {name: {minW, minH, hasMaxItems}}}` | `401` |
 | `GET /api/dashboards` | admin | `200 {"dashboards": [dashboard]}` | `401` |
@@ -69,11 +69,17 @@ screen within that time. Deleting a display unpairs all its screens.
 
 **user:** `{"id": 1, "username": "stijn"}`
 
-**display:** `{"id": "kitchen", "name": "Kitchen TV", "castDeviceId": "e542…", "dashboardId": "", "activeFrom": "06:30", "activeUntil": "23:00", "createdAt": "2026-10-08T17:00:00Z"}`.
+**display:** `{"id": "kitchen", "name": "Kitchen TV", "castDeviceId": "e542…", "dashboardId": "", "activeFrom": "06:30", "activeUntil": "23:00", "schedule": [slot], "createdAt": "2026-10-08T17:00:00Z"}`.
 `id` is 1 to 32 lowercase letters, digits or dashes and is fixed after creation;
 `castDeviceId` is empty for browser and kiosk displays; an empty `dashboardId` means the default dashboard.
 `activeFrom`/`activeUntil` are HH:MM in the server's time zone (`TZ`), may wrap past midnight, and are both empty for
 always on. Outside them the page is dark, the snapshot has no data and the cast is stopped.
+`schedule` holds at most 6 slots and is replaced as a whole by a `PATCH`; it is always a list, empty when unused.
+
+**slot:** `{"from": "06:30", "until": "09:00", "dashboardId": "morning"}`. During the slot the display shows that
+dashboard instead of its own; the first slot that contains the current time wins. Times follow the same rules as
+active hours, but both are required. Deleting a dashboard removes the slots that use it. Field errors are named
+`schedule[i]`, and `schedule` for a slot with an unknown dashboard.
 
 **dashboard:** `{"id": "default", "name": "Default", "columns": 24, "rows": 14, "theme": "minimal-dark", "widgets": [widget]}`.
 `theme` is one of `minimal-dark` (default), `minimal-light` and `glass`; an unknown theme is a `422`. The grid size and
@@ -86,6 +92,6 @@ widget is outside the grid, smaller than its type allows, overlaps another, or h
 **device:** `{"id": "e542…", "name": "tv woonkamer", "model": "Chromecast HD", "addr": "192.168.1.160:8009", "hasScreen": true}`
 
 **snapshot event:** `{"type": "snapshot", "version": 3, "serverTime": "…", "dashboard": {…}, "data": {"weather.current": {"value": {…}, "fetchedAt": "…", "staleAfter": "…", "failing": false}}}`.
-Each display gets its own dashboard, and `data` only holds the sources its widgets use. `active` is false outside the
+Each display gets the dashboard for the current time (its schedule or its own), and `data` only holds the sources its widgets use. `active` is false outside the
 display's active hours; `data` is then empty.
 See `internal/display/display.go` and `web/src/protocol.ts`.
