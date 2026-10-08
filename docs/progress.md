@@ -9,6 +9,7 @@ State of the project on 8 October 2026, so work can continue on any machine.
 - **Pairing:** a display page shows a code until it is paired in the web interface; a TV opened by Daycast pairs itself with a single-use launch token. Only paired screens and logged-in admins receive dashboard data, and unpairing takes effect within 20 seconds.
 - **News:** headlines from any RSS or Atom feed (default NOS), fetched once by the server.
 - **Calendar:** the coming week from secret iCal addresses, with recurrences, exceptions and moved occurrences, grouped by day on the TV. Tested with a synthetic calendar; a real Google or iCloud calendar is still to try.
+- **Dashboard editor:** dashboards are stored in SQLite and edited by dragging and resizing widgets on the 24x14 grid; each display picks one. Saving reaches open screens within seconds. A display only receives the data its widgets use.
 - **TV page:** clock, weather, calendar and news on a fixed 16:9 stage, an offline indicator, and reconnection without a reload. About 20 KB of JavaScript (gzip).
 - **Casting:** for every display linked to a Cast device, a keeper finds the device by ID, starts the receiver and keeps it on screen. Without an own receiver it uses the public DashCast receiver, which needs no Cast developer account.
 
@@ -41,6 +42,10 @@ gofmt, go vet, the Go tests with the race detector, govulncheck, svelte-check wi
 - **License:** AGPL-3.0 or Apache-2.0. The repository stays private until this is chosen.
 - **Name:** Daycast is the working name; a trademark check (BOIP, EUIPO) is still to do.
 
+## Not deployed to the TV yet
+
+The living room TV still runs the version from before the dashboard editor. Restarting the server restarts the cast, which can switch a TV on through HDMI-CEC, so that waits until someone is home and awake.
+
 ## Next
 
-Measure a full day on the living room TV and a Nest Hub, then continue with v0.5 from the research (`GoogleHome-Dashboard/docs/onderzoek/`, chapters 18 and 19): display pairing for the TV pages, the grid editor and more widgets.
+Measure a full day on the living room TV and a Nest Hub, then continue with v0.5 from the research (`GoogleHome-Dashboard/docs/onderzoek/`, chapters 18 and 19): themes, schedules per display (a morning and an evening dashboard), and the Nest Hub test.

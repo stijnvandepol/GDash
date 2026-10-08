@@ -221,7 +221,8 @@ Security scan:    go run golang.org/x/vuln/cmd/govulncheck@v1.8.0 ./... && (cd w
 Build:            (cd web && npm ci && npm run build) && go build ./cmd/daycast, or docker build .
 CI:               .github/workflows/ci.yml runs all of the above on every push.
 Architecture:     One Go binary (cmd/daycast). internal/datahub fetches external data once for all displays
-                  and keeps the last good value; internal/display builds and streams snapshots;
+                  and keeps the last good value; internal/display validates dashboard layouts and builds one
+                  snapshot per display with only the data its widgets use;
                   internal/store is the only package with SQL; internal/auth handles accounts and sessions;
                   internal/pairing decides which screens may show a display; internal/token and
                   internal/ratelimit are shared by both; internal/news and internal/weather read external

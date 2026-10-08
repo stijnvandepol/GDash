@@ -3,8 +3,8 @@
 Your day on every TV in the house. Self-hosted, casts to the Chromecast or
 Google TV you already own. No extra hardware, no subscription, no cloud.
 
-> **Status: prototype.** It works on real hardware at home, but there is no
-> dashboard editor yet. Run it only on a network you trust.
+> **Status: prototype.** It works on real hardware at home. Run it only on a
+> network you trust.
 
 ## What works
 
@@ -18,6 +18,9 @@ Google TV you already own. No extra hardware, no subscription, no cloud.
   reach the screen.
 - **A web interface** at `/` to set up the first account, log in and manage
   displays.
+- **A dashboard editor**: drag and resize widgets on the TV's 16:9 grid, make
+  several dashboards and pick one per display. Saving updates the TVs within
+  seconds. A display only receives the data its own widgets show.
 - **Displays**: link a display to a Cast device found on your network, and
   Daycast keeps the dashboard on that TV. It restarts the cast every 15
   minutes, because Google TV covers a running cast with its screensaver after

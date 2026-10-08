@@ -33,8 +33,14 @@ come from another site (cross-site request forgery protection).
 | `GET /api/me` | admin | `200` user | `401` |
 | `GET /api/displays` | admin | `200 {"displays": [display + pairedScreens]}` | `401` |
 | `POST /api/displays` `{id, name, castDeviceId}` | admin | `201` display | `401`, `409 conflict`, `422` |
-| `PATCH /api/displays/{id}` `{name?, castDeviceId?}` | admin | `200` display | `401`, `404 not_found`, `422` |
+| `PATCH /api/displays/{id}` `{name?, castDeviceId?, dashboardId?}` | admin | `200` display | `401`, `404 not_found`, `422` (also for an unknown `dashboardId`) |
 | `DELETE /api/displays/{id}` | admin | `204` | `401`, `404 not_found` |
+| `GET /api/widget-types` | admin | `200 {columns, rows, types: {name: {minW, minH, hasMaxItems}}}` | `401` |
+| `GET /api/dashboards` | admin | `200 {"dashboards": [dashboard]}` | `401` |
+| `POST /api/dashboards` `{id, name, widgets}` | admin | `201` dashboard | `401`, `409 conflict`, `422` |
+| `GET /api/dashboards/{id}` | admin | `200` dashboard | `401`, `404` |
+| `PUT /api/dashboards/{id}` `{name, widgets}` | admin | `200` dashboard; screens update at once | `401`, `404`, `422` |
+| `DELETE /api/dashboards/{id}` | admin | `204`; its displays fall back to the default | `401`, `404`, `409` for `default` |
 | `GET /api/cast-devices` | admin | `200 {"devices": [device]}` | `401`, `500 discovery_failed` |
 | `GET /api/displays/{id}/events` | paired screen or admin | `text/event-stream`, `snapshot` events | `401 not_paired`, `404` for an invalid id |
 | `POST /api/pairing-requests` `{displayId}` | no | `201 {code, pollToken, expiresAt}` | `404`, `429 rate_limited` |
@@ -67,7 +73,15 @@ screen within that time. Deleting a display unpairs all its screens.
 `id` is 1 to 32 lowercase letters, digits or dashes and is fixed after creation;
 `castDeviceId` is empty for browser and kiosk displays.
 
+**dashboard:** `{"id": "default", "name": "Default", "columns": 24, "rows": 14, "theme": "minimal-dark", "widgets": [widget]}`.
+The grid size, theme and every widget's `source` are set by the server; values sent by a client are ignored.
+
+**widget:** `{"id": "news", "type": "news", "x": 10, "y": 9, "w": 14, "h": 5, "source": "news.default", "settings": {"maxItems": 3}}`.
+Types are `clock`, `weather`, `news` and `calendar`. A layout is rejected with field errors such as `widgets[2]` when a
+widget is outside the grid, smaller than its type allows, overlaps another, or has settings its type does not take.
+
 **device:** `{"id": "e542…", "name": "tv woonkamer", "model": "Chromecast HD", "addr": "192.168.1.160:8009", "hasScreen": true}`
 
 **snapshot event:** `{"type": "snapshot", "version": 3, "serverTime": "…", "dashboard": {…}, "data": {"weather.current": {"value": {…}, "fetchedAt": "…", "staleAfter": "…", "failing": false}}}`.
+Each display gets its own dashboard, and `data` only holds the sources its widgets use.
 See `internal/display/display.go` and `web/src/protocol.ts`.
