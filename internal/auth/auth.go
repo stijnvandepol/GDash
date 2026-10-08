@@ -5,9 +5,7 @@ package auth
 import (
 	"context"
 	"crypto/rand"
-	"crypto/sha256"
 	"crypto/subtle"
-	"encoding/base64"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -17,6 +15,7 @@ import (
 
 	"github.com/stijnvandepol/daycast/internal/ratelimit"
 	"github.com/stijnvandepol/daycast/internal/store"
+	"github.com/stijnvandepol/daycast/internal/token"
 	"github.com/stijnvandepol/daycast/internal/validation"
 )
 
@@ -159,11 +158,11 @@ func (s *Service) Login(ctx context.Context, c Credentials, clientIP string) (st
 }
 
 // Authenticate returns the user of a session token, or ErrNoSession.
-func (s *Service) Authenticate(ctx context.Context, token string) (User, error) {
-	if token == "" {
+func (s *Service) Authenticate(ctx context.Context, session string) (User, error) {
+	if session == "" {
 		return User{}, ErrNoSession
 	}
-	hash := hashToken(token)
+	hash := token.Hash(session)
 	sess, err := s.store.SessionByHash(ctx, hash)
 	if errors.Is(err, store.ErrNotFound) {
 		return User{}, ErrNoSession
@@ -187,25 +186,19 @@ func (s *Service) Authenticate(ctx context.Context, token string) (User, error) 
 }
 
 // Logout ends a session.
-func (s *Service) Logout(ctx context.Context, token string) error {
-	return s.store.DeleteSession(ctx, hashToken(token))
+func (s *Service) Logout(ctx context.Context, session string) error {
+	return s.store.DeleteSession(ctx, token.Hash(session))
 }
 
 func (s *Service) startSession(ctx context.Context, u store.User) (string, User, error) {
-	raw := make([]byte, 32)
-	if _, err := rand.Read(raw); err != nil {
-		return "", User{}, fmt.Errorf("generate session token: %w", err)
-	}
-	token := base64.RawURLEncoding.EncodeToString(raw)
-	if err := s.store.CreateSession(ctx, hashToken(token), u.ID, s.now()); err != nil {
+	session, err := token.New()
+	if err != nil {
 		return "", User{}, err
 	}
-	return token, User{ID: u.ID, Username: u.Username}, nil
-}
-
-func hashToken(token string) string {
-	sum := sha256.Sum256([]byte(token))
-	return hex.EncodeToString(sum[:])
+	if err := s.store.CreateSession(ctx, token.Hash(session), u.ID, s.now()); err != nil {
+		return "", User{}, err
+	}
+	return session, User{ID: u.ID, Username: u.Username}, nil
 }
 
 func validateAccount(c Credentials) error {
