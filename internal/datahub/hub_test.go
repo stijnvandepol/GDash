@@ -5,22 +5,24 @@ import (
 	"errors"
 	"io"
 	"log/slog"
+	"sync/atomic"
 	"testing"
 	"time"
 )
 
 var fixedNow = time.Date(2026, 10, 8, 7, 30, 0, 0, time.UTC)
 
-func newTestHub(t *testing.T) (*Hub, *FileStore, *int) {
+func newTestHub(t *testing.T) (*Hub, *FileStore, *atomic.Int32) {
 	t.Helper()
 	store, err := NewFileStore(t.TempDir())
 	if err != nil {
 		t.Fatal(err)
 	}
-	changes := 0
-	h := New(store, slog.New(slog.NewTextHandler(io.Discard, nil)), func() { changes++ })
+	// onChange runs on the hub's goroutines, so the counter must be atomic.
+	changes := &atomic.Int32{}
+	h := New(store, slog.New(slog.NewTextHandler(io.Discard, nil)), func() { changes.Add(1) })
 	h.now = func() time.Time { return fixedNow }
-	return h, store, &changes
+	return h, store, changes
 }
 
 func source(fetch func(context.Context) (any, error)) Source {
@@ -41,8 +43,8 @@ func TestRefreshStoresValueWithStaleDeadline(t *testing.T) {
 	if want := fixedNow.Add(16 * time.Minute); !got.StaleAfter.Equal(want) {
 		t.Fatalf("StaleAfter = %v, want %v", got.StaleAfter, want)
 	}
-	if *changes != 1 {
-		t.Fatalf("onChange called %d times, want 1", *changes)
+	if n := changes.Load(); n != 1 {
+		t.Fatalf("onChange called %d times, want 1", n)
 	}
 	if _, ok, err := store.Load("weather.current"); err != nil || !ok {
 		t.Fatalf("value not persisted: ok=%v err=%v", ok, err)
@@ -67,8 +69,8 @@ func TestFailedRefreshKeepsLastKnownValue(t *testing.T) {
 	if err := h.refresh(context.Background(), failing); err == nil {
 		t.Fatal("refresh hid the fetch error")
 	}
-	if *changes != 2 {
-		t.Fatalf("onChange called %d times, want 2 (success, first failure)", *changes)
+	if n := changes.Load(); n != 2 {
+		t.Fatalf("onChange called %d times, want 2 (success, first failure)", n)
 	}
 }
 
