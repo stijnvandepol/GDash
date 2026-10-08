@@ -8,7 +8,7 @@ import (
 )
 
 func valid() Dashboard {
-	return Dashboard{ID: "kitchen", Name: "Kitchen", Widgets: []Widget{
+	return Dashboard{ID: "kitchen", Name: "Kitchen", Theme: "glass", Widgets: []Widget{
 		{ID: "clock", Type: "clock", X: 0, Y: 0, W: 10, H: 5},
 		{ID: "news", Type: "news", X: 10, Y: 0, W: 14, H: 5, Settings: map[string]any{"maxItems": float64(4)}},
 	}}
@@ -32,6 +32,7 @@ func TestValidateDashboard(t *testing.T) {
 		{"empty dashboard", func(d *Dashboard) { d.Widgets = nil }, ""},
 		{"bad id", func(d *Dashboard) { d.ID = "Kitchen!" }, "id:"},
 		{"blank name", func(d *Dashboard) { d.Name = "  " }, "name:"},
+		{"unknown theme", func(d *Dashboard) { d.Theme = "comic-sans" }, "theme: choose one of"},
 		{"unknown type", func(d *Dashboard) { d.Widgets[0].Type = "iframe" }, `widgets[0]: unknown widget type "iframe"`},
 		{"outside grid", func(d *Dashboard) { d.Widgets[1].X = 12 }, "widgets[1]: must fit the 24x14 grid"},
 		{"negative position", func(d *Dashboard) { d.Widgets[0].Y = -1 }, "widgets[0]: must fit"},
@@ -70,11 +71,14 @@ func TestValidateDashboardLimitsWidgetCount(t *testing.T) {
 
 func TestNormalizeSetsSourceFromType(t *testing.T) {
 	d := valid()
-	d.Columns, d.Rows, d.Theme = 99, 99, "evil"
+	d.Columns, d.Rows = 99, 99
 	d.Widgets[1].Source = "secrets.everything"
 	n := Normalize(d)
-	if n.Columns != GridColumns || n.Rows != GridRows || n.Theme != defaultTheme {
+	if n.Columns != GridColumns || n.Rows != GridRows || n.Theme != "glass" {
 		t.Fatalf("grid/theme = %d %d %s", n.Columns, n.Rows, n.Theme)
+	}
+	if empty := Normalize(Dashboard{}); empty.Theme != defaultTheme {
+		t.Fatalf("empty theme became %q, want the default", empty.Theme)
 	}
 	if n.Widgets[1].Source != "news.default" || n.Widgets[0].Source != "" {
 		t.Fatalf("sources = %q %q, want them derived from the type", n.Widgets[0].Source, n.Widgets[1].Source)

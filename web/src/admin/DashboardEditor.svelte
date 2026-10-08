@@ -21,6 +21,13 @@
   // Widgets by id; positions live in the grid until saving.
   let widgets = $state<Record<string, Widget>>({});
   let name = $state('');
+  let theme = $state('minimal-dark');
+
+  const THEME_NAMES: Record<string, string> = {
+    'minimal-dark': 'Minimal dark',
+    'minimal-light': 'Minimal light',
+    glass: 'Glass',
+  };
   let selected = $state<string | null>(null);
   let message = $state('');
   let errors = $state<string[]>([]);
@@ -36,6 +43,7 @@
 
   onMount(() => {
     name = dashboard.name;
+    theme = dashboard.theme ?? 'minimal-dark';
     for (const w of dashboard.widgets) widgets[w.id] = { ...w, settings: { ...(w.settings ?? {}) } };
 
     // Plain text only: widget labels never become HTML.
@@ -132,7 +140,7 @@
       return { id: w.id, type: w.type, x: n.x ?? 0, y: n.y ?? 0, w: n.w ?? 1, h: n.h ?? 1, settings };
     });
     try {
-      await api.saveDashboard({ id: dashboard.id, name: name.trim(), widgets: layout });
+      await api.saveDashboard({ id: dashboard.id, name: name.trim(), theme, widgets: layout });
       dirty = false;
       message = 'Saved. Screens showing this dashboard update now.';
     } catch (err) {
@@ -165,6 +173,11 @@
   <div class="editor-head">
     <button class="link" onclick={close}>← Dashboards</button>
     <input class="name" bind:value={name} oninput={() => (dirty = true)} aria-label="Dashboard name" />
+    <select bind:value={theme} onchange={() => (dirty = true)} aria-label="Theme">
+      {#each catalogue.themes as t (t)}
+        <option value={t}>{THEME_NAMES[t] ?? t}</option>
+      {/each}
+    </select>
     <button onclick={save} disabled={saving}>{saving ? 'Saving…' : 'Save'}</button>
   </div>
 

@@ -33,7 +33,7 @@
 
 <svelte:window bind:innerWidth bind:innerHeight />
 
-<main class="screen">
+<main class="screen" data-theme={dashboard?.theme ?? 'minimal-dark'}>
   {#if asleep}
     <!-- Outside active hours: nothing lit, so the TV can idle and OLED pixels rest. -->
   {:else if display.problem}
@@ -89,7 +89,8 @@
     position: fixed;
     inset: 0;
     overflow: hidden;
-    background: var(--surface-0);
+    background: var(--backdrop), var(--surface-0);
+    color: var(--text-primary);
   }
   .stage {
     position: absolute;
@@ -103,6 +104,7 @@
   }
   .widget {
     background: var(--surface-1);
+    border: 1px solid var(--widget-border);
     border-radius: var(--radius-widget);
     padding: var(--space-widget);
     overflow: hidden;

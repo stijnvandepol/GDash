@@ -11,11 +11,13 @@ import (
 
 type dashboardBody struct {
 	Name    string           `json:"name"`
+	Theme   string           `json:"theme"`
 	Widgets []display.Widget `json:"widgets"`
 }
 
 // getWidgetTypes handles GET /api/widget-types: the widget catalogue with
-// minimum sizes and whether a widget takes "maxItems", plus the grid size.
+// minimum sizes and whether a widget takes "maxItems", the grid size and
+// the themes.
 func (s *Server) getWidgetTypes(w http.ResponseWriter, _ *http.Request) {
 	type widgetType struct {
 		MinW        int  `json:"minW"`
@@ -27,7 +29,7 @@ func (s *Server) getWidgetTypes(w http.ResponseWriter, _ *http.Request) {
 		types[name] = widgetType{MinW: t.MinW, MinH: t.MinH, HasMaxItems: t.HasMaxItems}
 	}
 	writeJSON(w, http.StatusOK, map[string]any{
-		"columns": display.GridColumns, "rows": display.GridRows, "types": types,
+		"columns": display.GridColumns, "rows": display.GridRows, "types": types, "themes": display.Themes,
 	})
 }
 
@@ -107,7 +109,7 @@ func (s *Server) deleteDashboard(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) validDashboard(w http.ResponseWriter, id string, body dashboardBody) (display.Dashboard, bool) {
-	d := display.Normalize(display.Dashboard{ID: id, Name: body.Name, Widgets: body.Widgets})
+	d := display.Normalize(display.Dashboard{ID: id, Name: body.Name, Theme: body.Theme, Widgets: body.Widgets})
 	if d.Widgets == nil {
 		d.Widgets = []display.Widget{}
 	}

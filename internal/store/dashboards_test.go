@@ -11,7 +11,7 @@ import (
 )
 
 func morning() display.Dashboard {
-	return display.Dashboard{ID: "morning", Name: "Morning", Widgets: []display.Widget{
+	return display.Dashboard{ID: "morning", Name: "Morning", Theme: "minimal-light", Widgets: []display.Widget{
 		{ID: "clock", Type: "clock", X: 0, Y: 0, W: 8, H: 4},
 		{ID: "news", Type: "news", X: 8, Y: 0, W: 10, H: 6, Settings: map[string]any{"maxItems": float64(4)}},
 	}}
@@ -28,7 +28,7 @@ func TestDashboardLifecycle(t *testing.T) {
 		t.Fatal(err)
 	}
 	// Reading normalizes: grid, theme and sources come from the server.
-	if got.Columns != display.GridColumns || got.Widgets[1].Source != "news.default" || got.Widgets[1].Settings["maxItems"] != float64(4) {
+	if got.Columns != display.GridColumns || got.Theme != "minimal-light" || got.Widgets[1].Source != "news.default" || got.Widgets[1].Settings["maxItems"] != float64(4) {
 		t.Fatalf("Dashboard = %+v", got)
 	}
 

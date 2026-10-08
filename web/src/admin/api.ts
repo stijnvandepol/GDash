@@ -54,12 +54,14 @@ export interface Widget {
 export interface Dashboard {
   id: string;
   name: string;
+  theme?: string;
   widgets: Widget[];
 }
 
 export interface WidgetCatalogue {
   columns: number;
   rows: number;
+  themes: string[];
   types: Record<string, { minW: number; minH: number; hasMaxItems: boolean }>;
 }
 
@@ -115,7 +117,7 @@ export const api = {
   dashboards: () => request<{ dashboards: Dashboard[] }>('GET', '/api/dashboards').then((r) => r.dashboards),
   createDashboard: (d: Dashboard) => request<Dashboard>('POST', '/api/dashboards', d),
   saveDashboard: (d: Dashboard) =>
-    request<Dashboard>('PUT', `/api/dashboards/${encodeURIComponent(d.id)}`, { name: d.name, widgets: d.widgets }),
+    request<Dashboard>('PUT', `/api/dashboards/${encodeURIComponent(d.id)}`, { name: d.name, theme: d.theme, widgets: d.widgets }),
   deleteDashboard: (id: string) => request<void>('DELETE', `/api/dashboards/${encodeURIComponent(id)}`),
   castDevices: () => request<{ devices: CastDevice[] }>('GET', '/api/cast-devices').then((r) => r.devices),
 };

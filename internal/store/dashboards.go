@@ -17,7 +17,7 @@ const MaxDashboards = 50
 
 // Dashboards returns all dashboards ordered by name.
 func (s *Store) Dashboards(ctx context.Context) ([]display.Dashboard, error) {
-	rows, err := s.db.QueryContext(ctx, "SELECT id, name, widgets FROM dashboards ORDER BY name LIMIT ?", MaxDashboards)
+	rows, err := s.db.QueryContext(ctx, "SELECT id, name, theme, widgets FROM dashboards ORDER BY name LIMIT ?", MaxDashboards)
 	if err != nil {
 		return nil, fmt.Errorf("list dashboards: %w", err)
 	}
@@ -35,7 +35,7 @@ func (s *Store) Dashboards(ctx context.Context) ([]display.Dashboard, error) {
 
 // Dashboard returns one dashboard, or ErrNotFound.
 func (s *Store) Dashboard(ctx context.Context, id string) (display.Dashboard, error) {
-	d, err := scanDashboard(s.db.QueryRowContext(ctx, "SELECT id, name, widgets FROM dashboards WHERE id = ?", id))
+	d, err := scanDashboard(s.db.QueryRowContext(ctx, "SELECT id, name, theme, widgets FROM dashboards WHERE id = ?", id))
 	if errors.Is(err, sql.ErrNoRows) {
 		return display.Dashboard{}, ErrNotFound
 	}
@@ -61,8 +61,8 @@ func (s *Store) CreateDashboard(ctx context.Context, d display.Dashboard, now ti
 	if count >= MaxDashboards {
 		return fmt.Errorf("%w: limit of %d dashboards reached", ErrConflict, MaxDashboards)
 	}
-	_, err = tx.ExecContext(ctx, "INSERT INTO dashboards (id, name, widgets, created_at, updated_at) VALUES (?, ?, ?, ?, ?)",
-		d.ID, d.Name, string(widgets), formatTime(now), formatTime(now))
+	_, err = tx.ExecContext(ctx, "INSERT INTO dashboards (id, name, theme, widgets, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
+		d.ID, d.Name, d.Theme, string(widgets), formatTime(now), formatTime(now))
 	if err != nil {
 		if isUniqueViolation(err) {
 			return fmt.Errorf("%w: dashboard %q", ErrConflict, d.ID)
@@ -72,14 +72,14 @@ func (s *Store) CreateDashboard(ctx context.Context, d display.Dashboard, now ti
 	return tx.Commit()
 }
 
-// UpdateDashboard replaces the name and widgets of a dashboard.
+// UpdateDashboard replaces the name, theme and widgets of a dashboard.
 func (s *Store) UpdateDashboard(ctx context.Context, d display.Dashboard, now time.Time) error {
 	widgets, err := json.Marshal(d.Widgets)
 	if err != nil {
 		return fmt.Errorf("encode widgets: %w", err)
 	}
-	res, err := s.db.ExecContext(ctx, "UPDATE dashboards SET name = ?, widgets = ?, updated_at = ? WHERE id = ?",
-		d.Name, string(widgets), formatTime(now), d.ID)
+	res, err := s.db.ExecContext(ctx, "UPDATE dashboards SET name = ?, theme = ?, widgets = ?, updated_at = ? WHERE id = ?",
+		d.Name, d.Theme, string(widgets), formatTime(now), d.ID)
 	if err != nil {
 		return fmt.Errorf("update dashboard: %w", err)
 	}
@@ -116,7 +116,7 @@ func (s *Store) EnsureDashboard(ctx context.Context, d display.Dashboard, now ti
 // active hours.
 func (s *Store) DisplayViews(ctx context.Context) (map[string]display.View, error) {
 	rows, err := s.db.QueryContext(ctx, `
-		SELECT d.id, d.active_from, d.active_until, b.id, b.name, b.widgets
+		SELECT d.id, d.active_from, d.active_until, b.id, b.name, b.theme, b.widgets
 		FROM displays d
 		JOIN dashboards b ON b.id = COALESCE(d.dashboard_id, ?)
 		LIMIT ?`, display.DefaultID, displays.MaxDisplays)
@@ -128,7 +128,7 @@ func (s *Store) DisplayViews(ctx context.Context) (map[string]display.View, erro
 	for rows.Next() {
 		var displayID, widgets string
 		var v display.View
-		if err := rows.Scan(&displayID, &v.Hours.From, &v.Hours.Until, &v.Dashboard.ID, &v.Dashboard.Name, &widgets); err != nil {
+		if err := rows.Scan(&displayID, &v.Hours.From, &v.Hours.Until, &v.Dashboard.ID, &v.Dashboard.Name, &v.Dashboard.Theme, &widgets); err != nil {
 			return nil, err
 		}
 		if err := json.Unmarshal([]byte(widgets), &v.Dashboard.Widgets); err != nil {
@@ -143,7 +143,7 @@ func (s *Store) DisplayViews(ctx context.Context) (map[string]display.View, erro
 func scanDashboard(row scanner) (display.Dashboard, error) {
 	var d display.Dashboard
 	var widgets string
-	if err := row.Scan(&d.ID, &d.Name, &widgets); err != nil {
+	if err := row.Scan(&d.ID, &d.Name, &d.Theme, &widgets); err != nil {
 		return display.Dashboard{}, err
 	}
 	if err := json.Unmarshal([]byte(widgets), &d.Widgets); err != nil {

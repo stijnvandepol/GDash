@@ -31,8 +31,11 @@ func TestDashboardCRUD(t *testing.T) {
 	if status != http.StatusUnprocessableEntity || !strings.Contains(body, `"field":"widgets[1]"`) {
 		t.Fatalf("overlapping layout = %d %s", status, body)
 	}
-	status, body = env.do(t, "PUT", "/api/dashboards/morning", `{"name":"Mornings","widgets":[]}`)
-	if status != http.StatusOK || !strings.Contains(body, `"widgets":[]`) {
+	if status, body := env.do(t, "PUT", "/api/dashboards/morning", `{"name":"Mornings","theme":"comic","widgets":[]}`); status != http.StatusUnprocessableEntity || !strings.Contains(body, `"field":"theme"`) {
+		t.Fatalf("unknown theme = %d %s", status, body)
+	}
+	status, body = env.do(t, "PUT", "/api/dashboards/morning", `{"name":"Mornings","theme":"glass","widgets":[]}`)
+	if status != http.StatusOK || !strings.Contains(body, `"widgets":[]`) || !strings.Contains(body, `"theme":"glass"`) {
 		t.Fatalf("update = %d %s", status, body)
 	}
 
@@ -85,7 +88,7 @@ func TestDashboardRoutesNeedLoginAndWidgetTypesAreListed(t *testing.T) {
 	}
 	env.setUp(t)
 	status, body := env.do(t, "GET", "/api/widget-types", "")
-	if status != http.StatusOK || !strings.Contains(body, `"calendar":{"minW":6,"minH":4,"hasMaxItems":true}`) || !strings.Contains(body, `"columns":24`) {
+	if status != http.StatusOK || !strings.Contains(body, `"calendar":{"minW":6,"minH":4,"hasMaxItems":true}`) || !strings.Contains(body, `"columns":24`) || !strings.Contains(body, `"glass"`) {
 		t.Fatalf("widget types = %d %s", status, body)
 	}
 }

@@ -3,6 +3,7 @@ package display
 import (
 	"fmt"
 	"regexp"
+	"slices"
 	"strings"
 	"unicode/utf8"
 
@@ -47,6 +48,9 @@ var WidgetTypes = map[string]WidgetType{
 	"calendar": {Source: "calendar.default", MinW: 6, MinH: 4, HasMaxItems: true},
 }
 
+// Themes are the built-in themes; web/src/theme.css defines their tokens.
+var Themes = []string{"minimal-dark", "minimal-light", "glass"}
+
 var validDashboardID = regexp.MustCompile(`^[a-z0-9][a-z0-9-]{0,31}$`)
 
 var validWidgetID = regexp.MustCompile(`^[a-z0-9][a-z0-9-]{0,31}$`)
@@ -54,11 +58,15 @@ var validWidgetID = regexp.MustCompile(`^[a-z0-9][a-z0-9-]{0,31}$`)
 // ValidDashboardID reports whether id can name a dashboard.
 func ValidDashboardID(id string) bool { return validDashboardID.MatchString(id) }
 
-// Normalize fills in what a client does not decide: the grid size, the
-// theme, and each widget's data source from its type. Client values for
-// these are ignored.
+// Normalize fills in what a client does not decide: the grid size and each
+// widget's data source from its type, whatever the client sent. An empty
+// theme becomes the default; an unknown one is left for ValidateDashboard
+// to reject.
 func Normalize(d Dashboard) Dashboard {
-	d.Columns, d.Rows, d.Theme = GridColumns, GridRows, defaultTheme
+	d.Columns, d.Rows = GridColumns, GridRows
+	if d.Theme == "" {
+		d.Theme = defaultTheme
+	}
 	widgets := make([]Widget, len(d.Widgets))
 	for i, w := range d.Widgets {
 		w.Source = WidgetTypes[w.Type].Source
@@ -79,6 +87,9 @@ func ValidateDashboard(d Dashboard) error {
 	name := strings.TrimSpace(d.Name)
 	if name == "" || name != d.Name || utf8.RuneCountInString(name) > maxNameLength {
 		errs.Add("name", "use 1 to 60 characters without leading or trailing spaces")
+	}
+	if !slices.Contains(Themes, d.Theme) {
+		errs.Add("theme", "choose one of: "+strings.Join(Themes, ", "))
 	}
 	if len(d.Widgets) > maxWidgets {
 		errs.Add("widgets", fmt.Sprintf("use at most %d widgets", maxWidgets))

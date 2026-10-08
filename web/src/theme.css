@@ -1,26 +1,61 @@
 /*
- * Minimal Dark, the first theme. Widgets only use these semantic tokens, so
- * a later theme can restyle everything without touching widget code.
- * System fonts only: no web fonts, so nothing is loaded from outside.
+ * Built-in themes. Widgets only use these semantic tokens, so a theme
+ * restyles everything without touching widget code. internal/display lists
+ * the same theme names. System fonts only: nothing is loaded from outside.
+ *
+ * No backdrop-filter or blur anywhere: Cast receivers are low-power, and
+ * Google's guidance is to avoid effects that recomposite large areas.
  */
 :root {
-  --surface-0: #0b0c0e;
-  --surface-1: #16181c;
-  --text-primary: #f2f3f5;
-  --text-muted: #9aa0a8;
-  --warning: #f0b429;
+  --font-ui: system-ui, Roboto, 'Segoe UI', 'Noto Sans', sans-serif;
   --radius-widget: 28px;
   --space-gap: 24px;
   --space-widget: 48px;
-  --font-ui: system-ui, Roboto, 'Segoe UI', 'Noto Sans', sans-serif;
+}
+
+/* Minimal Dark: the default, and the safest choice for OLED screens. */
+.screen,
+.screen[data-theme='minimal-dark'] {
+  --surface-0: #0b0c0e;
+  --surface-1: #16181c;
+  --widget-border: transparent;
+  --text-primary: #f2f3f5;
+  --text-muted: #9aa0a8;
+  --warning: #f0b429;
+  --backdrop: none;
+}
+
+/* Minimal Light: for bright rooms in the daytime. */
+.screen[data-theme='minimal-light'] {
+  --surface-0: #e9ecf0;
+  --surface-1: #ffffff;
+  --widget-border: #d6dbe1;
+  --text-primary: #15171a;
+  --text-muted: #59606b;
+  --warning: #b26b00;
+  --backdrop: none;
+}
+
+/*
+ * Glass: translucent tiles over a still gradient. The gradient is painted
+ * once; the tiles are plain semi-transparent fills, cheap to draw.
+ */
+.screen[data-theme='glass'] {
+  --surface-0: #0d1424;
+  --surface-1: rgba(255, 255, 255, 0.07);
+  --widget-border: rgba(255, 255, 255, 0.14);
+  --text-primary: #f4f6fb;
+  --text-muted: #a9b3c7;
+  --warning: #ffc861;
+  --backdrop: radial-gradient(circle at 15% 20%, #2a3f73 0%, transparent 55%),
+    radial-gradient(circle at 85% 80%, #4b2a6b 0%, transparent 50%), linear-gradient(160deg, #0d1424, #120f22);
 }
 
 html,
 body {
   margin: 0;
   height: 100%;
-  background: var(--surface-0);
-  color: var(--text-primary);
+  background: #000;
   font-family: var(--font-ui);
   cursor: none;
 }
