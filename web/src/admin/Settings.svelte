@@ -53,20 +53,6 @@
 
 {#if loadError}<p class="error">{loadError}</p>{/if}
 {#if settings}
-  <section class="card">
-    <h2>Language on the TVs</h2>
-    <p class="muted">Days, dates, weather and other texts on the screens. This web interface stays in English.</p>
-    <select
-      aria-label="Language on the TVs"
-      value={settings.language}
-      onchange={(e) => chooseLanguage((e.target as HTMLSelectElement).value)}
-    >
-      <option value="en">English</option>
-      <option value="nl">Nederlands</option>
-    </select>
-    {#if languageError}<p class="error">{languageError}</p>{/if}
-  </section>
-
   <LocationSetting location={settings.location} status={status['weather.current']} onchanged={load} onerror={handle} />
 
   <SourceList
@@ -112,6 +98,20 @@
     }}
     onerror={handle}
   />
+
+  <section class="card">
+    <h2>Language on the TVs</h2>
+    <p class="muted">Days, dates, weather and other texts on the screens. This web interface stays in English.</p>
+    <select
+      aria-label="Language on the TVs"
+      value={settings.language}
+      onchange={(e) => chooseLanguage((e.target as HTMLSelectElement).value)}
+    >
+      <option value="en">English</option>
+      <option value="nl">Nederlands</option>
+    </select>
+    {#if languageError}<p class="error">{languageError}</p>{/if}
+  </section>
 {:else if !loadError}
   <p class="muted">Loading…</p>
 {/if}
