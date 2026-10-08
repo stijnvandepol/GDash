@@ -15,6 +15,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/stijnvandepol/daycast/internal/ratelimit"
 	"github.com/stijnvandepol/daycast/internal/store"
 	"github.com/stijnvandepol/daycast/internal/validation"
 )
@@ -26,6 +27,9 @@ const (
 	sessionAbsoluteTimeout = 30 * 24 * time.Hour
 	// Recording every request would mean a database write per page load.
 	touchInterval = time.Hour
+
+	maxFailures   = 5
+	failureWindow = 15 * time.Minute
 )
 
 var (
@@ -59,7 +63,7 @@ type User struct {
 // Service runs authentication against the store.
 type Service struct {
 	store      *store.Store
-	limiter    *limiter
+	limiter    *ratelimit.Limiter
 	now        func() time.Time
 	setupToken string
 	// dummyHash is verified when a username does not exist, so a login for
@@ -75,7 +79,7 @@ func NewService(st *store.Store, setupToken string) (*Service, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Service{store: st, limiter: newLimiter(time.Now), now: time.Now, setupToken: setupToken, dummyHash: dummy}, nil
+	return &Service{store: st, limiter: ratelimit.New(time.Now, maxFailures, failureWindow), now: time.Now, setupToken: setupToken, dummyHash: dummy}, nil
 }
 
 // NewSetupToken returns a random token for the first-run setup.
@@ -97,11 +101,11 @@ func (s *Service) SetupNeeded(ctx context.Context) (bool, error) {
 // token to put in a cookie.
 func (s *Service) Setup(ctx context.Context, setupToken string, c Credentials, clientIP string) (string, User, error) {
 	key := "setup|" + clientIP
-	if !s.limiter.allowed(key) {
+	if !s.limiter.Allowed(key) {
 		return "", User{}, ErrRateLimited
 	}
 	if subtle.ConstantTimeCompare([]byte(setupToken), []byte(s.setupToken)) != 1 {
-		s.limiter.fail(key)
+		s.limiter.Fail(key)
 		return "", User{}, ErrInvalidSetupToken
 	}
 	if err := validateAccount(c); err != nil {
@@ -118,18 +122,18 @@ func (s *Service) Setup(ctx context.Context, setupToken string, c Credentials, c
 	if err != nil {
 		return "", User{}, err
 	}
-	s.limiter.reset(key)
+	s.limiter.Reset(key)
 	return s.startSession(ctx, u)
 }
 
 // Login checks credentials and starts a session.
 func (s *Service) Login(ctx context.Context, c Credentials, clientIP string) (string, User, error) {
 	keys := []string{"ip|" + clientIP, "user|" + strings.ToLower(c.Username)}
-	if !s.limiter.allowed(keys...) {
+	if !s.limiter.Allowed(keys...) {
 		return "", User{}, ErrRateLimited
 	}
 	if len(c.Password) > maxPasswordBytes {
-		s.limiter.fail(keys...)
+		s.limiter.Fail(keys...)
 		return "", User{}, ErrInvalidCredentials
 	}
 	u, err := s.store.UserByName(ctx, c.Username)
@@ -144,10 +148,10 @@ func (s *Service) Login(ctx context.Context, c Credentials, clientIP string) (st
 		return "", User{}, fmt.Errorf("verify password of user %d: %w", u.ID, err)
 	}
 	if !ok || u.ID == 0 {
-		s.limiter.fail(keys...)
+		s.limiter.Fail(keys...)
 		return "", User{}, ErrInvalidCredentials
 	}
-	s.limiter.reset(keys...)
+	s.limiter.Reset(keys...)
 	if err := s.store.DeleteExpiredSessions(ctx, s.now().Add(-sessionIdleTimeout), s.now().Add(-sessionAbsoluteTimeout)); err != nil {
 		return "", User{}, err
 	}

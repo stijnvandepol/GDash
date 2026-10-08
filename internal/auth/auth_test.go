@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stijnvandepol/daycast/internal/ratelimit"
 	"github.com/stijnvandepol/daycast/internal/store"
 	"github.com/stijnvandepol/daycast/internal/validation"
 )
@@ -31,7 +32,7 @@ func newTestService(t *testing.T) (*Service, *testClock) {
 	}
 	clock := &testClock{t: time.Date(2026, 10, 8, 17, 0, 0, 0, time.UTC)}
 	s.now = clock.now
-	s.limiter = newLimiter(clock.now)
+	s.limiter = ratelimit.New(clock.now, maxFailures, failureWindow)
 	return s, clock
 }
 
