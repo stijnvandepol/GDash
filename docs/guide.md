@@ -98,7 +98,9 @@ Choose **Schedule** at a display:
 
 Daycast does not take over a TV that someone casts to, such as YouTube from
 a phone: it waits, and the dashboard returns within about 30 seconds after
-the cast stops. Google TV does not report its own apps, such as Netflix,
+the cast stops. It also leaves a TV in standby alone, because starting a
+cast could switch it on; when someone switches the TV on, the dashboard
+appears within about 30 seconds. Google TV does not report its own apps, such as Netflix,
 to Daycast, so there it cannot tell; use active hours to keep the dashboard
 away when the TV is mostly used for watching.
 

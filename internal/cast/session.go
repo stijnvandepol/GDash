@@ -85,8 +85,15 @@ func (s *keeperSession) rest(ctx context.Context, app Application, running bool)
 
 // restart stops the receiver and launches it again. It does nothing while
 // another app is on screen, and nothing while the TV is in standby, because
-// launching would switch the TV on through HDMI-CEC.
+// launching would switch the TV on through HDMI-CEC. It asks the device
+// first: the last status poll can be 30 seconds old.
 func (s *keeperSession) restart(ctx context.Context) error {
+	if s.transport == "" {
+		return nil
+	}
+	if err := s.syncStatus(ctx); err != nil {
+		return err
+	}
 	if s.transport == "" || s.standby {
 		return nil
 	}
@@ -107,6 +114,14 @@ func (s *keeperSession) reconcile(ctx context.Context, status ReceiverStatus) er
 	if k.Active != nil && !k.Active() {
 		k.report(StateResting, nil)
 		return s.rest(ctx, app, running)
+	}
+	if status.IsStandBy && s.transport == "" {
+		// The TV sleeps. Launching or restarting the receiver could switch
+		// it on through HDMI-CEC, in the middle of the night after a server
+		// restart. The next status poll launches it once someone switches
+		// the TV on.
+		k.report(StateStandby, nil)
+		return nil
 	}
 	if running && k.LaunchMessage != nil && s.transport == "" {
 		k.Logger.Info("restarting receiver that was already running, so it takes the current page")

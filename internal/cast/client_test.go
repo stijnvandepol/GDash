@@ -206,13 +206,58 @@ func TestKeeperDoesNotRestartDuringStandby(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), testTimeout)
 	defer cancel()
 	device := newFakeDevice(t)
-	device.standby = true
 	go newRefreshingKeeper(device, 50*time.Millisecond).Run(ctx)
-
 	waitForLaunches(t, device, 1)
+
+	// The TV goes to standby while the receiver runs: no more restarts.
+	device.mu.Lock()
+	device.standby = true
+	device.mu.Unlock()
+	time.Sleep(100 * time.Millisecond) // let a restart that already started finish
+	before := device.launchCount()
 	time.Sleep(300 * time.Millisecond)
-	if n := device.launchCount(); n != 1 {
-		t.Fatalf("launches = %d during standby, want only the first", n)
+	if n := device.launchCount(); n != before {
+		t.Fatalf("launches went from %d to %d during standby, want no restarts", before, n)
+	}
+}
+
+func TestKeeperDoesNotWakeATVInStandby(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), testTimeout)
+	defer cancel()
+	device := newFakeDevice(t)
+	device.standby = true
+	go newRefreshingKeeper(device, 0).Run(ctx)
+
+	time.Sleep(300 * time.Millisecond)
+	if n := device.launchCount(); n != 0 {
+		t.Fatalf("launches = %d while the TV sleeps, want 0: a launch can switch the TV on", n)
+	}
+
+	// Someone switches the TV on; the device reports its new state.
+	device.mu.Lock()
+	device.standby = false
+	device.mu.Unlock()
+	update := Message{SourceID: receiverID, DestinationID: senderID, Namespace: nsReceiver,
+		Payload: `{"type":"RECEIVER_STATUS","requestId":0,"status":{"applications":[]}}`}
+	if err := writeFrame(<-device.conns, update); err != nil {
+		t.Fatal(err)
+	}
+	waitForLaunches(t, device, 1)
+}
+
+func TestKeeperLeavesARunningReceiverAloneInStandby(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), testTimeout)
+	defer cancel()
+	// After a server restart at night: DashCast still runs, the TV sleeps.
+	device := newFakeDevice(t, Application{AppID: DashCastAppID, SessionID: "old", TransportID: "web-0"})
+	device.standby = true
+	go newLaunchingKeeper(device, &launchCounter{}, 0).Run(ctx)
+
+	time.Sleep(300 * time.Millisecond)
+	device.mu.Lock()
+	defer device.mu.Unlock()
+	if len(device.apps) != 1 || len(device.launches) != 0 {
+		t.Fatalf("apps = %v, launches = %v; want the sleeping TV left alone", device.apps, device.launches)
 	}
 }
 

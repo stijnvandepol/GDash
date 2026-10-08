@@ -47,6 +47,15 @@ build script was tested locally with v0.9.0-test.
 
 gofmt, go vet, the Go tests with the race detector, govulncheck, svelte-check with zero warnings, the web unit tests (Vitest), npm audit, an up-to-date THIRD_PARTY_LICENSES, and a Docker build for amd64 and arm64. The first run passed on 8 October 2026.
 
+## Standby
+
+The keeper used to launch the receiver whenever the device showed nothing,
+also while the TV was in standby: after a server restart at night that
+could switch the TV on through HDMI-CEC. It now leaves a sleeping TV alone,
+launches once the TV is switched on (within one 30-second status poll), and
+asks the device for its state before every periodic restart. Tested with a
+simulated device; not yet on the real TV.
+
 ## Not tested yet
 
 - **A full 24-hour run** with the periodic restart (five and a half hours done, see above).

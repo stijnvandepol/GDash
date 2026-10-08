@@ -12,8 +12,9 @@ The first release. Everything below is new.
 - Casts the dashboard to Chromecasts, Google TV and Nest Hubs on your
   network without a Cast developer account, through the public DashCast
   receiver, and keeps it on screen: it restarts the cast every 15 minutes
-  (9 on a Nest Hub) against the Google TV screensaver, never while the TV is
-  in standby, and never over another app.
+  (9 on a Nest Hub) against the Google TV screensaver. It never starts a
+  cast while the TV is in standby, so it does not switch a TV on at night,
+  and never over another app someone casts.
 - Shows per display whether the TV shows the dashboard, sleeps, runs
   another app or cannot be reached.
 - Any browser or kiosk can open a display at `/d/<display>` and pair with a
