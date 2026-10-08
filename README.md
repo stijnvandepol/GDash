@@ -54,7 +54,8 @@ behind the design (Dutch) is in
 ## Run it
 
 To install a release with Docker, as a Linux service or on Windows, see
-[docs/install.md](docs/install.md). To build from source you need Go 1.26
+[docs/install.md](docs/install.md); how to use it is in
+[docs/guide.md](docs/guide.md). To build from source you need Go 1.26
 and Node.js 24:
 
 ```bash
