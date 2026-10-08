@@ -6,6 +6,7 @@
 //	daycast            start the server
 //	daycast discover   list Cast devices on the local network
 //	daycast status A   show what the Cast device at address A is doing
+//	daycast version    print the version
 package main
 
 import (
@@ -63,8 +64,10 @@ func main() {
 		err = discover(ctx)
 	case os.Args[1] == "status" && len(os.Args) == 3:
 		err = status(ctx, os.Args[2])
+	case os.Args[1] == "version":
+		fmt.Println(currentVersion())
 	default:
-		err = errors.New("usage: daycast | daycast discover | daycast status <device-address>")
+		err = errors.New("usage: daycast | daycast discover | daycast status <device-address> | daycast version")
 	}
 	if err != nil {
 		logger.Error("daycast stopped", "error", err)
@@ -144,6 +147,7 @@ func serve(ctx context.Context, logger *slog.Logger) error {
 	if err != nil {
 		return err
 	}
+	logger.Info("daycast starting", "version", currentVersion())
 	db, err := store.Open(ctx, filepath.Join(cfg.dataDir, "daycast.db"))
 	if err != nil {
 		return err
@@ -192,6 +196,7 @@ func serve(ctx context.Context, logger *slog.Logger) error {
 			}
 		},
 		SourceStatus: sources.hub.Entries,
+		Version:      currentVersion(),
 		Now:          time.Now,
 		Logger:       logger,
 	}).Handler()

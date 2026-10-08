@@ -123,3 +123,14 @@ func TestPlaces(t *testing.T) {
 		t.Fatalf("upstream down = %d %s", status, body)
 	}
 }
+
+func TestSystemShowsVersionToAdminsOnly(t *testing.T) {
+	env := newTestEnv(t, nil)
+	if status, _ := env.do(t, "GET", "/api/system", ""); status != http.StatusUnauthorized {
+		t.Fatalf("without login = %d, want 401", status)
+	}
+	env.setUp(t)
+	if status, body := env.do(t, "GET", "/api/system", ""); status != http.StatusOK || body != `{"version":"v1.2.3"}`+"\n" {
+		t.Fatalf("system = %d %q", status, body)
+	}
+}

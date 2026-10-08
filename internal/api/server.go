@@ -61,6 +61,8 @@ type Server struct {
 	SettingsChanged func()
 	// SourceStatus returns the data hub's entries, for the Settings page.
 	SourceStatus func() map[string]datahub.Entry
+	// Version is the running release, shown in the web interface.
+	Version string
 	// PingInterval is how often an open display stream sends a keep-alive
 	// and re-checks that it may still show the display. Zero means 20
 	// seconds.
@@ -84,6 +86,7 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("POST /api/sessions", s.postSession)
 	mux.Handle("DELETE /api/sessions/current", s.requireUser(s.deleteSession))
 	mux.Handle("GET /api/me", s.requireUser(s.getMe))
+	mux.Handle("GET /api/system", s.requireUser(s.getSystem))
 
 	mux.HandleFunc("POST /api/pairing-requests", s.postPairingRequest)
 	mux.HandleFunc("POST /api/display-sessions", s.postDisplaySession)

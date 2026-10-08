@@ -115,6 +115,7 @@ func newTestEnv(t *testing.T, discover func(context.Context) ([]cast.Device, err
 		Places:            sources,
 		SettingsChanged:   func() { settingsChanges.Add(1) },
 		SourceStatus:      sources.Entries,
+		Version:           "v1.2.3",
 		PingInterval:      50 * time.Millisecond,
 		Now:               now,
 		Logger:            logger,

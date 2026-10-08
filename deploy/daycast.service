@@ -1,0 +1,47 @@
+# systemd unit for Daycast on Linux and Raspberry Pi OS. Install with:
+#
+#   sudo install -m 755 daycast /usr/local/bin/daycast
+#   sudo install -m 644 daycast.service /etc/systemd/system/daycast.service
+#   sudo systemctl daemon-reload && sudo systemctl enable --now daycast
+#   journalctl -u daycast    # shows the setup token on the first start
+#
+# Daycast runs as a throwaway user with only its data directory writable.
+
+[Unit]
+Description=Daycast TV dashboard
+Documentation=https://github.com/stijnvandepol/daycast
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+ExecStart=/usr/local/bin/daycast
+Environment=DAYCAST_DATA_DIR=/var/lib/daycast
+# Uncomment to listen on another port; open it in the firewall for your TVs.
+#Environment=DAYCAST_ADDR=:8420
+Restart=on-failure
+RestartSec=5
+
+DynamicUser=yes
+StateDirectory=daycast
+StateDirectoryMode=0700
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+ProtectClock=yes
+ProtectHostname=yes
+RestrictNamespaces=yes
+RestrictRealtime=yes
+LockPersonality=yes
+MemoryDenyWriteExecute=yes
+SystemCallArchitectures=native
+CapabilityBoundingSet=
+# Netlink lists the network interfaces for Cast discovery (mDNS).
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX AF_NETLINK
+
+[Install]
+WantedBy=multi-user.target

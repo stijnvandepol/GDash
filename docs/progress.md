@@ -28,9 +28,18 @@ State of the project on 8 October 2026, so work can continue on any machine.
 - Soak test from 19:12 to 22:10 (35 checks every 5 minutes): never without a connection, always DashCast on screen, 10 periodic restarts and no warnings or errors in the server log. The run continues overnight.
 - Three more problems found and fixed: the URL for the TV used the Tailscale address instead of the home network address; a DashCast session that was already running ignored the new URL; a late status update after a stop caused a second launch.
 
+## Releases
+
+A version tag such as `v1.0.0` builds archives for Linux (amd64, arm64,
+armv7) and Windows with checksums as a draft GitHub release, and a Docker
+image for amd64 and arm64 on `ghcr.io/stijnvandepol/daycast`. The release
+stays a draft until someone publishes it. `daycast version`, the server log
+and the web interface show the version. No release has been made yet; the
+build script was tested locally with v0.9.0-test.
+
 ## Checked by CI on every push
 
-gofmt, go vet, the Go tests with the race detector, govulncheck, svelte-check with zero warnings, npm audit, and a Docker build for amd64 and arm64. The first run passed on 8 October 2026.
+gofmt, go vet, the Go tests with the race detector, govulncheck, svelte-check with zero warnings, the web unit tests (Vitest), npm audit, an up-to-date THIRD_PARTY_LICENSES, and a Docker build for amd64 and arm64. The first run passed on 8 October 2026.
 
 ## Not tested yet
 

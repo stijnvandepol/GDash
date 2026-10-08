@@ -12,6 +12,16 @@
 
   let screen = $state<Screen>({ name: 'loading' });
   let tab = $state<'displays' | 'dashboards' | 'settings'>('displays');
+  let version = $state('');
+
+  // The version is only for logged-in admins; the footer shows it once known.
+  $effect(() => {
+    if (screen.name !== 'app') return;
+    api
+      .system()
+      .then((s) => (version = s.version))
+      .catch(() => (version = ''));
+  });
 
   onMount(async () => {
     try {
@@ -68,7 +78,7 @@
 </main>
 
 <footer class="footer muted small">
-  Daycast is free software under the
+  Daycast{version ? ` ${version}` : ''} is free software under the
   <a href="https://www.gnu.org/licenses/agpl-3.0.html" rel="noopener">AGPL-3.0</a>.
   <a href="https://github.com/stijnvandepol/daycast" rel="noopener">Source code</a>
 </footer>

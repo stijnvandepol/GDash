@@ -91,7 +91,7 @@ func (d *dataSources) build(cfg settings.Sources) []datahub.Source {
 		sources = append(sources, datahub.Source{
 			Key:      "weather.current",
 			Interval: weatherInterval,
-			Version:  version(*loc),
+			Version:  fingerprint(*loc),
 			Fetch:    func(ctx context.Context) (any, error) { return d.weather.Current(ctx, *loc) },
 		})
 	}
@@ -99,7 +99,7 @@ func (d *dataSources) build(cfg settings.Sources) []datahub.Source {
 		sources = append(sources, datahub.Source{
 			Key:      "news.default",
 			Interval: newsInterval,
-			Version:  version(feeds),
+			Version:  fingerprint(feeds),
 			Fetch:    func(ctx context.Context) (any, error) { return d.news.Headlines(ctx, feeds, newsItems) },
 		})
 	}
@@ -107,7 +107,7 @@ func (d *dataSources) build(cfg settings.Sources) []datahub.Source {
 		sources = append(sources, datahub.Source{
 			Key:      "calendar.default",
 			Interval: calendarInterval,
-			Version:  version(calendars),
+			Version:  fingerprint(calendars),
 			Fetch: func(ctx context.Context) (any, error) {
 				return d.calendar.Upcoming(ctx, calendars, calendarDays)
 			},
@@ -116,9 +116,9 @@ func (d *dataSources) build(cfg settings.Sources) []datahub.Source {
 	return sources
 }
 
-// version fingerprints a source's configuration. It is a hash, so secret
+// fingerprint identifies a source's configuration. It is a hash, so secret
 // calendar addresses do not sit in the hub as plain text.
-func version(v any) string {
+func fingerprint(v any) string {
 	sum := sha256.Sum256(fmt.Appendf(nil, "%+v", v))
 	return hex.EncodeToString(sum[:8])
 }

@@ -17,8 +17,10 @@ COPY . .
 COPY --from=web /src/web/dist ./web/dist
 ARG TARGETOS
 ARG TARGETARCH
+# Set by the release workflow, for example v1.0.0; empty reports "dev".
+ARG VERSION=""
 RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH \
-    go build -trimpath -ldflags="-s -w" -o /out/daycast ./cmd/daycast \
+    go build -trimpath -ldflags="-s -w -X main.version=$VERSION" -o /out/daycast ./cmd/daycast \
  && mkdir /out/data
 
 # distroless has no shell or package manager: nothing to exploit besides

@@ -138,6 +138,12 @@ func (s *Server) getMe(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, userFrom(r.Context()))
 }
 
+// getSystem handles GET /api/system: {"version"}. Only for admins, so the
+// version is no help to someone scanning the network for old releases.
+func (s *Server) getSystem(w http.ResponseWriter, _ *http.Request) {
+	writeJSON(w, http.StatusOK, map[string]string{"version": s.Version})
+}
+
 // writeAuthError translates auth errors to responses. It returns true when
 // err is nil and the handler may continue.
 func (s *Server) writeAuthError(w http.ResponseWriter, op string, err error) bool {

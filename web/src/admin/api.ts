@@ -163,6 +163,7 @@ export const api = {
   login: (username: string, password: string) => request<User>('POST', '/api/sessions', { username, password }),
   logout: () => request<void>('DELETE', '/api/sessions/current'),
   me: () => request<User>('GET', '/api/me'),
+  system: () => request<{ version: string }>('GET', '/api/system'),
   displays: () => request<{ displays: Display[] }>('GET', '/api/displays').then((r) => r.displays),
   createDisplay: (d: { id: string; name: string; castDeviceId: string }) => request<Display>('POST', '/api/displays', d),
   updateDisplay: (
