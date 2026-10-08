@@ -25,6 +25,7 @@ RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH \
 # Daycast itself.
 FROM gcr.io/distroless/static-debian12:nonroot
 COPY --from=server /out/daycast /daycast
+COPY LICENSE THIRD_PARTY_LICENSES /usr/share/doc/daycast/
 COPY --from=server --chown=65532:65532 /out/data /data
 ENV DAYCAST_DATA_DIR=/data
 VOLUME /data

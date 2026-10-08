@@ -61,6 +61,12 @@ button.tab.active {
   background: var(--bg);
 }
 
+.footer {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 0 16px 32px;
+}
+
 .content {
   max-width: 960px;
   margin: 0 auto;

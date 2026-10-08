@@ -1,6 +1,7 @@
 # Enforces what CODE_GUIDELINES.md requires to hold every time: formatting,
-# vet, tests (with the race detector), type checks and a vulnerability scan
-# of Go and npm dependencies. Actions are pinned to commit SHAs.
+# vet, tests (with the race detector), type checks, a vulnerability scan of
+# Go and npm dependencies, and license notices for everything that ships.
+# Actions are pinned to commit SHAs.
 name: CI
 
 on:
@@ -60,6 +61,25 @@ jobs:
       - name: Vulnerability scan
         run: go run golang.org/x/vuln/cmd/govulncheck@v1.8.0 ./...
       - run: go build ./cmd/daycast
+
+  licenses:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: npm ci
+        working-directory: web
+      - name: THIRD_PARTY_LICENSES lists every bundled dependency
+        run: |
+          scripts/third-party-licenses.sh
+          git diff --exit-code THIRD_PARTY_LICENSES || { echo "Run scripts/third-party-licenses.sh and commit the result."; exit 1; }
 
   docker:
     needs: go

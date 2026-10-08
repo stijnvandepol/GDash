@@ -44,7 +44,6 @@ gofmt, go vet, the Go tests with the race detector, govulncheck, svelte-check wi
 - **Relaunch policy** (`ShouldRelaunch` in `internal/cast/keeper.go`): Daycast only takes over a screen when nothing else runs. Google TV reports "no apps" while a native app such as Netflix is on screen, so Daycast could start over it.
 - **TLS:** the code guidelines require TLS for all traffic, but a TV opening the display page through DashCast can only use plain HTTP on a LAN address. See "Known oddities" in CODE_GUIDELINES.md.
 - **TLS verification towards Cast devices:** off, as in pychromecast. Pinning the certificate on first connection is an option.
-- **License:** AGPL-3.0 or Apache-2.0. The repository stays private until this is chosen.
 - **Name:** Daycast is the working name; a trademark check (BOIP, EUIPO) is still to do.
 
 ## Not deployed to the TV yet

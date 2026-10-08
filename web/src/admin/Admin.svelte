@@ -66,3 +66,9 @@
     <Settings onSessionEnded={() => (screen = { name: 'login' })} />
   {/if}
 </main>
+
+<footer class="footer muted small">
+  Daycast is free software under the
+  <a href="https://www.gnu.org/licenses/agpl-3.0.html" rel="noopener">AGPL-3.0</a>.
+  <a href="https://github.com/stijnvandepol/daycast" rel="noopener">Source code</a>
+</footer>

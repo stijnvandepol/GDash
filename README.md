@@ -105,5 +105,10 @@ in [docs/api.md](docs/api.md).
 
 ## License
 
-Not chosen yet (AGPL-3.0 or Apache-2.0, see the research). Until a license is
-added, no rights are granted to reuse this code.
+Daycast is free software under the [GNU Affero General Public License
+v3.0](LICENSE). You may run, change and share it; if you offer a changed
+version to others over a network, you must offer them its source too. The
+license keeps the dashboard from becoming a closed hosted service, the risk
+the research names for this market.
+
+The web interface links to the source, as section 13 of the license asks.
