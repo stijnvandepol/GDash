@@ -33,6 +33,18 @@ type Device struct {
 	Name  string `json:"name"`
 	Model string `json:"model"`
 	Addr  string `json:"addr"`
+	// HasScreen is false for speakers such as a Nest Mini or a soundbar,
+	// which can run a Cast session but cannot show a dashboard.
+	HasScreen bool `json:"hasScreen"`
+}
+
+// capabilityVideoOut is bit 0 of the "ca" TXT field: the device has video
+// output.
+const capabilityVideoOut = 1
+
+func hasVideoOut(ca string) bool {
+	flags, err := strconv.ParseUint(ca, 10, 64)
+	return err == nil && flags&capabilityVideoOut != 0
 }
 
 // Discover asks the local network for Cast devices and collects answers
@@ -263,10 +275,11 @@ func (c *collector) devices() []Device {
 			continue
 		}
 		byID[id] = Device{
-			ID:    id,
-			Name:  inst.txt["fn"],
-			Model: inst.txt["md"],
-			Addr:  net.JoinHostPort(ip.String(), strconv.Itoa(int(inst.port))),
+			ID:        id,
+			Name:      inst.txt["fn"],
+			Model:     inst.txt["md"],
+			Addr:      net.JoinHostPort(ip.String(), strconv.Itoa(int(inst.port))),
+			HasScreen: hasVideoOut(inst.txt["ca"]),
 		}
 	}
 	devices := make([]Device, 0, len(byID))

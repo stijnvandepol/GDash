@@ -69,9 +69,9 @@ func discover(ctx context.Context) error {
 		return nil
 	}
 	w := tabwriter.NewWriter(os.Stdout, 0, 4, 2, ' ', 0)
-	fmt.Fprintln(w, "NAME\tMODEL\tADDRESS\tID")
+	fmt.Fprintln(w, "NAME\tMODEL\tSCREEN\tADDRESS\tID")
 	for _, d := range devices {
-		fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", d.Name, d.Model, d.Addr, d.ID)
+		fmt.Fprintf(w, "%s\t%s\t%v\t%s\t%s\n", d.Name, d.Model, d.HasScreen, d.Addr, d.ID)
 	}
 	return w.Flush()
 }

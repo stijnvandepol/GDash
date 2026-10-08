@@ -66,14 +66,14 @@ func TestCollectorParsesCastAnnouncement(t *testing.T) {
 		host:     "abc.local.",
 		ip:       [4]byte{192, 168, 1, 40},
 		port:     8009,
-		txt:      []string{"id=abc123", "fn=Keuken TV", "md=Google TV Streamer"},
+		txt:      []string{"id=abc123", "fn=Keuken TV", "md=Google TV Streamer", "ca=4101"},
 		withA:    true,
 	})
 	if err := acc.add(packet, net.IPv4(192, 168, 1, 99)); err != nil {
 		t.Fatalf("add: %v", err)
 	}
 	got := acc.devices()
-	want := []Device{{ID: "abc123", Name: "Keuken TV", Model: "Google TV Streamer", Addr: "192.168.1.40:8009"}}
+	want := []Device{{ID: "abc123", Name: "Keuken TV", Model: "Google TV Streamer", Addr: "192.168.1.40:8009", HasScreen: true}}
 	if len(got) != 1 || got[0] != want[0] {
 		t.Fatalf("devices = %+v, want %+v", got, want)
 	}
@@ -155,5 +155,22 @@ func TestBuildQueryAsksForCastService(t *testing.T) {
 	}
 	if question.Name.String() != castService || question.Type != dnsmessage.TypePTR {
 		t.Fatalf("question = %v, want PTR %s", question, castService)
+	}
+}
+
+func TestHasVideoOut(t *testing.T) {
+	tests := []struct {
+		ca   string
+		want bool
+	}{
+		{"4101", true},    // Chromecast: video and audio out
+		{"199172", false}, // Nest Mini: audio only
+		{"", false},
+		{"not-a-number", false},
+	}
+	for _, tt := range tests {
+		if got := hasVideoOut(tt.ca); got != tt.want {
+			t.Errorf("hasVideoOut(%q) = %v, want %v", tt.ca, got, tt.want)
+		}
 	}
 }
