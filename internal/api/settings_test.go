@@ -134,3 +134,21 @@ func TestSystemShowsVersionToAdminsOnly(t *testing.T) {
 		t.Fatalf("system = %d %q", status, body)
 	}
 }
+
+func TestChangePassword(t *testing.T) {
+	env := newTestEnv(t, nil)
+	env.setUp(t)
+	status, body := env.do(t, "PUT", "/api/me/password", `{"currentPassword":"wrong","newPassword":"a new long password"}`)
+	if status != http.StatusUnprocessableEntity || !strings.Contains(body, `"field":"currentPassword"`) {
+		t.Fatalf("wrong current password = %d %s; want 422 on the field, not a 401 that would log the admin out", status, body)
+	}
+	if status, body = env.do(t, "PUT", "/api/me/password", `{"currentPassword":"correct horse battery","newPassword":"short"}`); status != http.StatusUnprocessableEntity || !strings.Contains(body, `"field":"newPassword"`) {
+		t.Fatalf("short new password = %d %s", status, body)
+	}
+	if status, body = env.do(t, "PUT", "/api/me/password", `{"currentPassword":"correct horse battery","newPassword":"a new long password"}`); status != http.StatusNoContent {
+		t.Fatalf("change = %d %s", status, body)
+	}
+	if status, _ = env.do(t, "GET", "/api/me", ""); status != http.StatusOK {
+		t.Fatalf("own session after the change = %d, want it kept", status)
+	}
+}

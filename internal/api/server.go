@@ -86,6 +86,7 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("POST /api/sessions", s.postSession)
 	mux.Handle("DELETE /api/sessions/current", s.requireUser(s.deleteSession))
 	mux.Handle("GET /api/me", s.requireUser(s.getMe))
+	mux.Handle("PUT /api/me/password", s.requireUser(s.putPassword))
 	mux.Handle("GET /api/system", s.requireUser(s.getSystem))
 
 	mux.HandleFunc("POST /api/pairing-requests", s.postPairingRequest)

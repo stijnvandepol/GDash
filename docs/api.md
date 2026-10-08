@@ -31,6 +31,7 @@ come from another site (cross-site request forgery protection).
 | `POST /api/sessions` `{username, password}` | no | `201` user, sets cookie | `401 invalid_credentials`, `429 rate_limited` |
 | `DELETE /api/sessions/current` | admin | `204` | `401` |
 | `GET /api/me` | admin | `200` user | `401` |
+| `PUT /api/me/password` `{currentPassword, newPassword}` | admin | `204`; every other session of the account ends | `401`, `422` (wrong current or too short new password), `429 rate_limited` |
 | `GET /api/system` | admin | `200 {"version"}` | `401` |
 | `GET /api/displays` | admin | `200 {"displays": [display + pairedScreens]}` | `401` |
 | `POST /api/displays` `{id, name, castDeviceId, activeFrom?, activeUntil?, schedule?}` | admin | `201` display | `401`, `409 conflict`, `422` |

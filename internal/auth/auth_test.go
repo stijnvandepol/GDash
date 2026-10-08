@@ -194,3 +194,50 @@ func TestPasswordHashRoundTrip(t *testing.T) {
 		t.Fatal("verify accepted a malformed hash")
 	}
 }
+
+func TestChangePassword(t *testing.T) {
+	ctx := context.Background()
+	s, _ := newTestService(t)
+	current := setUp(t, s)
+	other, _, err := s.Login(ctx, Credentials{"stijn", "correct horse battery"}, "192.168.1.20")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if err := s.ChangePassword(ctx, current, "wrong password!", "a new long password", "192.168.1.109"); !errors.Is(err, ErrWrongPassword) {
+		t.Fatalf("wrong current password: err = %v, want ErrWrongPassword", err)
+	}
+	err = s.ChangePassword(ctx, current, "correct horse battery", "short", "192.168.1.109")
+	if f := validation.Fields(err); len(f) != 1 || f[0].Field != "newPassword" {
+		t.Fatalf("short new password: err = %v, want a newPassword field error", err)
+	}
+	if err := s.ChangePassword(ctx, current, "correct horse battery", "a new long password", "192.168.1.109"); err != nil {
+		t.Fatalf("ChangePassword: %v", err)
+	}
+
+	// The session that changed it stays; every other one ends.
+	if _, err := s.Authenticate(ctx, current); err != nil {
+		t.Fatalf("own session after the change: %v", err)
+	}
+	if _, err := s.Authenticate(ctx, other); !errors.Is(err, ErrNoSession) {
+		t.Fatalf("other session after the change: err = %v, want ErrNoSession", err)
+	}
+	if _, _, err := s.Login(ctx, Credentials{"stijn", "correct horse battery"}, "192.168.1.109"); !errors.Is(err, ErrInvalidCredentials) {
+		t.Fatalf("login with the old password: err = %v", err)
+	}
+	if _, _, err := s.Login(ctx, Credentials{"stijn", "a new long password"}, "192.168.1.109"); err != nil {
+		t.Fatalf("login with the new password: %v", err)
+	}
+}
+
+func TestChangePasswordIsRateLimited(t *testing.T) {
+	ctx := context.Background()
+	s, _ := newTestService(t)
+	session := setUp(t, s)
+	for range maxFailures {
+		_ = s.ChangePassword(ctx, session, "guess", "a new long password", "192.168.1.66")
+	}
+	if err := s.ChangePassword(ctx, session, "correct horse battery", "a new long password", "192.168.1.66"); !errors.Is(err, ErrRateLimited) {
+		t.Fatalf("after %d wrong guesses: err = %v, want ErrRateLimited", maxFailures, err)
+	}
+}

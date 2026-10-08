@@ -154,3 +154,24 @@ func (s *Store) DeleteExpiredSessions(ctx context.Context, idleCutoff, absoluteC
 	}
 	return nil
 }
+
+// ChangePassword stores a new password hash and ends every session of the
+// user except the one with keepTokenHash, in one transaction.
+func (s *Store) ChangePassword(ctx context.Context, userID int64, passwordHash, keepTokenHash string) error {
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+	res, err := tx.ExecContext(ctx, "UPDATE users SET password_hash = ? WHERE id = ?", passwordHash, userID)
+	if err != nil {
+		return fmt.Errorf("change password: %w", err)
+	}
+	if err := requireOneRow(res); err != nil {
+		return err
+	}
+	if _, err := tx.ExecContext(ctx, "DELETE FROM sessions WHERE user_id = ? AND token_hash != ?", userID, keepTokenHash); err != nil {
+		return fmt.Errorf("end other sessions: %w", err)
+	}
+	return tx.Commit()
+}

@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import { api, type Settings, type SourceStatus } from './api';
   import { errorMessage } from './errors';
+  import AccountSetting from './AccountSetting.svelte';
   import LocationSetting from './LocationSetting.svelte';
   import SourceList from './SourceList.svelte';
 
@@ -87,3 +88,5 @@
 {:else if !loadError}
   <p class="muted">Loading…</p>
 {/if}
+
+<AccountSetting onerror={handle} />

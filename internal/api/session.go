@@ -138,6 +138,33 @@ func (s *Server) getMe(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, userFrom(r.Context()))
 }
 
+// putPassword handles PUT /api/me/password {currentPassword, newPassword}:
+// 204, and every other session of the account ends. A wrong current
+// password is a 422 on that field, not a 401: the session itself is fine.
+func (s *Server) putPassword(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		CurrentPassword string `json:"currentPassword"`
+		NewPassword     string `json:"newPassword"`
+	}
+	if !decodeJSON(w, r, &body) {
+		return
+	}
+	cookie, err := r.Cookie(sessionCookie)
+	if err != nil {
+		writeError(w, http.StatusUnauthorized, "not_logged_in", "Log in to continue.")
+		return
+	}
+	err = s.Auth.ChangePassword(r.Context(), cookie.Value, body.CurrentPassword, body.NewPassword, clientIP(r))
+	switch {
+	case errors.Is(err, auth.ErrWrongPassword):
+		writeValidationError(w, []validation.FieldError{{Field: "currentPassword", Message: "this is not your current password"}})
+	case errors.Is(err, auth.ErrNoSession):
+		writeError(w, http.StatusUnauthorized, "not_logged_in", "Your session has ended. Log in again.")
+	case s.writeAuthError(w, "change password", err):
+		w.WriteHeader(http.StatusNoContent)
+	}
+}
+
 // getSystem handles GET /api/system: {"version"}. Only for admins, so the
 // version is no help to someone scanning the network for old releases.
 func (s *Server) getSystem(w http.ResponseWriter, _ *http.Request) {

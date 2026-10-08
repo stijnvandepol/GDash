@@ -43,6 +43,9 @@ var (
 	ErrInvalidSetupToken = errors.New("invalid setup token")
 	// ErrNoSession is returned for a missing, unknown or expired session.
 	ErrNoSession = errors.New("not logged in")
+	// ErrWrongPassword is returned when the current password given to
+	// change it is not correct.
+	ErrWrongPassword = errors.New("current password is not correct")
 )
 
 var validUsername = regexp.MustCompile(`^[A-Za-z0-9._-]{1,32}$`)
@@ -185,6 +188,47 @@ func (s *Service) Authenticate(ctx context.Context, session string) (User, error
 	return User{ID: sess.User.ID, Username: sess.User.Username}, nil
 }
 
+// ChangePassword sets a new password for the user of session after checking
+// the current one, and ends every other session of that user, so a lost or
+// shared browser loses access. Wrong current passwords count towards the
+// same rate limit as logins. It returns ErrWrongPassword, ErrRateLimited, or
+// a *validation.Error for the new password (field "newPassword").
+func (s *Service) ChangePassword(ctx context.Context, session, current, next, clientIP string) error {
+	user, err := s.Authenticate(ctx, session)
+	if err != nil {
+		return err
+	}
+	keys := []string{"ip|" + clientIP, "user|" + strings.ToLower(user.Username)}
+	if !s.limiter.Allowed(keys...) {
+		return ErrRateLimited
+	}
+	stored, err := s.store.UserByName(ctx, user.Username)
+	if err != nil {
+		return err
+	}
+	ok := false
+	if len(current) <= maxPasswordBytes {
+		if ok, err = verifyPassword(stored.PasswordHash, current); err != nil {
+			return fmt.Errorf("verify password of user %d: %w", stored.ID, err)
+		}
+	}
+	if !ok {
+		s.limiter.Fail(keys...)
+		return ErrWrongPassword
+	}
+	var errs validation.Collector
+	if msg := passwordProblem(next); msg != "" {
+		errs.Add("newPassword", msg)
+		return errs.Err()
+	}
+	hash, err := hashPassword(next)
+	if err != nil {
+		return err
+	}
+	s.limiter.Reset(keys...)
+	return s.store.ChangePassword(ctx, stored.ID, hash, token.Hash(session))
+}
+
 // Logout ends a session.
 func (s *Service) Logout(ctx context.Context, session string) error {
 	return s.store.DeleteSession(ctx, token.Hash(session))
@@ -206,10 +250,19 @@ func validateAccount(c Credentials) error {
 	if !validUsername.MatchString(c.Username) {
 		errs.Add("username", "use 1 to 32 letters, digits, dots, dashes or underscores")
 	}
-	if len([]rune(c.Password)) < minPasswordLength {
-		errs.Add("password", fmt.Sprintf("use at least %d characters", minPasswordLength))
-	} else if len(c.Password) > maxPasswordBytes {
-		errs.Add("password", fmt.Sprintf("use at most %d bytes", maxPasswordBytes))
+	if msg := passwordProblem(c.Password); msg != "" {
+		errs.Add("password", msg)
 	}
 	return errs.Err()
+}
+
+// passwordProblem returns why a new password is not acceptable, or "".
+func passwordProblem(password string) string {
+	switch {
+	case len([]rune(password)) < minPasswordLength:
+		return fmt.Sprintf("use at least %d characters", minPasswordLength)
+	case len(password) > maxPasswordBytes:
+		return fmt.Sprintf("use at most %d bytes", maxPasswordBytes)
+	}
+	return ""
 }
