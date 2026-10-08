@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { api, ApiError, slugify, type CastDevice, type Dashboard, type Display } from './api';
+  import { errorMessage } from './errors';
   import ScheduleEditor from './ScheduleEditor.svelte';
 
   let { onSessionEnded }: { onSessionEnded: () => void } = $props();
@@ -36,13 +37,7 @@
   });
 
   /** Sends the user back to the login screen when the session has ended. */
-  function handle(err: unknown): string {
-    if (err instanceof ApiError && err.status === 401) {
-      onSessionEnded();
-      return '';
-    }
-    return err instanceof Error ? err.message : 'Something went wrong.';
-  }
+  const handle = (err: unknown) => errorMessage(err, onSessionEnded);
 
   async function load() {
     try {

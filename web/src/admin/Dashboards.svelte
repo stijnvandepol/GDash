@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { api, ApiError, slugify, type Dashboard, type WidgetCatalogue } from './api';
+  import { errorMessage } from './errors';
   import DashboardEditor from './DashboardEditor.svelte';
 
   let { onSessionEnded }: { onSessionEnded: () => void } = $props();
@@ -14,13 +15,7 @@
 
   onMount(() => void load());
 
-  function handle(err: unknown): string {
-    if (err instanceof ApiError && err.status === 401) {
-      onSessionEnded();
-      return '';
-    }
-    return err instanceof Error ? err.message : 'Something went wrong.';
-  }
+  const handle = (err: unknown) => errorMessage(err, onSessionEnded);
 
   async function load() {
     try {
