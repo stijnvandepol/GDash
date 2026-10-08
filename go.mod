@@ -1,11 +1,11 @@
 module github.com/stijnvandepol/daycast
 
-go 1.26.6
+go 1.26.9
 
 require (
 	github.com/emersion/go-ical v0.0.0-20250609112844-439c63cef608
 	golang.org/x/crypto v0.57.0
-	golang.org/x/net v0.59.0
+	golang.org/x/net v0.60.0
 	modernc.org/sqlite v1.60.1
 )
 

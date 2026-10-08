@@ -211,7 +211,7 @@ A change is done when every line is true:
 Fill this in per repository. It is the one section an agent cannot infer, and the one most often left empty. Fill it in before anything else in this file matters.
 
 ```
-Stack:            Go 1.26.6+, standard library first (x/net, x/crypto for argon2id, modernc.org/sqlite). Svelte 5,
+Stack:            Go 1.26.9+, standard library first (x/net, x/crypto for argon2id, modernc.org/sqlite). Svelte 5,
                   TypeScript 6, Vite 8 in web/. All UI text, docs and code are in English.
 Run locally:      cd web && npm run build && cd .. && go run ./cmd/daycast
 Run tests:        go test ./... (CI adds -race, which needs cgo) && (cd web && npm test)
