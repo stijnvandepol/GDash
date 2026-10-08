@@ -30,7 +30,8 @@ State of the project on 8 October 2026, so work can continue on any machine.
 - DashCast showed the Daycast page on a Chromecast HD (Google TV) and kept a live connection.
 - **The Google TV screensaver covered the cast after about 19 minutes**, while the device still reported DashCast as running. Stopping and relaunching the receiver brought the dashboard back. The keeper now does this every 15 minutes (every 9 on a Nest Hub), never while the TV is in standby.
 - After the switch to pairing, the TV paired itself through the launch token in the DashCast URL and showed clock, weather and news. The database migrated from version 2 to 3 and wrote its backup first.
-- Soak test from 19:12 to 22:10 (35 checks every 5 minutes): never without a connection, always DashCast on screen, 10 periodic restarts and no warnings or errors in the server log. The run continues overnight.
+- Soak test from 19:18 to 00:53 (68 checks every 5 minutes): never without a connection, always DashCast on screen, 21 periodic restarts and no warnings or errors in the server log. The run continues overnight.
+- Memory: the TV server used 26 MB (working set) after five and a half hours; a freshly started server with all features 47 MB. The research's limit is 50 MB.
 - Three more problems found and fixed: the URL for the TV used the Tailscale address instead of the home network address; a DashCast session that was already running ignored the new URL; a late status update after a stop caused a second launch.
 
 ## Releases
@@ -48,10 +49,12 @@ gofmt, go vet, the Go tests with the race detector, govulncheck, svelte-check wi
 
 ## Not tested yet
 
-- **A full 24-hour run** with the periodic restart (three hours done, see above).
+- **A full 24-hour run** with the periodic restart (five and a half hours done, see above).
 - **The Nest Hub** with the 9-minute restart.
 - **An own receiver** (option A from the research): needs a Cast developer account (USD 5) and a registered device, see [receiver.md](receiver.md).
-- **Running the Docker image** on a NAS or Raspberry Pi. CI builds it for amd64 and arm64, but nobody has started it yet.
+- **Running the Docker image** on a NAS or Raspberry Pi. CI builds it for amd64 and arm64, but nobody has started it yet; Docker Desktop on the development PC did not start its engine.
+- **A release:** the release workflow has not run yet; the build script was tested locally.
+- **A real Google or iCloud calendar** and a Dutch display on a real TV.
 
 ## Open decisions
 
@@ -62,8 +65,11 @@ gofmt, go vet, the Go tests with the race detector, govulncheck, svelte-check wi
 
 ## Not deployed to the TV yet
 
-The living room TV still runs the version from before the dashboard editor, themes, active hours and schedules. Restarting the server restarts the cast, which can switch a TV on through HDMI-CEC, so that waits until someone is home and awake.
+The living room TV still runs the version from before the dashboard editor and everything after it (themes, active hours, schedules, settings, widgets, languages). Restarting the server restarts the cast, which can switch a TV on through HDMI-CEC, so that waits until someone is home and awake.
 
 ## Next
 
-Measure a full day on the living room TV and a Nest Hub, then continue with v0.5 from the research (`GoogleHome-Dashboard/docs/onderzoek/`, chapters 18 and 19). Themes, active hours and schedules are done; the Nest Hub test is next.
+1. Deploy the current version to the living room TV during the day, and choose the location and calendars under Settings.
+2. Test the Nest Hub with the 9-minute restart (with permission, in the daytime).
+3. Make the first release (tag `v0.5.0`) and publish the draft after checking it.
+4. Still open from the research's v1.0: page rotation, export and import of the configuration, a Home Assistant add-on, and an external review of the authentication.
