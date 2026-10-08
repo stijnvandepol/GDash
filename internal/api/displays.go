@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/stijnvandepol/daycast/internal/displays"
+	"github.com/stijnvandepol/daycast/internal/schedule"
 	"github.com/stijnvandepol/daycast/internal/store"
 	"github.com/stijnvandepol/daycast/internal/validation"
 )
@@ -41,11 +42,16 @@ func (s *Server) createDisplay(w http.ResponseWriter, r *http.Request) {
 		ID           string `json:"id"`
 		Name         string `json:"name"`
 		CastDeviceID string `json:"castDeviceId"`
+		ActiveFrom   string `json:"activeFrom"`
+		ActiveUntil  string `json:"activeUntil"`
 	}
 	if !decodeJSON(w, r, &body) {
 		return
 	}
-	d := displays.Display{ID: body.ID, Name: body.Name, CastDeviceID: body.CastDeviceID, CreatedAt: s.Now().UTC()}
+	d := displays.Display{
+		ID: body.ID, Name: body.Name, CastDeviceID: body.CastDeviceID,
+		Hours: schedule.Hours{From: body.ActiveFrom, Until: body.ActiveUntil}, CreatedAt: s.Now().UTC(),
+	}
 	if err := displays.Validate(d); err != nil {
 		writeValidationError(w, validation.Fields(err))
 		return
@@ -59,7 +65,8 @@ func (s *Server) createDisplay(w http.ResponseWriter, r *http.Request) {
 }
 
 // updateDisplay handles PATCH /api/displays/{display} {name?, castDeviceId?,
-// dashboardId?}; an empty dashboardId means the default dashboard:
+// dashboardId?, activeFrom?, activeUntil?}; an empty dashboardId means the
+// default dashboard, empty active hours mean always on:
 // changes only the fields present and answers 200 with the display. The
 // id is fixed, because it is part of the display's URL.
 func (s *Server) updateDisplay(w http.ResponseWriter, r *http.Request) {
@@ -67,6 +74,8 @@ func (s *Server) updateDisplay(w http.ResponseWriter, r *http.Request) {
 		Name         *string `json:"name"`
 		CastDeviceID *string `json:"castDeviceId"`
 		DashboardID  *string `json:"dashboardId"`
+		ActiveFrom   *string `json:"activeFrom"`
+		ActiveUntil  *string `json:"activeUntil"`
 	}
 	if !decodeJSON(w, r, &body) {
 		return
@@ -84,6 +93,12 @@ func (s *Server) updateDisplay(w http.ResponseWriter, r *http.Request) {
 	}
 	if body.DashboardID != nil {
 		d.DashboardID = *body.DashboardID
+	}
+	if body.ActiveFrom != nil {
+		d.From = *body.ActiveFrom
+	}
+	if body.ActiveUntil != nil {
+		d.Until = *body.ActiveUntil
 	}
 	if err := displays.Validate(d); err != nil {
 		writeValidationError(w, validation.Fields(err))

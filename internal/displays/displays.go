@@ -9,6 +9,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/stijnvandepol/daycast/internal/display"
+	"github.com/stijnvandepol/daycast/internal/schedule"
 	"github.com/stijnvandepol/daycast/internal/validation"
 )
 
@@ -33,8 +34,10 @@ type Display struct {
 	CastDeviceID string `json:"castDeviceId"`
 	// DashboardID is the dashboard the display shows; empty means the
 	// default dashboard.
-	DashboardID string    `json:"dashboardId"`
-	CreatedAt   time.Time `json:"createdAt"`
+	DashboardID string `json:"dashboardId"`
+	// Hours are the display's active hours; outside them it is left dark.
+	schedule.Hours
+	CreatedAt time.Time `json:"createdAt"`
 }
 
 // Validate checks a display before it is stored. It returns a
@@ -53,6 +56,9 @@ func Validate(d Display) error {
 	}
 	if d.DashboardID != "" && !display.ValidDashboardID(d.DashboardID) {
 		errs.Add("dashboardId", "must be the id of a dashboard")
+	}
+	if err := d.Hours.Validate(); err != nil {
+		errs.Add("activeHours", err.Error())
 	}
 	return errs.Err()
 }
