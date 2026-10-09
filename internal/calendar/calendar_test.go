@@ -70,6 +70,20 @@ func TestParseFillsEventFields(t *testing.T) {
 	}
 }
 
+func TestParseCutsEndlessEventsAtYear9999(t *testing.T) {
+	events, err := Parse(strings.NewReader(vevent("DTSTART:20261009T080000Z", "DTEND:99991231T235959Z", "SUMMARY:Forever")), window(t), "Work")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(events) != 1 {
+		t.Fatalf("events = %+v", events)
+	}
+	// The end was written with five digits (year 10000) in the server's zone.
+	if _, err := time.Parse(time.RFC3339, events[0].End); err != nil {
+		t.Errorf("End %q is not RFC 3339: %v", events[0].End, err)
+	}
+}
+
 func TestParseUsesFallbackNameAndRejectsGarbage(t *testing.T) {
 	ics := "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:x\r\nBEGIN:VEVENT\r\nUID:a\r\nDTSTAMP:20261001T120000Z\r\nDTSTART:20261009T080000Z\r\nSUMMARY:   Many    spaces  \r\nEND:VEVENT\r\nEND:VCALENDAR\r\n"
 	events, err := Parse(strings.NewReader(ics), window(t), "Work")

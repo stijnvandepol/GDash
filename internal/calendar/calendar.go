@@ -20,6 +20,9 @@ const maxSummaryRunes = 120
 // a TV in another zone does not move a birthday to the previous day.
 const dateLayout = "2006-01-02"
 
+// latestEnd is the last moment an event end can be written as.
+var latestEnd = time.Date(9999, 12, 31, 0, 0, 0, 0, time.UTC)
+
 // Event is one occurrence in the window.
 type Event struct {
 	Title string `json:"title"`
@@ -186,11 +189,17 @@ func newEvent(e ical.Event, occ occurrence, calendar string, loc *time.Location)
 	if r := []rune(title); len(r) > maxSummaryRunes {
 		title = string(r[:maxSummaryRunes-1]) + "…"
 	}
+	// RFC 3339 and JavaScript dates stop at year 9999, so an event that runs
+	// to the end of time is cut there instead of printing a five digit year.
+	end := occ.end
+	if end.After(latestEnd) {
+		end = latestEnd
+	}
 	ev := Event{Title: title, AllDay: occ.allDay, Calendar: calendar, sortKey: occ.start}
 	if occ.allDay {
-		ev.Start, ev.End = occ.start.Format(dateLayout), occ.end.Format(dateLayout)
+		ev.Start, ev.End = occ.start.Format(dateLayout), end.Format(dateLayout)
 	} else {
-		ev.Start, ev.End = occ.start.In(loc).Format(time.RFC3339), occ.end.In(loc).Format(time.RFC3339)
+		ev.Start, ev.End = occ.start.In(loc).Format(time.RFC3339), end.In(loc).Format(time.RFC3339)
 	}
 	return ev
 }
