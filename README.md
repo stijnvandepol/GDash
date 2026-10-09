@@ -88,6 +88,7 @@ needed to read the stored calendar addresses.
 | `NOOKBOARD_DATA_DIR` | `data` | Database, secret key and cached data |
 | `TZ` | system | Time zone for "today" in the calendar, for example `Europe/Amsterdam` |
 | `NOOKBOARD_CAST_APP_ID` | none | App ID of an own registered receiver ([docs/receiver.md](docs/receiver.md)); without it Nookboard uses DashCast |
+| `NOOKBOARD_TRUSTED_PROXIES` | none | Addresses or CIDR ranges of reverse proxies, such as `172.17.0.1`; their `X-Forwarded-For` and `X-Forwarded-Proto` headers set the client address and secure cookies |
 
 Location, news feeds and calendars are set in the web interface. For an
 installation from before that existed, Nookboard copies `NOOKBOARD_LATITUDE`,

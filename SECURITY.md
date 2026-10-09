@@ -45,8 +45,9 @@ fully trust, such as a guest's phone.
 - The web interface and the display pages use **plain HTTP on the LAN**. A TV
   that opens the dashboard through Cast cannot be given a certificate it
   trusts for a LAN address. Put a reverse proxy with HTTPS in front of the
-  web interface if you open it from outside, and never expose port 8420 to
-  the internet.
+  web interface if you open it from outside, set `NOOKBOARD_TRUSTED_PROXIES`
+  to its address, and never expose port 8420 to the internet. Forwarding
+  headers from any other address are ignored.
 - Nookboard does not verify the TLS certificates of Cast devices: they use
   Google's device CA, which no trust store contains. Home Assistant and
   pychromecast do the same.

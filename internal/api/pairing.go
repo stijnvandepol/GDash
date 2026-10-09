@@ -65,7 +65,7 @@ func (s *Server) postDisplaySession(w http.ResponseWriter, r *http.Request) {
 	}
 	http.SetCookie(w, &http.Cookie{
 		Name: displayCookie, Value: displayToken, Path: "/", HttpOnly: true,
-		Secure: r.TLS != nil, SameSite: http.SameSiteLaxMode, MaxAge: displayCookieMaxAge,
+		Secure: isHTTPS(r), SameSite: http.SameSiteLaxMode, MaxAge: displayCookieMaxAge,
 	})
 	writeJSON(w, http.StatusCreated, map[string]string{"displayId": displayID})
 }

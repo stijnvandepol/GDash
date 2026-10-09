@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 )
@@ -63,6 +64,17 @@ func TestWithDefaultPort(t *testing.T) {
 	}
 }
 
+func TestLoadConfigTrustedProxies(t *testing.T) {
+	cfg, err := loadConfig(env(map[string]string{"NOOKBOARD_TRUSTED_PROXIES": " 172.17.0.1, 10.1.2.3/8 ,fd00::/8"}))
+	if err != nil {
+		t.Fatalf("loadConfig: %v", err)
+	}
+	got := fmt.Sprint(cfg.trustedProxies)
+	if got != "[172.17.0.1/32 10.0.0.0/8 fd00::/8]" {
+		t.Fatalf("trusted proxies = %s", got)
+	}
+}
+
 func TestLoadConfigErrors(t *testing.T) {
 	tests := []struct {
 		name    string
@@ -74,6 +86,7 @@ func TestLoadConfigErrors(t *testing.T) {
 		{"latitude out of range", map[string]string{"NOOKBOARD_LATITUDE": "95", "NOOKBOARD_LONGITUDE": "5"}, "invalid location"},
 		{"news feed not http", map[string]string{"NOOKBOARD_LATITUDE": "51", "NOOKBOARD_LONGITUDE": "5", "NOOKBOARD_NEWS_FEED": "file:///etc/passwd"}, "NOOKBOARD_NEWS_FEED"},
 		{"calendar not a URL", map[string]string{"NOOKBOARD_LATITUDE": "51", "NOOKBOARD_LONGITUDE": "5", "NOOKBOARD_CALENDAR_URLS": "ftp://x/y.ics"}, "NOOKBOARD_CALENDAR_URLS"},
+		{"bad trusted proxy", map[string]string{"NOOKBOARD_TRUSTED_PROXIES": "10.0.0.1, proxy.local"}, "NOOKBOARD_TRUSTED_PROXIES"},
 		{"malformed app id", map[string]string{"NOOKBOARD_LATITUDE": "51", "NOOKBOARD_LONGITUDE": "5", "NOOKBOARD_CAST_APP_ID": "dashcast"}, "8-character"},
 	}
 	for _, tt := range tests {

@@ -11,6 +11,7 @@ import (
 	"io/fs"
 	"log/slog"
 	"net/http"
+	"net/netip"
 	"regexp"
 	"time"
 
@@ -82,8 +83,11 @@ type Server struct {
 	// and re-checks that it may still show the display. Zero means 20
 	// seconds.
 	PingInterval time.Duration
-	Now          func() time.Time
-	Logger       *slog.Logger
+	// TrustedProxies are the reverse proxies whose X-Forwarded-For and
+	// X-Forwarded-Proto headers count; see behindProxies.
+	TrustedProxies []netip.Prefix
+	Now            func() time.Time
+	Logger         *slog.Logger
 }
 
 // Handler returns the routes of the server.
@@ -150,7 +154,7 @@ func (s *Server) Handler() http.Handler {
 	// Rejects state-changing requests that a browser sends from another
 	// site (CSRF), based on Sec-Fetch-Site and Origin.
 	var csrf http.CrossOriginProtection
-	return withSecurityHeaders(csrf.Handler(mux))
+	return behindProxies(s.TrustedProxies, withSecurityHeaders(csrf.Handler(mux)))
 }
 
 func withSecurityHeaders(next http.Handler) http.Handler {

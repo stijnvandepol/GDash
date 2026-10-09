@@ -117,7 +117,9 @@ Nookboard serves plain HTTP on the LAN, because a TV that opens the dashboard
 through Cast cannot be given a certificate it trusts for a LAN address. The
 web interface carries your login: if you open it from outside your home
 network, put a reverse proxy with HTTPS in front of it and do not expose
-port 8420 to the internet. Displays only receive data after they are paired.
+port 8420 to the internet. Set `NOOKBOARD_TRUSTED_PROXIES` to the proxy's
+address, so login limits and the activity log see the real client and
+cookies are only sent over HTTPS. Displays only receive data after they are paired.
 
 ## Troubleshooting
 

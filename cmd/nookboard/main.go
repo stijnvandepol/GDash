@@ -209,15 +209,16 @@ func serve(ctx context.Context, logger *slog.Logger) error {
 		return err
 	}
 	handler := (&api.Server{
-		Snapshots:     snapshots,
-		Auth:          authService,
-		Pairing:       pairings,
-		Store:         db,
-		Settings:      settingsService,
-		Places:        weather.Geocoder{BaseURL: weather.DefaultGeocodingURL, HTTP: &http.Client{Timeout: upstreamTimeout}},
-		HomeAssistant: sources.home,
-		Web:           frontend,
-		Discover:      cast.Discover,
+		Snapshots:      snapshots,
+		Auth:           authService,
+		Pairing:        pairings,
+		Store:          db,
+		Settings:       settingsService,
+		Places:         weather.Geocoder{BaseURL: weather.DefaultGeocodingURL, HTTP: &http.Client{Timeout: upstreamTimeout}},
+		HomeAssistant:  sources.home,
+		TrustedProxies: cfg.trustedProxies,
+		Web:            frontend,
+		Discover:       cast.Discover,
 		DisplaysChanged: func() {
 			publisher.Refresh(ctx)
 			castManager.Changed()

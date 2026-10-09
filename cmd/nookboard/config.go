@@ -4,9 +4,11 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"net/netip"
 	"net/url"
 	"regexp"
 	"strconv"
+	"strings"
 
 	"github.com/stijnvandepol/nookboard/internal/calendar"
 	"github.com/stijnvandepol/nookboard/internal/settings"
@@ -27,6 +29,8 @@ type config struct {
 	// seed fills the settings on the first start only; after that the web
 	// interface manages location, feeds and calendars.
 	seed settings.Seed
+	// trustedProxies are reverse proxies whose forwarding headers count.
+	trustedProxies []netip.Prefix
 }
 
 // defaultNewsFeed is the general news feed of the NOS, the Dutch public
@@ -46,11 +50,37 @@ func loadConfig(getenv func(string) string) (config, error) {
 		return config{}, err
 	}
 
+	if cfg.trustedProxies, err = parsePrefixes(getenv("NOOKBOARD_TRUSTED_PROXIES")); err != nil {
+		return config{}, fmt.Errorf("NOOKBOARD_TRUSTED_PROXIES: %w", err)
+	}
+
 	cfg.castAppID = getenv("NOOKBOARD_CAST_APP_ID")
 	if cfg.castAppID != "" && !validAppID.MatchString(cfg.castAppID) {
 		return config{}, fmt.Errorf("NOOKBOARD_CAST_APP_ID %q is not an 8-character Cast application ID", cfg.castAppID)
 	}
 	return cfg, nil
+}
+
+// parsePrefixes reads a comma-separated list of IP addresses and CIDR
+// ranges, such as "172.17.0.1, 10.0.0.0/8". An address is a range of one.
+func parsePrefixes(list string) ([]netip.Prefix, error) {
+	var prefixes []netip.Prefix
+	for item := range strings.SplitSeq(list, ",") {
+		item = strings.TrimSpace(item)
+		if item == "" {
+			continue
+		}
+		if addr, err := netip.ParseAddr(item); err == nil {
+			prefixes = append(prefixes, netip.PrefixFrom(addr.Unmap(), addr.Unmap().BitLen()))
+			continue
+		}
+		prefix, err := netip.ParsePrefix(item)
+		if err != nil {
+			return nil, fmt.Errorf("%q is not an IP address or CIDR range", item)
+		}
+		prefixes = append(prefixes, prefix.Masked())
+	}
+	return prefixes, nil
 }
 
 // loadSeed reads the environment variables that configured the sources
