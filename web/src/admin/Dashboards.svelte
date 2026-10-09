@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import { api, ApiError, slugify, type Dashboard, type WidgetCatalogue } from './api';
   import { errorMessage } from './errors';
+  import { freeId, fromFile, toFile } from './dashboardFile';
   import DashboardEditor from './DashboardEditor.svelte';
 
   let { onSessionEnded }: { onSessionEnded: () => void } = $props();
@@ -50,6 +51,43 @@
     }
   }
 
+  /** Saves the dashboard as a file the browser downloads. */
+  function exportDashboard(d: Dashboard) {
+    const url = URL.createObjectURL(new Blob([toFile(d)], { type: 'application/json' }));
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${d.id}.daycast.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+  }
+
+  let importError = $state('');
+
+  /** Creates a new dashboard from an exported file, next to the existing ones. */
+  async function importDashboard(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file) return;
+    importError = '';
+    try {
+      const imported = fromFile(await file.text());
+      const id = freeId(imported.name, dashboards.map((d) => d.id));
+      await api.createDashboard({ id, ...imported });
+      await load();
+    } catch (err) {
+      importError = describeImportError(err);
+    }
+  }
+
+  function describeImportError(err: unknown): string {
+    if (err instanceof ApiError && err.fields.length > 0) {
+      return `This dashboard cannot be imported: ${err.fields.map((f) => f.message).join('; ')}`;
+    }
+    if (err instanceof ApiError) return handle(err);
+    return err instanceof Error ? err.message : 'The file could not be read.';
+  }
+
   async function closeEditor() {
     editing = null;
     await load();
@@ -70,6 +108,7 @@
             <span class="muted">{d.widgets.length === 1 ? '1 widget' : `${d.widgets.length} widgets`}{d.id === 'default' ? ' · shown on displays without a choice' : ''}</span>
           </div>
           <button class="link" onclick={() => (editing = d)}>Edit</button>
+          <button class="link" onclick={() => exportDashboard(d)}>Export</button>
           {#if d.id !== 'default'}
             <button class="link danger" onclick={() => remove(d)}>Delete</button>
           {/if}
@@ -87,4 +126,11 @@
     {#if createError}<p class="error">{createError}</p>{/if}
     <button type="submit">Create and edit</button>
   </form>
+
+  <section class="card">
+    <h2>Import a dashboard</h2>
+    <p class="muted">Choose a file that Export saved, from this Daycast or another one. It is added as a new dashboard.</p>
+    <input type="file" accept=".json,application/json" aria-label="Dashboard file" onchange={importDashboard} />
+    {#if importError}<p class="error">{importError}</p>{/if}
+  </section>
 {/if}

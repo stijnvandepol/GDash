@@ -75,6 +75,11 @@ Under **Dashboards** you edit layouts on the same 16:9 grid as the TV.
 Every display shows the **Default** dashboard until you choose another one
 in the list at the display.
 
+**Export** saves a dashboard as a file, as a backup or to share a layout.
+**Import a dashboard** adds such a file as a new dashboard, also in another
+Daycast. The file holds the layout, the theme and the widget settings, such
+as the text of a note; it holds no data and no calendar addresses.
+
 ## Schedules
 
 Choose **Schedule** at a display:
