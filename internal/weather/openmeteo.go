@@ -195,7 +195,7 @@ func (r forecastResponse) days() []Day {
 // sun pairs sunrise and sunset with their dates, from yesterday on.
 func (r forecastResponse) sun() []SunTimes {
 	d := r.Daily
-	n := min(len(d.Time), len(d.Sunrise), len(d.Sunset))
+	n := min(len(d.Time), len(d.Sunrise), len(d.Sunset), r.today()+forecastDays)
 	var sun []SunTimes
 	for i := max(r.today()-pastDays, 0); i < n; i++ {
 		sun = append(sun, SunTimes{Date: d.Time[i], Sunrise: d.Sunrise[i], Sunset: d.Sunset[i]})

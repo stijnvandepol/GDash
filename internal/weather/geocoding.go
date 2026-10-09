@@ -81,6 +81,9 @@ func (g Geocoder) Search(ctx context.Context, query string) ([]Place, error) {
 	}
 	places := []Place{}
 	for _, r := range body.Results {
+		if len(places) == maxPlaces {
+			break
+		}
 		if _, err := NewLocation(r.Latitude, r.Longitude); err != nil || r.Name == "" {
 			continue
 		}
