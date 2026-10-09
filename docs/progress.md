@@ -58,7 +58,13 @@ name Daycast, so it is better replaced by a new draft with the next tag.
 
 ## Checked by CI on every push
 
-gofmt, go vet, the Go tests with the race detector, govulncheck, svelte-check with zero warnings, the web unit tests (Vitest), npm audit, an up-to-date THIRD_PARTY_LICENSES, and a Docker build for amd64 and arm64. The first run passed on 8 October 2026.
+gofmt, go vet, staticcheck, the Go tests with the race detector (fuzz seeds included), govulncheck, svelte-check with zero warnings, the web unit tests (Vitest), npm audit, an up-to-date THIRD_PARTY_LICENSES, a gitleaks scan of the whole history, 19 Playwright browser tests with axe accessibility checks in light and dark mode, and a Docker build for amd64 and arm64. The first run passed on 8 October 2026; all of it passed on 9 October 2026 after the security and design rounds.
+
+## Security and design rounds (9 October 2026)
+
+- **OWASP ASVS 4.0.3 level 2 review** (read-only agent): one medium finding, a recurrence rule that cost minutes of CPU per refresh, and a fuzz-found crash on a malformed calendar line, both fixed; all low findings fixed (password policy after NIST SP 800-63B, caching and security headers, content type checks, audit gaps, data directory and database file modes, https-to-http redirects, recovery with `gdash reset-password`). Left as information: no two-factor login (one household admin on a LAN, written down in SECURITY.md), photos keep their EXIF data, the TV's cached snapshot is not cleared on its own.
+- **Supply chain:** image bases pinned by digest, non-root image with a read-only compose example, hardened systemd unit, Dependabot, SBOM and provenance (provenance starts once the repository is public). The Docker image built in CI; it has not been run on a NAS yet.
+- **Design:** checked in a real Chromium at 1920x1080, 1440x900 and 390 px wide, light and dark. Warm palette and two shipped fonts (Atkinson Hyperlegible Next, Fraunces); every text colour computed to reach 4.5:1 in the web interface and in all six TV themes. Atkinson draws its zero with a slash, also on the clock; it has no alternative zero.
 
 ## Standby
 

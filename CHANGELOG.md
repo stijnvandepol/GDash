@@ -13,6 +13,20 @@ the format follows [Keep a Changelog](https://keepachangelog.com).
   GDash renames an existing `daycast.db`, so the configuration stays,
   and dashboard files exported by Daycast still import. Log in again, and
   pair screens that show the page in a browser again; cast screens carry on.
+- A look of its own, on the TV and in the web interface: warm paper and
+  charcoal instead of grey and blue, one deep teal for actions, Atkinson
+  Hyperlegible (made for readability) for text and figures and Fraunces
+  for headings and the date. Both fonts ship with GDash. The six TV themes
+  keep their names; Glass is now slate green instead of purple, and every
+  text colour in every theme reaches 4.5:1.
+- Settings is grouped into data sources, screens, automations and account;
+  each display shows its dashboard and text size as labelled fields; the
+  dashboard editor is wider, draws its grid and outlines the selected
+  widget; templates are shown in their theme's colours.
+- New passwords follow NIST SP 800-63B: at least 12 characters, not the
+  user name or a well-known password. Existing passwords keep working.
+- The Docker image runs as user 65532 with a read-only file system in the
+  example compose file, and the systemd unit is sandboxed further.
 
 ### Added
 
@@ -42,6 +56,11 @@ the format follows [Keep a Changelog](https://keepachangelog.com).
   stores the token encrypted.
 - Text size per display (100 to 200 %), for smart displays, tablets and
   small screens; the dashboard now fills screens that are not 16:9.
+- `gdash reset-password <user>` for a lost password, and `gdash
+  healthcheck`, which the Docker image uses.
+- Releases carry an SBOM, and build provenance once the repository is
+  public. Dependabot proposes updates weekly; CI also runs staticcheck,
+  a secret scan of the whole history and fuzz-test seeds for every parser.
 
 ### Security
 
@@ -57,6 +76,21 @@ the format follows [Keep a Changelog](https://keepachangelog.com).
 - IPv6 transition addresses (6to4, Teredo, IPv4-compatible) that reach a
   cloud metadata address are refused, like NAT64 already was.
 - Widget positions so large that they wrap around are rejected.
+- A calendar line such as `X;A=` no longer crashes the server, a
+  recurrence such as `FREQ=SECONDLY` from 1990 no longer costs minutes per
+  refresh, and a panic in any data source now fails only that refresh.
+- A device on the network can no longer lock the admin out with wrong
+  passwords; logins are limited per address, per account from an address
+  and per account overall, with IPv6 counted per /64.
+- Responses carry no-store for API answers, Permissions-Policy,
+  Cross-Origin-Opener- and -Resource-Policy, HSTS behind an HTTPS proxy and
+  a CSP on the receiver page; JSON bodies must be application/json.
+- The database, its copies and the data directory are readable by GDash
+  only; cache fingerprints are keyed with the secret key.
+- Redirects from https to http, news feed addresses with a password and
+  air quality values too large to be real are refused; the own Cast
+  receiver no longer follows navigate messages.
+- Failed setups and rejected API tokens are recorded in the activity log.
 
 ## 0.5.0 – 2026-10-09
 
