@@ -11,6 +11,7 @@ import (
 	"io/fs"
 	"net/url"
 	"os"
+	"path/filepath"
 	"sort"
 
 	_ "modernc.org/sqlite" // pure-Go SQLite driver, registers "sqlite"
@@ -36,7 +37,12 @@ type Store struct {
 
 // Open opens or creates the database at path and brings its schema up to
 // date. Before changing an existing schema it writes a backup next to it.
+// It creates the database's directory, readable by Daycast only, so a first
+// start needs no folder made by hand.
 func Open(ctx context.Context, path string) (*Store, error) {
+	if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
+		return nil, fmt.Errorf("create data directory: %w", err)
+	}
 	dsn := "file:" + url.PathEscape(path) +
 		"?_pragma=foreign_keys(1)&_pragma=journal_mode(WAL)&_pragma=busy_timeout(5000)"
 	db, err := sql.Open("sqlite", dsn)

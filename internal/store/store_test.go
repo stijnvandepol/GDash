@@ -216,3 +216,18 @@ func TestWriteCopyMakesAUsableDatabase(t *testing.T) {
 		t.Fatalf("display in the copy = %+v, %v", d, err)
 	}
 }
+
+func TestOpenCreatesTheDataDirectory(t *testing.T) {
+	// A first start of the binary uses a data directory that does not
+	// exist yet.
+	path := filepath.Join(t.TempDir(), "data", "daycast.db")
+	s, err := Open(context.Background(), path)
+	if err != nil {
+		t.Fatalf("Open in a missing directory: %v", err)
+	}
+	s.Close()
+	info, err := os.Stat(filepath.Dir(path))
+	if err != nil || !info.IsDir() {
+		t.Fatalf("data directory = %v, %v", info, err)
+	}
+}
