@@ -73,7 +73,7 @@ simulated device; not yet on the real TV.
 - **TLS verification towards Cast devices:** off, as in pychromecast. Pinning the certificate on first connection is an option.
 - **Name:** Daycast is the working name; a trademark check (BOIP, EUIPO) is still to do.
 
-## Not deployed to the TV yet
+## The living room TV
 
 The living room TV runs the current version since 9 October 09:13; the database migrated from version 3 to 10 with a backup before every step, and the location and news feed were copied from the environment. Restarting the server restarts the cast, which can switch a TV on through HDMI-CEC, so that waits until someone is home and awake.
 
