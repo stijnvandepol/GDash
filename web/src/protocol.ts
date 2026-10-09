@@ -30,6 +30,13 @@ export interface Dashboard {
   widgets: Widget[];
 }
 
+/** A message shown over the dashboard until expiresAt, on the server's clock. */
+export interface Announcement {
+  title?: string;
+  message: string;
+  expiresAt: string;
+}
+
 export interface Snapshot {
   type: 'snapshot';
   version: number;
@@ -45,6 +52,8 @@ export interface Snapshot {
   pageSeconds?: number;
   /** Text size in percent; see stage.ts. */
   textScale?: number;
+  /** Absent when there is none; see announcement.ts. */
+  announcement?: Announcement;
 }
 
 function isRecord(v: unknown): v is Record<string, unknown> {

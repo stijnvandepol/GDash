@@ -1,3 +1,4 @@
+import { clockOffset } from './announcement';
 import type { PairingCode } from './pairing';
 import type { Snapshot } from './protocol';
 
@@ -17,11 +18,14 @@ export const display = $state<{
   pairingCode: PairingCode | null;
   /** A problem the screen cannot solve itself, shown instead of a dashboard. */
   problem: string | null;
+  /** How far the server's clock is ahead of this screen's, for expiring announcements. */
+  serverOffsetMs: number;
 }>({
   snapshot: null,
   connection: 'connecting',
   pairingCode: null,
   problem: null,
+  serverOffsetMs: 0,
 });
 
 /** Minute-resolution clock shared by widgets. One timer for the whole page. */
@@ -43,6 +47,7 @@ scheduleNextMinute();
 export function showSnapshot(snapshot: Snapshot): boolean {
   if (display.snapshot && snapshot.version === display.snapshot.version) return false;
   display.snapshot = snapshot;
+  display.serverOffsetMs = clockOffset(snapshot.serverTime, Date.now());
   return true;
 }
 

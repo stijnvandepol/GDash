@@ -4,6 +4,8 @@
   import { t } from './i18n.svelte';
   import { msToNextPage, pageAt } from './pages';
   import { stageFor } from './stage';
+  import { msUntilExpiry, visibleAnnouncement } from './announcement';
+  import AnnouncementBanner from './AnnouncementBanner.svelte';
 
   // Spacing of theme.css in design pixels. A larger text size draws the
   // stage smaller and these with it, so only the text grows.
@@ -45,6 +47,21 @@
   });
   const dashboard = $derived(pageAt(display.snapshot, now));
   const asleep = $derived(display.snapshot?.active === false);
+
+  // An announcement leaves the screen at its expiry on the server's clock,
+  // by one timer; the server's next snapshot does not have to arrive first.
+  // The margin makes sure the timer fires after the expiry, not just before.
+  const EXPIRY_MARGIN_MS = 100;
+  let announcementNow = $state(Date.now());
+  $effect(() => {
+    const nowMs = Date.now();
+    announcementNow = nowMs;
+    const remaining = msUntilExpiry(display.snapshot?.announcement, display.serverOffsetMs, nowMs);
+    if (remaining === null || remaining <= 0) return;
+    const timer = setTimeout(() => (announcementNow = Date.now()), remaining + EXPIRY_MARGIN_MS);
+    return () => clearTimeout(timer);
+  });
+  const announcement = $derived(visibleAnnouncement(display.snapshot?.announcement, display.serverOffsetMs, announcementNow));
 
   // Pixel shift against burn-in: every few minutes the whole stage moves a
   // few pixels, so no edge stays lit on the same OLED pixels all day.
@@ -117,6 +134,9 @@
           {/if}
         </section>
       {/each}
+      {#if announcement}
+        <AnnouncementBanner title={announcement.title} message={announcement.message} />
+      {/if}
     </div>
   {:else}
     <p class="message">{t('connecting')}</p>
