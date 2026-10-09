@@ -6,8 +6,11 @@ package secret
 import (
 	"crypto/aes"
 	"crypto/cipher"
+	"crypto/hmac"
 	"crypto/rand"
+	"crypto/sha256"
 	"encoding/base64"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"io/fs"
@@ -23,7 +26,17 @@ var ErrUnreadable = errors.New("secret cannot be decrypted with this key")
 // Box seals and opens secrets with one key, using AES-256-GCM.
 type Box struct {
 	aead cipher.AEAD
+	// macKey is derived from the key, so fingerprints and encryption never
+	// use the same key material.
+	macKey []byte
 }
+
+// fingerprintLabel separates the fingerprint key from the encryption key.
+const fingerprintLabel = "gdash fingerprint v1"
+
+// fingerprintBytes is long enough that two configurations never collide in
+// practice, and short enough to read in a cache file.
+const fingerprintBytes = 16
 
 // LoadOrCreateKey reads the key at path, or creates one there readable only
 // by the current user.
@@ -65,7 +78,18 @@ func NewBox(key []byte) (*Box, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Box{aead: aead}, nil
+	mac := hmac.New(sha256.New, key)
+	mac.Write([]byte(fingerprintLabel))
+	return &Box{aead: aead, macKey: mac.Sum(nil)}, nil
+}
+
+// Fingerprint returns a keyed hash of data: equal for equal data on this
+// installation, but without the key file it reveals nothing about data,
+// even when data is guessable, such as a calendar address.
+func (b *Box) Fingerprint(data []byte) string {
+	mac := hmac.New(sha256.New, b.macKey)
+	mac.Write(data)
+	return hex.EncodeToString(mac.Sum(nil)[:fingerprintBytes])
 }
 
 // Seal encrypts plaintext with a fresh random nonce and returns it as text.

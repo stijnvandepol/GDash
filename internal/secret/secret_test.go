@@ -64,3 +64,21 @@ func TestNewBoxRejectsWrongKeySize(t *testing.T) {
 		t.Fatal("NewBox accepted a 16-byte key")
 	}
 }
+
+func TestFingerprintDependsOnTheKey(t *testing.T) {
+	one, _ := NewBox(make([]byte, keySize))
+	other, _ := NewBox(append(make([]byte, keySize-1), 1))
+	data := []byte("https://calendar.example.org/private-0123456789/basic.ics")
+	if one.Fingerprint(data) != one.Fingerprint(data) {
+		t.Fatal("a fingerprint changes between calls")
+	}
+	if one.Fingerprint(data) == other.Fingerprint(data) {
+		t.Fatal("two keys give the same fingerprint, so it could be computed without the key file")
+	}
+	if one.Fingerprint(data) == one.Fingerprint([]byte("something else")) {
+		t.Fatal("different data gives the same fingerprint")
+	}
+	if got := len(one.Fingerprint(data)); got != 2*fingerprintBytes {
+		t.Fatalf("fingerprint length = %d, want %d hex characters", got, 2*fingerprintBytes)
+	}
+}

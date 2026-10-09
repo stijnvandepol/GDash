@@ -5,6 +5,7 @@ import (
 
 	"github.com/stijnvandepol/gdash/internal/display"
 	"github.com/stijnvandepol/gdash/internal/homeassistant"
+	"github.com/stijnvandepol/gdash/internal/secret"
 	"github.com/stijnvandepol/gdash/internal/settings"
 	"github.com/stijnvandepol/gdash/internal/weather"
 )
@@ -12,7 +13,11 @@ import (
 func keys(t *testing.T, cfg settings.Sources, entities []string) map[string]string {
 	t.Helper()
 	out := map[string]string{}
-	for _, src := range (&dataSources{}).build(cfg, entities) {
+	box, err := secret.NewBox(make([]byte, 32))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, src := range (&dataSources{settings: &settings.Service{Box: box}}).build(cfg, entities) {
 		out[src.Key] = src.Version
 	}
 	return out

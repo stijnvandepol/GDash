@@ -2,8 +2,6 @@ package main
 
 import (
 	"context"
-	"crypto/sha256"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"log/slog"
@@ -135,12 +133,12 @@ func (d *dataSources) build(cfg settings.Sources, entities []string) []datahub.S
 		sources = append(sources, datahub.Source{
 			Key:      "weather.current",
 			Interval: weatherInterval,
-			Version:  fingerprint(*loc),
+			Version:  d.fingerprint(*loc),
 			Fetch:    func(ctx context.Context) (any, error) { return d.weather.Current(ctx, *loc) },
 		}, datahub.Source{
 			Key:      display.AirQualitySource,
 			Interval: airQualityInterval,
-			Version:  fingerprint(*loc),
+			Version:  d.fingerprint(*loc),
 			Fetch:    func(ctx context.Context) (any, error) { return d.airQuality.Current(ctx, *loc) },
 		})
 	}
@@ -149,7 +147,7 @@ func (d *dataSources) build(cfg settings.Sources, entities []string) []datahub.S
 			Key:      "news.default",
 			Interval: newsInterval,
 			Timeout:  newsTimeout,
-			Version:  fingerprint(feeds),
+			Version:  d.fingerprint(feeds),
 			Fetch:    func(ctx context.Context) (any, error) { return d.news.Headlines(ctx, feeds, newsItems) },
 		})
 	}
@@ -158,7 +156,7 @@ func (d *dataSources) build(cfg settings.Sources, entities []string) []datahub.S
 			Key:      "calendar.default",
 			Interval: calendarInterval,
 			Timeout:  calendarTimeout,
-			Version:  fingerprint(calendars),
+			Version:  d.fingerprint(calendars),
 			Fetch: func(ctx context.Context) (any, error) {
 				return d.calendar.Upcoming(ctx, calendars, calendarDays)
 			},
@@ -170,18 +168,18 @@ func (d *dataSources) build(cfg settings.Sources, entities []string) []datahub.S
 			Key:      display.HomeAssistantSource,
 			Interval: homeAssistantInterval,
 			Timeout:  homeAssistantTimeout,
-			Version:  fingerprint(struct{ Connection, Entities any }{*conn, entities}),
+			Version:  d.fingerprint(struct{ Connection, Entities any }{*conn, entities}),
 			Fetch:    func(ctx context.Context) (any, error) { return d.home.States(ctx, *conn, entities) },
 		})
 	}
 	return sources
 }
 
-// fingerprint identifies a source's configuration. It is a hash, so secret
-// calendar addresses and tokens do not sit in the hub as plain text.
-func fingerprint(v any) string {
-	sum := sha256.Sum256(fmt.Appendf(nil, "%+v", v))
-	return hex.EncodeToString(sum[:8])
+// fingerprint identifies a source's configuration. It is keyed with the
+// installation's secret key and written to the cache files, so secret
+// calendar addresses and tokens cannot be guessed from it.
+func (d *dataSources) fingerprint(v any) string {
+	return d.settings.Box.Fingerprint(fmt.Appendf(nil, "%+v", v))
 }
 
 // republishEveryMinute lets displays cross the edge of their active hours on
