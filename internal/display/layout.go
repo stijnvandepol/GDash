@@ -165,7 +165,9 @@ func widgetProblem(w Widget, seen map[string]bool) string {
 		return "id is used by another widget"
 	case !known:
 		return fmt.Sprintf("unknown widget type %q", w.Type)
-	case w.X < 0 || w.Y < 0 || w.X+w.W > GridColumns || w.Y+w.H > GridRows:
+	// Each bound on its own first: a huge X plus W would wrap around.
+	case w.X < 0 || w.Y < 0 || w.X > GridColumns || w.Y > GridRows || w.W > GridColumns || w.H > GridRows ||
+		w.X+w.W > GridColumns || w.Y+w.H > GridRows:
 		return fmt.Sprintf("must fit the %dx%d grid", GridColumns, GridRows)
 	case w.W < kind.MinW || w.H < kind.MinH:
 		return fmt.Sprintf("a %s widget needs at least %dx%d cells", w.Type, kind.MinW, kind.MinH)
