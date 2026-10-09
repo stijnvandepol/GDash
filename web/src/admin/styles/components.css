@@ -24,6 +24,10 @@
   box-shadow: var(--shadow-sm);
   padding: var(--s-5);
   display: grid;
+  /* The column may shrink below its content's natural width, so a wide
+     control, such as a file field with a long browser text, stays inside
+     the card instead of widening it past a phone screen. */
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--s-4);
 }
 .card-head {
