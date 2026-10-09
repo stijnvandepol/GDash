@@ -76,6 +76,9 @@ func (f *fakeSources) set(places []weather.Place, err error, entries map[string]
 	f.places, f.err, f.entries = places, err, entries
 }
 
+// testReadTimeout is the test server's read timeout.
+const testReadTimeout = 300 * time.Millisecond
+
 type testEnv struct {
 	srv     *httptest.Server
 	client  *http.Client
@@ -138,7 +141,10 @@ func newTestEnv(t *testing.T, discover func(context.Context) ([]cast.Device, err
 		Now:               now,
 		Logger:            logger,
 	}
-	srv := httptest.NewServer(s.Handler())
+	srv := httptest.NewUnstartedServer(s.Handler())
+	// As in production (cmd/nookboard), short enough to notice in tests.
+	srv.Config.ReadTimeout = testReadTimeout
+	srv.Start()
 	t.Cleanup(srv.Close)
 	jar, _ := cookiejar.New(nil)
 	return &testEnv{

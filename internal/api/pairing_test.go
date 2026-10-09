@@ -100,6 +100,33 @@ func TestOpenStreamEndsWhenScreenIsUnpaired(t *testing.T) {
 	}
 }
 
+func TestStreamOutlivesTheReadTimeout(t *testing.T) {
+	env := newTestEnv(t, nil)
+	env.setUp(t)
+	env.createKitchen(t)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	req, _ := http.NewRequestWithContext(ctx, http.MethodGet, env.srv.URL+"/api/displays/keuken/events", nil)
+	resp, err := env.client.Do(req)
+	if err != nil || resp.StatusCode != http.StatusOK {
+		t.Fatalf("open stream: %v %v", resp, err)
+	}
+	defer resp.Body.Close()
+	// Pings keep arriving well after the server's read timeout.
+	time.Sleep(2 * testReadTimeout)
+	buf := make([]byte, 4096)
+	for deadline := time.Now().Add(time.Second); time.Now().Before(deadline); {
+		n, err := resp.Body.Read(buf)
+		if err != nil {
+			t.Fatalf("stream ended after the read timeout: %v", err)
+		}
+		if strings.Contains(string(buf[:n]), ": ping") {
+			return
+		}
+	}
+	t.Fatal("no ping after the read timeout")
+}
+
 func TestPairedScreenCannotShowAnotherDisplay(t *testing.T) {
 	env := newTestEnv(t, nil)
 	env.setUp(t)

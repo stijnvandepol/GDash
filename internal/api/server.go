@@ -29,8 +29,11 @@ const (
 	// Proxies close idle connections after 30 to 60 seconds; a comment line
 	// every 20 seconds keeps the event stream open through them.
 	defaultPingInterval = 20 * time.Second
-	sseRetryMillis      = 5000
-	discoveryTimeout    = 3 * time.Second
+	// streamWriteTimeout ends an event stream whose screen stopped reading,
+	// so a stalled client does not hold a goroutine and a connection.
+	streamWriteTimeout = 30 * time.Second
+	sseRetryMillis     = 5000
+	discoveryTimeout   = 3 * time.Second
 )
 
 var validDisplayID = regexp.MustCompile(`^[a-z0-9][a-z0-9-]{0,31}$`)
@@ -240,7 +243,10 @@ func (s *Server) streamSnapshots(w http.ResponseWriter, r *http.Request, rc *htt
 	ping := time.NewTicker(interval)
 	defer ping.Stop()
 	for {
-		var err error
+		err := rc.SetWriteDeadline(time.Now().Add(streamWriteTimeout))
+		if err != nil {
+			return
+		}
 		select {
 		case msg, ok := <-messages:
 			if !ok {

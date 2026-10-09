@@ -278,7 +278,12 @@ func listen(ctx context.Context, addr string, handler http.Handler, logger *slog
 		Addr:              addr,
 		Handler:           handler,
 		ReadHeaderTimeout: 10 * time.Second,
-		// No WriteTimeout: display event streams stay open for days.
+		// A request body that drips in, a byte at a time, cannot hold a
+		// connection longer than this. It does not end event streams, whose
+		// request has been read (internal/api tests this).
+		ReadTimeout: time.Minute,
+		// No WriteTimeout: display event streams stay open for days; they
+		// set a deadline per write instead.
 		IdleTimeout: 2 * time.Minute,
 	}
 	go func() {
