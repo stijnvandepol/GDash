@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"slices"
+	"strings"
 	"testing"
 	"time"
 )
@@ -33,16 +35,16 @@ func TestCurrentParsesRecordedResponse(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Current: %v", err)
 	}
-	if got.TemperatureC != 9.9 || got.WeatherCode != 3 || got.IsDay || got.WindKmh != 14.4 || got.ObservedAt != "2026-10-09T00:00" {
+	if got.TemperatureC != 10.2 || got.WeatherCode != 3 || !got.IsDay || got.WindKmh != 28.8 || got.ObservedAt != "2026-10-09T13:15" {
 		t.Fatalf("current = %+v", got)
 	}
-	if got.TodayMaxC != 13.7 || got.TodayMinC != 8.0 {
+	if got.TodayMaxC != 14.0 || got.TodayMinC != 8.3 {
 		t.Fatalf("today = %v / %v, want the first forecast day", got.TodayMinC, got.TodayMaxC)
 	}
 	if len(got.Days) != 7 {
 		t.Fatalf("days = %d, want 7", len(got.Days))
 	}
-	if want := (Day{Date: "2026-10-13", WeatherCode: 51, MaxC: 20.1, MinC: 14.1, RainChance: 18}); got.Days[4] != want {
+	if want := (Day{Date: "2026-10-13", WeatherCode: 51, MaxC: 19.5, MinC: 11.0, RainChance: 25}); got.Days[4] != want {
 		t.Fatalf("day 5 = %+v, want %+v", got.Days[4], want)
 	}
 	if lat := req.URL.Query().Get("latitude"); lat != "51.65" {
@@ -85,6 +87,62 @@ func TestDaysStopAtTheShortestArray(t *testing.T) {
 	got, err := client.Current(context.Background(), Location{})
 	if err != nil || len(got.Days) != 2 || got.Days[1].WeatherCode != 63 {
 		t.Fatalf("Days = %+v, %v; want the two complete days", got.Days, err)
+	}
+}
+
+func TestCurrentKeepsYesterdayOutOfTheForecastButInTheSun(t *testing.T) {
+	body, err := os.ReadFile("testdata/forecast.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	client, req := serve(t, http.StatusOK, body)
+
+	got, err := client.Current(context.Background(), Location{})
+	if err != nil {
+		t.Fatalf("Current: %v", err)
+	}
+	if got.Days[0].Date != "2026-10-09" {
+		t.Fatalf("first forecast day = %s, want today", got.Days[0].Date)
+	}
+	if len(got.Sun) != 8 || got.Sun[0] != (SunTimes{Date: "2026-10-08", Sunrise: "2026-10-08T07:48", Sunset: "2026-10-08T18:58"}) {
+		t.Fatalf("sun = %+v, want yesterday first and eight days", got.Sun)
+	}
+	if got.Sun[1].Sunrise != "2026-10-09T07:50" || got.Sun[1].Sunset != "2026-10-09T18:56" {
+		t.Fatalf("today's sun = %+v", got.Sun[1])
+	}
+	query := req.URL.Query()
+	if query.Get("past_days") != "1" || !strings.Contains(query.Get("daily"), "sunrise,sunset") {
+		t.Fatalf("query = %v, want past_days=1 and sunrise,sunset", query)
+	}
+}
+
+func TestSunDegradesWithoutBreakingTheWeather(t *testing.T) {
+	tests := []struct {
+		name    string
+		today   string
+		daily   string
+		wantSun []SunTimes
+	}{
+		{"no sun arrays", "2026-10-09", `"time":["2026-10-09"]`, nil},
+		{"sunset missing", "2026-10-09", `"time":["2026-10-09"],"sunrise":["2026-10-09T07:50"]`, nil},
+		{"no yesterday", "2026-10-09", `"time":["2026-10-09"],"sunrise":["2026-10-09T07:50"],"sunset":["2026-10-09T18:56"]`,
+			[]SunTimes{{Date: "2026-10-09", Sunrise: "2026-10-09T07:50", Sunset: "2026-10-09T18:56"}}},
+		{"polar night", "2026-12-20", `"time":["2026-12-20"],"sunrise":[null],"sunset":[null]`,
+			[]SunTimes{{Date: "2026-12-20"}}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			body := []byte(`{"current":{"time":"` + tt.today + `T12:00","temperature_2m":5,"weather_code":3,"is_day":1,"wind_speed_10m":4},
+				"daily":{` + tt.daily + `,"weather_code":[61],"temperature_2m_max":[13],"temperature_2m_min":[8],"precipitation_probability_max":[100]}}`)
+			client, _ := serve(t, http.StatusOK, body)
+			got, err := client.Current(context.Background(), Location{})
+			if err != nil || len(got.Days) != 1 {
+				t.Fatalf("Current = %+v, %v; want the weather to survive", got, err)
+			}
+			if !slices.Equal(got.Sun, tt.wantSun) {
+				t.Fatalf("sun = %+v, want %+v", got.Sun, tt.wantSun)
+			}
+		})
 	}
 }
 

@@ -11,6 +11,7 @@ import (
 	"math"
 	"net/http"
 	"net/url"
+	"slices"
 	"strconv"
 )
 
@@ -54,6 +55,21 @@ type Report struct {
 	ObservedAt string `json:"observedAt"`
 	// Days is the forecast from today on, at most forecastDays long.
 	Days []Day `json:"days"`
+	// Sun holds sunrise and sunset from yesterday on, so the sun widget can
+	// say how today's daylight compares. It is empty when Open-Meteo sent
+	// no usable times; the weather itself does not depend on it.
+	Sun []SunTimes `json:"sun,omitempty"`
+}
+
+// SunTimes is sunrise and sunset on one local day. A time is empty when the
+// sun does not rise or set that day, as near the poles.
+type SunTimes struct {
+	// Date is the local date, for example "2026-10-09".
+	Date string `json:"date"`
+	// Sunrise and Sunset are local times as Open-Meteo reports them, for
+	// example "2026-10-09T07:50", without a time zone.
+	Sunrise string `json:"sunrise"`
+	Sunset  string `json:"sunset"`
 }
 
 // Day is the forecast for one day.
@@ -69,6 +85,13 @@ type Day struct {
 
 // forecastDays covers a week; the forecast widget shows a part of it.
 const forecastDays = 7
+
+// pastDays puts yesterday in front of the daily arrays, for the change in
+// day length that the sun widget shows.
+const pastDays = 1
+
+// dateLength is the length of a "2006-01-02" date, the start of a timestamp.
+const dateLength = len("2006-01-02")
 
 // Client fetches reports from Open-Meteo.
 type Client struct {
@@ -91,6 +114,8 @@ type forecastResponse struct {
 		Temperature2mMax            []float64 `json:"temperature_2m_max"`
 		Temperature2mMin            []float64 `json:"temperature_2m_min"`
 		PrecipitationProbabilityMax []int     `json:"precipitation_probability_max"`
+		Sunrise                     []string  `json:"sunrise"`
+		Sunset                      []string  `json:"sunset"`
 	} `json:"daily"`
 }
 
@@ -103,9 +128,10 @@ func (c Client) Current(ctx context.Context, loc Location) (Report, error) {
 		"latitude":      {strconv.FormatFloat(loc.Latitude, 'f', 2, 64)},
 		"longitude":     {strconv.FormatFloat(loc.Longitude, 'f', 2, 64)},
 		"current":       {"temperature_2m,weather_code,is_day,wind_speed_10m"},
-		"daily":         {"weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max"},
+		"daily":         {"weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,sunrise,sunset"},
 		"timezone":      {"auto"},
 		"forecast_days": {strconv.Itoa(forecastDays)},
+		"past_days":     {strconv.Itoa(pastDays)},
 	}
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.BaseURL+"?"+query.Encode(), nil)
 	if err != nil {
@@ -138,17 +164,41 @@ func (c Client) Current(ctx context.Context, loc Location) (Report, error) {
 		TodayMinC:    days[0].MinC,
 		ObservedAt:   cur.Time,
 		Days:         days,
+		Sun:          body.sun(),
 	}, nil
 }
 
-// days pairs the daily arrays up to the shortest of them, so a response
-// with a missing value never shifts one day's numbers onto another.
+// today is the index of the current local day in the daily arrays, which
+// Open-Meteo starts pastDays earlier. A response whose dates do not include
+// the day of the observation is read from its first entry.
+func (r forecastResponse) today() int {
+	if len(r.Current.Time) < dateLength {
+		return 0
+	}
+	return max(slices.Index(r.Daily.Time, r.Current.Time[:dateLength]), 0)
+}
+
+// days pairs the daily arrays from today on, up to the shortest of them, so
+// a response with a missing value never shifts one day's numbers onto
+// another.
 func (r forecastResponse) days() []Day {
 	d := r.Daily
-	n := min(len(d.Time), len(d.WeatherCode), len(d.Temperature2mMax), len(d.Temperature2mMin), len(d.PrecipitationProbabilityMax), forecastDays)
-	days := make([]Day, n)
-	for i := range n {
-		days[i] = Day{Date: d.Time[i], WeatherCode: d.WeatherCode[i], MaxC: d.Temperature2mMax[i], MinC: d.Temperature2mMin[i], RainChance: d.PrecipitationProbabilityMax[i]}
+	from := r.today()
+	n := min(len(d.Time), len(d.WeatherCode), len(d.Temperature2mMax), len(d.Temperature2mMin), len(d.PrecipitationProbabilityMax), from+forecastDays)
+	var days []Day
+	for i := from; i < n; i++ {
+		days = append(days, Day{Date: d.Time[i], WeatherCode: d.WeatherCode[i], MaxC: d.Temperature2mMax[i], MinC: d.Temperature2mMin[i], RainChance: d.PrecipitationProbabilityMax[i]})
 	}
 	return days
+}
+
+// sun pairs sunrise and sunset with their dates, from yesterday on.
+func (r forecastResponse) sun() []SunTimes {
+	d := r.Daily
+	n := min(len(d.Time), len(d.Sunrise), len(d.Sunset))
+	var sun []SunTimes
+	for i := max(r.today()-pastDays, 0); i < n; i++ {
+		sun = append(sun, SunTimes{Date: d.Time[i], Sunrise: d.Sunrise[i], Sunset: d.Sunset[i]})
+	}
+	return sun
 }
