@@ -60,7 +60,8 @@
       {
         column: catalogue.columns,
         row: catalogue.rows,
-        float: true,
+        // Widgets stay exactly where they are placed, as on the TV.
+        mode: 'float',
         margin: 3,
         cellHeight: cellHeight(),
         animate: false,
