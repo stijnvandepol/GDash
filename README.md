@@ -6,6 +6,8 @@ Google TV you already own. No extra hardware, no subscription, no cloud.
 > **Status: beta (0.5).** It runs every day on a TV at home, but has not
 > been used anywhere else yet. Run it only on a network you trust.
 
+![GDash on a TV: Home Assistant values, clock, sunrise and sunset, air quality and weather in the Glass theme](docs/images/tv-glass.jpg)
+
 ## What works
 
 - **Weather** from [Open-Meteo](https://open-meteo.com) (no API key): now, and
