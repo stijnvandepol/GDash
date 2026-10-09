@@ -5,6 +5,7 @@ import (
 	"errors"
 	"io"
 	"log/slog"
+	"strings"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -71,6 +72,23 @@ func TestFailedRefreshKeepsLastKnownValue(t *testing.T) {
 	}
 	if n := changes.Load(); n != 2 {
 		t.Fatalf("onChange called %d times, want 2 (success, first failure)", n)
+	}
+}
+
+func TestPanickingFetchFailsOnlyThatRefresh(t *testing.T) {
+	h, _, _ := newTestHub(t)
+	ok := source(func(context.Context) (any, error) { return 14.3, nil })
+	broken := source(func(context.Context) (any, error) { panic("parser bug") })
+
+	if err := h.refresh(context.Background(), ok); err != nil {
+		t.Fatal(err)
+	}
+	err := h.refresh(context.Background(), broken)
+	if err == nil || !strings.Contains(err.Error(), "parser bug") {
+		t.Fatalf("refresh after a panic = %v, want an error naming it", err)
+	}
+	if got := h.Entries()["weather.current"]; string(got.Value) != "14.3" || !got.Failing {
+		t.Fatalf("entry after a panic = %+v, want the old value marked failing", got)
 	}
 }
 

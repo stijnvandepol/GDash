@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"log/slog"
 	"maps"
+	"runtime/debug"
 	"sync"
 	"time"
 )
@@ -174,7 +175,7 @@ func (h *Hub) refresh(ctx context.Context, src Source) error {
 	fetchCtx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
-	value, err := src.Fetch(fetchCtx)
+	value, err := safeFetch(fetchCtx, src)
 	if err != nil {
 		h.markFailing(ctx, src.Key)
 		return err
@@ -188,6 +189,18 @@ func (h *Hub) refresh(ctx context.Context, src Source) error {
 	entry := Entry{Value: raw, FetchedAt: now, StaleAfter: now.Add(src.Interval + staleMargin)}
 	h.set(ctx, src, entry)
 	return nil
+}
+
+// safeFetch runs the source's fetch and turns a panic into an error. The
+// sources parse documents from outside, such as calendars and feeds; a bug
+// in a parser must fail that one refresh, not end the whole server.
+func safeFetch(ctx context.Context, src Source) (value any, err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			value, err = nil, fmt.Errorf("refresh of %s panicked: %v\n%s", src.Key, r, debug.Stack())
+		}
+	}()
+	return src.Fetch(ctx)
 }
 
 func (h *Hub) markFailing(ctx context.Context, key string) {
