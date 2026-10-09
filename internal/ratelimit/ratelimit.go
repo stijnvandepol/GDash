@@ -3,6 +3,7 @@
 package ratelimit
 
 import (
+	"net/netip"
 	"sync"
 	"time"
 )
@@ -11,6 +12,25 @@ import (
 // recent failures are dropped on the next failure, so a flood of random
 // usernames or codes cannot grow the map forever.
 const pruneThreshold = 1000
+
+// ipv6NetworkBits is the prefix one IPv6 host normally owns: a device can
+// pick any address in its /64 at will, so limits per address count the /64.
+const ipv6NetworkBits = 64
+
+// AddressKey returns the part of a client address that limits should count:
+// the address itself for IPv4, its /64 network for IPv6. Anything that is
+// not an IP address is returned as it is.
+func AddressKey(ip string) string {
+	addr, err := netip.ParseAddr(ip)
+	if err != nil {
+		return ip
+	}
+	addr = addr.Unmap()
+	if addr.Is4() {
+		return addr.String()
+	}
+	return netip.PrefixFrom(addr, ipv6NetworkBits).Masked().String()
+}
 
 // Limiter counts failures per key.
 type Limiter struct {

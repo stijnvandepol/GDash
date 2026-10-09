@@ -27,8 +27,14 @@ const (
 	// Recording every request would mean a database write per page load.
 	touchInterval = time.Hour
 
+	// maxFailures limits guesses per address, and per account from one
+	// address. A device on the network can therefore not lock the
+	// household out by failing its username five times.
 	maxFailures   = 5
 	failureWindow = 15 * time.Minute
+	// maxAccountFailures limits guesses per account from all addresses
+	// together, against guessing spread over many devices.
+	maxAccountFailures = 50
 )
 
 var (
@@ -64,10 +70,12 @@ type User struct {
 
 // Service runs authentication against the store.
 type Service struct {
-	store      *store.Store
-	limiter    *ratelimit.Limiter
-	now        func() time.Time
-	setupToken string
+	store   *store.Store
+	limiter *ratelimit.Limiter
+	// accountLimiter counts failures per account over all addresses.
+	accountLimiter *ratelimit.Limiter
+	now            func() time.Time
+	setupToken     string
 	// dummyHash is verified when a username does not exist, so a login for
 	// an unknown user takes as long as one with a wrong password.
 	dummyHash string
@@ -81,7 +89,12 @@ func NewService(st *store.Store, setupToken string) (*Service, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Service{store: st, limiter: ratelimit.New(time.Now, maxFailures, failureWindow), now: time.Now, setupToken: setupToken, dummyHash: dummy}, nil
+	return &Service{
+		store:          st,
+		limiter:        ratelimit.New(time.Now, maxFailures, failureWindow),
+		accountLimiter: ratelimit.New(time.Now, maxAccountFailures, failureWindow),
+		now:            time.Now, setupToken: setupToken, dummyHash: dummy,
+	}, nil
 }
 
 // NewSetupToken returns a random token for the first-run setup.
@@ -102,7 +115,7 @@ func (s *Service) SetupNeeded(ctx context.Context) (bool, error) {
 // Setup creates the first account and logs it in. It returns the session
 // token to put in a cookie.
 func (s *Service) Setup(ctx context.Context, setupToken string, c Credentials, clientIP string) (string, User, error) {
-	key := "setup|" + clientIP
+	key := "setup|" + ratelimit.AddressKey(clientIP)
 	if !s.limiter.Allowed(key) {
 		return "", User{}, ErrRateLimited
 	}
@@ -130,9 +143,8 @@ func (s *Service) Setup(ctx context.Context, setupToken string, c Credentials, c
 
 // Login checks credentials and starts a session.
 func (s *Service) Login(ctx context.Context, c Credentials, clientIP string) (string, User, error) {
-	keys := []string{"ip|" + clientIP, "user|" + strings.ToLower(c.Username)}
-	// The attempt counts as a failure until the password is proven right.
-	if !s.limiter.Attempt(keys...) {
+	keys, account := attemptKeys(c.Username, clientIP)
+	if !s.attempt(keys, account) {
 		return "", User{}, ErrRateLimited
 	}
 	if len(c.Password) > maxPasswordBytes {
@@ -153,6 +165,7 @@ func (s *Service) Login(ctx context.Context, c Credentials, clientIP string) (st
 		return "", User{}, ErrInvalidCredentials
 	}
 	s.limiter.Reset(keys...)
+	s.accountLimiter.Reset(account)
 	if err := s.store.DeleteExpiredSessions(ctx, s.now().Add(-sessionIdleTimeout), s.now().Add(-sessionAbsoluteTimeout)); err != nil {
 		return "", User{}, err
 	}
@@ -197,9 +210,8 @@ func (s *Service) ChangePassword(ctx context.Context, session, current, next, cl
 	if err != nil {
 		return err
 	}
-	keys := []string{"ip|" + clientIP, "user|" + strings.ToLower(user.Username)}
-	// The attempt counts as a failure until the password is proven right.
-	if !s.limiter.Attempt(keys...) {
+	keys, account := attemptKeys(user.Username, clientIP)
+	if !s.attempt(keys, account) {
 		return ErrRateLimited
 	}
 	stored, err := s.store.UserByName(ctx, user.Username)
@@ -224,11 +236,34 @@ func (s *Service) ChangePassword(ctx context.Context, session, current, next, cl
 	if err != nil {
 		return err
 	}
-	// Only the account's own count: the address may have failed logins
+	// Only the account's own counts: the address may have failed logins
 	// for other usernames that must keep counting.
-	s.limiter.Reset("user|" + strings.ToLower(user.Username))
-	s.limiter.Release("ip|" + clientIP)
+	s.limiter.Reset(keys[1])
+	s.limiter.Release(keys[0])
+	s.accountLimiter.Reset(account)
 	return s.store.ChangePassword(ctx, stored.ID, hash, token.Hash(session))
+}
+
+// attemptKeys returns the limiter keys of a password attempt: the address,
+// the account from that address, and the account over all addresses.
+func attemptKeys(username, clientIP string) (perAddress []string, account string) {
+	address := ratelimit.AddressKey(clientIP)
+	name := strings.ToLower(username)
+	return []string{"ip|" + address, "user|" + name + "|" + address}, "user|" + name
+}
+
+// attempt counts a password attempt against both limiters, or neither when
+// one of them is at its limit. Each counts it as a failure until the
+// password is proven right.
+func (s *Service) attempt(perAddress []string, account string) bool {
+	if !s.accountLimiter.Attempt(account) {
+		return false
+	}
+	if !s.limiter.Attempt(perAddress...) {
+		s.accountLimiter.Release(account)
+		return false
+	}
+	return true
 }
 
 // Logout ends a session.

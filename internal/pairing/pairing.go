@@ -100,7 +100,7 @@ func New(st *store.Store) *Service {
 
 // Begin starts pairing a screen with a display and returns the code to show.
 func (s *Service) Begin(ctx context.Context, displayID, clientIP string) (Request, error) {
-	key := "pairing|" + clientIP
+	key := "pairing|" + ratelimit.AddressKey(clientIP)
 	if !s.limiter.Attempt(key) {
 		return Request{}, ErrRateLimited
 	}

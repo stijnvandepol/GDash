@@ -90,3 +90,19 @@ func TestReleaseTakesBackOneAttempt(t *testing.T) {
 	}
 	l.Release("ip|unknown")
 }
+
+func TestAddressKeyGroupsAnIPv6Network(t *testing.T) {
+	tests := map[string]string{
+		"192.168.1.66":            "192.168.1.66",
+		"::ffff:192.168.1.66":     "192.168.1.66",
+		"2001:db8:1:2:aaaa::1":    "2001:db8:1:2::/64",
+		"2001:db8:1:2:ffff::9999": "2001:db8:1:2::/64",
+		"fe80::1%eth0":            "fe80::/64",
+		"not an address":          "not an address",
+	}
+	for in, want := range tests {
+		if got := AddressKey(in); got != want {
+			t.Errorf("AddressKey(%q) = %q, want %q", in, got, want)
+		}
+	}
+}

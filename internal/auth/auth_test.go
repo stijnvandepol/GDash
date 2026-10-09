@@ -3,6 +3,7 @@ package auth
 import (
 	"context"
 	"errors"
+	"fmt"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -35,6 +36,7 @@ func newTestService(t *testing.T) (*Service, *testClock) {
 	clock := &testClock{t: time.Date(2026, 10, 8, 17, 0, 0, 0, time.UTC)}
 	s.now = clock.now
 	s.limiter = ratelimit.New(clock.now, maxFailures, failureWindow)
+	s.accountLimiter = ratelimit.New(clock.now, maxAccountFailures, failureWindow)
 	return s, clock
 }
 
@@ -146,6 +148,42 @@ func TestParallelWrongLoginsStopAtTheLimit(t *testing.T) {
 	wg.Wait()
 	if checked.Load() != maxFailures {
 		t.Fatalf("%d of 20 parallel wrong logins had their password checked, want %d", checked.Load(), maxFailures)
+	}
+}
+
+func TestAnotherDeviceCannotLockTheAccount(t *testing.T) {
+	ctx := context.Background()
+	s, _ := newTestService(t)
+	setUp(t, s)
+	for range maxFailures + 3 {
+		_, _, _ = s.Login(ctx, Credentials{"stijn", "wrong password!"}, "192.168.1.66")
+	}
+	if _, _, err := s.Login(ctx, Credentials{"stijn", "correct horse battery"}, "192.168.1.20"); err != nil {
+		t.Fatalf("Login from the household's own device after a guest failed: %v", err)
+	}
+}
+
+func TestAnIPv6NetworkCountsAsOneAddress(t *testing.T) {
+	ctx := context.Background()
+	s, _ := newTestService(t)
+	setUp(t, s)
+	for i := range maxFailures {
+		_, _, _ = s.Login(ctx, Credentials{"nobody", "wrong password!"}, fmt.Sprintf("2001:db8:1:2::%x", i+1))
+	}
+	if _, _, err := s.Login(ctx, Credentials{"stijn", "correct horse battery"}, "2001:db8:1:2::ffff"); !errors.Is(err, ErrRateLimited) {
+		t.Fatalf("Login from a fresh address in the same /64: err = %v, want ErrRateLimited", err)
+	}
+}
+
+func TestGuessesSpreadOverAddressesStopAtTheAccountLimit(t *testing.T) {
+	ctx := context.Background()
+	s, _ := newTestService(t)
+	setUp(t, s)
+	for i := range maxAccountFailures {
+		_, _, _ = s.Login(ctx, Credentials{"stijn", "wrong password!"}, fmt.Sprintf("10.0.%d.%d", i/200, i%200+1))
+	}
+	if _, _, err := s.Login(ctx, Credentials{"stijn", "correct horse battery"}, "192.168.1.20"); !errors.Is(err, ErrRateLimited) {
+		t.Fatalf("Login after %d guesses from many addresses: err = %v, want ErrRateLimited", maxAccountFailures, err)
 	}
 }
 
