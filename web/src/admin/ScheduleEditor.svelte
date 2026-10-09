@@ -1,5 +1,6 @@
 <script lang="ts">
   import { api, ApiError, type Dashboard, type Display, type Slot } from './api';
+  import Icon from './Icon.svelte';
 
   let {
     display,
@@ -35,6 +36,11 @@
   // The server allows five pages besides the display's own (displays.MaxRotation).
   const MAX_PAGES = 5;
   const ROTATE_CHOICES = [15, 30, 60, 120, 300];
+  // The display's own dashboard, named in the explanations.
+  const ownName = $derived.by(() => {
+    const own = dashboards.find((b) => b.id === (display.dashboardId || 'default'));
+    return own ? `“${own.name}”` : 'its own dashboard';
+  });
   const others = $derived(dashboards.filter((b) => b.id !== (display.dashboardId || 'default')));
 
   function togglePage(id: string) {
@@ -102,73 +108,88 @@
 </script>
 
 <form class="schedule" onsubmit={save}>
-  <div class="inline">
-    <label class="inline-time"><input type="checkbox" bind:checked={alwaysOn} /> Always on</label>
-    {#if !alwaysOn}
-      <label class="inline-time">On from <input type="time" bind:value={from} required /></label>
-      <label class="inline-time">until <input type="time" bind:value={until} required /></label>
-    {/if}
-  </div>
-  <p class="muted">Outside its active hours the cast stops and the screen stays dark.</p>
-  <p class="muted">
-    Show another dashboard during part of the day, on every day or only on the days you pick. Outside these times the display shows its own dashboard. When
-    slots overlap, the first one wins.
-  </p>
-  {#each slots as slot, i (i)}
+  <h3>Schedule for {display.name}</h3>
+
+  <fieldset>
+    <legend>When the screen is on</legend>
     <div class="inline">
-      <label class="inline-time">From <input type="time" bind:value={slot.from} required /></label>
-      <label class="inline-time">until <input type="time" bind:value={slot.until} required /></label>
-      <select aria-label="Dashboard for time slot {i + 1}" bind:value={slot.dashboardId}>
-        {#each dashboards as b (b.id)}
-          <option value={b.id}>{b.name}</option>
-        {/each}
-      </select>
-      <button type="button" class="link danger" onclick={() => slots.splice(i, 1)}>Remove</button>
+      <label class="inline-time"><input type="checkbox" bind:checked={alwaysOn} /> Always on</label>
+      {#if !alwaysOn}
+        <label class="inline-time">On from <input type="time" bind:value={from} required /></label>
+        <label class="inline-time">until <input type="time" bind:value={until} required /></label>
+      {/if}
     </div>
-    <div class="days" role="group" aria-label="Days for time slot {i + 1}">
-      {#each DAYS as [day, label] (day)}
-        <button
-          type="button"
-          class="day"
-          class:on={slot.days.includes(day)}
-          aria-pressed={slot.days.includes(day)}
-          onclick={() => toggleDay(slot, day)}>{label}</button
-        >
-      {/each}
-      <span class="muted small">{slot.days.length === 0 ? 'every day' : ''}</span>
-    </div>
-  {:else}
-    <p class="muted">No time slots: the display shows its own dashboard all day.</p>
-  {/each}
-  {#if slots.length < maxSlots}
-    <div><button type="button" class="link" onclick={add}>Add a time slot</button></div>
-  {/if}
-  {#if others.length > 0}
-    <p class="muted">
-      Pages in turn: outside time slots, also show these dashboards one after another with the display's own.
+    <p class="muted small">Outside these hours the cast stops and the screen stays dark, so the TV can sleep.</p>
+  </fieldset>
+
+  <fieldset>
+    <legend>Another dashboard at set times</legend>
+    <p class="muted small">
+      For example the school run on weekday mornings. Outside these times the display shows {ownName}. When times
+      overlap, the first one wins.
     </p>
-    <div class="days" role="group" aria-label="Dashboards shown in turn">
-      {#each others as b (b.id)}
-        <button
-          type="button"
-          class="day"
-          class:on={rotation.includes(b.id)}
-          aria-pressed={rotation.includes(b.id)}
-          onclick={() => togglePage(b.id)}>{b.name}</button
-        >
-      {/each}
-    </div>
-    {#if rotation.length > 0}
-      <label class="inline-time">
-        Each page for
-        <select bind:value={rotateSeconds}>
-          {#each ROTATE_CHOICES as s (s)}
-            <option value={s}>{describeSeconds(s)}</option>
+    {#each slots as slot, i (i)}
+      <div class="slot">
+        <div class="inline">
+          <label class="inline-time">From <input type="time" bind:value={slot.from} required /></label>
+          <label class="inline-time">until <input type="time" bind:value={slot.until} required /></label>
+          <select aria-label="Dashboard for time slot {i + 1}" bind:value={slot.dashboardId}>
+            {#each dashboards as b (b.id)}
+              <option value={b.id}>{b.name}</option>
+            {/each}
+          </select>
+          <button type="button" class="link danger" onclick={() => slots.splice(i, 1)}>Remove</button>
+        </div>
+        <div class="days" role="group" aria-label="Days for time slot {i + 1}">
+          {#each DAYS as [day, label] (day)}
+            <button
+              type="button"
+              class="day"
+              class:on={slot.days.includes(day)}
+              aria-pressed={slot.days.includes(day)}
+              onclick={() => toggleDay(slot, day)}>{label}</button
+            >
           {/each}
-        </select>
-      </label>
+          <span class="muted small">{slot.days.length === 0 ? 'every day' : ''}</span>
+        </div>
+      </div>
+    {:else}
+      <p class="muted small">No set times yet.</p>
+    {/each}
+    {#if slots.length < maxSlots}
+      <div><button type="button" class="secondary" onclick={add}>Add a time</button></div>
     {/if}
+  </fieldset>
+
+  {#if others.length > 0}
+    <fieldset>
+      <legend>Dashboards in turn</legend>
+      <p class="muted small">Outside the set times, show these one after another with {ownName}.</p>
+      <div class="days" role="group" aria-label="Dashboards shown in turn">
+        {#each others as b (b.id)}
+          <button
+            type="button"
+            class="day"
+            class:on={rotation.includes(b.id)}
+            aria-pressed={rotation.includes(b.id)}
+            onclick={() => togglePage(b.id)}
+            >{#if rotation.includes(b.id)}<Icon name="check" size={14} />{/if}{b.name}</button
+          >
+        {/each}
+      </div>
+      {#if rotation.length > 0}
+        <label class="inline-time">
+          Each page for
+          <select bind:value={rotateSeconds}>
+            {#each ROTATE_CHOICES as s (s)}
+              <option value={s}>{describeSeconds(s)}</option>
+            {/each}
+          </select>
+        </label>
+      {/if}
+    </fieldset>
   {/if}
+
   <div class="inline">
     <button type="submit" disabled={saving}>Save</button>
     <button type="button" class="link" onclick={() => onclose(false)}>Cancel</button>
@@ -179,11 +200,33 @@
 <style>
   .schedule {
     display: grid;
-    gap: 8px;
+    gap: var(--s-4);
     width: 100%;
   }
   .schedule p {
     margin: 0;
+  }
+  h3 {
+    font-size: var(--fs-lg);
+  }
+  fieldset {
+    display: grid;
+    gap: var(--s-2);
+    margin: 0;
+    padding: var(--s-3) var(--s-4) var(--s-4);
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+    min-width: 0;
+  }
+  legend {
+    padding: 0 var(--s-1);
+    font-weight: 700;
+  }
+  .slot {
+    display: grid;
+    gap: var(--s-2);
+    padding-bottom: var(--s-2);
+    border-bottom: 1px dashed var(--border);
   }
   .days {
     display: flex;
@@ -192,6 +235,9 @@
     align-items: center;
   }
   .day {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
     min-width: 2.6em;
     padding: 4px 6px;
     background: transparent;
