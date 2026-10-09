@@ -19,6 +19,7 @@ import (
 	"github.com/stijnvandepol/daycast/internal/casting"
 	"github.com/stijnvandepol/daycast/internal/datahub"
 	"github.com/stijnvandepol/daycast/internal/pairing"
+	"github.com/stijnvandepol/daycast/internal/photos"
 	"github.com/stijnvandepol/daycast/internal/settings"
 	"github.com/stijnvandepol/daycast/internal/store"
 	"github.com/stijnvandepol/daycast/internal/validation"
@@ -66,6 +67,10 @@ type Server struct {
 	Version string
 	// CastStatus returns what each display's cast keeper last found.
 	CastStatus func() map[string]casting.Status
+	Photos     *photos.Store
+	// PhotosChanged is called after a photo is added or removed, so photo
+	// widgets update.
+	PhotosChanged func()
 	// PingInterval is how often an open display stream sends a keep-alive
 	// and re-checks that it may still show the display. Zero means 20
 	// seconds.
@@ -115,6 +120,11 @@ func (s *Server) Handler() http.Handler {
 	mux.Handle("POST /api/calendars", s.requireUser(s.postCalendar))
 	mux.Handle("DELETE /api/calendars/{id}", s.requireUser(s.deleteCalendar))
 	mux.Handle("GET /api/places", s.requireUser(s.getPlaces))
+
+	mux.Handle("GET /api/photos", s.requireUser(s.listPhotos))
+	mux.Handle("POST /api/photos", s.requireUser(s.postPhoto))
+	mux.Handle("DELETE /api/photos/{name}", s.requireUser(s.deletePhoto))
+	mux.HandleFunc("GET /api/photos/{name}", s.getPhoto)
 
 	mux.Handle("GET /api/cast-devices", s.requireUser(s.castDevices))
 	mux.Handle("GET /api/displays", s.requireUser(s.listDisplays))

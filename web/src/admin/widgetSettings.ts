@@ -9,6 +9,7 @@ export const WIDGET_LABELS: Record<string, string> = {
   news: 'News',
   text: 'Note',
   countdown: 'Countdown',
+  photos: 'Photos',
 };
 
 export const SETTING_LABELS: Record<string, string> = {
@@ -17,6 +18,7 @@ export const SETTING_LABELS: Record<string, string> = {
   text: 'Text',
   label: 'Label',
   date: 'Date',
+  seconds: 'Seconds per photo',
 };
 
 const COUNTDOWN_DAYS = 30;
@@ -27,6 +29,7 @@ export function defaultSettings(type: WidgetType, today = new Date()): Record<st
   const defaults: Record<string, unknown> = {
     maxItems: 5,
     days: 5,
+    seconds: 30,
     text: 'Write a note for the household here.',
     label: 'Holiday',
     date: isoDate(later),

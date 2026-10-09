@@ -30,6 +30,8 @@ const (
 	auditNewsFeedRemoved     = "news_feed_removed"
 	auditCalendarAdded       = "calendar_added"
 	auditCalendarRemoved     = "calendar_removed"
+	auditPhotoAdded          = "photo_added"
+	auditPhotoRemoved        = "photo_removed"
 	defaultAuditPage         = 100
 	maxAuditDetailCharacters = 200
 )

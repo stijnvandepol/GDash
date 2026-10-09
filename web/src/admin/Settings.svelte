@@ -6,6 +6,7 @@
   import AccountSetting from './AccountSetting.svelte';
   import ActivityLog from './ActivityLog.svelte';
   import LocationSetting from './LocationSetting.svelte';
+  import PhotoSetting from './PhotoSetting.svelte';
   import SourceList from './SourceList.svelte';
 
   let { onSessionEnded }: { onSessionEnded: () => void } = $props();
@@ -119,6 +120,8 @@
 {:else if !loadError}
   <p class="muted">Loading…</p>
 {/if}
+
+<PhotoSetting onerror={handle} />
 
 <AccountSetting onerror={handle} />
 

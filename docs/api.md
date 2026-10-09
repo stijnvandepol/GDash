@@ -53,6 +53,10 @@ come from another site (cross-site request forgery protection).
 | `DELETE /api/news-feeds/{id}` | admin | `204` | `401`, `404` |
 | `POST /api/calendars` `{name, url}` | admin | `201` calendar, without its address | `401`, `409` at 10 calendars, `422` |
 | `DELETE /api/calendars/{id}` | admin | `204` | `401`, `404` |
+| `GET /api/photos` | admin | `200 {"photos": [{name, size, addedAt}]}`, oldest first | `401` |
+| `POST /api/photos` multipart, field `photo` | admin | `201` photo | `401`, `409` at 50 photos, `422` for another kind of file or one over 8 MB |
+| `DELETE /api/photos/{name}` | admin | `204` | `401`, `404` |
+| `GET /api/photos/{name}` | admin or any paired screen | `200` the image | `404`, also for anyone else |
 | `GET /api/cast-devices` | admin | `200 {"devices": [device]}` | `401`, `500 discovery_failed` |
 | `GET /api/displays/{id}/events` | paired screen or admin | `text/event-stream`, `snapshot` events | `401 not_paired`, `404` for an invalid id |
 | `POST /api/pairing-requests` `{displayId}` | no | `201 {code, pollToken, expiresAt}` | `404`, `429 rate_limited` |
@@ -144,6 +148,7 @@ allows, overlaps another, lacks a required setting, or has a setting its type do
 | `news` | 6x4 | `news.default` | `maxItems`: 1 to 20 |
 | `calendar` | 6x4 | `calendar.default` | `maxItems`: 1 to 20 |
 | `text` | 4x3 | none | `text`: 1 to 300 characters, line breaks allowed (required) |
+| `photos` | 4x3 | `photos.default` | `seconds`: 5 to 600 per photo, default 30 |
 | `countdown` | 4x4 | none | `label`: 1 to 60 characters, `date`: `YYYY-MM-DD` (both required) |
 
 A setting's `kind` is `integer`, `text` or `date`; `min` and `max` bound an integer, or a text's length in characters.

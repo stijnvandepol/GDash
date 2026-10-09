@@ -67,11 +67,16 @@ var WidgetTypes = map[string]WidgetType{
 	"news":     {Source: "news.default", MinW: 6, MinH: 4, Settings: maxItems},
 	"calendar": {Source: "calendar.default", MinW: 6, MinH: 4, Settings: maxItems},
 	"text":     {MinW: 4, MinH: 3, Settings: map[string]Setting{"text": {Kind: SettingText, Min: 1, Max: 300, Required: true}}},
+	"photos":   {Source: PhotosSource, MinW: 4, MinH: 3, Settings: map[string]Setting{"seconds": {Kind: SettingInteger, Min: 5, Max: 600}}},
 	"countdown": {MinW: 4, MinH: 4, Settings: map[string]Setting{
 		"label": {Kind: SettingText, Min: 1, Max: 60, Required: true},
 		"date":  {Kind: SettingDate, Required: true},
 	}},
 }
+
+// PhotosSource is the data key of the photo list; the server builds it
+// from the photo folder rather than fetching it.
+const PhotosSource = "photos.default"
 
 // Themes are the built-in themes; web/src/theme.css defines their tokens.
 var Themes = []string{"minimal-dark", "minimal-light", "glass", "warm-light", "high-contrast", "night"}

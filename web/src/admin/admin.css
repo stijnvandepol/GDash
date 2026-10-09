@@ -74,6 +74,11 @@ button.tab.active {
   display: grid;
   gap: 20px;
 }
+/* Grid items do not shrink below their content by default; one wide card
+   would then make every card wider than a phone screen. */
+.content > * {
+  min-width: 0;
+}
 
 .card {
   background: var(--card);
@@ -113,6 +118,11 @@ select {
   background: var(--bg);
   color: var(--text);
   min-width: 0;
+}
+/* The browser's own text in a file field ("No file chosen") would
+   otherwise make it wider than a phone screen. */
+input[type='file'] {
+  max-width: 100%;
 }
 .with-prefix {
   display: flex;

@@ -23,6 +23,7 @@ import (
 	"github.com/stijnvandepol/daycast/internal/casting"
 	"github.com/stijnvandepol/daycast/internal/datahub"
 	"github.com/stijnvandepol/daycast/internal/pairing"
+	"github.com/stijnvandepol/daycast/internal/photos"
 	"github.com/stijnvandepol/daycast/internal/secret"
 	"github.com/stijnvandepol/daycast/internal/settings"
 	"github.com/stijnvandepol/daycast/internal/store"
@@ -105,6 +106,10 @@ func newTestEnv(t *testing.T, discover func(context.Context) ([]cast.Device, err
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	now := func() time.Time { return time.Date(2026, 10, 8, 17, 0, 0, 0, time.UTC) }
 	sources := &fakeSources{}
+	album, err := photos.NewStore(filepath.Join(t.TempDir(), "photos"))
+	if err != nil {
+		t.Fatal(err)
+	}
 	s := &Server{
 		Snapshots: fixedSubscriber(`{"type":"snapshot","version":1}`),
 		Auth:      authService,
@@ -125,6 +130,8 @@ func newTestEnv(t *testing.T, discover func(context.Context) ([]cast.Device, err
 		SourceStatus:      sources.Entries,
 		Version:           "v1.2.3",
 		CastStatus:        sources.CastStatus,
+		Photos:            album,
+		PhotosChanged:     func() { changes.Add(1) },
 		PingInterval:      50 * time.Millisecond,
 		Now:               now,
 		Logger:            logger,

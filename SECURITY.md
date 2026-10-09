@@ -26,6 +26,8 @@ fully trust, such as a guest's phone.
 - **Secrets:** calendar addresses give read access to a calendar, so they
   are encrypted (AES-256-GCM) with a key file next to the database, never
   returned by the API and never logged.
+- **Photos:** only served to logged-in admins and paired screens; an
+  upload is accepted by its content (JPEG, PNG or WebP), not by its name.
 - **Outgoing requests:** feeds and calendars an admin adds are fetched with a
   client that refuses link-local addresses, where cloud hosts serve instance
   metadata.

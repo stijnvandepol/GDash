@@ -71,6 +71,11 @@ Under **Dashboards** you edit layouts on the same 16:9 grid as the TV.
 | News | Headlines from your feeds |
 | Note | A short text for the household |
 | Countdown | The days until a date, such as a holiday |
+| Photos | A slideshow of your photos |
+
+**Photos** are added under Settings, Photos: JPEG, PNG or WebP, up to 8 MB
+each and 50 in total. They stay on your server and only go to paired
+screens and to you; the rest of the network gets nothing.
 
 Every display shows the **Default** dashboard until you choose another one
 in the list at the display.

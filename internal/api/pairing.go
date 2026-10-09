@@ -126,6 +126,11 @@ func (s *Server) mayShowDisplay(r *http.Request, displayID string) (bool, error)
 	if !errors.Is(err, pairing.ErrInvalidToken) {
 		return false, err
 	}
+	return s.isAdmin(r)
+}
+
+// isAdmin reports whether the request carries a valid admin session.
+func (s *Server) isAdmin(r *http.Request) (bool, error) {
 	cookie, err := r.Cookie(sessionCookie)
 	if err != nil {
 		return false, nil

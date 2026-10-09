@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -16,6 +17,7 @@ import (
 	"github.com/stijnvandepol/daycast/internal/display"
 	"github.com/stijnvandepol/daycast/internal/news"
 	"github.com/stijnvandepol/daycast/internal/outbound"
+	"github.com/stijnvandepol/daycast/internal/photos"
 	"github.com/stijnvandepol/daycast/internal/settings"
 	"github.com/stijnvandepol/daycast/internal/store"
 	"github.com/stijnvandepol/daycast/internal/weather"
@@ -37,7 +39,7 @@ type dataSources struct {
 
 // startData starts fetching dashboard data. The publisher turns every data
 // or configuration change into new display snapshots on the broadcaster.
-func startData(ctx context.Context, cfg config, db *store.Store, svc *settings.Service, logger *slog.Logger) (*display.Broadcaster, *display.Publisher, *dataSources, error) {
+func startData(ctx context.Context, cfg config, db *store.Store, svc *settings.Service, album *photos.Store, logger *slog.Logger) (*display.Broadcaster, *display.Publisher, *dataSources, error) {
 	cache, err := datahub.NewFileStore(filepath.Join(cfg.dataDir, "cache"))
 	if err != nil {
 		return nil, nil, nil, err
@@ -47,7 +49,7 @@ func startData(ctx context.Context, cfg config, db *store.Store, svc *settings.S
 	publisher := &display.Publisher{
 		Broadcaster: broadcaster,
 		Views:       db.DisplayViews,
-		Data:        func() map[string]datahub.Entry { return hub.Entries() },
+		Data:        func() map[string]datahub.Entry { return withPhotos(hub.Entries(), album, logger) },
 		Language:    svc.Language,
 		Now:         time.Now,
 		Logger:      logger,
@@ -69,6 +71,30 @@ func startData(ctx context.Context, cfg config, db *store.Store, svc *settings.S
 		return nil, nil, nil, err
 	}
 	return broadcaster, publisher, sources, nil
+}
+
+// withPhotos adds the list of photo names to the fetched data, for the
+// photo widget. Reading a folder of at most 50 files on every publish is
+// cheaper than keeping a copy in step.
+func withPhotos(entries map[string]datahub.Entry, album *photos.Store, logger *slog.Logger) map[string]datahub.Entry {
+	list, err := album.List()
+	if err != nil {
+		logger.Error("could not list photos; photo widgets keep their last list", "error", err)
+		return entries
+	}
+	names := make([]string, len(list))
+	for i, p := range list {
+		names[i] = p.Name
+	}
+	value, err := json.Marshal(names)
+	if err != nil {
+		logger.Error("could not encode the photo list", "error", err)
+		return entries
+	}
+	now := time.Now()
+	// The list is never stale: it is read from disk on every publish.
+	entries[display.PhotosSource] = datahub.Entry{Value: value, FetchedAt: now, StaleAfter: now.Add(photoListValidity)}
+	return entries
 }
 
 // sync reads the settings and reconfigures the hub. ctx is the server's

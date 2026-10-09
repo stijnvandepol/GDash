@@ -36,6 +36,7 @@ const en = {
   calendarLoading: 'Loading calendar…',
   calendarFailed: 'Could not load the calendar',
   calendarNotSetUp: 'No calendar. Add one under Settings.',
+  photosNone: 'No photos yet. Add them under Settings.',
 };
 
 export type TextKey = keyof typeof en;
@@ -71,6 +72,7 @@ const TEXTS: Record<Language, Record<TextKey, string>> = {
     calendarLoading: 'Agenda laden…',
     calendarFailed: 'De agenda kon niet worden geladen',
     calendarNotSetUp: 'Geen agenda. Voeg er een toe onder Settings.',
+    photosNone: "Nog geen foto's. Voeg ze toe onder Settings.",
   },
 };
 

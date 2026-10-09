@@ -44,3 +44,11 @@
   {/if}
   {#if error}<p class="error">{error}</p>{/if}
 </section>
+
+<style>
+  /* Names and addresses can be long words; they wrap instead of widening
+     the page. */
+  .list {
+    overflow-wrap: anywhere;
+  }
+</style>

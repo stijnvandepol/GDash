@@ -31,6 +31,7 @@ import (
 	"github.com/stijnvandepol/daycast/internal/cast"
 	"github.com/stijnvandepol/daycast/internal/display"
 	"github.com/stijnvandepol/daycast/internal/pairing"
+	"github.com/stijnvandepol/daycast/internal/photos"
 	"github.com/stijnvandepol/daycast/internal/secret"
 	"github.com/stijnvandepol/daycast/internal/settings"
 	"github.com/stijnvandepol/daycast/internal/store"
@@ -53,6 +54,9 @@ const (
 	// short headlines keep a snapshot far below the 64 KB Cast limit.
 	newsItems       = 10
 	upstreamTimeout = 15 * time.Second
+	// photoListValidity only has to outlast the minute between publishes;
+	// the list is read again every time.
+	photoListValidity = time.Hour
 	// A week of daily database copies covers a mistake noticed days later.
 	backupsKept     = 7
 	shutdownTimeout = 5 * time.Second
@@ -172,7 +176,11 @@ func serve(ctx context.Context, logger *slog.Logger) error {
 	if err != nil {
 		return err
 	}
-	snapshots, publisher, sources, err := startData(ctx, cfg, db, settingsService, logger)
+	album, err := photos.NewStore(filepath.Join(cfg.dataDir, "photos"))
+	if err != nil {
+		return err
+	}
+	snapshots, publisher, sources, err := startData(ctx, cfg, db, settingsService, album, logger)
 	if err != nil {
 		return err
 	}
@@ -208,11 +216,13 @@ func serve(ctx context.Context, logger *slog.Logger) error {
 			// The display language travels in the snapshots.
 			publisher.Refresh(ctx)
 		},
-		SourceStatus: sources.hub.Entries,
-		Version:      currentVersion(),
-		CastStatus:   castManager.Statuses,
-		Now:          time.Now,
-		Logger:       logger,
+		SourceStatus:  sources.hub.Entries,
+		Version:       currentVersion(),
+		CastStatus:    castManager.Statuses,
+		Photos:        album,
+		PhotosChanged: func() { publisher.Refresh(ctx) },
+		Now:           time.Now,
+		Logger:        logger,
 	}).Handler()
 	return listen(ctx, cfg.addr, handler, logger)
 }

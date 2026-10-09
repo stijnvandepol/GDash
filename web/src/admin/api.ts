@@ -144,6 +144,12 @@ export interface Place extends Location {
   region: string;
 }
 
+export interface Photo {
+  name: string;
+  size: number;
+  addedAt: string;
+}
+
 export interface CastDevice {
   id: string;
   name: string;
@@ -152,11 +158,13 @@ export interface CastDevice {
   hasScreen: boolean;
 }
 
+/** Sends body as JSON, or as it is when it is a form, such as a photo upload. */
 async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
+  const isForm = body instanceof FormData;
   const response = await fetch(path, {
     method,
-    headers: body === undefined ? {} : { 'Content-Type': 'application/json' },
-    body: body === undefined ? undefined : JSON.stringify(body),
+    headers: body === undefined || isForm ? {} : { 'Content-Type': 'application/json' },
+    body: body === undefined ? undefined : isForm ? body : JSON.stringify(body),
     credentials: 'same-origin',
   });
   if (response.status === 204) return undefined as T;
@@ -181,6 +189,13 @@ export const api = {
   logout: () => request<void>('DELETE', '/api/sessions/current'),
   me: () => request<User>('GET', '/api/me'),
   system: () => request<{ version: string }>('GET', '/api/system'),
+  photos: () => request<{ photos: Photo[] }>('GET', '/api/photos').then((r) => r.photos),
+  uploadPhoto: (file: File) => {
+    const form = new FormData();
+    form.append('photo', file);
+    return request<Photo>('POST', '/api/photos', form);
+  },
+  deletePhoto: (name: string) => request<void>('DELETE', `/api/photos/${encodeURIComponent(name)}`),
   auditEvents: (limit: number) =>
     request<{ events: AuditEvent[] }>('GET', `/api/audit-events?limit=${limit}`).then((r) => r.events),
   changePassword: (currentPassword: string, newPassword: string) =>

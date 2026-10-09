@@ -31,12 +31,17 @@ const ACTIONS: Record<string, string> = {
   news_feed_removed: 'Removed news feed',
   calendar_added: 'Added calendar',
   calendar_removed: 'Removed calendar',
+  photo_added: 'Added a photo',
+  photo_removed: 'Removed a photo',
 };
+
+// Actions whose detail means nothing to a person, such as a photo's file name.
+const WITHOUT_DETAIL = new Set(['photo_added', 'photo_removed']);
 
 /** "Changed dashboard morning", or the raw action for one this version does not know. */
 export function describeAction(event: AuditEvent): string {
   const text = ACTIONS[event.action] ?? event.action;
-  if (!event.detail) return text;
+  if (!event.detail || WITHOUT_DETAIL.has(event.action)) return text;
   return event.action === 'login_failed' || event.action === 'password_change_failed'
     ? `${text}: ${event.detail}`
     : `${text} ${event.detail}`;

@@ -101,8 +101,8 @@ failed upgrade, but they sit on the same disk: copy the whole data directory
 to another machine now and then as well.
 
 The data directory holds the database (`daycast.db`), the key that encrypts
-calendar addresses (`secret.key`), the daily copies (`backups`) and the last
-fetched data (`cache`). Without `secret.key` a restored database still
+calendar addresses (`secret.key`), the daily copies (`backups`), your photos
+(`photos`) and the last fetched data (`cache`). Without `secret.key` a restored database still
 works, but its calendars have to be added again.
 
 To restore a daily copy: stop Daycast, remove `daycast.db`, `daycast.db-wal`

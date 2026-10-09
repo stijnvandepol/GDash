@@ -12,6 +12,10 @@ describe('describeAction', () => {
     );
   });
 
+  it('leaves out file names of photos', () => {
+    expect(describeAction({ ...base, action: 'photo_added', detail: '17ffba802f212d49844c20cc3dca1edb.png' })).toBe('Added a photo');
+  });
+
   it('shows an action from a newer server as it is', () => {
     expect(describeAction({ ...base, action: 'backup_restored' })).toBe('backup_restored');
   });
