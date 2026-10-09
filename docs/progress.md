@@ -78,7 +78,7 @@ simulated device; not yet on the real TV.
 
 ## The living room TV
 
-The living room TV runs the current version since 9 October 09:13; the database migrated from version 3 to 10 with a backup before every step, and the location and news feed were copied from the environment. Restarting the server restarts the cast, which can switch a TV on through HDMI-CEC, so that waits until someone is home and awake.
+The living room TV runs the current version: first on 9 October at 09:13, when the database migrated from version 3 to 10 with a backup before every step and the location and news feed were copied from the environment, and again at 09:38 and 09:58 with the later features (migrations 11 and 12). A 24-hour soak test on it started at 09:14. Restarting the server restarts the cast, which can switch a TV on through HDMI-CEC, so that waits until someone is home and awake.
 
 ## Next
 
