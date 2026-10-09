@@ -2,14 +2,16 @@
   import { onMount } from 'svelte';
   import { api } from './api';
 
-  let { onopen }: { onopen: (tab: 'displays' | 'settings') => void } = $props();
+  let { onopen }: { onopen: (tab: 'displays' | 'dashboards' | 'settings') => void } = $props();
 
   // How often the steps are checked again while the card shows, so it
   // disappears soon after the last step is done on another tab.
   const RECHECK_MS = 10_000;
+  const DEFAULT_DASHBOARD_ID = 'default';
 
   let hasLocation = $state(true);
   let hasSources = $state(true);
+  let hasDashboard = $state(true);
   let hasDisplay = $state(true);
 
   const done = $derived(hasLocation && hasDisplay);
@@ -26,12 +28,14 @@
   // itself reports errors when it loads.
   async function check() {
     try {
-      const [{ settings }, displays] = await Promise.all([api.settings(), api.displays()]);
+      const [{ settings }, displays, dashboards] = await Promise.all([api.settings(), api.displays(), api.dashboards()]);
       hasLocation = settings.location !== null;
       hasSources = settings.newsFeeds.length > 0 || settings.calendars.length > 0;
+      // The default dashboard always exists, so only another one counts.
+      hasDashboard = dashboards.some((d) => d.id !== DEFAULT_DASHBOARD_ID);
       hasDisplay = displays.length > 0;
     } catch {
-      hasLocation = hasDisplay = true;
+      hasLocation = hasDisplay = hasDashboard = true;
     }
   }
 </script>
@@ -47,6 +51,10 @@
       <li class:done={hasSources}>
         Add news feeds or calendars, if you want them.
         {#if !hasSources}<button class="link" onclick={() => onopen('settings')}>Open Settings</button>{/if}
+      </li>
+      <li class:done={hasDashboard}>
+        Start a dashboard from a template, such as Kitchen or Hallway, or keep the default.
+        {#if !hasDashboard}<button class="link" onclick={() => onopen('dashboards')}>Open Dashboards</button>{/if}
       </li>
       <li class:done={hasDisplay}>
         Add a display and pick your TV, or pair a browser with the code it shows.
