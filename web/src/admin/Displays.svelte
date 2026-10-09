@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { toast } from './toast.svelte';
   import { ask } from './confirm.svelte';
   import { onMount } from 'svelte';
   import { api, ApiError, type CastDevice, type Dashboard, type Display } from './api';
@@ -88,6 +89,7 @@
     if (!(await ask({ title: 'Remove this display?', message, action: 'Remove' }))) return;
     try {
       await api.deleteDisplay(d.id);
+      toast.success(`Removed ${d.name}.`);
       await load();
     } catch (err) {
       rowError = handle(err);
@@ -141,6 +143,7 @@
     event.preventDefault();
     try {
       await api.pairScreen(id, pairCode.trim());
+      toast.success('Screen paired. It shows the dashboard within seconds.');
       pairingId = null;
       await load();
     } catch (err) {

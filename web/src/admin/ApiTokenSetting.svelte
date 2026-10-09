@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { toast } from './toast.svelte';
   import { ask } from './confirm.svelte';
   import { onMount } from 'svelte';
   import { api, ApiError, type ApiToken, type NewApiToken } from './api';
@@ -54,6 +55,7 @@
     error = '';
     try {
       await api.revokeApiToken(token.id);
+      toast.success(`Revoked ${token.name}.`);
       if (fresh?.id === token.id) fresh = null;
       await load();
     } catch (err) {

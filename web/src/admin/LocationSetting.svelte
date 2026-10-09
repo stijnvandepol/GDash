@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { toast } from './toast.svelte';
   import { ask } from './confirm.svelte';
   import { api, ApiError, type Location, type Place, type SourceStatus } from './api';
   import { describeStatus } from './status';
@@ -44,6 +45,7 @@
     error = '';
     try {
       await api.setLocation(loc);
+      toast.success(`Weather location set to ${loc.name}.`);
       editing = false;
       places = null;
       query = '';
@@ -77,6 +79,7 @@
     if (!(await ask({ title: 'Remove the location?', message, action: 'Remove' }))) return;
     try {
       await api.clearLocation();
+      toast.success('Weather location removed.');
       await onchanged();
       editing = true;
     } catch (err) {

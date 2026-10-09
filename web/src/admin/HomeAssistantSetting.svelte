@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { toast } from './toast.svelte';
   import { ask } from './confirm.svelte';
   import { api, ApiError, type HomeAssistant, type SourceStatus } from './api';
   import { describeStatus } from './status';
@@ -31,6 +32,7 @@
     fieldErrors = {};
     try {
       await api.connectHomeAssistant(url.trim(), token.trim());
+      toast.success('Home Assistant is connected.');
       url = '';
       token = '';
       editing = false;
@@ -52,6 +54,7 @@
     error = '';
     try {
       await api.disconnectHomeAssistant();
+      toast.success('Home Assistant is disconnected.');
       await onchanged();
     } catch (err) {
       error = onerror(err);

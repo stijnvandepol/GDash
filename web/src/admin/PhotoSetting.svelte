@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { toast } from './toast.svelte';
   import { ask } from './confirm.svelte';
   import FileButton from './FileButton.svelte';
   import { onMount } from 'svelte';
@@ -53,6 +54,7 @@
     if (!(await ask({ title: 'Remove this photo?', message, action: 'Remove' }))) return;
     try {
       await api.deletePhoto(p.name);
+      toast.success('Photo removed.');
       await load();
     } catch (err) {
       error = onerror(err);

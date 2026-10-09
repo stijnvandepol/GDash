@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { toast } from './toast.svelte';
   import { api, ApiError, slugify, type CastDevice } from './api';
 
   let {
@@ -39,6 +40,7 @@
     createError = null;
     try {
       await api.createDisplay({ id: newId, name: newName.trim(), castDeviceId: newDevice });
+      toast.success(`Added ${newName.trim()}.`);
       newName = '';
       newId = '';
       idEdited = false;

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { toast } from './toast.svelte';
   import { ask } from './confirm.svelte';
   import FileButton from './FileButton.svelte';
   import { onMount } from 'svelte';
@@ -68,6 +69,7 @@
     if (!(await ask({ title: 'Delete this dashboard?', message, action: 'Delete' }))) return;
     try {
       await api.deleteDashboard(d.id);
+      toast.success(`Deleted ${d.name}.`);
       await load();
     } catch (err) {
       loadError = handle(err);
@@ -97,6 +99,7 @@
       const imported = fromFile(await file.text());
       const id = freeId(imported.name, dashboards.map((d) => d.id));
       await api.createDashboard({ id, ...imported });
+      toast.success(`Imported ${imported.name}.`);
       await load();
     } catch (err) {
       importError = describeImportError(err);

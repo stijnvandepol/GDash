@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { toast } from './toast.svelte';
   import { ask } from './confirm.svelte';
   import { ApiError, type SourceStatus } from './api';
   import { describeStatus } from './status';
@@ -68,6 +69,7 @@
     fieldErrors = {};
     try {
       await onadd(name.trim(), url.trim());
+      toast.success(`Added ${name.trim()}.`);
       name = '';
       url = '';
     } catch (err) {
@@ -87,6 +89,7 @@
     error = '';
     try {
       await onremove(item.id);
+      toast.success(`Removed ${item.name}.`);
     } catch (err) {
       error = onerror(err);
     }
