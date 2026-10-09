@@ -44,12 +44,21 @@ for (const colorScheme of ['light', 'dark'] as const) {
       await expectNoBlockingViolations(page);
     });
 
-    for (const tab of ['Displays', 'Dashboards', 'Settings'] as const) {
+    for (const tab of ['Displays', 'Dashboards'] as const) {
       test(`the ${tab} page has no serious or critical violations`, async ({ adminPage: page }) => {
         await page.emulateMedia({ colorScheme });
         await openTab(page, tab);
         await expectNoBlockingViolations(page);
       });
     }
+
+    test('every part of Settings has no serious or critical violations', async ({ adminPage: page }) => {
+      await page.emulateMedia({ colorScheme });
+      await openTab(page, 'Settings');
+      for (const part of ['Data sources', 'Screens', 'Automations', 'Account']) {
+        await page.getByRole('navigation', { name: 'Settings' }).getByRole('button', { name: part }).click();
+        await expectNoBlockingViolations(page);
+      }
+    });
   });
 }

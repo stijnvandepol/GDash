@@ -47,12 +47,16 @@ test.describe('settings', () => {
   });
 
   test('the language of the TVs can be changed', async ({ adminPage: page }) => {
+    const screens = page.getByRole('navigation', { name: 'Settings' }).getByRole('button', { name: 'Screens' });
+    await screens.click();
+    await expect(screens).toHaveAttribute('aria-current', 'page');
     const language = page.getByLabel('Language on the TVs');
     await expect(language).toHaveValue('en');
     await language.selectOption('nl');
 
     await page.reload();
     await openTab(page, 'Settings');
+    await screens.click();
     await expect(language).toHaveValue('nl');
     const stored = await page.request.get('/api/settings');
     expect(((await stored.json()) as { settings: { language: string } }).settings.language).toBe('nl');
