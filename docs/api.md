@@ -18,7 +18,9 @@ Every error has the same shape:
 ```
 
 `fields` is only present for `422`. Request bodies must be one JSON object of
-at most 64 KiB; unknown fields are rejected with `400 invalid_json`.
+at most 64 KiB, sent as `Content-Type: application/json` (otherwise
+`415 unsupported_media_type`); unknown fields are rejected with
+`400 invalid_json`. API answers carry `Cache-Control: no-store`.
 
 Browser requests that change something are rejected with `403` when they
 come from another site (cross-site request forgery protection).

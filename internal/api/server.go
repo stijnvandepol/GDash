@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"io/fs"
 	"log/slog"
+	"mime"
 	"net/http"
 	"net/netip"
 	"regexp"
@@ -105,7 +106,7 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /d/{display}", s.displayPage)
 	mux.HandleFunc("GET /preview/{dashboard}", s.previewPage)
 	mux.HandleFunc("GET /receiver/", s.receiverPage)
-	mux.Handle("GET /assets/", http.FileServerFS(s.Web))
+	mux.Handle("GET /assets/", withoutDirectoryListing(http.FileServerFS(s.Web)))
 	mux.HandleFunc("GET /api/displays/{display}/events", s.displayEvents)
 
 	mux.HandleFunc("GET /api/setup", s.getSetup)
@@ -168,15 +169,6 @@ func (s *Server) Handler() http.Handler {
 	return behindProxies(s.TrustedProxies, withSecurityHeaders(csrf.Handler(mux)))
 }
 
-func withSecurityHeaders(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		h := w.Header()
-		h.Set("X-Content-Type-Options", "nosniff")
-		h.Set("Referrer-Policy", "no-referrer")
-		next.ServeHTTP(w, r)
-	})
-}
-
 // displayCSP (also used for the web interface) allows nothing from outside the server: no CDN, no fonts from
 // Google, no inline scripts.
 const (
@@ -205,9 +197,10 @@ func (s *Server) displayPage(w http.ResponseWriter, r *http.Request) {
 
 // receiverPage is served for development: an unpublished Cast app may point
 // at a LAN address. A published receiver must come from HTTPS, see
-// docs/receiver.md. No CSP is set because the Cast framework loads code from
-// gstatic.com at runtime.
+// docs/receiver.md. Its CSP cannot limit scripts, because the Cast
+// framework loads code from gstatic.com at runtime; see receiverCSP.
 func (s *Server) receiverPage(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Security-Policy", receiverCSP)
 	s.servePage(w, r, "receiver/index.html")
 }
 
@@ -263,6 +256,10 @@ const maxRequestBody = 64 << 10
 // decodeJSON reads one JSON object into dst and rejects unknown fields, so a
 // typo in a field name is an error instead of being silently ignored.
 func decodeJSON(w http.ResponseWriter, r *http.Request, dst any) bool {
+	if mediaType, _, err := mime.ParseMediaType(r.Header.Get("Content-Type")); err != nil || mediaType != "application/json" {
+		writeError(w, http.StatusUnsupportedMediaType, "unsupported_media_type", "Send the request body as application/json.")
+		return false
+	}
 	dec := json.NewDecoder(http.MaxBytesReader(w, r.Body, maxRequestBody))
 	dec.DisallowUnknownFields()
 	if err := dec.Decode(dst); err != nil {

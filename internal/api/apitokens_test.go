@@ -20,6 +20,9 @@ func (e *testEnv) bearer(t *testing.T, method, path, body, secret string, header
 	if secret != "" {
 		req.Header.Set("Authorization", "Bearer "+secret)
 	}
+	if body != "" {
+		req.Header.Set("Content-Type", "application/json")
+	}
 	for k, v := range headers {
 		req.Header.Set(k, v)
 	}

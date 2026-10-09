@@ -150,6 +150,7 @@ func TestAnnouncementIsRateLimitedPerToken(t *testing.T) {
 		}
 	}
 	req, _ := http.NewRequest("POST", env.srv.URL+"/api/announcements", strings.NewReader(`{"message":"x"}`))
+	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "Bearer "+first)
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
@@ -213,6 +214,7 @@ func TestAnnouncementCrossSiteRequestsAreRefused(t *testing.T) {
 			t.Errorf("token with %v = %d, want 403", headers, status)
 		}
 		req, _ := http.NewRequest("POST", env.srv.URL+"/api/announcements", strings.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
 		for k, v := range headers {
 			req.Header.Set(k, v)
 		}
@@ -238,6 +240,7 @@ func TestSessionCookieDoesNotRescueABadToken(t *testing.T) {
 	env := newTestEnv(t, nil)
 	env.withDisplays(t)
 	req, _ := http.NewRequest("POST", env.srv.URL+"/api/announcements", strings.NewReader(`{"message":"x"}`))
+	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "Bearer gdk_wrong")
 	resp, err := env.client.Do(req) // carries the admin's session cookie
 	if err != nil {
