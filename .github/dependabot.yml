@@ -1,0 +1,38 @@
+# Weekly update proposals for everything that is pinned: Go modules, npm
+# packages, GitHub Actions (pinned by commit SHA, with the version in a
+# comment) and the base images of the Dockerfile (pinned by digest). Minor
+# and patch updates arrive as one pull request per ecosystem; a major update
+# is its own pull request, as it may need code changes. CI runs on each.
+version: 2
+updates:
+  - package-ecosystem: gomod
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      go-minor-and-patch:
+        update-types: [minor, patch]
+
+  - package-ecosystem: npm
+    directory: /web
+    schedule:
+      interval: weekly
+    groups:
+      npm-minor-and-patch:
+        update-types: [minor, patch]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      actions-minor-and-patch:
+        update-types: [minor, patch]
+
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      docker-minor-and-patch:
+        update-types: [minor, patch]
