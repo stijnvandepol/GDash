@@ -4,7 +4,6 @@
 package calendar
 
 import (
-	"errors"
 	"fmt"
 	"io"
 	"sort"
@@ -75,17 +74,19 @@ func Parse(r io.Reader, w Window, fallbackName string) ([]Event, error) {
 			events = append(events, newEvent(e, occ, name, w.Location))
 		}
 	}
+	recurring := 0
 	for _, e := range masters {
-		if isCancelled(e) {
+		if isCancelled(e) || recurring >= maxOccurrences {
 			continue
 		}
-		occs, err := expand(e, w)
+		occs, err := expand(e, w, maxOccurrences-recurring)
 		if err != nil {
 			// One broken rule must not hide the rest of the calendar.
 			continue
 		}
 		uid := propValue(e.Props, ical.PropUID)
 		for _, occ := range occs {
+			recurring++
 			if !overridden[uid][occ.start.Unix()] {
 				events = append(events, newEvent(e, occ, name, w.Location))
 			}
@@ -146,31 +147,6 @@ func single(e ical.Event, loc *time.Location) (occurrence, error) {
 		end = defaultEnd(start, allDay)
 	}
 	return occurrence{start: start, end: end, allDay: allDay}, nil
-}
-
-func expand(e ical.Event, w Window) ([]occurrence, error) {
-	first, err := single(e, w.Location)
-	if err != nil {
-		return nil, err
-	}
-	set, err := e.RecurrenceSet(w.Location)
-	if err != nil {
-		return nil, err
-	}
-	if set == nil {
-		return nil, errors.New("event has no recurrence set")
-	}
-	duration := first.end.Sub(first.start)
-	// Start the search one duration early, so an occurrence that began
-	// before the window but still runs is found.
-	var occs []occurrence
-	for _, start := range set.Between(w.From.Add(-duration), w.To, true) {
-		occ := occurrence{start: start, end: start.Add(duration), allDay: first.allDay}
-		if overlaps(occ, w) {
-			occs = append(occs, occ)
-		}
-	}
-	return occs, nil
 }
 
 func overlaps(occ occurrence, w Window) bool {
