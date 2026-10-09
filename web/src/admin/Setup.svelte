@@ -1,5 +1,6 @@
 <script lang="ts">
   import { api, ApiError, type User } from './api';
+  import Logo from './Logo.svelte';
 
   let { onDone }: { onDone: (user: User) => void } = $props();
 
@@ -23,28 +24,54 @@
   }
 </script>
 
-<form class="card narrow" onsubmit={submit}>
-  <h1>Set up Nookboard</h1>
-  <p class="muted">
-    Create the administrator account. The setup token is printed in the Nookboard log, for example in Container Manager on
-    your NAS or in the terminal window. That way only you can set up this server.
-  </p>
+<div class="auth-card">
+  <div class="auth-brand">
+    <Logo size={56} />
+    <span class="name">Welcome to Nookboard</span>
+    <p>Create the administrator account to get started.</p>
+  </div>
 
-  <label>
-    Setup token
-    <input bind:value={setupToken} autocomplete="off" spellcheck="false" required />
-  </label>
-  <label>
-    Username
-    <input bind:value={username} autocomplete="username" required />
-    {#if error?.fieldMessage('username')}<span class="field-error">{error.fieldMessage('username')}</span>{/if}
-  </label>
-  <label>
-    Password
-    <input type="password" bind:value={password} autocomplete="new-password" required minlength="10" />
-    {#if error?.fieldMessage('password')}<span class="field-error">{error.fieldMessage('password')}</span>{/if}
-  </label>
+  <form class="card auth-form" onsubmit={submit}>
+    <h1>Set up this server</h1>
 
-  {#if error && error.fields.length === 0}<p class="error">{error.message}</p>{/if}
-  <button type="submit" disabled={busy}>{busy ? 'Working…' : 'Create account'}</button>
-</form>
+    <label>
+      Setup token
+      <input bind:value={setupToken} autocomplete="off" spellcheck="false" required />
+    </label>
+    <details class="help" open>
+      <summary>Where do I find the setup token?</summary>
+      <p>
+        Nookboard prints it in its log when it starts for the first time. Only someone with access to the server can read
+        it, so only you can set up this server.
+      </p>
+      <ul>
+        <li>Docker: run <code>docker compose logs nookboard</code></li>
+        <li>Synology: open the project in Container Manager and read its log</li>
+        <li>Linux service: run <code>journalctl -u nookboard</code></li>
+        <li>Started in a terminal: it is in that window</li>
+      </ul>
+    </details>
+
+    <label>
+      Username
+      <input bind:value={username} autocomplete="username" required aria-invalid={!!error?.fieldMessage('username')} />
+      {#if error?.fieldMessage('username')}<span class="field-error">{error.fieldMessage('username')}</span>{/if}
+    </label>
+    <label>
+      Password
+      <input
+        type="password"
+        bind:value={password}
+        autocomplete="new-password"
+        required
+        minlength="10"
+        aria-invalid={!!error?.fieldMessage('password')}
+      />
+      <span class="muted small">At least 10 characters.</span>
+      {#if error?.fieldMessage('password')}<span class="field-error">{error.fieldMessage('password')}</span>{/if}
+    </label>
+
+    {#if error && error.fields.length === 0}<p class="error" role="alert">{error.message}</p>{/if}
+    <button type="submit" class:busy aria-busy={busy} disabled={busy}>{busy ? 'Working…' : 'Create account'}</button>
+  </form>
+</div>
