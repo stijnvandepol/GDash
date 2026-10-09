@@ -22,7 +22,10 @@ the format follows [Keep a Changelog](https://keepachangelog.com).
 - Settings is grouped into data sources, screens, automations and account;
   each display shows its dashboard and text size as labelled fields; the
   dashboard editor is wider, draws its grid and outlines the selected
-  widget; templates are shown in their theme's colours.
+  widget; templates and your own dashboards are shown as thumbnails in
+  their theme's colours. Removing something asks in GDash's own dialog
+  instead of the browser's, and the main actions confirm with a short
+  message.
 - New passwords follow NIST SP 800-63B: at least 12 characters, not the
   user name or a well-known password. Existing passwords keep working.
 - The Docker image runs as user 65532 with a read-only file system in the
@@ -91,6 +94,8 @@ the format follows [Keep a Changelog](https://keepachangelog.com).
   air quality values too large to be real are refused; the own Cast
   receiver no longer follows navigate messages.
 - Failed setups and rejected API tokens are recorded in the activity log.
+- Uploaded photos lose their location, camera, date and other metadata
+  before they are stored; a JPEG keeps only its orientation.
 
 ## 0.5.0 – 2026-10-09
 
