@@ -269,7 +269,7 @@ type launchCounter struct {
 	localIPs []string
 }
 
-func (c *launchCounter) message(localIP string) ([]byte, error) {
+func (c *launchCounter) message(localIP, _ string) ([]byte, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	c.n++

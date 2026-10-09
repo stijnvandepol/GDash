@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"net/netip"
 	"strings"
 	"testing"
 	"time"
@@ -73,7 +74,7 @@ func TestOpenStreamEndsWhenScreenIsUnpaired(t *testing.T) {
 	env := newTestEnv(t, nil)
 	env.setUp(t)
 	env.createKitchen(t)
-	launch, err := env.pairing.NewLaunchToken("keuken")
+	launch, err := env.pairing.NewLaunchToken("keuken", netip.MustParseAddr("127.0.0.1"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -134,7 +135,7 @@ func TestPairedScreenCannotShowAnotherDisplay(t *testing.T) {
 	if status, _ := env.do(t, "POST", "/api/displays", `{"id":"kantoor","name":"Kantoor"}`); status != http.StatusCreated {
 		t.Fatal("create second display failed")
 	}
-	launch, err := env.pairing.NewLaunchToken("keuken")
+	launch, err := env.pairing.NewLaunchToken("keuken", netip.MustParseAddr("127.0.0.1"))
 	if err != nil {
 		t.Fatal(err)
 	}

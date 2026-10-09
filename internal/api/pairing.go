@@ -51,7 +51,7 @@ func (s *Server) postDisplaySession(w http.ResponseWriter, r *http.Request) {
 	case body.PollToken != "" && body.LaunchToken == "":
 		displayToken, displayID, err = s.Pairing.Claim(body.PollToken)
 	case body.LaunchToken != "" && body.PollToken == "":
-		displayToken, displayID, err = s.Pairing.Exchange(r.Context(), body.LaunchToken)
+		displayToken, displayID, err = s.Pairing.Exchange(r.Context(), body.LaunchToken, clientIP(r))
 	default:
 		writeError(w, http.StatusBadRequest, "invalid_json", "Send either pollToken or launchToken.")
 		return

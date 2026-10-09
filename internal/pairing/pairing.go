@@ -8,6 +8,7 @@ package pairing
 import (
 	"context"
 	"errors"
+	"net/netip"
 	"sync"
 	"time"
 
@@ -70,6 +71,8 @@ type pending struct {
 type launch struct {
 	displayID string
 	expires   time.Time
+	// device is the Cast device the token was sent to; only it may use it.
+	device netip.Addr
 }
 
 // Service manages pairing. Pending codes and launch tokens live in memory:
@@ -175,8 +178,10 @@ func (s *Service) Claim(pollToken string) (displayToken, displayID string, err e
 }
 
 // NewLaunchToken returns a single-use token for the URL a cast keeper opens
-// on a TV, valid for two minutes.
-func (s *Service) NewLaunchToken(displayID string) (string, error) {
+// on the Cast device at device, valid for two minutes and only from that
+// address: a device on the network that answers discovery in the TV's name
+// receives the URL, but cannot pair a screen of its own with it.
+func (s *Service) NewLaunchToken(displayID string, device netip.Addr) (string, error) {
 	launchToken, err := token.New()
 	if err != nil {
 		return "", err
@@ -187,16 +192,22 @@ func (s *Service) NewLaunchToken(displayID string) (string, error) {
 	if len(s.launches) >= maxPendingLaunches {
 		return "", errors.New("too many unused launch tokens")
 	}
-	s.launches[token.Hash(launchToken)] = launch{displayID: displayID, expires: s.now().Add(launchTTL)}
+	s.launches[token.Hash(launchToken)] = launch{displayID: displayID, expires: s.now().Add(launchTTL), device: device.Unmap()}
 	return launchToken, nil
 }
 
-// Exchange turns a launch token into a display token. A launch token works
-// once.
-func (s *Service) Exchange(ctx context.Context, launchToken string) (displayToken, displayID string, err error) {
+// Exchange turns a launch token into a display token for a screen at
+// clientIP. A launch token works once, and only from the device it was sent
+// to; a try from elsewhere leaves it for that device.
+func (s *Service) Exchange(ctx context.Context, launchToken, clientIP string) (displayToken, displayID string, err error) {
 	hash := token.Hash(launchToken)
+	client, _ := netip.ParseAddr(clientIP)
 	s.mu.Lock()
 	l, ok := s.launches[hash]
+	if ok && client.Unmap() != l.device {
+		s.mu.Unlock()
+		return "", "", ErrInvalidToken
+	}
 	delete(s.launches, hash)
 	s.mu.Unlock()
 	if !ok || !s.now().Before(l.expires) {

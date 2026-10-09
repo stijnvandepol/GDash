@@ -3,6 +3,7 @@ package pairing
 import (
 	"context"
 	"errors"
+	"net/netip"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -106,31 +107,52 @@ func TestBeginRejectsUnknownDisplayAndLimitsRequests(t *testing.T) {
 	}
 }
 
+// tvAddr is the Cast device that launch tokens are sent to in these tests.
+var tvAddr = netip.MustParseAddr("192.168.1.160")
+
+func TestLaunchTokenOnlyWorksFromItsDevice(t *testing.T) {
+	ctx := context.Background()
+	s, _ := newTestService(t)
+	launchToken, err := s.NewLaunchToken("kitchen", tvAddr)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, other := range []string{"192.168.1.66", "", "not an address"} {
+		if _, _, err := s.Exchange(ctx, launchToken, other); !errors.Is(err, ErrInvalidToken) {
+			t.Fatalf("Exchange from %q: err = %v, want ErrInvalidToken", other, err)
+		}
+	}
+	// The tries from elsewhere did not use up the token.
+	if _, displayID, err := s.Exchange(ctx, launchToken, "::ffff:192.168.1.160"); err != nil || displayID != "kitchen" {
+		t.Fatalf("Exchange from the TV = %q, %v", displayID, err)
+	}
+}
+
 func TestLaunchTokenIsSingleUseAndExpires(t *testing.T) {
 	ctx := context.Background()
 	s, clock := newTestService(t)
 
-	launchToken, err := s.NewLaunchToken("kitchen")
+	launchToken, err := s.NewLaunchToken("kitchen", tvAddr)
 	if err != nil {
 		t.Fatal(err)
 	}
-	displayToken, displayID, err := s.Exchange(ctx, launchToken)
+	displayToken, displayID, err := s.Exchange(ctx, launchToken, tvAddr.String())
 	if err != nil || displayID != "kitchen" {
 		t.Fatalf("Exchange = %q, %v", displayID, err)
 	}
 	if got, err := s.Authenticate(ctx, displayToken); err != nil || got != "kitchen" {
 		t.Fatalf("Authenticate = %q, %v", got, err)
 	}
-	if _, _, err := s.Exchange(ctx, launchToken); !errors.Is(err, ErrInvalidToken) {
+	if _, _, err := s.Exchange(ctx, launchToken, tvAddr.String()); !errors.Is(err, ErrInvalidToken) {
 		t.Fatalf("second Exchange: err = %v, want ErrInvalidToken", err)
 	}
 
-	expiring, err := s.NewLaunchToken("kitchen")
+	expiring, err := s.NewLaunchToken("kitchen", tvAddr)
 	if err != nil {
 		t.Fatal(err)
 	}
 	clock.t = clock.t.Add(launchTTL + time.Second)
-	if _, _, err := s.Exchange(ctx, expiring); !errors.Is(err, ErrInvalidToken) {
+	if _, _, err := s.Exchange(ctx, expiring, tvAddr.String()); !errors.Is(err, ErrInvalidToken) {
 		t.Fatalf("Exchange after expiry: err = %v, want ErrInvalidToken", err)
 	}
 }
@@ -138,11 +160,11 @@ func TestLaunchTokenIsSingleUseAndExpires(t *testing.T) {
 func TestIdleScreenIsUnpaired(t *testing.T) {
 	ctx := context.Background()
 	s, clock := newTestService(t)
-	launch, err := s.NewLaunchToken("kitchen")
+	launch, err := s.NewLaunchToken("kitchen", tvAddr)
 	if err != nil {
 		t.Fatal(err)
 	}
-	displayToken, _, err := s.Exchange(ctx, launch)
+	displayToken, _, err := s.Exchange(ctx, launch, tvAddr.String())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -165,11 +187,11 @@ func TestEveryLaunchReplacesTheCastToken(t *testing.T) {
 	s, _ := newTestService(t)
 	var tokens []string
 	for range 3 {
-		launchToken, err := s.NewLaunchToken("kitchen")
+		launchToken, err := s.NewLaunchToken("kitchen", tvAddr)
 		if err != nil {
 			t.Fatal(err)
 		}
-		displayToken, _, err := s.Exchange(ctx, launchToken)
+		displayToken, _, err := s.Exchange(ctx, launchToken, tvAddr.String())
 		if err != nil {
 			t.Fatal(err)
 		}

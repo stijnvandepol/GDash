@@ -64,6 +64,7 @@ type keeperSession struct {
 	client    *Client
 	messages  <-chan []byte
 	localIP   string
+	deviceIP  string
 	app       Application
 	transport string
 	standby   bool
@@ -155,7 +156,7 @@ func (s *keeperSession) reconcile(ctx context.Context, status ReceiverStatus) er
 	s.transport = app.TransportID
 	s.reportShowing()
 	if k.LaunchMessage != nil {
-		msg, err := k.LaunchMessage(s.localIP)
+		msg, err := k.LaunchMessage(s.localIP, s.deviceIP)
 		if err != nil {
 			return fmt.Errorf("build launch message: %w", err)
 		}

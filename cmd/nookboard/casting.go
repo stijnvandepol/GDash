@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net"
+	"net/netip"
 	"net/url"
 	"strings"
 	"time"
@@ -47,8 +48,12 @@ func newCastManager(cfg config, deps castDeps) (*casting.Manager, error) {
 			keeper.Messages = func(ctx context.Context) <-chan []byte { return snapshots.Subscribe(ctx, d.ID) }
 		} else {
 			keeper.AppID, keeper.Namespace = cast.DashCastAppID, cast.DashCastNamespace
-			keeper.LaunchMessage = func(localIP string) ([]byte, error) {
-				launchToken, err := pairings.NewLaunchToken(d.ID)
+			keeper.LaunchMessage = func(localIP, deviceIP string) ([]byte, error) {
+				device, err := netip.ParseAddr(deviceIP)
+				if err != nil {
+					return nil, fmt.Errorf("cast device address %q: %w", deviceIP, err)
+				}
+				launchToken, err := pairings.NewLaunchToken(d.ID, device)
 				if err != nil {
 					return nil, err
 				}

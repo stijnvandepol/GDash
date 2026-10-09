@@ -36,9 +36,10 @@ type Keeper struct {
 	// after they start, such as DashCast, which replaces itself with the
 	// page it opens. It is called after every launch, so the message can
 	// carry a fresh single-use token. localIP is an address of this server
-	// that the device can reach. A receiver of this kind that is found
-	// already running is restarted, because it would ignore the message.
-	LaunchMessage func(localIP string) ([]byte, error)
+	// that the device can reach, deviceIP the device's own address. A
+	// receiver of this kind that is found already running is restarted,
+	// because it would ignore the message.
+	LaunchMessage func(localIP, deviceIP string) ([]byte, error)
 	// Active reports whether the display is in its active hours. Outside
 	// them the keeper stops the receiver and does not launch it, so the TV
 	// can go to standby. Nil means always active. It is checked at every
@@ -93,10 +94,11 @@ func (k *Keeper) session(ctx context.Context) error {
 	sessionCtx, cancel := context.WithCancel(ctx)
 	defer cancel()
 	s := &keeperSession{
-		keeper:  k,
-		client:  client,
-		localIP: ReachableIP(device.Addr, client.LocalIP()),
-		resend:  time.NewTimer(0),
+		keeper:   k,
+		client:   client,
+		localIP:  ReachableIP(device.Addr, client.LocalIP()),
+		deviceIP: hostOf(device.Addr),
+		resend:   time.NewTimer(0),
 	}
 	if k.Messages != nil {
 		s.messages = k.Messages(sessionCtx)
@@ -158,4 +160,13 @@ func (c *Client) LocalIP() string {
 		return addr.IP.String()
 	}
 	return ""
+}
+
+// hostOf returns the host part of a host:port address, or addr itself.
+func hostOf(addr string) string {
+	host, _, err := net.SplitHostPort(addr)
+	if err != nil {
+		return addr
+	}
+	return host
 }
