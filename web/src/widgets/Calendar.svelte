@@ -140,8 +140,12 @@
     align-items: baseline;
     min-width: 0;
   }
-  li.past {
-    opacity: 0.45;
+  /* Muted rather than faded, so a past event stays readable. */
+  li.past .title {
+    color: var(--text-muted);
+  }
+  li.past .dot {
+    opacity: 0.5;
   }
   .dot {
     flex: none;
