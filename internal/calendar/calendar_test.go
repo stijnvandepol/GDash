@@ -70,6 +70,15 @@ func TestParseFillsEventFields(t *testing.T) {
 	}
 }
 
+func TestParseReturnsAnErrorForLinesThatPanicTheDecoder(t *testing.T) {
+	for _, line := range []string{"X;A=", "X;A=1,", `X;A="1"2:3`} {
+		ics := "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:x\r\n" + line + "\r\nEND:VCALENDAR\r\n"
+		if _, err := Parse(strings.NewReader(ics), window(t), "Work"); err == nil {
+			t.Errorf("Parse accepted the line %q", line)
+		}
+	}
+}
+
 func TestParseCutsEndlessEventsAtYear9999(t *testing.T) {
 	events, err := Parse(strings.NewReader(vevent("DTSTART:20261009T080000Z", "DTEND:99991231T235959Z", "SUMMARY:Forever")), window(t), "Work")
 	if err != nil {

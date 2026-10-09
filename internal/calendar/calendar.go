@@ -4,6 +4,7 @@
 package calendar
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"sort"
@@ -56,7 +57,7 @@ type occurrence struct {
 // Parse lists the events of one ICS document in the window, sorted by start.
 // fallbackName names the calendar when the feed does not.
 func Parse(r io.Reader, w Window, fallbackName string) ([]Event, error) {
-	cal, err := ical.NewDecoder(r).Decode()
+	cal, err := decode(r)
 	if err != nil {
 		return nil, fmt.Errorf("parse calendar: %w", err)
 	}
@@ -97,6 +98,19 @@ func Parse(r io.Reader, w Window, fallbackName string) ([]Event, error) {
 	}
 	Sort(events)
 	return events, nil
+}
+
+// decode reads the document. go-ical panics on some malformed lines (a
+// parameter without a value, such as "X;A=", or text after a quoted
+// value), and nothing above Parse recovers: one such line in a calendar
+// would end the whole server. The panic becomes an ordinary error.
+func decode(r io.Reader) (cal *ical.Calendar, err error) {
+	defer func() {
+		if recover() != nil {
+			cal, err = nil, errors.New("malformed calendar line")
+		}
+	}()
+	return ical.NewDecoder(r).Decode()
 }
 
 // classify splits events into recurring masters and single occurrences, and
