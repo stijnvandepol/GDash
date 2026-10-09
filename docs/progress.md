@@ -79,13 +79,13 @@ simulated device; not yet on the real TV.
 - **TLS verification towards Cast devices:** off, as in pychromecast. Pinning the certificate on first connection is an option.
 - **Name:** Daycast is the working name; a trademark check (BOIP, EUIPO) is still to do.
 
-## The living room TV
+## The kitchen TV
 
-The living room TV runs the current version: first on 9 October at 09:13, when the database migrated from version 3 to 10 with a backup before every step and the location and news feed were copied from the environment, and again at 09:38 and 09:58 with the later features (migrations 11 and 12). A 24-hour soak test on it started at 09:14. Restarting the server restarts the cast, which can switch a TV on through HDMI-CEC, so that waits until someone is home and awake.
+The kitchen TV (a Chromecast HD with Google TV, called "tv woonkamer" in Google Home) runs the current version: first on 9 October at 09:13, when the database migrated from version 3 to 10 with a backup before every step and the location and news feed were copied from the environment, and again at 09:38 and 09:58 with the later features (migrations 11 and 12). A 24-hour soak test on it started at 09:14. Restarting the server restarts the cast, which can switch a TV on through HDMI-CEC, so that waits until someone is home and awake.
 
 ## Next
 
-1. Deploy the current version to the living room TV during the day, and choose the location and calendars under Settings.
+1. Choose the location and calendars under Settings on the kitchen TV's server.
 2. Test the Nest Hub with the 9-minute restart (with permission, in the daytime).
 3. Publish the 0.5.0 draft release when the repository is ready to be seen.
 4. Still open from the research's v1.0: a Home Assistant add-on and an external review of the authentication. Dashboards can be exported and imported; the rest of the configuration moves with the data directory.
