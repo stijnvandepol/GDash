@@ -4,7 +4,7 @@ import { ADMIN_USERNAME, adminPassword, setupToken } from './env';
 type Tab = 'Displays' | 'Dashboards' | 'Settings';
 
 /** Creates the administrator account when the server has none yet. */
-async function ensureAccount(request: APIRequestContext): Promise<void> {
+export async function ensureAccount(request: APIRequestContext): Promise<void> {
   const state = await request.get('/api/setup');
   expect(state.ok()).toBe(true);
   if (!((await state.json()) as { needed: boolean }).needed) return;
