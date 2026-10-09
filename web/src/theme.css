@@ -123,6 +123,7 @@
   --text-muted: #b8652c;
   --accent: #d9752f;
   --warning: #f2a23a;
+  --dot-tint: var(--text-muted);
   --backdrop: none;
 }
 

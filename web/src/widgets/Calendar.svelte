@@ -91,7 +91,7 @@
         <ul>
           {#each day.events as e, i (i)}
             <li class:past={isPast(e, clock.now)}>
-              {#if calendarColor(e.color)}<span class="dot" style:background={calendarColor(e.color)}></span>{/if}
+              {#if calendarColor(e.color)}<span class="dot" style:--dot={calendarColor(e.color)}></span>{/if}
               <span class="when">{when(e)}</span>
               <span class="title">{e.title}</span>
             </li>
@@ -154,6 +154,8 @@
     height: 0.55em;
     margin-right: -12px;
     border-radius: 50%;
+    /* A theme can recolour every dot, as Night does to stay free of blue. */
+    background: var(--dot-tint, var(--dot));
     font-size: 28px;
   }
   .when {
