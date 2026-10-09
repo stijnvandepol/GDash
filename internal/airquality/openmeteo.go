@@ -97,7 +97,7 @@ func (c Client) Current(ctx context.Context, loc weather.Location) (Report, erro
 		return Report{}, fmt.Errorf("decode open-meteo response: %w", err)
 	}
 	cur := body.Current
-	if cur.EuropeanAQI == nil || !valid(*cur.EuropeanAQI) {
+	if cur.EuropeanAQI == nil || !validAQI(*cur.EuropeanAQI) {
 		return Report{}, errIncomplete
 	}
 	report := Report{EuropeanAQI: int(math.Round(*cur.EuropeanAQI)), ObservedAt: cur.Time}
@@ -123,4 +123,15 @@ func (c Client) Current(ctx context.Context, loc weather.Location) (Report, erro
 
 // valid reports whether v can be an index or a concentration; JSON has no
 // NaN or infinity, so only a negative number is out.
-func valid(v float64) bool { return v >= 0 }
+// The largest values that can be real: the European index stays far below
+// a thousand even in a wildfire, and pollen below a million grains per m³.
+// Anything larger is a broken answer, and converting a huge float to an
+// int would give a negative index.
+const (
+	maxAQI    = 1000
+	maxGrains = 1_000_000
+)
+
+func valid(v float64) bool { return v >= 0 && v <= maxGrains }
+
+func validAQI(v float64) bool { return v >= 0 && v <= maxAQI }
