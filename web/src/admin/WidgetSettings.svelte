@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { WidgetType } from './api';
   import { SETTING_LABELS } from './widgetSettings';
+  import EntityPicker from './EntityPicker.svelte';
 
   // Texts up to this length get a single-line field, longer ones a text area.
   const SINGLE_LINE_MAX = 60;
@@ -28,6 +29,11 @@
     onchange(next);
   }
 
+  function list(key: string): string[] {
+    const v = settings[key];
+    return Array.isArray(v) ? v.filter((s): s is string => typeof s === 'string') : [];
+  }
+
   function text(key: string): string {
     const v = settings[key];
     return typeof v === 'string' ? v : '';
@@ -36,6 +42,9 @@
 
 {#each keys as key (key)}
   {@const rule = type.settings[key]!}
+  {#if rule.kind === 'entities'}
+    <EntityPicker selected={list(key)} max={rule.max ?? 1} onchange={(ids) => set(key, ids)} />
+  {:else}
   <label class="inline-label">
     {SETTING_LABELS[key] ?? key}
     {#if rule.kind === 'integer'}
@@ -66,6 +75,7 @@
       />
     {/if}
   </label>
+  {/if}
 {/each}
 
 <style>

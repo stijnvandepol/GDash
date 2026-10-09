@@ -2,7 +2,7 @@ import { t, type TextKey } from '../i18n.svelte';
 import type { Entry } from '../protocol';
 
 /** The data sources a widget can wait for. */
-export type Source = 'weather' | 'forecast' | 'news' | 'calendar';
+export type Source = 'weather' | 'forecast' | 'news' | 'calendar' | 'homeassistant';
 
 const TEXTS: Record<Source, { notSetUp: TextKey; failed: TextKey; loading: TextKey }> = {
   weather: { notSetUp: 'weatherNotSetUp', failed: 'weatherFailed', loading: 'weatherLoading' },
@@ -10,6 +10,7 @@ const TEXTS: Record<Source, { notSetUp: TextKey; failed: TextKey; loading: TextK
   forecast: { notSetUp: 'weatherNotSetUp', failed: 'forecastFailed', loading: 'forecastLoading' },
   news: { notSetUp: 'newsNotSetUp', failed: 'newsFailed', loading: 'newsLoading' },
   calendar: { notSetUp: 'calendarNotSetUp', failed: 'calendarFailed', loading: 'calendarLoading' },
+  homeassistant: { notSetUp: 'haNotSetUp', failed: 'haFailed', loading: 'haLoading' },
 };
 
 /**

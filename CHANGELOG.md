@@ -16,6 +16,10 @@ the format follows [Keep a Changelog](https://keepachangelog.com).
 
 ### Added
 
+- Home Assistant: connect it with a long-lived access token under Settings
+  and add a Home Assistant widget that shows up to eight sensors or
+  switches, in English or Dutch. Nookboard only reads, once a minute, and
+  stores the token encrypted.
 - Text size per display (100 to 200 %), for smart displays, tablets and
   small screens; the dashboard now fills screens that are not 16:9.
 

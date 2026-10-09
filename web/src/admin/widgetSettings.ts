@@ -10,6 +10,7 @@ export const WIDGET_LABELS: Record<string, string> = {
   text: 'Note',
   countdown: 'Countdown',
   photos: 'Photos',
+  homeassistant: 'Home Assistant',
 };
 
 export const SETTING_LABELS: Record<string, string> = {
@@ -33,6 +34,7 @@ export function defaultSettings(type: WidgetType, today = new Date()): Record<st
     text: 'Write a note for the household here.',
     label: 'Holiday',
     date: isoDate(later),
+    entities: [],
   };
   const settings: Record<string, unknown> = {};
   for (const key of Object.keys(type.settings)) {

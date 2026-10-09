@@ -1,5 +1,5 @@
 // Package settings manages what Nookboard fetches: the weather location, news
-// feeds and calendars. They are edited in the web interface and stored in
+// feeds, calendars and the Home Assistant connection. They are edited in the web interface and stored in
 // SQLite; environment variables only fill them on the very first start.
 package settings
 
@@ -15,6 +15,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/stijnvandepol/nookboard/internal/calendar"
+	"github.com/stijnvandepol/nookboard/internal/homeassistant"
 	"github.com/stijnvandepol/nookboard/internal/news"
 	"github.com/stijnvandepol/nookboard/internal/secret"
 	"github.com/stijnvandepol/nookboard/internal/store"
@@ -89,6 +90,8 @@ type Settings struct {
 	Calendars []Calendar `json:"calendars"`
 	// Language is what TVs show their texts and dates in.
 	Language string `json:"language"`
+	// HomeAssistant is nil until a connection is set up.
+	HomeAssistant *HomeAssistant `json:"homeAssistant"`
 }
 
 // Languages are the display languages; web/src/i18n.svelte.ts has their
@@ -101,6 +104,8 @@ type Sources struct {
 	Location  *weather.Location
 	NewsFeeds []news.Source
 	Calendars []calendar.Source
+	// HomeAssistant is nil when no readable connection is set up.
+	HomeAssistant *homeassistant.Connection
 }
 
 // Service reads and changes the settings.
@@ -139,6 +144,9 @@ func (s *Service) Get(ctx context.Context) (Settings, error) {
 			ID: c.ID, Name: c.Name, Host: c.Host, Color: calendarColor(c.Color, i), Unreadable: openErr != nil,
 		})
 	}
+	if out.HomeAssistant, err = s.homeAssistantView(ctx); err != nil {
+		return Settings{}, err
+	}
 	return out, nil
 }
 
@@ -175,6 +183,12 @@ func (s *Service) Sources(ctx context.Context) (Sources, error) {
 			continue
 		}
 		out.Calendars = append(out.Calendars, calendar.Source{Name: c.Name, URL: address, Color: calendarColor(c.Color, i)})
+	}
+	conn, ok, err := s.HomeAssistantConnection(ctx)
+	if err != nil {
+		s.Logger.Error("home assistant connection cannot be decrypted; connect again", "error", err)
+	} else if ok {
+		out.HomeAssistant = &conn
 	}
 	return out, nil
 }

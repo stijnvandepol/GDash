@@ -65,6 +65,19 @@ func TestValidateDashboard(t *testing.T) {
 			w.Settings["date"] = float64(20261224)
 			d.Widgets = append(d.Widgets, w)
 		}, "widgets[2]: date must be a date"},
+		{"home assistant", func(d *Dashboard) { d.Widgets = append(d.Widgets, entities("sensor.temp", "binary_sensor.door")) }, ""},
+		{"home assistant without entities", func(d *Dashboard) {
+			w := entities()
+			w.Settings = nil
+			d.Widgets = append(d.Widgets, w)
+		}, "widgets[2]: choose 1 to 8 Home Assistant entities"},
+		{"home assistant empty list", func(d *Dashboard) { d.Widgets = append(d.Widgets, entities()) }, "widgets[2]: choose 1 to 8"},
+		{"home assistant bad id", func(d *Dashboard) { d.Widgets = append(d.Widgets, entities("../api/config")) }, "widgets[2]: choose"},
+		{"home assistant repeated id", func(d *Dashboard) { d.Widgets = append(d.Widgets, entities("sensor.a", "sensor.a")) }, "widgets[2]: choose"},
+		{"home assistant too many", func(d *Dashboard) {
+			d.Widgets = append(d.Widgets, entities("a.a", "a.b", "a.c", "a.d", "a.e", "a.f", "a.g", "a.h", "a.i"))
+		}, "widgets[2]: choose"},
+		{"home assistant id as number", func(d *Dashboard) { d.Widgets = append(d.Widgets, entities(float64(1))) }, "widgets[2]: choose"},
 		{"forecast days", func(d *Dashboard) {
 			d.Widgets = append(d.Widgets, Widget{ID: "fc", Type: "forecast", X: 0, Y: 5, W: 6, H: 4, Settings: map[string]any{"days": float64(8)}})
 		}, "widgets[2]: days must be a whole number from 1 to 7"},
@@ -118,5 +131,19 @@ func TestDefaultDashboardsAreValid(t *testing.T) {
 		if err := ValidateDashboard(DefaultDashboard(withCalendar)); err != nil {
 			t.Errorf("DefaultDashboard(%v): %s", withCalendar, fields(err))
 		}
+	}
+}
+
+// entities returns a Home Assistant widget below the default layout.
+func entities(ids ...any) Widget {
+	return Widget{ID: "home", Type: "homeassistant", X: 0, Y: 5, W: 4, H: 3, Settings: map[string]any{"entities": ids}}
+}
+
+func TestEntityIDsAreCollectedOnce(t *testing.T) {
+	a := Dashboard{Widgets: []Widget{entities("sensor.b", "sensor.a"), {Type: "text", Settings: map[string]any{"entities": []any{"sensor.c"}}}}}
+	b := Dashboard{Widgets: []Widget{entities("sensor.a", "light.kitchen"), entities("bad id")}}
+	got := strings.Join(EntityIDs([]Dashboard{a, b}), ",")
+	if got != "light.kitchen,sensor.a,sensor.b" {
+		t.Fatalf("EntityIDs = %s, want the entities of valid Home Assistant widgets, sorted once", got)
 	}
 }

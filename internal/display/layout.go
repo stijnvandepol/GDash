@@ -11,6 +11,7 @@ import (
 	"unicode"
 	"unicode/utf8"
 
+	"github.com/stijnvandepol/nookboard/internal/homeassistant"
 	"github.com/stijnvandepol/nookboard/internal/validation"
 )
 
@@ -34,6 +35,9 @@ const (
 	SettingInteger = "integer"
 	SettingText    = "text"
 	SettingDate    = "date"
+	// SettingEntities is a list of Home Assistant entity IDs; Min and Max
+	// bound how many.
+	SettingEntities = "entities"
 )
 
 // Setting is one setting a widget type takes.
@@ -72,7 +76,18 @@ var WidgetTypes = map[string]WidgetType{
 		"label": {Kind: SettingText, Min: 1, Max: 60, Required: true},
 		"date":  {Kind: SettingDate, Required: true},
 	}},
+	"homeassistant": {Source: HomeAssistantSource, MinW: 4, MinH: 3, Settings: map[string]Setting{
+		"entities": {Kind: SettingEntities, Min: 1, Max: MaxEntitiesPerWidget, Required: true},
+	}},
 }
+
+// HomeAssistantSource is the data key of the entity states that Home
+// Assistant widgets show.
+const HomeAssistantSource = "homeassistant.default"
+
+// MaxEntitiesPerWidget keeps a Home Assistant widget readable from across
+// a room.
+const MaxEntitiesPerWidget = 8
 
 // PhotosSource is the data key of the photo list; the server builds it
 // from the photo folder rather than fetching it.
@@ -172,7 +187,10 @@ func settingsProblem(w Widget, kind WidgetType) string {
 		}
 	}
 	for _, key := range slices.Sorted(maps.Keys(kind.Settings)) {
-		if _, set := w.Settings[key]; kind.Settings[key].Required && !set {
+		rule := kind.Settings[key]
+		if _, set := w.Settings[key]; rule.Required && !set && rule.Kind == SettingEntities {
+			return valueProblem(key, nil, rule)
+		} else if rule.Required && !set {
 			return fmt.Sprintf("a %s widget needs a %s", w.Type, key)
 		}
 	}
@@ -201,8 +219,45 @@ func valueProblem(key string, value any, rule Setting) string {
 		if _, err := time.Parse(dateLayout, text); !ok || err != nil {
 			return fmt.Sprintf("%s must be a date as YYYY-MM-DD", key)
 		}
+	case SettingEntities:
+		if ids, ok := entityIDs(value, rule.Max); !ok || len(ids) < rule.Min {
+			return fmt.Sprintf("choose %d to %d Home Assistant entities", rule.Min, rule.Max)
+		}
 	}
 	return ""
+}
+
+// entityIDs reads an entities setting: a list of distinct entity IDs, at
+// most limit long. ok is false for anything else.
+func entityIDs(value any, limit int) ([]string, bool) {
+	list, ok := value.([]any)
+	if !ok || len(list) > limit {
+		return nil, false
+	}
+	ids := make([]string, 0, len(list))
+	for _, v := range list {
+		id, isText := v.(string)
+		if !isText || !homeassistant.ValidEntityID(id) || slices.Contains(ids, id) {
+			return nil, false
+		}
+		ids = append(ids, id)
+	}
+	return ids, true
+}
+
+// EntityIDs returns every Home Assistant entity the dashboards show, sorted
+// and without repeats, so the server fetches each one once.
+func EntityIDs(dashboards []Dashboard) []string {
+	var all []string
+	for _, d := range dashboards {
+		for _, w := range d.Widgets {
+			if ids, ok := entityIDs(w.Settings["entities"], MaxEntitiesPerWidget); ok && w.Type == "homeassistant" {
+				all = append(all, ids...)
+			}
+		}
+	}
+	slices.Sort(all)
+	return slices.Compact(all)
 }
 
 // hasControl reports control characters other than a line break, which a

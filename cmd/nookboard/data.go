@@ -15,6 +15,7 @@ import (
 	"github.com/stijnvandepol/nookboard/internal/calendar"
 	"github.com/stijnvandepol/nookboard/internal/datahub"
 	"github.com/stijnvandepol/nookboard/internal/display"
+	"github.com/stijnvandepol/nookboard/internal/homeassistant"
 	"github.com/stijnvandepol/nookboard/internal/news"
 	"github.com/stijnvandepol/nookboard/internal/outbound"
 	"github.com/stijnvandepol/nookboard/internal/photos"
@@ -30,7 +31,11 @@ type dataSources struct {
 	weather  weather.Client
 	news     *news.Client
 	calendar *calendar.Client
-	logger   *slog.Logger
+	home     *homeassistant.Client
+	// dashboards lists every dashboard, for the Home Assistant entities
+	// their widgets show.
+	dashboards func(ctx context.Context) ([]display.Dashboard, error)
+	logger     *slog.Logger
 
 	// mu makes syncs run one at a time, so an older read of the settings
 	// can never be applied after a newer one.
@@ -63,9 +68,11 @@ func startData(ctx context.Context, cfg config, db *store.Store, svc *settings.S
 		settings: svc,
 		weather:  weather.Client{BaseURL: weather.DefaultBaseURL, HTTP: &http.Client{Timeout: upstreamTimeout}},
 		// Feeds and calendars are addresses an admin typed in.
-		news:     &news.Client{HTTP: outbound.NewClient(upstreamTimeout)},
-		calendar: &calendar.Client{HTTP: outbound.NewClient(upstreamTimeout), Location: time.Local, Now: time.Now},
-		logger:   logger,
+		news:       &news.Client{HTTP: outbound.NewClient(upstreamTimeout)},
+		calendar:   &calendar.Client{HTTP: outbound.NewClient(upstreamTimeout), Location: time.Local, Now: time.Now},
+		home:       &homeassistant.Client{HTTP: outbound.NewClient(upstreamTimeout)},
+		dashboards: db.Dashboards,
+		logger:     logger,
 	}
 	if err := sources.sync(ctx); err != nil {
 		return nil, nil, nil, err
@@ -106,13 +113,18 @@ func (d *dataSources) sync(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("read data sources: %w", err)
 	}
-	d.hub.Configure(ctx, d.build(cfg))
+	dashboards, err := d.dashboards(ctx)
+	if err != nil {
+		return fmt.Errorf("read dashboards: %w", err)
+	}
+	d.hub.Configure(ctx, d.build(cfg, display.EntityIDs(dashboards)))
 	return nil
 }
 
 // build turns settings into hub sources. A source that has nothing to fetch
-// is left out, so its widgets show that it is not set up.
-func (d *dataSources) build(cfg settings.Sources) []datahub.Source {
+// is left out, so its widgets show that it is not set up. entities are the
+// Home Assistant entities that dashboards show.
+func (d *dataSources) build(cfg settings.Sources, entities []string) []datahub.Source {
 	var sources []datahub.Source
 	if loc := cfg.Location; loc != nil {
 		sources = append(sources, datahub.Source{
@@ -142,11 +154,21 @@ func (d *dataSources) build(cfg settings.Sources) []datahub.Source {
 			},
 		})
 	}
+	if conn := cfg.HomeAssistant; conn != nil && len(entities) > 0 {
+		entities = entities[:min(len(entities), maxHomeAssistantEntities)]
+		sources = append(sources, datahub.Source{
+			Key:      display.HomeAssistantSource,
+			Interval: homeAssistantInterval,
+			Timeout:  homeAssistantTimeout,
+			Version:  fingerprint(struct{ Connection, Entities any }{*conn, entities}),
+			Fetch:    func(ctx context.Context) (any, error) { return d.home.States(ctx, *conn, entities) },
+		})
+	}
 	return sources
 }
 
 // fingerprint identifies a source's configuration. It is a hash, so secret
-// calendar addresses do not sit in the hub as plain text.
+// calendar addresses and tokens do not sit in the hub as plain text.
 func fingerprint(v any) string {
 	sum := sha256.Sum256(fmt.Appendf(nil, "%+v", v))
 	return hex.EncodeToString(sum[:8])

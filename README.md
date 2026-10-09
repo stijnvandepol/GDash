@@ -13,6 +13,10 @@ Google TV you already own. No extra hardware, no subscription, no cloud.
   internet drops, and stale data is marked.
 - **Dutch or English on the TV**: days, dates, weather and other texts on the
   screens follow the household's choice; the web interface is in English.
+- **Home Assistant**: show sensors and switches, such as the temperature
+  inside or whether a door is open, with a long-lived access token. Read
+  only; the token is stored encrypted. Nookboard works without Home
+  Assistant too.
 - **Notes and countdowns**: a short text for the household, and the days
   left until a date such as a holiday or a birthday.
 - **Calendar** from secret iCal addresses (Google, Outlook, iCloud,

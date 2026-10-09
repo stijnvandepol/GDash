@@ -34,6 +34,8 @@ const ACTIONS: Record<string, string> = {
   calendar_changed: 'Changed the colour of calendar',
   photo_added: 'Added a photo',
   photo_removed: 'Removed a photo',
+  homeassistant_connected: 'Connected Home Assistant at',
+  homeassistant_removed: 'Disconnected Home Assistant',
 };
 
 // Actions whose detail means nothing to a person, such as a photo's file name.

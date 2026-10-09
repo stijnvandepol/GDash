@@ -58,6 +58,7 @@ type Server struct {
 	DashboardsChanged func()
 	Settings          *settings.Service
 	Places            PlaceSearcher
+	HomeAssistant     HomeAssistantReader
 	// SettingsChanged is called after a data source setting changes, so
 	// the data hub fetches what is configured now.
 	SettingsChanged func()
@@ -121,6 +122,9 @@ func (s *Server) Handler() http.Handler {
 	mux.Handle("PATCH /api/calendars/{id}", s.requireUser(s.patchCalendar))
 	mux.Handle("DELETE /api/calendars/{id}", s.requireUser(s.deleteCalendar))
 	mux.Handle("GET /api/places", s.requireUser(s.getPlaces))
+	mux.Handle("PUT /api/homeassistant", s.requireUser(s.putHomeAssistant))
+	mux.Handle("DELETE /api/homeassistant", s.requireUser(s.deleteHomeAssistant))
+	mux.Handle("GET /api/homeassistant/entities", s.requireUser(s.getHomeAssistantEntities))
 
 	mux.Handle("GET /api/photos", s.requireUser(s.listPhotos))
 	mux.Handle("POST /api/photos", s.requireUser(s.postPhoto))

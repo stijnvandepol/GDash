@@ -22,6 +22,7 @@ import (
 	"github.com/stijnvandepol/nookboard/internal/cast"
 	"github.com/stijnvandepol/nookboard/internal/casting"
 	"github.com/stijnvandepol/nookboard/internal/datahub"
+	"github.com/stijnvandepol/nookboard/internal/homeassistant"
 	"github.com/stijnvandepol/nookboard/internal/pairing"
 	"github.com/stijnvandepol/nookboard/internal/photos"
 	"github.com/stijnvandepol/nookboard/internal/secret"
@@ -126,6 +127,7 @@ func newTestEnv(t *testing.T, discover func(context.Context) ([]cast.Device, err
 		DashboardsChanged: func() { changes.Add(1) },
 		Settings:          &settings.Service{Store: st, Box: box, Now: now, Logger: logger},
 		Places:            sources,
+		HomeAssistant:     &homeassistant.Client{HTTP: &http.Client{Timeout: 5 * time.Second}},
 		SettingsChanged:   func() { settingsChanges.Add(1) },
 		SourceStatus:      sources.Entries,
 		Version:           "v1.2.3",

@@ -23,12 +23,14 @@ fully trust, such as a guest's phone.
   a code shown on it, or opened by Nookboard's own cast with a single-use token
   that expires after two minutes. Unpairing takes effect within 20 seconds.
   Each display only receives the data its own widgets show.
-- **Secrets:** calendar addresses give read access to a calendar, so they
-  are encrypted (AES-256-GCM) with a key file next to the database, never
-  returned by the API and never logged.
+- **Secrets:** calendar addresses give read access to a calendar, and a
+  Home Assistant token to everything its user can see, so they are
+  encrypted (AES-256-GCM) with a key file next to the database, never
+  returned by the API and never logged. Nookboard only reads from Home
+  Assistant.
 - **Photos:** only served to logged-in admins and paired screens; an
   upload is accepted by its content (JPEG, PNG or WebP), not by its name.
-- **Outgoing requests:** feeds and calendars an admin adds are fetched with a
+- **Outgoing requests:** feeds, calendars and Home Assistant are fetched with a
   client that refuses link-local addresses, where cloud hosts serve instance
   metadata.
 - **Web interface:** a strict Content-Security-Policy without inline scripts,

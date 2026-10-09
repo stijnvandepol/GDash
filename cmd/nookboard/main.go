@@ -46,6 +46,12 @@ const (
 	// servers are built for clients polling this often.
 	calendarInterval = 10 * time.Minute
 	calendarDays     = 7
+	// Home Assistant runs in the home; once a minute keeps a sensor on the
+	// TV current without a request storm. Entities are fetched one by one,
+	// so their number is bounded.
+	homeAssistantInterval    = time.Minute
+	homeAssistantTimeout     = 30 * time.Second
+	maxHomeAssistantEntities = 40
 	// A refresh fetches all feeds or all calendars, partly in parallel;
 	// each request may take upstreamTimeout.
 	newsTimeout     = 30 * time.Second
@@ -201,19 +207,26 @@ func serve(ctx context.Context, logger *slog.Logger) error {
 		return err
 	}
 	handler := (&api.Server{
-		Snapshots: snapshots,
-		Auth:      authService,
-		Pairing:   pairings,
-		Store:     db,
-		Settings:  settingsService,
-		Places:    weather.Geocoder{BaseURL: weather.DefaultGeocodingURL, HTTP: &http.Client{Timeout: upstreamTimeout}},
-		Web:       frontend,
-		Discover:  cast.Discover,
+		Snapshots:     snapshots,
+		Auth:          authService,
+		Pairing:       pairings,
+		Store:         db,
+		Settings:      settingsService,
+		Places:        weather.Geocoder{BaseURL: weather.DefaultGeocodingURL, HTTP: &http.Client{Timeout: upstreamTimeout}},
+		HomeAssistant: sources.home,
+		Web:           frontend,
+		Discover:      cast.Discover,
 		DisplaysChanged: func() {
 			publisher.Refresh(ctx)
 			castManager.Changed()
 		},
-		DashboardsChanged: func() { publisher.Refresh(ctx) },
+		DashboardsChanged: func() {
+			// A dashboard can start or stop showing a Home Assistant entity.
+			if err := sources.sync(ctx); err != nil {
+				logger.Error("could not follow the dashboard change; restart Nookboard", "error", err)
+			}
+			publisher.Refresh(ctx)
+		},
 		SettingsChanged: func() {
 			if err := sources.sync(ctx); err != nil {
 				logger.Error("could not apply the new settings; restart Nookboard", "error", err)

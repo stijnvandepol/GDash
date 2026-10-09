@@ -54,6 +54,9 @@ come from another site (cross-site request forgery protection).
 | `POST /api/calendars` `{name, url}` | admin | `201` calendar, without its address | `401`, `409` at 10 calendars, `422` |
 | `PATCH /api/calendars/{id}` `{color}` | admin | `204` | `401`, `404`, `422` for another colour |
 | `DELETE /api/calendars/{id}` | admin | `204` | `401`, `404` |
+| `PUT /api/homeassistant` `{url, token}` | admin | `200 {"url": …}` after Home Assistant accepted the token | `401`, `422` naming `url` or `token` |
+| `DELETE /api/homeassistant` | admin | `204`; Home Assistant widgets show that it is not connected | `401` |
+| `GET /api/homeassistant/entities` | admin | `200 {"entities": [entity]}`, sorted by ID | `401`, `409 not_connected`, `502 upstream_unavailable` |
 | `GET /api/photos` | admin | `200 {"photos": [{name, size, addedAt}]}`, oldest first | `401` |
 | `POST /api/photos` multipart, field `photo` | admin | `201` photo | `401`, `409` at 50 photos, `422` for another kind of file or one over 8 MB |
 | `DELETE /api/photos/{name}` | admin | `204` | `401`, `404` |
@@ -100,9 +103,18 @@ Radicale at home works. Link-local addresses (169.254.0.0/16, fe80::/10)
 and AWS's IPv6 metadata address (fd00:ec2::254), where cloud hosts serve
 instance metadata, are refused when connecting, also in their NAT64 form.
 
+Home Assistant is connected with its address and a long-lived access token,
+made in Home Assistant under the user's profile, Security. Nookboard tries the
+connection before storing it, stores address and token encrypted together,
+and never returns or logs the token. It only reads: once a minute it asks
+`/api/states/<entity>` for each entity that a Home Assistant widget shows,
+at most 40. The token gives the rights of the Home Assistant user who made
+it, so a separate, non-admin user for Nookboard is the safer choice.
+
 Changes apply at once: a changed source is fetched again, a removed one
 disappears from the displays. `status` has an entry per configured source by
-data key (`weather.current`, `news.default`, `calendar.default`).
+data key (`weather.current`, `news.default`, `calendar.default`,
+`homeassistant.default`).
 
 Place search sends the typed name to Open-Meteo's geocoding service, which
 uses GeoNames data; the coordinates can also be entered by hand.
@@ -155,8 +167,10 @@ allows, overlaps another, lacks a required setting, or has a setting its type do
 | `text` | 4x3 | none | `text`: 1 to 300 characters, line breaks allowed (required) |
 | `photos` | 4x3 | `photos.default` | `seconds`: 5 to 600 per photo, default 30 |
 | `countdown` | 4x4 | none | `label`: 1 to 60 characters, `date`: `YYYY-MM-DD` (both required) |
+| `homeassistant` | 4x3 | `homeassistant.default` | `entities`: 1 to 8 entity IDs such as `sensor.living_room_temperature` (required) |
 
-A setting's `kind` is `integer`, `text` or `date`; `min` and `max` bound an integer, or a text's length in characters.
+A setting's `kind` is `integer`, `text`, `date` or `entities`; `min` and `max` bound an integer, a text's length in
+characters, or the number of entities.
 Text settings are shown as plain text on the screen, never as HTML.
 
 **settings:** `{"language": "nl", "location": {"name": "Oss", "latitude": 51.77, "longitude": 5.52} | null, "newsFeeds": [{"id": 1, "name": "NOS", "url": "https://…"}], "calendars": [{"id": 2, "name": "Family", "host": "calendar.google.com", "color": "blue", "unreadable": false}]}`.
@@ -167,6 +181,12 @@ Several news feeds are merged into one list, newest first, each headline with `s
 an empty `title`, which the screen fills in in its own language.
 
 **place:** `{"name": "Oss", "region": "North Brabant, Netherlands", "latitude": 51.765, "longitude": 5.518}`
+
+**settings.homeAssistant:** `{"url": "http://192.168.1.10:8123", "unreadable": false}`, or `null` when not connected.
+
+**entity:** `{"id": "sensor.living_room_temperature", "name": "Living room", "state": "21.4", "unit": "°C", "deviceClass": "temperature"}`.
+The `homeassistant.default` data on a screen maps entity IDs to the same object without `id`; an entity Home
+Assistant does not know is left out.
 
 **device:** `{"id": "e542…", "name": "tv woonkamer", "model": "Chromecast HD", "addr": "192.168.1.160:8009", "hasScreen": true}`
 

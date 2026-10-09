@@ -17,6 +17,7 @@
   import Note from './widgets/Note.svelte';
   import Countdown from './widgets/Countdown.svelte';
   import Photos from './widgets/Photos.svelte';
+  import HomeAssistant from './widgets/HomeAssistant.svelte';
   import Calendar from './widgets/Calendar.svelte';
 
   // Dashboards are designed on a fixed 1920x1080 stage and scaled to the
@@ -103,6 +104,8 @@
             <Countdown settings={widget.settings} />
           {:else if widget.type === 'photos'}
             <Photos entry={widget.source ? display.snapshot?.data[widget.source] : undefined} settings={widget.settings} />
+          {:else if widget.type === 'homeassistant'}
+            <HomeAssistant entry={widget.source ? display.snapshot?.data[widget.source] : undefined} settings={widget.settings} />
           {:else}
             <p class="muted">{t('unknownWidget', { type: widget.type })}</p>
           {/if}

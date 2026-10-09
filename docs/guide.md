@@ -74,6 +74,7 @@ Under **Dashboards** you edit layouts on the same 16:9 grid as the TV.
 | Note | A short text for the household |
 | Countdown | The days until a date, such as a holiday |
 | Photos | A slideshow of your photos |
+| Home Assistant | Up to eight sensors or switches from Home Assistant |
 
 **Photos** are added under Settings, Photos: JPEG, PNG or WebP, up to 8 MB
 each and 50 in total. They stay on your server and only go to paired
@@ -86,6 +87,28 @@ in the list at the display.
 **Import a dashboard** adds such a file as a new dashboard, also in another
 Nookboard. The file holds the layout, the theme and the widget settings, such
 as the text of a note; it holds no data and no calendar addresses.
+
+## Home Assistant
+
+Nookboard can show what Home Assistant knows, such as the temperature
+inside, whether the front door is open or the power used right now. It
+only reads; it never switches anything.
+
+1. In Home Assistant, open your profile, Security, and make a **long-lived
+   access token**. A separate Home Assistant user for Nookboard, without
+   admin rights, limits what the token can see.
+2. In Nookboard, under Settings, Home Assistant, enter the address you
+   open Home Assistant with, such as `http://192.168.1.10:8123`, and the
+   token. Nookboard tries them before it saves them, and stores the token
+   encrypted.
+3. Add a **Home Assistant** widget to a dashboard and search for the
+   entities it should show, up to eight. With one entity the widget shows
+   its value large; with more, a list.
+
+Numbers are shown with their unit, doors and windows as open or closed,
+motion as detected or clear, people as home or away. The screen updates
+once a minute. Home Assistant's own dashboards remain the place to control
+things; Nookboard is the calm screen that shows the day.
 
 ## Small screens
 

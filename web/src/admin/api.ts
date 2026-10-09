@@ -99,8 +99,8 @@ export interface WidgetType {
 
 /** A setting a widget type takes; internal/display validates the same. */
 export interface SettingRule {
-  kind: 'integer' | 'text' | 'date';
-  /** Bounds of an integer, or of a text's length in characters. */
+  kind: 'integer' | 'text' | 'date' | 'entities';
+  /** Bounds of an integer, of a text's length in characters, or of how many entities. */
   min?: number;
   max?: number;
   required: boolean;
@@ -135,6 +135,22 @@ export interface Settings {
   calendars: Calendar[];
   /** What the TVs show their texts and dates in. */
   language: 'en' | 'nl';
+  /** Null until Home Assistant is connected; the token never leaves the server. */
+  homeAssistant: HomeAssistant | null;
+}
+
+export interface HomeAssistant {
+  url: string;
+  /** True when the connection cannot be decrypted with this server's key. */
+  unreadable: boolean;
+}
+
+/** A Home Assistant entity, as the widget editor lists it. */
+export interface HomeAssistantEntity {
+  id: string;
+  name: string;
+  state: string;
+  unit?: string;
 }
 
 /** Whether a data source works, by data key such as "weather.current". */
@@ -232,6 +248,11 @@ export const api = {
   addCalendar: (name: string, url: string) => request<Calendar>('POST', '/api/calendars', { name, url }),
   deleteCalendar: (id: number) => request<void>('DELETE', `/api/calendars/${id}`),
   setCalendarColor: (id: number, color: string) => request<void>('PATCH', `/api/calendars/${id}`, { color }),
+  connectHomeAssistant: (url: string, token: string) =>
+    request<HomeAssistant>('PUT', '/api/homeassistant', { url, token }),
+  disconnectHomeAssistant: () => request<void>('DELETE', '/api/homeassistant'),
+  homeAssistantEntities: () =>
+    request<{ entities: HomeAssistantEntity[] }>('GET', '/api/homeassistant/entities').then((r) => r.entities),
   deleteDisplay: (id: string) => request<void>('DELETE', `/api/displays/${encodeURIComponent(id)}`),
   pairScreen: (id: string, code: string) =>
     request<void>('POST', `/api/displays/${encodeURIComponent(id)}/pairings`, { code }),

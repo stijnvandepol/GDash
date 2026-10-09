@@ -5,6 +5,7 @@
   import { newestOnly } from './newest';
   import AccountSetting from './AccountSetting.svelte';
   import ActivityLog from './ActivityLog.svelte';
+  import HomeAssistantSetting from './HomeAssistantSetting.svelte';
   import LocationSetting from './LocationSetting.svelte';
   import PhotoSetting from './PhotoSetting.svelte';
   import SourceList from './SourceList.svelte';
@@ -106,6 +107,13 @@
       await api.setCalendarColor(id, color);
       await load();
     }}
+    onerror={handle}
+  />
+
+  <HomeAssistantSetting
+    connection={settings.homeAssistant}
+    status={status['homeassistant.default']}
+    onchanged={load}
     onerror={handle}
   />
 
