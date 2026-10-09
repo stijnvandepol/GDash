@@ -2,6 +2,8 @@ package ratelimit
 
 import (
 	"fmt"
+	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 )
@@ -57,4 +59,34 @@ func TestLimiterPrunesOldKeys(t *testing.T) {
 	if n := len(l.failures); n != 1 {
 		t.Fatalf("tracked keys = %d after pruning, want 1", n)
 	}
+}
+
+func TestAttemptCountsParallelRequests(t *testing.T) {
+	c := &clock{t: time.Date(2026, 10, 9, 13, 0, 0, 0, time.UTC)}
+	l := New(c.now, 5, time.Minute)
+	var wg sync.WaitGroup
+	var passed atomic.Int32
+	for range 50 {
+		wg.Go(func() {
+			if l.Attempt("ip|1") {
+				passed.Add(1)
+			}
+		})
+	}
+	wg.Wait()
+	if passed.Load() != 5 {
+		t.Fatalf("%d of 50 parallel attempts passed, want exactly 5", passed.Load())
+	}
+}
+
+func TestReleaseTakesBackOneAttempt(t *testing.T) {
+	c := &clock{t: time.Date(2026, 10, 9, 13, 0, 0, 0, time.UTC)}
+	l := New(c.now, 2, time.Minute)
+	l.Fail("ip|1")
+	l.Attempt("ip|1")
+	l.Release("ip|1")
+	if !l.Allowed("ip|1") {
+		t.Fatal("blocked after the second attempt was released")
+	}
+	l.Release("ip|unknown")
 }

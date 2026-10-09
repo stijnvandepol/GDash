@@ -5,6 +5,8 @@ import (
 	"errors"
 	"path/filepath"
 	"strings"
+	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -125,6 +127,25 @@ func TestLoginRateLimitPerIPAndExpiry(t *testing.T) {
 	clock.t = clock.t.Add(failureWindow + time.Second)
 	if _, _, err := s.Login(ctx, Credentials{"stijn", "correct horse battery"}, "192.168.1.66"); err != nil {
 		t.Fatalf("Login after the window passed: %v", err)
+	}
+}
+
+func TestParallelWrongLoginsStopAtTheLimit(t *testing.T) {
+	ctx := context.Background()
+	s, _ := newTestService(t)
+	setUp(t, s)
+	var wg sync.WaitGroup
+	var checked atomic.Int32
+	for range 20 {
+		wg.Go(func() {
+			if _, _, err := s.Login(ctx, Credentials{"stijn", "wrong password!"}, "192.168.1.66"); errors.Is(err, ErrInvalidCredentials) {
+				checked.Add(1)
+			}
+		})
+	}
+	wg.Wait()
+	if checked.Load() != maxFailures {
+		t.Fatalf("%d of 20 parallel wrong logins had their password checked, want %d", checked.Load(), maxFailures)
 	}
 }
 

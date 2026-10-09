@@ -31,12 +31,26 @@ const (
 var errMalformedHash = errors.New("malformed password hash")
 
 // hashPassword returns an encoded argon2id hash in the common PHC format.
+// maxParallelHashes bounds how many argon2id computations run at once.
+// Each takes argonMemory, so a burst of logins could otherwise exhaust the
+// memory of a small server such as a Raspberry Pi.
+const maxParallelHashes = 2
+
+var hashSlots = make(chan struct{}, maxParallelHashes)
+
+// argon2Key runs argon2id in one of the hashSlots.
+func argon2Key(password, salt []byte, time, memory uint32, threads uint8, keyLen uint32) []byte {
+	hashSlots <- struct{}{}
+	defer func() { <-hashSlots }()
+	return argon2.IDKey(password, salt, time, memory, threads, keyLen)
+}
+
 func hashPassword(password string) (string, error) {
 	salt := make([]byte, saltLen)
 	if _, err := rand.Read(salt); err != nil {
 		return "", fmt.Errorf("generate salt: %w", err)
 	}
-	key := argon2.IDKey([]byte(password), salt, argonTime, argonMemory, argonThreads, argonKeyLen)
+	key := argon2Key([]byte(password), salt, argonTime, argonMemory, argonThreads, argonKeyLen)
 	b64 := base64.RawStdEncoding
 	return fmt.Sprintf("$argon2id$v=%d$m=%d,t=%d,p=%d$%s$%s",
 		argon2.Version, argonMemory, argonTime, argonThreads, b64.EncodeToString(salt), b64.EncodeToString(key)), nil
@@ -67,6 +81,6 @@ func verifyPassword(encoded, password string) (bool, error) {
 	if err != nil || len(want) == 0 {
 		return false, errMalformedHash
 	}
-	got := argon2.IDKey([]byte(password), salt, time, memory, threads, uint32(len(want)))
+	got := argon2Key([]byte(password), salt, time, memory, threads, uint32(len(want)))
 	return subtle.ConstantTimeCompare(got, want) == 1, nil
 }

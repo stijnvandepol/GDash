@@ -131,11 +131,11 @@ func (s *Service) Setup(ctx context.Context, setupToken string, c Credentials, c
 // Login checks credentials and starts a session.
 func (s *Service) Login(ctx context.Context, c Credentials, clientIP string) (string, User, error) {
 	keys := []string{"ip|" + clientIP, "user|" + strings.ToLower(c.Username)}
-	if !s.limiter.Allowed(keys...) {
+	// The attempt counts as a failure until the password is proven right.
+	if !s.limiter.Attempt(keys...) {
 		return "", User{}, ErrRateLimited
 	}
 	if len(c.Password) > maxPasswordBytes {
-		s.limiter.Fail(keys...)
 		return "", User{}, ErrInvalidCredentials
 	}
 	u, err := s.store.UserByName(ctx, c.Username)
@@ -150,7 +150,6 @@ func (s *Service) Login(ctx context.Context, c Credentials, clientIP string) (st
 		return "", User{}, fmt.Errorf("verify password of user %d: %w", u.ID, err)
 	}
 	if !ok || u.ID == 0 {
-		s.limiter.Fail(keys...)
 		return "", User{}, ErrInvalidCredentials
 	}
 	s.limiter.Reset(keys...)
@@ -199,7 +198,8 @@ func (s *Service) ChangePassword(ctx context.Context, session, current, next, cl
 		return err
 	}
 	keys := []string{"ip|" + clientIP, "user|" + strings.ToLower(user.Username)}
-	if !s.limiter.Allowed(keys...) {
+	// The attempt counts as a failure until the password is proven right.
+	if !s.limiter.Attempt(keys...) {
 		return ErrRateLimited
 	}
 	stored, err := s.store.UserByName(ctx, user.Username)
@@ -213,7 +213,6 @@ func (s *Service) ChangePassword(ctx context.Context, session, current, next, cl
 		}
 	}
 	if !ok {
-		s.limiter.Fail(keys...)
 		return ErrWrongPassword
 	}
 	var errs validation.Collector
@@ -228,6 +227,7 @@ func (s *Service) ChangePassword(ctx context.Context, session, current, next, cl
 	// Only the account's own count: the address may have failed logins
 	// for other usernames that must keep counting.
 	s.limiter.Reset("user|" + strings.ToLower(user.Username))
+	s.limiter.Release("ip|" + clientIP)
 	return s.store.ChangePassword(ctx, stored.ID, hash, token.Hash(session))
 }
 

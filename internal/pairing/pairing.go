@@ -94,10 +94,9 @@ func New(st *store.Store) *Service {
 // Begin starts pairing a screen with a display and returns the code to show.
 func (s *Service) Begin(ctx context.Context, displayID, clientIP string) (Request, error) {
 	key := "pairing|" + clientIP
-	if !s.limiter.Allowed(key) {
+	if !s.limiter.Attempt(key) {
 		return Request{}, ErrRateLimited
 	}
-	s.limiter.Fail(key)
 	if _, err := s.store.Display(ctx, displayID); errors.Is(err, store.ErrNotFound) {
 		return Request{}, ErrUnknownDisplay
 	} else if err != nil {
