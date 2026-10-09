@@ -1,0 +1,18 @@
+# Keeps the build context small and keeps local data, keys and build output
+# of the host out of the image: the build compiles the web interface itself.
+.git
+.github
+.claude
+.env
+.env.*
+/data
+/data-*
+/dist-release
+/gdash
+/gdash.exe
+/gdash-dev.exe
+**/node_modules
+/web/dist/*
+!/web/dist/.gitkeep
+/web/test-results
+/web/playwright-report
