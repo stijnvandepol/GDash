@@ -44,8 +44,12 @@ A version tag such as `v1.0.0` builds archives for Linux (amd64, arm64,
 armv7) and Windows with checksums as a draft GitHub release, and a Docker
 image for amd64 and arm64 on `ghcr.io/stijnvandepol/daycast`. The release
 stays a draft until someone publishes it. `daycast version`, the server log
-and the web interface show the version. No release has been made yet; the
-build script was tested locally with v0.9.0-test.
+and the web interface show the version.
+
+**0.5.0** was tagged on 9 October 2026: the workflow made the draft release
+with the four archives and checksums, and the image. The Windows archive was
+downloaded again, its checksum verified, and it started from an empty data
+directory. The draft is waiting to be published.
 
 ## Checked by CI on every push
 
@@ -66,7 +70,6 @@ simulated device; not yet on the real TV.
 - **The Nest Hub** with the 9-minute restart.
 - **An own receiver** (option A from the research): needs a Cast developer account (USD 5) and a registered device, see [receiver.md](receiver.md).
 - **Running the Docker image** on a NAS or Raspberry Pi. CI builds it for amd64 and arm64, but nobody has started it yet; Docker Desktop on the development PC did not start its engine.
-- **A release:** the release workflow has not run yet; the build script was tested locally.
 - **A real Google or iCloud calendar** and a Dutch display on a real TV.
 
 ## Open decisions
@@ -84,5 +87,5 @@ The living room TV runs the current version: first on 9 October at 09:13, when t
 
 1. Deploy the current version to the living room TV during the day, and choose the location and calendars under Settings.
 2. Test the Nest Hub with the 9-minute restart (with permission, in the daytime).
-3. Make the first release (tag `v0.5.0`) and publish the draft after checking it.
+3. Publish the 0.5.0 draft release when the repository is ready to be seen.
 4. Still open from the research's v1.0: a Home Assistant add-on and an external review of the authentication. Dashboards can be exported and imported; the rest of the configuration moves with the data directory.
