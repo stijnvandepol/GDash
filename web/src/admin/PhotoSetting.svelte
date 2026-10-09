@@ -1,4 +1,5 @@
 <script lang="ts">
+  import FileButton from './FileButton.svelte';
   import { onMount } from 'svelte';
   import { api, ApiError, type Photo } from './api';
 
@@ -74,10 +75,7 @@
     </ul>
   {/if}
   {#if photos.length < MAX_PHOTOS}
-    <label>
-      Add photos
-      <input type="file" accept="image/jpeg,image/png,image/webp" multiple disabled={busy} onchange={upload} />
-    </label>
+    <FileButton label="Add photos" accept="image/jpeg,image/png,image/webp" multiple disabled={busy} onchange={upload} />
   {/if}
   {#if busy}<p class="muted">Uploading…</p>{/if}
   {#if error}<p class="error">{error}</p>{/if}

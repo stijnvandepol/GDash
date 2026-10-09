@@ -60,7 +60,12 @@
   <div class="fields">
     <label>
       Dashboard
-      <select value={d.dashboardId || 'default'} onchange={(e) => ondashboard((e.target as HTMLSelectElement).value)}>
+      <!-- The accessible name keeps the visible label and adds the display,
+           so several displays' lists stay apart for a screen reader. -->
+      <select
+        aria-label="Dashboard for {d.name}"
+        value={d.dashboardId || 'default'}
+        onchange={(e) => ondashboard((e.target as HTMLSelectElement).value)}>
         {#each dashboards as b (b.id)}
           <option value={b.id}>{b.name}</option>
         {/each}
@@ -68,7 +73,10 @@
     </label>
     <label>
       Text size
-      <select value={d.textScale || 100} onchange={(e) => ontextscale(Number((e.target as HTMLSelectElement).value))}>
+      <select
+        aria-label="Text size for {d.name}"
+        value={d.textScale || 100}
+        onchange={(e) => ontextscale(Number((e.target as HTMLSelectElement).value))}>
         {#each textSizes as [value, label] (value)}
           <option {value}>{label}</option>
         {/each}

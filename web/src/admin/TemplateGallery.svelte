@@ -31,7 +31,7 @@
       </div>
       <strong>{template.name}</strong>
       <p class="muted small">{template.description}</p>
-      <button type="button" disabled={busyId !== ''} onclick={() => onUse(template)}>
+      <button type="button" class="secondary" disabled={busyId !== ''} onclick={() => onUse(template)}>
         {busyId === template.id ? 'Creating…' : 'Use this template'}
       </button>
     </article>

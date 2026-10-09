@@ -1,4 +1,5 @@
 <script lang="ts">
+  import FileButton from './FileButton.svelte';
   import { onMount } from 'svelte';
   import { api, ApiError, slugify, type Dashboard, type DashboardTemplate, type WidgetCatalogue } from './api';
   import { errorMessage } from './errors';
@@ -159,7 +160,7 @@
   <section class="card">
     <h2>Import a dashboard</h2>
     <p class="muted">Choose a file that Export saved, from this GDash or another one. It is added as a new dashboard.</p>
-    <input type="file" accept=".json,application/json" aria-label="Dashboard file" onchange={importDashboard} />
+    <FileButton label="Choose a dashboard file" accept=".json,application/json" onchange={importDashboard} />
     {#if importError}<p class="error">{importError}</p>{/if}
   </section>
 {/if}
