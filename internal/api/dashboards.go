@@ -37,6 +37,13 @@ func (s *Server) getWidgetTypes(w http.ResponseWriter, _ *http.Request) {
 	})
 }
 
+// getDashboardTemplates handles GET /api/dashboard-templates:
+// {"templates": [{id, name, description, theme, widgets}]}. A client creates
+// a dashboard from one with POST /api/dashboards and the template's layout.
+func (s *Server) getDashboardTemplates(w http.ResponseWriter, _ *http.Request) {
+	writeJSON(w, http.StatusOK, map[string]any{"templates": display.Templates(s.Now())})
+}
+
 // listDashboards handles GET /api/dashboards: {"dashboards": [...]}.
 func (s *Server) listDashboards(w http.ResponseWriter, r *http.Request) {
 	list, err := s.Store.Dashboards(r.Context())

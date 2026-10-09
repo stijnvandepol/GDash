@@ -109,6 +109,7 @@ func (s *Server) Handler() http.Handler {
 	mux.Handle("DELETE /api/displays/{display}/pairings", s.requireUser(s.deletePairings))
 
 	mux.Handle("GET /api/widget-types", s.requireUser(s.getWidgetTypes))
+	mux.Handle("GET /api/dashboard-templates", s.requireUser(s.getDashboardTemplates))
 	mux.Handle("GET /api/dashboards", s.requireUser(s.listDashboards))
 	mux.Handle("POST /api/dashboards", s.requireUser(s.createDashboard))
 	mux.Handle("GET /api/dashboards/{dashboard}", s.requireUser(s.getDashboard))

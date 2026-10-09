@@ -39,6 +39,7 @@ come from another site (cross-site request forgery protection).
 | `PATCH /api/displays/{id}` `{name?, castDeviceId?, dashboardId?, activeFrom?, activeUntil?, schedule?, rotation?, rotateSeconds?, textScale?}` | admin | `200` display | `401`, `404 not_found`, `422` (also for an unknown dashboard) |
 | `DELETE /api/displays/{id}` | admin | `204` | `401`, `404 not_found` |
 | `GET /api/widget-types` | admin | `200 {columns, rows, themes, types: {name: {minW, minH, settings: {key: {kind, min?, max?, required}}}}}` | `401` |
+| `GET /api/dashboard-templates` | admin | `200 {"templates": [{id, name, description, theme, widgets}]}`; create a dashboard from one with `POST /api/dashboards` and its `theme` and `widgets` | `401` |
 | `GET /api/dashboards` | admin | `200 {"dashboards": [dashboard]}` | `401` |
 | `POST /api/dashboards` `{id, name, theme?, widgets}` | admin | `201` dashboard | `401`, `409 conflict`, `422` |
 | `GET /api/dashboards/{id}` | admin | `200` dashboard | `401`, `404` |

@@ -93,3 +93,27 @@ func TestDashboardRoutesNeedLoginAndWidgetTypesAreListed(t *testing.T) {
 		t.Fatalf("widget types = %d %s", status, body)
 	}
 }
+
+func TestDashboardTemplatesCanBeCreatedAsDashboards(t *testing.T) {
+	env := newTestEnv(t, nil)
+	if status, _ := env.do(t, "GET", "/api/dashboard-templates", ""); status != http.StatusUnauthorized {
+		t.Fatalf("templates without login = %d, want 401", status)
+	}
+	env.setUp(t)
+	status, body := env.do(t, "GET", "/api/dashboard-templates", "")
+	var list struct{ Templates []display.Template }
+	if err := json.Unmarshal([]byte(body), &list); status != http.StatusOK || err != nil || len(list.Templates) < 5 {
+		t.Fatalf("templates = %d %s (%v)", status, body, err)
+	}
+	// The client creates a dashboard from a template by sending its layout
+	// with an id and a name of its own.
+	for _, tmpl := range list.Templates {
+		create, err := json.Marshal(map[string]any{"id": "my-" + tmpl.ID, "name": "My " + tmpl.Name, "theme": tmpl.Theme, "widgets": tmpl.Widgets})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if status, body := env.do(t, "POST", "/api/dashboards", string(create)); status != http.StatusCreated {
+			t.Errorf("create from %s = %d %s", tmpl.ID, status, body)
+		}
+	}
+}
