@@ -58,7 +58,7 @@ name Daycast, so it is better replaced by a new draft with the next tag.
 
 ## Checked by CI on every push
 
-gofmt, go vet, staticcheck, the Go tests with the race detector (fuzz seeds included), govulncheck, svelte-check with zero warnings, the web unit tests (Vitest), npm audit, an up-to-date THIRD_PARTY_LICENSES, a gitleaks scan of the whole history, 19 Playwright browser tests with axe accessibility checks in light and dark mode, and a Docker build for amd64 and arm64. The first run passed on 8 October 2026; all of it passed on 9 October 2026 after the security and design rounds.
+gofmt, go vet, staticcheck, the Go tests with the race detector (fuzz seeds included), govulncheck, svelte-check with zero warnings, the web unit tests (Vitest), npm audit, an up-to-date THIRD_PARTY_LICENSES, a gitleaks scan of the whole history, 20 Playwright browser tests (setup, settings, dashboards, pairing, schedule) with axe accessibility checks in light and dark mode, and a Docker build for amd64 and arm64. The first run passed on 8 October 2026; all of it passed on 9 October 2026 after the security and design rounds.
 
 ## Security and design rounds (9 October 2026)
 
