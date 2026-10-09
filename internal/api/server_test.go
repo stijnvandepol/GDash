@@ -133,6 +133,7 @@ func newTestEnv(t *testing.T, discover func(context.Context) ([]cast.Device, err
 		HomeAssistant:     &homeassistant.Client{HTTP: &http.Client{Timeout: 5 * time.Second}},
 		SettingsChanged:   func() { settingsChanges.Add(1) },
 		SourceStatus:      sources.Entries,
+		Data:              sources.Entries,
 		Version:           "v1.2.3",
 		CastStatus:        sources.CastStatus,
 		Photos:            album,

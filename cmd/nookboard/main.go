@@ -235,6 +235,7 @@ func serve(ctx context.Context, logger *slog.Logger) error {
 			publisher.Refresh(ctx)
 		},
 		SourceStatus:  sources.hub.Entries,
+		Data:          publisher.Data,
 		Version:       currentVersion(),
 		CastStatus:    castManager.Statuses,
 		Photos:        album,

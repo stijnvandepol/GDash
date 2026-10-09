@@ -45,6 +45,8 @@ come from another site (cross-site request forgery protection).
 | `GET /api/dashboards/{id}` | admin | `200` dashboard | `401`, `404` |
 | `PUT /api/dashboards/{id}` `{name, theme?, widgets}` | admin | `200` dashboard; screens update at once | `401`, `404`, `422` |
 | `DELETE /api/dashboards/{id}` | admin | `204`; its displays fall back to the default | `401`, `404`, `409` for `default` |
+| `GET /api/dashboards/{id}/preview?textScale=` | admin | `200` snapshot of the stored dashboard with the data a screen gets now; no display needed | `401`, `404`, `422` for a `textScale` other than 100, 125, 150 or 200 |
+| `POST /api/dashboards/{id}/preview?textScale=` `{name, theme?, widgets}` | admin | `200` snapshot of that unsaved layout; nothing is stored and no screen changes | `401`, `404` (the dashboard must exist), `422` |
 | `GET /api/settings` | admin | `200 {"settings": settings, "status": {key: {updatedAt?, failing}}}` | `401` |
 | `PUT /api/settings/location` `{name, latitude, longitude}` | admin | `200` location | `401`, `422` |
 | `PUT /api/settings/language` `{language}` | admin | `200`; screens switch at once | `401`, `422` for a language other than `en` or `nl` |
@@ -194,4 +196,10 @@ without `id`; an entity Home Assistant does not know is left out.
 **snapshot event:** `{"type": "snapshot", "version": 3, "serverTime": "…", "language": "nl", "dashboard": {…}, "data": {"weather.current": {"value": {…}, "fetchedAt": "…", "staleAfter": "…", "failing": false}}}`.
 Each display gets the dashboard for the current time (its schedule or its own), and `data` only holds the sources its widgets use. `active` is false outside the
 display's active hours; `data` is then empty.
+A preview snapshot has the same shape: `active` is true, the household's `language` and the chosen `textScale`
+(default 100) are set, there are no `pages`, and `data` holds the sources of that one dashboard. Its `version` is a
+hash of the content, so a poller sees whether anything changed. Data a draft needs that no saved dashboard uses yet
+(a new Home Assistant entity) is absent until the dashboard is saved. The web interface polls the preview every few
+seconds rather than opening a stream: a preview shows one dashboard that may be a draft, which the per-display
+event stream cannot do, and polling needs no connection kept open per editor.
 See `internal/display/display.go` and `web/src/protocol.ts`.

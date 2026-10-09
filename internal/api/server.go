@@ -67,6 +67,9 @@ type Server struct {
 	SettingsChanged func()
 	// SourceStatus returns the data hub's entries, for the Settings page.
 	SourceStatus func() map[string]datahub.Entry
+	// Data returns the data displays are sent, for the dashboard preview:
+	// the hub's entries and the photo list.
+	Data func() map[string]datahub.Entry
 	// Version is the running release, shown in the web interface.
 	Version string
 	// CastStatus returns what each display's cast keeper last found.
@@ -115,6 +118,8 @@ func (s *Server) Handler() http.Handler {
 	mux.Handle("GET /api/dashboards/{dashboard}", s.requireUser(s.getDashboard))
 	mux.Handle("PUT /api/dashboards/{dashboard}", s.requireUser(s.updateDashboard))
 	mux.Handle("DELETE /api/dashboards/{dashboard}", s.requireUser(s.deleteDashboard))
+	mux.Handle("GET /api/dashboards/{dashboard}/preview", s.requireUser(s.getDashboardPreview))
+	mux.Handle("POST /api/dashboards/{dashboard}/preview", s.requireUser(s.postDashboardPreview))
 
 	mux.Handle("GET /api/settings", s.requireUser(s.getSettings))
 	mux.Handle("PUT /api/settings/location", s.requireUser(s.putLocation))
