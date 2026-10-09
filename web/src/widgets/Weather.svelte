@@ -69,8 +69,9 @@
   .temperature {
     font-size: 220px;
     font-size: min(220px, 50cqw, 48cqh);
-    font-weight: 300;
+    font-weight: var(--weight-figure);
     line-height: 1;
+    font-variant-numeric: tabular-nums;
     color: var(--text-primary);
   }
   .description {
@@ -84,6 +85,7 @@
     margin-top: 12px;
     font-size: 40px;
     color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
   }
   .updated {
     margin-top: auto;

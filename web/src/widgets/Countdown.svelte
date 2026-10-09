@@ -44,7 +44,7 @@
   .number {
     font-size: 110px;
     font-size: min(110px, 40cqw, 52cqh);
-    font-weight: 300;
+    font-weight: var(--weight-figure);
     line-height: 1.05;
     color: var(--text-primary);
     font-variant-numeric: tabular-nums;

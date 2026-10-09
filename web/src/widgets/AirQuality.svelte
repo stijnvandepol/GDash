@@ -55,10 +55,9 @@
   .title {
     display: none;
     margin-bottom: 12px;
-    font-size: 30px;
-    font-weight: 600;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
+    font-family: var(--font-display);
+    font-size: 34px;
+    font-weight: 500;
     color: var(--text-muted);
   }
   .index {
@@ -70,7 +69,7 @@
   }
   .number {
     font-size: 1.4em;
-    font-weight: 300;
+    font-weight: var(--weight-figure);
     line-height: 1;
     font-variant-numeric: tabular-nums;
     color: var(--text-primary);

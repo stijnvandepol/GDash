@@ -90,7 +90,7 @@
   }
   .time {
     font-size: 0.8em;
-    font-weight: 300;
+    font-weight: var(--weight-figure);
     line-height: 1.05;
     font-variant-numeric: tabular-nums;
     color: var(--text-primary);

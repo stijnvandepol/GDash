@@ -69,10 +69,9 @@
   }
   .source {
     margin: 0 0 20px;
-    font-size: 30px;
-    font-weight: 600;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
+    font-family: var(--font-display);
+    font-size: 36px;
+    font-weight: 500;
     color: var(--text-muted);
   }
   .source.stale {

@@ -17,6 +17,7 @@
   interface Day {
     key: string;
     label: string;
+    today: boolean;
     events: CalendarEvent[];
   }
 
@@ -63,7 +64,7 @@
       let key = dateKey(parseDate(e.start, e.allDay));
       if (key < today) key = today;
       const label = key === today ? t('today') : key === tomorrow ? t('tomorrow') : weekday.format(parseDate(key, true));
-      const day = byDay.get(key) ?? { key, label, events: [] };
+      const day = byDay.get(key) ?? { key, label, today: key === today, events: [] };
       day.events.push(e);
       byDay.set(key, day);
     }
@@ -86,7 +87,7 @@
     {/if}
     {#each days as day (day.key)}
       <section class="day" data-fit-group>
-        <h2 class:stale>{day.label}</h2>
+        <h2 class:today={day.today} class:stale>{day.label}</h2>
         <ul>
           {#each day.events as e, i (i)}
             <li class:past={isPast(e, clock.now)}>
@@ -114,11 +115,13 @@
   }
   h2 {
     margin: 0 0 6px;
-    font-size: 26px;
-    font-weight: 600;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
+    font-family: var(--font-display);
+    font-size: 32px;
+    font-weight: 500;
     color: var(--text-muted);
+  }
+  h2.today {
+    color: var(--accent);
   }
   h2.stale,
   .empty.stale {

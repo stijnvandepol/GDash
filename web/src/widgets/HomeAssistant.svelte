@@ -67,7 +67,7 @@
     /* As large as the tile allows: a digit is about 0.55em wide, so the
        value fills most of the width whether it is "21" or "Geen beweging". */
     font-size: min(180px, calc(150cqw / max(var(--length), 3)), 48cqh);
-    font-weight: 300;
+    font-weight: var(--weight-figure);
     line-height: 1;
     color: var(--text-primary);
     font-variant-numeric: tabular-nums;
@@ -106,6 +106,7 @@
   .value {
     flex: none;
     font-size: 44px;
+    font-weight: var(--weight-figure);
     color: var(--text-primary);
     font-variant-numeric: tabular-nums;
   }

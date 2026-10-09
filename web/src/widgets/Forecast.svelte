@@ -84,6 +84,7 @@
     align-items: center;
     gap: 4px;
     min-width: 0;
+    font-variant-numeric: tabular-nums;
   }
   .day {
     font-size: 30px;
@@ -100,6 +101,7 @@
   .max {
     font-size: 48px;
     font-size: min(48px, calc(100cqw / var(--days) * 0.42), 22cqh);
+    font-weight: var(--weight-figure);
     color: var(--text-primary);
   }
   .min {
