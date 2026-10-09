@@ -16,7 +16,10 @@ import (
 	"github.com/stijnvandepol/gdash/internal/weather"
 )
 
-const defaultCastPort = "8009"
+const (
+	defaultAddr     = ":8420"
+	defaultCastPort = "8009"
+)
 
 // validAppID matches the 8 hex characters of a Cast application ID.
 var validAppID = regexp.MustCompile(`^[0-9A-F]{8}$`)
@@ -43,7 +46,7 @@ const defaultNewsFeed = "https://feeds.nos.nl/nosnieuwsalgemeen"
 // address, data directory and Cast app ID are read on every start.
 func loadConfig(getenv func(string) string) (config, error) {
 	cfg := config{
-		addr:    valueOr(getenv("GDASH_ADDR"), ":8420"),
+		addr:    valueOr(getenv("GDASH_ADDR"), defaultAddr),
 		dataDir: valueOr(getenv("GDASH_DATA_DIR"), "data"),
 	}
 	var err error

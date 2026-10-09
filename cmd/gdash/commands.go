@@ -3,6 +3,9 @@ package main
 import (
 	"context"
 	"fmt"
+	"net"
+	"net/http"
+	"net/netip"
 	"os"
 	"text/tabwriter"
 	"time"
@@ -54,4 +57,46 @@ func status(ctx context.Context, device string) error {
 		fmt.Fprintf(w, "%s\t%s\t%v\n", app.AppID, app.DisplayName, app.IsIdleScreen)
 	}
 	return w.Flush()
+}
+
+// healthTimeout bounds the check: a server that does not answer is not healthy.
+const healthTimeout = 3 * time.Second
+
+// healthcheck asks the server on this machine whether it is up, for the
+// container's HEALTHCHECK: the image has no shell, curl or wget. It reads
+// the address from the same GDASH_ADDR the server listens on.
+func healthcheck(ctx context.Context, getenv func(string) string) error {
+	url, err := healthURL(valueOr(getenv("GDASH_ADDR"), defaultAddr))
+	if err != nil {
+		return err
+	}
+	ctx, cancel := context.WithTimeout(ctx, healthTimeout)
+	defer cancel()
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return err
+	}
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("gdash is not answering: %w", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusNoContent {
+		return fmt.Errorf("gdash is unhealthy: %s", resp.Status)
+	}
+	return nil
+}
+
+// healthURL turns a listen address such as ":8420" into the URL of the
+// health route on this machine. A server that listens on all addresses is
+// reached through the loopback address.
+func healthURL(listenAddr string) (string, error) {
+	host, port, err := net.SplitHostPort(listenAddr)
+	if err != nil {
+		return "", fmt.Errorf("GDASH_ADDR %q is not a host:port address: %w", listenAddr, err)
+	}
+	if ip, err := netip.ParseAddr(host); host == "" || (err == nil && ip.IsUnspecified()) {
+		host = "127.0.0.1"
+	}
+	return "http://" + net.JoinHostPort(host, port) + "/healthz", nil
 }

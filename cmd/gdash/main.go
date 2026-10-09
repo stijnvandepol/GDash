@@ -7,6 +7,7 @@
 //	gdash discover   list Cast devices on the local network
 //	gdash status A   show what the Cast device at address A is doing
 //	gdash version    print the version
+//	gdash healthcheck  exit 0 when the server on this machine answers
 package main
 
 import (
@@ -83,10 +84,12 @@ func main() {
 		err = discover(ctx)
 	case os.Args[1] == "status" && len(os.Args) == 3:
 		err = status(ctx, os.Args[2])
+	case os.Args[1] == "healthcheck":
+		err = healthcheck(ctx, os.Getenv)
 	case os.Args[1] == "version":
 		fmt.Println(currentVersion())
 	default:
-		err = errors.New("usage: gdash | gdash discover | gdash status <device-address> | gdash version")
+		err = errors.New("usage: gdash | gdash discover | gdash status <device-address> | gdash healthcheck | gdash version")
 	}
 	if err != nil {
 		logger.Error("gdash stopped", "error", err)
