@@ -41,6 +41,39 @@ func decodeSnapshot(t *testing.T, body string) display.Snapshot {
 	return s
 }
 
+func TestPreviewPageMayBeFramedByTheWebInterfaceOnly(t *testing.T) {
+	env := newTestEnv(t, nil)
+	resp, err := http.Get(env.srv.URL + "/preview/hall")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer resp.Body.Close()
+	body, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode != http.StatusOK || string(body) != "<html>preview</html>" {
+		t.Fatalf("GET /preview/hall = %d %q", resp.StatusCode, body)
+	}
+	csp := resp.Header.Get("Content-Security-Policy")
+	for _, want := range []string{"default-src 'self'", "script-src 'self'", "frame-ancestors 'self'"} {
+		if !strings.Contains(csp, want) {
+			t.Errorf("CSP %q lacks %q", csp, want)
+		}
+	}
+	// Display pages and the web interface are never framed.
+	displayResp, err := http.Get(env.srv.URL + "/d/keuken")
+	if err != nil {
+		t.Fatal(err)
+	}
+	displayResp.Body.Close()
+	if csp := displayResp.Header.Get("Content-Security-Policy"); !strings.Contains(csp, "frame-ancestors 'none'") {
+		t.Errorf("display CSP = %q, want frame-ancestors 'none'", csp)
+	}
+	for _, path := range []string{"/preview/Hall", "/preview/..%2fetc", "/preview/" + strings.Repeat("a", 40)} {
+		if status, _ := env.do(t, "GET", path, ""); status != http.StatusNotFound {
+			t.Errorf("GET %s = %d, want 404", path, status)
+		}
+	}
+}
+
 func TestPreviewNeedsAnAdmin(t *testing.T) {
 	env := previewEnv(t)
 	screen := tv()

@@ -202,4 +202,7 @@ hash of the content, so a poller sees whether anything changed. Data a draft nee
 (a new Home Assistant entity) is absent until the dashboard is saved. The web interface polls the preview every few
 seconds rather than opening a stream: a preview shows one dashboard that may be a draft, which the per-display
 event stream cannot do, and polling needs no connection kept open per editor.
+The page `GET /preview/{id}` (optionally `?textScale=150`) shows that preview full screen, drawn by the same code
+as a display page; it loads without a session, like the web interface, and needs the admin session for its data.
+Its content security policy is the display's, except that the web interface may show it in a frame.
 See `internal/display/display.go` and `web/src/protocol.ts`.

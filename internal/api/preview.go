@@ -10,6 +10,18 @@ import (
 	"github.com/stijnvandepol/nookboard/internal/validation"
 )
 
+// previewPage is the dashboard shown as a TV shows it, for the editor to
+// frame. Like the web interface it loads without a session; the preview
+// endpoints it polls require one.
+func (s *Server) previewPage(w http.ResponseWriter, r *http.Request) {
+	if !display.ValidDashboardID(r.PathValue("dashboard")) {
+		http.NotFound(w, r)
+		return
+	}
+	w.Header().Set("Content-Security-Policy", previewCSP)
+	s.servePage(w, r, "preview/index.html")
+}
+
 // getDashboardPreview handles GET /api/dashboards/{dashboard}/preview
 // ?textScale=: the snapshot a screen showing the stored dashboard gets now.
 func (s *Server) getDashboardPreview(w http.ResponseWriter, r *http.Request) {

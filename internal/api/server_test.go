@@ -123,6 +123,7 @@ func newTestEnv(t *testing.T, discover func(context.Context) ([]cast.Device, err
 			"admin/index.html":    {Data: []byte("<html>admin</html>")},
 			"display/index.html":  {Data: []byte("<html>display</html>")},
 			"receiver/index.html": {Data: []byte("<html>receiver</html>")},
+			"preview/index.html":  {Data: []byte("<html>preview</html>")},
 			"assets/app.js":       {Data: []byte("console.log(1)")},
 		},
 		Discover:          discover,

@@ -14,6 +14,7 @@ export default defineConfig({
       input: {
         admin: 'admin/index.html',
         display: 'display/index.html',
+        preview: 'preview/index.html',
         receiver: 'receiver/index.html',
       },
     },

@@ -92,6 +92,7 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusNoContent) })
 	mux.HandleFunc("GET /{$}", s.adminPage)
 	mux.HandleFunc("GET /d/{display}", s.displayPage)
+	mux.HandleFunc("GET /preview/{dashboard}", s.previewPage)
 	mux.HandleFunc("GET /receiver/", s.receiverPage)
 	mux.Handle("GET /assets/", http.FileServerFS(s.Web))
 	mux.HandleFunc("GET /api/displays/{display}/events", s.displayEvents)
@@ -163,7 +164,13 @@ func withSecurityHeaders(next http.Handler) http.Handler {
 
 // displayCSP (also used for the web interface) allows nothing from outside the server: no CDN, no fonts from
 // Google, no inline scripts.
-const displayCSP = "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; font-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'"
+const (
+	pageCSP    = "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; font-src 'self'; base-uri 'none'; form-action 'none'"
+	displayCSP = pageCSP + "; frame-ancestors 'none'"
+	// previewCSP is the same, except that the web interface may show the
+	// preview in a frame.
+	previewCSP = pageCSP + "; frame-ancestors 'self'"
+)
 
 // adminPage is the web interface. It loads without a session; the API it
 // calls requires one.

@@ -36,9 +36,18 @@ function scheduleNextMinute(): void {
 }
 scheduleNextMinute();
 
-export function applySnapshot(displayId: string, snapshot: Snapshot): void {
-  if (display.snapshot && snapshot.version === display.snapshot.version) return;
+/**
+ * Shows a snapshot, unless the screen already shows that version. Returns
+ * whether the screen changed.
+ */
+export function showSnapshot(snapshot: Snapshot): boolean {
+  if (display.snapshot && snapshot.version === display.snapshot.version) return false;
   display.snapshot = snapshot;
+  return true;
+}
+
+export function applySnapshot(displayId: string, snapshot: Snapshot): void {
+  if (!showSnapshot(snapshot)) return;
   try {
     localStorage.setItem(STORAGE_PREFIX + displayId, JSON.stringify(snapshot));
   } catch {
