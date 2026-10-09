@@ -125,27 +125,36 @@ func (s *Store) Add(r io.Reader) (Photo, error) {
 		return Photo{}, err
 	}
 	name := hex.EncodeToString(id) + ext
-	return s.write(name, io.MultiReader(bytes.NewReader(head), r))
+	data, err := io.ReadAll(io.LimitReader(io.MultiReader(bytes.NewReader(head), r), MaxBytes+1))
+	if err != nil {
+		return Photo{}, fmt.Errorf("read photo: %w", err)
+	}
+	if len(data) > MaxBytes {
+		return Photo{}, ErrTooLarge
+	}
+	clean, err := stripMetadata(ext, data)
+	if err != nil {
+		return Photo{}, ErrNotAPhoto
+	}
+	return s.write(name, clean)
 }
 
-// write copies at most MaxBytes to the photo, through a temporary file so
-// a failed or oversized upload never leaves a photo behind.
-func (s *Store) write(name string, r io.Reader) (Photo, error) {
+// write stores the photo through a temporary file, so a failed write never
+// leaves half a photo behind.
+func (s *Store) write(name string, data []byte) (Photo, error) {
 	tmp, err := os.CreateTemp(s.dir, "upload-*.tmp")
 	if err != nil {
 		return Photo{}, fmt.Errorf("store photo: %w", err)
 	}
 	defer os.Remove(tmp.Name())
-	written, err := io.Copy(tmp, io.LimitReader(r, MaxBytes+1))
+	_, err = tmp.Write(data)
 	if closeErr := tmp.Close(); err == nil {
 		err = closeErr
 	}
 	if err != nil {
 		return Photo{}, fmt.Errorf("store photo: %w", err)
 	}
-	if written > MaxBytes {
-		return Photo{}, ErrTooLarge
-	}
+	written := int64(len(data))
 	path := filepath.Join(s.dir, name)
 	if err := os.Rename(tmp.Name(), path); err != nil {
 		return Photo{}, fmt.Errorf("store photo: %w", err)

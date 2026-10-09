@@ -2,19 +2,56 @@ package photos
 
 import (
 	"bytes"
+	"encoding/binary"
 	"errors"
+	"image"
+	"image/color"
+	imagejpeg "image/jpeg"
+	imagepng "image/png"
 	"io"
 	"os"
 	"strings"
 	"testing"
 )
 
-// Enough of each format for content sniffing; the store never decodes.
+// Small real images of each format: the store walks their containers to
+// remove metadata, so a few magic bytes are not enough.
 var (
-	jpeg = append([]byte{0xFF, 0xD8, 0xFF, 0xE0}, make([]byte, 100)...)
-	png  = append([]byte("\x89PNG\r\n\x1a\n"), make([]byte, 100)...)
-	webp = append([]byte("RIFF\x00\x00\x00\x00WEBPVP8 "), make([]byte, 100)...)
+	jpeg = encodeTestImage(func(w io.Writer, m image.Image) error { return imagejpeg.Encode(w, m, nil) })
+	png  = encodeTestImage(imagepng.Encode)
+	webp = webpContainer(chunk("VP8 ", make([]byte, 40)))
 )
+
+func encodeTestImage(encode func(io.Writer, image.Image) error) []byte {
+	m := image.NewRGBA(image.Rect(0, 0, 8, 8))
+	m.Set(1, 1, color.RGBA{R: 200, A: 255})
+	var b bytes.Buffer
+	if err := encode(&b, m); err != nil {
+		panic(err)
+	}
+	return b.Bytes()
+}
+
+// chunk is one RIFF chunk, padded to an even size.
+func chunk(kind string, payload []byte) []byte {
+	out := append([]byte(kind), 0, 0, 0, 0)
+	binary.LittleEndian.PutUint32(out[4:], uint32(len(payload)))
+	out = append(out, payload...)
+	if len(payload)%2 == 1 {
+		out = append(out, 0)
+	}
+	return out
+}
+
+// webpContainer wraps chunks in a RIFF WEBP header with the right size.
+func webpContainer(chunks ...[]byte) []byte {
+	out := []byte("RIFF\x00\x00\x00\x00WEBP")
+	for _, c := range chunks {
+		out = append(out, c...)
+	}
+	binary.LittleEndian.PutUint32(out[4:], uint32(len(out)-8))
+	return out
+}
 
 func newStore(t *testing.T) *Store {
 	t.Helper()

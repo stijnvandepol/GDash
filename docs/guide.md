@@ -97,7 +97,9 @@ add calendars and feeds under Settings, and the photos once you add photos.
 
 **Photos** are added under Settings, Photos: JPEG, PNG or WebP, up to 8 MB
 each and 50 in total. They stay on your server and only go to paired
-screens and to you; the rest of the network gets nothing.
+screens and to you; the rest of the network gets nothing. GDash removes
+the location and other details a phone stores in a photo before it keeps
+it; the picture itself is not changed.
 
 Every display shows the **Default** dashboard until you choose another one
 in the list at the display.

@@ -3,6 +3,8 @@ package api
 import (
 	"bytes"
 	"encoding/json"
+	"image"
+	"image/jpeg"
 	"io"
 	"mime/multipart"
 	"net/http"
@@ -13,7 +15,14 @@ import (
 	"github.com/stijnvandepol/gdash/internal/photos"
 )
 
-var jpegBytes = append([]byte{0xFF, 0xD8, 0xFF, 0xE0}, make([]byte, 200)...)
+// jpegBytes is a small real JPEG: uploads are walked to remove metadata.
+var jpegBytes = func() []byte {
+	var b bytes.Buffer
+	if err := jpeg.Encode(&b, image.NewRGBA(image.Rect(0, 0, 8, 8)), nil); err != nil {
+		panic(err)
+	}
+	return b.Bytes()
+}()
 
 // upload sends data as the "photo" field of a multipart form.
 func upload(t *testing.T, client *http.Client, url string, data []byte) (int, string) {

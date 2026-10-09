@@ -42,6 +42,8 @@ fully trust, such as a guest's phone.
   and removed from the screen on time.
 - **Photos:** only served to logged-in admins and paired screens; an
   upload is accepted by its content (JPEG, PNG or WebP), not by its name.
+  Location, camera, date and other metadata (EXIF, XMP, IPTC, text chunks)
+  are removed before a photo is stored; only a JPEG's orientation stays.
 - **Outgoing requests:** feeds, calendars and Home Assistant are fetched with a
   client that refuses link-local addresses, where cloud hosts serve instance
   metadata.
