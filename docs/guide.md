@@ -57,7 +57,9 @@ Under **Dashboards** you edit layouts on the same 16:9 grid as the TV.
   drag its corner to resize it. Click a widget to change its settings, such
   as the number of headlines or the text of a note.
 - **Themes:** Minimal dark (the default, best for OLED screens), Minimal
-  light for bright rooms, and Glass.
+  light and Warm light for bright rooms, Glass, High contrast for reading
+  from across the room or with poor eyesight, and Night, dim amber for a
+  bedroom.
 - **Save** sends the dashboard to every screen that shows it within seconds.
 
 | Widget | Shows |

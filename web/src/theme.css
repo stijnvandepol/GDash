@@ -11,6 +11,7 @@
   --radius-widget: 28px;
   --space-gap: 24px;
   --space-widget: 48px;
+  --widget-border-width: 1px;
 }
 
 /* Minimal Dark: the default, and the safest choice for OLED screens. */
@@ -49,6 +50,46 @@
   --warning: #ffc861;
   --backdrop: radial-gradient(circle at 15% 20%, #2a3f73 0%, transparent 55%),
     radial-gradient(circle at 85% 80%, #4b2a6b 0%, transparent 50%), linear-gradient(160deg, #0d1424, #120f22);
+}
+
+/* Warm light: cream and brown, softer than white in a kitchen by day. */
+.screen[data-theme='warm-light'] {
+  --surface-0: #efe7dc;
+  --surface-1: #fbf6ef;
+  --widget-border: #e2d6c5;
+  --text-primary: #2b231d;
+  --text-muted: #6f6257;
+  --warning: #a14d00;
+  --backdrop: none;
+}
+
+/*
+ * High contrast: white on black with clear borders, for poor eyesight and
+ * for reading from across a room.
+ */
+.screen[data-theme='high-contrast'] {
+  --surface-0: #000000;
+  --surface-1: #000000;
+  --widget-border: #ffffff;
+  --widget-border-width: 3px;
+  --text-primary: #ffffff;
+  --text-muted: #e8e8e8;
+  --warning: #ffd400;
+  --backdrop: none;
+}
+
+/*
+ * Night: dim amber on black for a bedroom, with no blue light and as few
+ * lit pixels as possible.
+ */
+.screen[data-theme='night'] {
+  --surface-0: #000000;
+  --surface-1: #000000;
+  --widget-border: transparent;
+  --text-primary: #d9752f;
+  --text-muted: #8f4a1f;
+  --warning: #c2410c;
+  --backdrop: none;
 }
 
 /* Author rules such as "li { display: flex }" would otherwise show

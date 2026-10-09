@@ -112,7 +112,7 @@
   }
   .widget {
     background: var(--surface-1);
-    border: 1px solid var(--widget-border);
+    border: var(--widget-border-width) solid var(--widget-border);
     border-radius: var(--radius-widget);
     padding: var(--space-widget);
     overflow: hidden;

@@ -74,7 +74,7 @@ var WidgetTypes = map[string]WidgetType{
 }
 
 // Themes are the built-in themes; web/src/theme.css defines their tokens.
-var Themes = []string{"minimal-dark", "minimal-light", "glass"}
+var Themes = []string{"minimal-dark", "minimal-light", "glass", "warm-light", "high-contrast", "night"}
 
 var validDashboardID = regexp.MustCompile(`^[a-z0-9][a-z0-9-]{0,31}$`)
 

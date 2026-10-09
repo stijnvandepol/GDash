@@ -27,6 +27,9 @@
     'minimal-dark': 'Minimal dark',
     'minimal-light': 'Minimal light',
     glass: 'Glass',
+    'warm-light': 'Warm light',
+    'high-contrast': 'High contrast',
+    night: 'Night',
   };
   let selected = $state<string | null>(null);
   let message = $state('');

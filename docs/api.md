@@ -125,7 +125,7 @@ active hours, but both are required. Deleting a dashboard removes the slots that
 `schedule[i]`, and `schedule` for a slot with an unknown dashboard.
 
 **dashboard:** `{"id": "default", "name": "Default", "columns": 24, "rows": 14, "theme": "minimal-dark", "widgets": [widget]}`.
-`theme` is one of `minimal-dark` (default), `minimal-light` and `glass`; an unknown theme is a `422`. The grid size and
+`theme` is one of `minimal-dark` (default), `minimal-light`, `glass`, `warm-light`, `high-contrast` and `night`; an unknown theme is a `422`. The grid size and
 every widget's `source` are set by the server; values sent by a client are ignored.
 
 **widget:** `{"id": "news", "type": "news", "x": 10, "y": 9, "w": 14, "h": 5, "source": "news.default", "settings": {"maxItems": 3}}`.

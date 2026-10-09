@@ -26,8 +26,9 @@ The first release. Everything below is new.
 
 ### Dashboards
 
-- A drag-and-drop editor on a 16:9 grid, several dashboards, and three
-  themes: Minimal dark, Minimal light and Glass.
+- A drag-and-drop editor on a 16:9 grid, several dashboards, and six
+  themes: Minimal dark, Minimal light, Glass, Warm light, High contrast and
+  Night.
 - Widgets: clock, weather, a forecast for up to seven days, calendar, news,
   a note and a countdown. Widgets fit their type to the size of their tile.
 - Schedules: another dashboard during parts of the day, on every day or on
