@@ -13,7 +13,7 @@ export function describeStatus(status: SourceStatus | undefined, now = Date.now(
   return status.failing ? `The last update failed; showing data from ${ago}.` : `Updated ${ago}.`;
 }
 
-function describeAge(minutes: number): string {
+export function describeAge(minutes: number): string {
   if (minutes === 0) return 'just now';
   if (minutes === 1) return '1 minute ago';
   if (minutes < 120) return `${minutes} minutes ago`;

@@ -8,6 +8,8 @@
   import HomeAssistantSetting from './HomeAssistantSetting.svelte';
   import LocationSetting from './LocationSetting.svelte';
   import PhotoSetting from './PhotoSetting.svelte';
+  import AnnouncementSetting from './AnnouncementSetting.svelte';
+  import ApiTokenSetting from './ApiTokenSetting.svelte';
   import SourceList from './SourceList.svelte';
 
   let { onSessionEnded }: { onSessionEnded: () => void } = $props();
@@ -135,6 +137,10 @@
 {/if}
 
 <PhotoSetting onerror={handle} />
+
+<ApiTokenSetting onerror={handle} />
+
+<AnnouncementSetting onerror={handle} />
 
 <AccountSetting onerror={handle} />
 

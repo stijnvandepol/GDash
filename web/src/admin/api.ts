@@ -179,6 +179,19 @@ export interface Photo {
   addedAt: string;
 }
 
+/** An API token for automations; the secret is only in the response that makes it. */
+export interface ApiToken {
+  id: number;
+  name: string;
+  createdAt: string;
+  /** Null until the token is used. */
+  lastUsedAt: string | null;
+}
+
+export interface NewApiToken extends ApiToken {
+  token: string;
+}
+
 export interface CastDevice {
   id: string;
   name: string;
@@ -227,6 +240,11 @@ export const api = {
   deletePhoto: (name: string) => request<void>('DELETE', `/api/photos/${encodeURIComponent(name)}`),
   auditEvents: (limit: number) =>
     request<{ events: AuditEvent[] }>('GET', `/api/audit-events?limit=${limit}`).then((r) => r.events),
+  apiTokens: () => request<{ tokens: ApiToken[] }>('GET', '/api/api-tokens').then((r) => r.tokens),
+  createApiToken: (name: string) => request<NewApiToken>('POST', '/api/api-tokens', { name }),
+  revokeApiToken: (id: number) => request<void>('DELETE', `/api/api-tokens/${id}`),
+  announce: (message: string, seconds: number) =>
+    request<{ displays: string[] }>('POST', '/api/announcements', { message, seconds }),
   changePassword: (currentPassword: string, newPassword: string) =>
     request<void>('PUT', '/api/me/password', { currentPassword, newPassword }),
   displays: () => request<{ displays: Display[] }>('GET', '/api/displays').then((r) => r.displays),
