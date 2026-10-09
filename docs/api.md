@@ -185,8 +185,8 @@ an empty `title`, which the screen fills in in its own language.
 **settings.homeAssistant:** `{"url": "http://192.168.1.10:8123", "unreadable": false}`, or `null` when not connected.
 
 **entity:** `{"id": "sensor.living_room_temperature", "name": "Living room", "state": "21.4", "unit": "°C", "deviceClass": "temperature"}`.
-The `homeassistant.default` data on a screen maps entity IDs to the same object without `id`; an entity Home
-Assistant does not know is left out.
+The `homeassistant.default` data on a screen maps the entity IDs that its own widgets show to the same object
+without `id`; an entity Home Assistant does not know is left out.
 
 **device:** `{"id": "e542…", "name": "tv woonkamer", "model": "Chromecast HD", "addr": "192.168.1.160:8009", "hasScreen": true}`
 

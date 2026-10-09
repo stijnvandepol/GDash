@@ -202,6 +202,9 @@ func dataFor(dashboards []Dashboard, data map[string]datahub.Entry) map[string]d
 			}
 		}
 	}
+	if entry, ok := used[HomeAssistantSource]; ok {
+		used[HomeAssistantSource] = onlyEntities(entry, EntityIDs(dashboards))
+	}
 	return used
 }
 
