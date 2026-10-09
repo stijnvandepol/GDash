@@ -35,6 +35,8 @@ const (
 	auditPhotoRemoved           = "photo_removed"
 	auditHomeAssistantConnected = "homeassistant_connected"
 	auditHomeAssistantRemoved   = "homeassistant_removed"
+	auditAPITokenCreated        = "api_token_created"
+	auditAPITokenRevoked        = "api_token_revoked"
 	defaultAuditPage            = 100
 	maxAuditDetailCharacters    = 200
 )

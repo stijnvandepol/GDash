@@ -26,6 +26,7 @@ import (
 	_ "time/tzdata"
 
 	"github.com/stijnvandepol/nookboard/internal/api"
+	"github.com/stijnvandepol/nookboard/internal/apitoken"
 	"github.com/stijnvandepol/nookboard/internal/auth"
 	"github.com/stijnvandepol/nookboard/internal/backup"
 	"github.com/stijnvandepol/nookboard/internal/cast"
@@ -212,6 +213,7 @@ func serve(ctx context.Context, logger *slog.Logger) error {
 		Snapshots:      snapshots,
 		Auth:           authService,
 		Pairing:        pairings,
+		APITokens:      apitoken.New(db),
 		Store:          db,
 		Settings:       settingsService,
 		Places:         weather.Geocoder{BaseURL: weather.DefaultGeocodingURL, HTTP: &http.Client{Timeout: upstreamTimeout}},

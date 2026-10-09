@@ -12,6 +12,11 @@ describe('describeAction', () => {
     );
   });
 
+  it('names the API token that was made or revoked', () => {
+    expect(describeAction({ ...base, action: 'api_token_created', detail: 'Home Assistant' })).toBe('Made API token Home Assistant');
+    expect(describeAction({ ...base, action: 'api_token_revoked', detail: 'Home Assistant' })).toBe('Revoked API token Home Assistant');
+  });
+
   it('leaves out file names of photos', () => {
     expect(describeAction({ ...base, action: 'photo_added', detail: '17ffba802f212d49844c20cc3dca1edb.png' })).toBe('Added a photo');
   });

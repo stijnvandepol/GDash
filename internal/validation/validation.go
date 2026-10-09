@@ -5,6 +5,7 @@ package validation
 import (
 	"errors"
 	"strings"
+	"unicode"
 )
 
 // FieldError describes one invalid field.
@@ -53,4 +54,10 @@ func (c *Collector) Err() error {
 		return nil
 	}
 	return &Error{Fields: c.fields}
+}
+
+// HasControlCharacter reports whether s contains a control character, such
+// as a newline, tab or escape. Names and short messages are plain text.
+func HasControlCharacter(s string) bool {
+	return strings.IndexFunc(s, unicode.IsControl) >= 0
 }

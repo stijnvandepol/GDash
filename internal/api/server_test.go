@@ -18,6 +18,7 @@ import (
 	"testing/fstest"
 	"time"
 
+	"github.com/stijnvandepol/nookboard/internal/apitoken"
 	"github.com/stijnvandepol/nookboard/internal/auth"
 	"github.com/stijnvandepol/nookboard/internal/cast"
 	"github.com/stijnvandepol/nookboard/internal/casting"
@@ -118,6 +119,7 @@ func newTestEnv(t *testing.T, discover func(context.Context) ([]cast.Device, err
 		Snapshots: fixedSubscriber(`{"type":"snapshot","version":1}`),
 		Auth:      authService,
 		Pairing:   pairingService,
+		APITokens: apitoken.New(st),
 		Store:     st,
 		Web: fstest.MapFS{
 			"admin/index.html":    {Data: []byte("<html>admin</html>")},

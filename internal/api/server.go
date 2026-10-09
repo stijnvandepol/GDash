@@ -15,6 +15,7 @@ import (
 	"regexp"
 	"time"
 
+	"github.com/stijnvandepol/nookboard/internal/apitoken"
 	"github.com/stijnvandepol/nookboard/internal/auth"
 	"github.com/stijnvandepol/nookboard/internal/cast"
 	"github.com/stijnvandepol/nookboard/internal/casting"
@@ -49,6 +50,7 @@ type Server struct {
 	Snapshots Subscriber
 	Auth      *auth.Service
 	Pairing   *pairing.Service
+	APITokens *apitoken.Service
 	Store     *store.Store
 	// Web holds the built frontend: display/index.html, receiver/index.html
 	// and assets/.
@@ -109,6 +111,9 @@ func (s *Server) Handler() http.Handler {
 	mux.Handle("PUT /api/me/password", s.requireUser(s.putPassword))
 	mux.Handle("GET /api/system", s.requireUser(s.getSystem))
 	mux.Handle("GET /api/audit-events", s.requireUser(s.getAuditEvents))
+	mux.Handle("GET /api/api-tokens", s.requireUser(s.listAPITokens))
+	mux.Handle("POST /api/api-tokens", s.requireUser(s.postAPIToken))
+	mux.Handle("DELETE /api/api-tokens/{id}", s.requireUser(s.deleteAPIToken))
 
 	mux.HandleFunc("POST /api/pairing-requests", s.postPairingRequest)
 	mux.HandleFunc("POST /api/display-sessions", s.postDisplaySession)

@@ -36,6 +36,8 @@ const ACTIONS: Record<string, string> = {
   photo_removed: 'Removed a photo',
   homeassistant_connected: 'Connected Home Assistant at',
   homeassistant_removed: 'Disconnected Home Assistant',
+  api_token_created: 'Made API token',
+  api_token_revoked: 'Revoked API token',
 };
 
 // Actions whose detail means nothing to a person, such as a photo's file name.
