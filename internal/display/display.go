@@ -11,6 +11,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/stijnvandepol/nookboard/internal/announcement"
 	"github.com/stijnvandepol/nookboard/internal/datahub"
 	"github.com/stijnvandepol/nookboard/internal/schedule"
 )
@@ -89,6 +90,10 @@ type Snapshot struct {
 	// TextScale is the text size in percent; the screen draws the stage
 	// smaller by that factor, so everything on it looks larger.
 	TextScale int `json:"textScale"`
+	// Announcement is shown over the dashboard until its ExpiresAt, which
+	// the screen compares with ServerTime. Absent when there is none and
+	// outside active hours.
+	Announcement *announcement.Announcement `json:"announcement,omitempty"`
 }
 
 // View is what one display shows and when.
@@ -103,6 +108,8 @@ type View struct {
 	PageSeconds int
 	// TextScale is the display's text size in percent.
 	TextScale int
+	// Announcement is the message to show over the dashboard now, if any.
+	Announcement *announcement.Announcement
 }
 
 // ScheduledDashboard is a dashboard shown during a window of the week.
@@ -172,13 +179,15 @@ func (b *Broadcaster) Publish(now time.Time, views map[string]View, data map[str
 			seconds = view.PageSeconds
 		}
 		used := map[string]datahub.Entry{}
+		var shown *announcement.Announcement
 		if active {
 			used = dataFor(append([]Dashboard{dashboard}, pages...), data)
+			shown = view.Announcement
 		}
 		msg, err := json.Marshal(Snapshot{
 			Type: "snapshot", Version: b.version, ServerTime: now, Active: active,
 			Dashboard: dashboard, Data: used, Language: language, Pages: pages, PageSeconds: seconds,
-			TextScale: view.TextScale,
+			TextScale: view.TextScale, Announcement: shown,
 		})
 		if err != nil {
 			return fmt.Errorf("encode snapshot for display %s: %w", displayID, err)
@@ -253,8 +262,10 @@ type Publisher struct {
 	Data  func() map[string]datahub.Entry
 	// Language returns the display language from the settings.
 	Language func(ctx context.Context) (string, error)
-	Now      func() time.Time
-	Logger   *slog.Logger
+	// Announcements holds the messages to show over the dashboards.
+	Announcements *announcement.Board
+	Now           func() time.Time
+	Logger        *slog.Logger
 
 	mu sync.Mutex
 }
@@ -274,7 +285,12 @@ func (p *Publisher) Refresh(ctx context.Context) {
 		p.Logger.Error("could not read the display language; displays keep their last state", "error", err)
 		return
 	}
-	if err := p.Broadcaster.Publish(p.Now(), views, p.Data(), language); err != nil {
+	now := p.Now()
+	for id, view := range views {
+		view.Announcement = p.Announcements.For(id, now)
+		views[id] = view
+	}
+	if err := p.Broadcaster.Publish(now, views, p.Data(), language); err != nil {
 		p.Logger.Error("could not publish display state", "error", err)
 	}
 }

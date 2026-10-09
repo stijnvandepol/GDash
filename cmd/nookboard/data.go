@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/stijnvandepol/nookboard/internal/airquality"
+	"github.com/stijnvandepol/nookboard/internal/announcement"
 	"github.com/stijnvandepol/nookboard/internal/calendar"
 	"github.com/stijnvandepol/nookboard/internal/datahub"
 	"github.com/stijnvandepol/nookboard/internal/display"
@@ -54,12 +55,13 @@ func startData(ctx context.Context, cfg config, db *store.Store, svc *settings.S
 	broadcaster := display.NewBroadcaster()
 	var hub *datahub.Hub
 	publisher := &display.Publisher{
-		Broadcaster: broadcaster,
-		Views:       db.DisplayViews,
-		Data:        func() map[string]datahub.Entry { return withPhotos(hub.Entries(), album, logger) },
-		Language:    svc.Language,
-		Now:         time.Now,
-		Logger:      logger,
+		Broadcaster:   broadcaster,
+		Views:         db.DisplayViews,
+		Data:          func() map[string]datahub.Entry { return withPhotos(hub.Entries(), album, logger) },
+		Language:      svc.Language,
+		Announcements: announcement.NewBoard(time.Now),
+		Now:           time.Now,
+		Logger:        logger,
 	}
 	hub = datahub.New(cache, logger, func() { publisher.Refresh(ctx) })
 	publisher.Refresh(ctx)

@@ -15,6 +15,7 @@ import (
 	"regexp"
 	"time"
 
+	"github.com/stijnvandepol/nookboard/internal/announcement"
 	"github.com/stijnvandepol/nookboard/internal/apitoken"
 	"github.com/stijnvandepol/nookboard/internal/auth"
 	"github.com/stijnvandepol/nookboard/internal/cast"
@@ -63,8 +64,13 @@ type Server struct {
 	// deleted, so screens showing it update at once.
 	DashboardsChanged func()
 	Settings          *settings.Service
-	Places            PlaceSearcher
-	HomeAssistant     HomeAssistantReader
+	// Announcements holds the messages that automations put on the
+	// displays. AnnouncementsChanged is called after one is posted, with
+	// the time it expires, so the screens receive it and lose it on time.
+	Announcements        *announcement.Board
+	AnnouncementsChanged func(expiresAt time.Time)
+	Places               PlaceSearcher
+	HomeAssistant        HomeAssistantReader
 	// SettingsChanged is called after a data source setting changes, so
 	// the data hub fetches what is configured now.
 	SettingsChanged func()
@@ -111,6 +117,7 @@ func (s *Server) Handler() http.Handler {
 	mux.Handle("PUT /api/me/password", s.requireUser(s.putPassword))
 	mux.Handle("GET /api/system", s.requireUser(s.getSystem))
 	mux.Handle("GET /api/audit-events", s.requireUser(s.getAuditEvents))
+	mux.Handle("POST /api/announcements", s.requireUserOrToken(s.postAnnouncement))
 	mux.Handle("GET /api/api-tokens", s.requireUser(s.listAPITokens))
 	mux.Handle("POST /api/api-tokens", s.requireUser(s.postAPIToken))
 	mux.Handle("DELETE /api/api-tokens/{id}", s.requireUser(s.deleteAPIToken))

@@ -232,6 +232,13 @@ func serve(ctx context.Context, logger *slog.Logger) error {
 			}
 			publisher.Refresh(ctx)
 		},
+		Announcements: publisher.Announcements,
+		AnnouncementsChanged: func(expiresAt time.Time) {
+			publisher.Refresh(ctx)
+			// The screen drops the message itself; this takes it out of
+			// the snapshot a screen gets when it connects later.
+			time.AfterFunc(time.Until(expiresAt), func() { publisher.Refresh(ctx) })
+		},
 		SettingsChanged: func() {
 			if err := sources.sync(ctx); err != nil {
 				logger.Error("could not apply the new settings; restart Nookboard", "error", err)

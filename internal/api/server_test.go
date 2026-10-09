@@ -18,6 +18,7 @@ import (
 	"testing/fstest"
 	"time"
 
+	"github.com/stijnvandepol/nookboard/internal/announcement"
 	"github.com/stijnvandepol/nookboard/internal/apitoken"
 	"github.com/stijnvandepol/nookboard/internal/auth"
 	"github.com/stijnvandepol/nookboard/internal/cast"
@@ -89,6 +90,11 @@ type testEnv struct {
 	pairing         *pairing.Service
 	store           *store.Store
 	sources         *fakeSources
+	board           *announcement.Board
+	// announced counts AnnouncementsChanged calls.
+	announced *atomic.Int32
+	// logs is everything the server logged.
+	logs *syncBuffer
 }
 
 func newTestEnv(t *testing.T, discover func(context.Context) ([]cast.Device, error)) *testEnv {
@@ -102,15 +108,17 @@ func newTestEnv(t *testing.T, discover func(context.Context) ([]cast.Device, err
 	if err != nil {
 		t.Fatal(err)
 	}
-	changes, settingsChanges := &atomic.Int32{}, &atomic.Int32{}
+	changes, settingsChanges, announced := &atomic.Int32{}, &atomic.Int32{}, &atomic.Int32{}
 	pairingService := pairing.New(st)
 	box, err := secret.LoadOrCreateKey(filepath.Join(t.TempDir(), "secret.key"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
+	logs := &syncBuffer{}
+	logger := slog.New(slog.NewTextHandler(logs, nil))
 	now := func() time.Time { return time.Date(2026, 10, 8, 17, 0, 0, 0, time.UTC) }
 	sources := &fakeSources{}
+	board := announcement.NewBoard(now)
 	album, err := photos.NewStore(filepath.Join(t.TempDir(), "photos"))
 	if err != nil {
 		t.Fatal(err)
@@ -128,22 +136,24 @@ func newTestEnv(t *testing.T, discover func(context.Context) ([]cast.Device, err
 			"preview/index.html":  {Data: []byte("<html>preview</html>")},
 			"assets/app.js":       {Data: []byte("console.log(1)")},
 		},
-		Discover:          discover,
-		DisplaysChanged:   func() { changes.Add(1) },
-		DashboardsChanged: func() { changes.Add(1) },
-		Settings:          &settings.Service{Store: st, Box: box, Now: now, Logger: logger},
-		Places:            sources,
-		HomeAssistant:     &homeassistant.Client{HTTP: &http.Client{Timeout: 5 * time.Second}},
-		SettingsChanged:   func() { settingsChanges.Add(1) },
-		SourceStatus:      sources.Entries,
-		Data:              sources.Entries,
-		Version:           "v1.2.3",
-		CastStatus:        sources.CastStatus,
-		Photos:            album,
-		PhotosChanged:     func() { changes.Add(1) },
-		PingInterval:      50 * time.Millisecond,
-		Now:               now,
-		Logger:            logger,
+		Discover:             discover,
+		DisplaysChanged:      func() { changes.Add(1) },
+		DashboardsChanged:    func() { changes.Add(1) },
+		Settings:             &settings.Service{Store: st, Box: box, Now: now, Logger: logger},
+		Places:               sources,
+		HomeAssistant:        &homeassistant.Client{HTTP: &http.Client{Timeout: 5 * time.Second}},
+		SettingsChanged:      func() { settingsChanges.Add(1) },
+		Announcements:        board,
+		AnnouncementsChanged: func(time.Time) { announced.Add(1) },
+		SourceStatus:         sources.Entries,
+		Data:                 sources.Entries,
+		Version:              "v1.2.3",
+		CastStatus:           sources.CastStatus,
+		Photos:               album,
+		PhotosChanged:        func() { changes.Add(1) },
+		PingInterval:         50 * time.Millisecond,
+		Now:                  now,
+		Logger:               logger,
 	}
 	srv := httptest.NewUnstartedServer(s.Handler())
 	// As in production (cmd/nookboard), short enough to notice in tests.
@@ -153,7 +163,7 @@ func newTestEnv(t *testing.T, discover func(context.Context) ([]cast.Device, err
 	jar, _ := cookiejar.New(nil)
 	return &testEnv{
 		srv: srv, client: &http.Client{Jar: jar}, changes: changes, settingsChanges: settingsChanges,
-		pairing: pairingService, store: st, sources: sources,
+		pairing: pairingService, store: st, sources: sources, board: board, announced: announced, logs: logs,
 	}
 }
 
