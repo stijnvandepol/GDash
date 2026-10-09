@@ -1,7 +1,7 @@
 # Enforces what CODE_GUIDELINES.md requires to hold every time: formatting,
-# vet, tests (with the race detector), browser tests of the built server, type
-# checks, a vulnerability scan of Go and npm dependencies, and license notices
-# for everything that ships.
+# vet and staticcheck, tests (with the race detector), browser tests of the
+# built server, type checks, a vulnerability scan of Go and npm dependencies,
+# and license notices for everything that ships.
 # Actions are pinned to commit SHAs.
 name: CI
 
@@ -61,6 +61,8 @@ jobs:
           unformatted="$(gofmt -l .)"
           if [ -n "$unformatted" ]; then echo "Run gofmt on:"; echo "$unformatted"; exit 1; fi
       - run: go vet ./...
+      - name: Static analysis
+        run: go run honnef.co/go/tools/cmd/staticcheck@v0.8.1 ./...
       - name: Tests with race detector
         run: go test -race -count=1 ./...
       - name: Vulnerability scan
