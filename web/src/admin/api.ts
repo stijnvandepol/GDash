@@ -84,6 +84,15 @@ export interface Dashboard {
   widgets: Widget[];
 }
 
+/** A ready-made layout to start a dashboard from. */
+export interface DashboardTemplate {
+  id: string;
+  name: string;
+  description: string;
+  theme: string;
+  widgets: Widget[];
+}
+
 export interface WidgetCatalogue {
   columns: number;
   rows: number;
@@ -259,6 +268,7 @@ export const api = {
   unpairScreens: (id: string) =>
     request<{ removed: number }>('DELETE', `/api/displays/${encodeURIComponent(id)}/pairings`),
   widgetTypes: () => request<WidgetCatalogue>('GET', '/api/widget-types'),
+  dashboardTemplates: () => request<{ templates: DashboardTemplate[] }>('GET', '/api/dashboard-templates').then((r) => r.templates),
   dashboards: () => request<{ dashboards: Dashboard[] }>('GET', '/api/dashboards').then((r) => r.dashboards),
   createDashboard: (d: Dashboard) => request<Dashboard>('POST', '/api/dashboards', d),
   saveDashboard: (d: Dashboard) =>

@@ -1,14 +1,19 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { api, ApiError, slugify, type Dashboard, type WidgetCatalogue } from './api';
+  import { api, ApiError, slugify, type Dashboard, type DashboardTemplate, type WidgetCatalogue } from './api';
   import { errorMessage } from './errors';
   import { freeId, fromFile, toFile } from './dashboardFile';
+  import { fromTemplate } from './templates';
   import DashboardEditor from './DashboardEditor.svelte';
+  import TemplateGallery from './TemplateGallery.svelte';
 
   let { onSessionEnded }: { onSessionEnded: () => void } = $props();
 
   let dashboards = $state<Dashboard[]>([]);
   let catalogue = $state<WidgetCatalogue | null>(null);
+  let templates = $state<DashboardTemplate[]>([]);
+  let creatingTemplate = $state('');
+  let templateError = $state('');
   let editing = $state<Dashboard | null>(null);
   let loadError = $state('');
   let newName = $state('');
@@ -20,10 +25,25 @@
 
   async function load() {
     try {
-      [dashboards, catalogue] = await Promise.all([api.dashboards(), api.widgetTypes()]);
+      [dashboards, catalogue, templates] = await Promise.all([api.dashboards(), api.widgetTypes(), api.dashboardTemplates()]);
       loadError = '';
     } catch (err) {
       loadError = handle(err);
+    }
+  }
+
+  /** Creates a dashboard with a template's layout and opens it in the editor. */
+  async function createFromTemplate(template: DashboardTemplate) {
+    templateError = '';
+    creatingTemplate = template.id;
+    try {
+      const created = await api.createDashboard(fromTemplate(template, dashboards.map((d) => d.id)));
+      await load();
+      editing = created;
+    } catch (err) {
+      templateError = handle(err);
+    } finally {
+      creatingTemplate = '';
     }
   }
 
@@ -117,8 +137,17 @@
     </ul>
   </section>
 
+  {#if catalogue && templates.length > 0}
+    <section class="card" id="templates">
+      <h2>Start from a template</h2>
+      <p class="muted small">A ready-made layout with a fitting theme. It is added as a new dashboard that you can change in the editor.</p>
+      <TemplateGallery {templates} columns={catalogue.columns} rows={catalogue.rows} busyId={creatingTemplate} onUse={createFromTemplate} />
+      {#if templateError}<p class="error">{templateError}</p>{/if}
+    </section>
+  {/if}
+
   <form class="card" onsubmit={create}>
-    <h2>New dashboard</h2>
+    <h2>New empty dashboard</h2>
     <label>
       Name
       <input bind:value={newName} placeholder="Evening" required />

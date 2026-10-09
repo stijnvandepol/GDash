@@ -55,6 +55,16 @@ example a tablet that was lost. They ask for a new code within 20 seconds.
 
 Under **Dashboards** you edit layouts on the same 16:9 grid as the TV.
 
+**Start from a template** gives you a finished layout in one click instead of
+an empty grid: Kitchen (clock, weather, forecast, calendar and news), Hallway
+(a big clock, the weather, the next appointments and a note), Bedroom / night
+(a calm clock and the weather for today and tomorrow in the Night theme),
+Small screen (three large widgets for a Nest Hub or tablet) and Family (a large
+calendar, photos, a countdown to the next New Year and a note). Each card shows
+the layout; the button adds it as a new dashboard and opens it in the editor,
+where you can change anything. The calendar and news widgets fill up once you
+add calendars and feeds under Settings, and the photos once you add photos.
+
 - **Add** a widget with the buttons above the canvas, drag it to move it and
   drag its corner to resize it. Click a widget to change its settings, such
   as the number of headlines or the text of a note.
