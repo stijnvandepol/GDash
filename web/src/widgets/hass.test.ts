@@ -18,6 +18,13 @@ describe('show', () => {
     expect(show('sensor.temp', { state: '21.46', name: 'Temp', unit: '°C' })).toEqual({ value: '21,5', unit: '°C', dim: false });
   });
 
+  it('passes the unit on exactly as Home Assistant spells it', () => {
+    // "W" once looked like "w" on the TV; the text was never changed, only
+    // drawn too small beside the value (see .unit in HomeAssistant.svelte).
+    expect(show('sensor.power', { state: '1234', name: 'Power', unit: 'W' }).unit).toBe('W');
+    expect(show('sensor.energy', { state: '12.8', name: 'Energy', unit: 'kWh' }).unit).toBe('kWh');
+  });
+
   it('names binary states after the kind of sensor', () => {
     expect(show('binary_sensor.door', { state: 'on', name: 'Door', deviceClass: 'door' }).value).toBe('Open');
     expect(show('binary_sensor.hall', { state: 'off', name: 'Hall', deviceClass: 'motion' }).value).toBe('Clear');

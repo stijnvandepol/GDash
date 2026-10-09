@@ -6,8 +6,8 @@
   import { t } from '../i18n.svelte';
   import { entityStates, show, type Shown } from './hass';
 
-  // The unit is drawn at 0.6em; see .unit.
-  const UNIT_SCALE = 0.6;
+  // The unit is drawn at this fraction of the value's size; see .unit.
+  const UNIT_SCALE = 0.8;
 
   let { entry, settings }: { entry: Entry | undefined; settings: Record<string, unknown> | undefined } = $props();
 
@@ -110,9 +110,12 @@
     color: var(--text-primary);
     font-variant-numeric: tabular-nums;
   }
+  /* Not much smaller than the value: a capital "W" at 0.6em is as tall as a
+     lowercase letter next to the digits and reads as "w" from across a room. */
   .unit {
     margin-left: 0.15em;
-    font-size: 0.6em;
+    font-size: 0.8em;
+    font-weight: 400;
     color: var(--text-muted);
   }
   .dim {
