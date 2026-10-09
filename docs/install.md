@@ -32,6 +32,14 @@ services:
     volumes:
       - gdash-data:/data
     restart: unless-stopped
+    # GDash needs no root and no capabilities, and writes only to /data.
+    user: "65532:65532"
+    read_only: true
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp
 
 volumes:
   gdash-data:
@@ -41,6 +49,11 @@ volumes:
 docker compose up -d
 docker compose logs gdash
 ```
+
+`docker compose ps` shows whether GDash is healthy: the image checks its own
+`/healthz` every 30 seconds. The image has no shell, so the check is the
+command `/gdash healthcheck`, which you can also run by hand with
+`docker compose exec gdash /gdash healthcheck`.
 
 The log of the first start shows a **setup token**. Open
 `http://<server>:8420/`, enter it and create your account. Then choose the
@@ -56,6 +69,30 @@ the Bonjour service of DSM.
 
 **Docker Desktop on Windows or macOS** does not reach the LAN with multicast,
 so GDash cannot find TVs there. Use the binary instead.
+
+### Data directory permissions
+
+The image runs GDash as user and group `65532`, never as root, and
+`/data` in the image belongs to that user and can only be read by it. A
+named volume that Docker fills from the image gets this by itself, so the
+file above needs nothing more. GDash has always run as this user in the
+image, so volumes of earlier versions are fine too.
+
+If `/data` belongs to someone else, GDash stops at the start with `data
+directory "/data" is not writable`. That happens with a folder you mount
+yourself (`./gdash-data:/data`), with a volume that was filled by a different
+image, or with data copied from a setup that ran as root. Give the data to the
+GDash user once, with the container stopped:
+
+```bash
+# A folder you mount yourself:
+sudo chown -R 65532:65532 ./gdash-data && sudo chmod 700 ./gdash-data
+
+# A named volume (docker volume ls shows its name, often <folder>_gdash-data):
+docker run --rm -v gdash-data:/data alpine sh -c 'chown -R 65532:65532 /data && chmod 700 /data'
+```
+
+Then start GDash again.
 
 ## Binary with systemd (Linux, Raspberry Pi)
 
@@ -74,8 +111,15 @@ journalctl -u gdash
 ```
 
 The unit runs GDash as a throwaway user that can only write its data in
-`/var/lib/gdash`. If a firewall runs on the machine, allow TCP 8420 from
-the network.
+`/var/lib/gdash`, which only that user can read (systemd sets the owner by
+itself, also on data moved there from an earlier setup). It also has no
+capabilities, cannot see other processes or the home directories, may only
+open IP, local and netlink sockets (netlink lists the network interfaces for
+finding TVs), and is limited to ordinary system calls. `systemd-analyze
+security gdash` shows the result. If you change `GDASH_ADDR` to a port below
+1024, set both `AmbientCapabilities=` and `CapabilityBoundingSet=` to
+`CAP_NET_BIND_SERVICE` in the unit. If a firewall runs on the machine, allow
+TCP 8420 from the network.
 
 ## Windows
 
@@ -86,6 +130,23 @@ written to a `data` folder in the folder GDash starts in.
 To start GDash with Windows, create a task in Task Scheduler: trigger
 "At startup", action "Start a program" with `gdash.exe`, "Start in" set to
 its folder, and "Run whether user is logged on or not".
+
+## Checking a download
+
+`SHA256SUMS` in every release lists the checksum of each archive. The release
+also has a CycloneDX SBOM (`gdash_<version>_sbom.cdx.json`) with the Go modules
+and npm packages the build pins; the SBOM of the Docker image, with the
+packages of its base image as well, is kept with the release workflow run
+(Actions, **Release**, Artifacts).
+
+Once the repository is public, releases also carry signed build provenance
+that says which commit and workflow made each file. Check it with the GitHub
+CLI:
+
+```bash
+gh attestation verify gdash_<version>_linux_arm64.tar.gz --repo stijnvandepol/gdash
+gh attestation verify oci://ghcr.io/stijnvandepol/gdash:<version> --repo stijnvandepol/gdash
+```
 
 ## Updating
 
@@ -122,6 +183,10 @@ address, so login limits and the activity log see the real client and
 cookies are only sent over HTTPS. Displays only receive data after they are paired.
 
 ## Troubleshooting
+
+**"data directory is not writable" at the start.** The data directory belongs
+to another user than the one GDash runs as. See
+[Data directory permissions](#data-directory-permissions).
 
 **"No Cast devices found."** GDash is not in the same network segment as
 the TV, multicast is blocked, or the container has no host networking. Run

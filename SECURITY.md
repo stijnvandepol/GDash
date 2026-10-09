@@ -46,6 +46,28 @@ fully trust, such as a guest's phone.
   Google's Cast framework on the receiver page.
 - **Audit log:** logins, failed logins, pairings and changes are recorded
   for 90 days and shown under Settings.
+- **Container and service:** the Docker image is a distroless static image
+  (no shell, no package manager) that runs as the fixed user `65532`, never
+  as root. Its data directory is mode 0700, and the example `compose.yaml`
+  adds a read-only root filesystem, no capabilities and `no-new-privileges`.
+  The systemd unit runs GDash as a throwaway user with only its data
+  directory writable, no capabilities, a system call filter and restricted
+  socket types. A data directory GDash cannot write to is reported at the
+  start. See [docs/install.md](docs/install.md#data-directory-permissions).
+
+## Supply chain
+
+- Go modules, npm packages, GitHub Actions and the base images of the
+  Dockerfile are pinned (by lock file, commit SHA and image digest), and
+  Dependabot proposes updates weekly. CI scans Go and npm dependencies for
+  known vulnerabilities, runs `staticcheck`, and scans the whole git history
+  for secrets with gitleaks.
+- Releases come with `SHA256SUMS` and a CycloneDX SBOM; the Docker image has
+  an SBOM and BuildKit provenance too. Signed build provenance
+  (`gh attestation verify`) is added by the release workflow as soon as the
+  repository is public, because GitHub does not offer it for private
+  repositories on a free plan. Releases are drafts until a maintainer
+  publishes them.
 
 ## Known limits
 
