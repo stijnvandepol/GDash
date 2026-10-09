@@ -42,6 +42,8 @@ import (
 const (
 	weatherInterval = 15 * time.Minute
 	newsInterval    = 15 * time.Minute
+	// The air quality model is updated hourly, and pollen moves slowly.
+	airQualityInterval = 30 * time.Minute
 	// Calendar changes should show up soon after they are made; ICS
 	// servers are built for clients polling this often.
 	calendarInterval = 10 * time.Minute

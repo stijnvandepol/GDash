@@ -12,6 +12,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/stijnvandepol/nookboard/internal/airquality"
 	"github.com/stijnvandepol/nookboard/internal/calendar"
 	"github.com/stijnvandepol/nookboard/internal/datahub"
 	"github.com/stijnvandepol/nookboard/internal/display"
@@ -26,12 +27,13 @@ import (
 
 // dataSources keeps the data hub in line with the settings.
 type dataSources struct {
-	hub      *datahub.Hub
-	settings *settings.Service
-	weather  weather.Client
-	news     *news.Client
-	calendar *calendar.Client
-	home     *homeassistant.Client
+	hub        *datahub.Hub
+	settings   *settings.Service
+	weather    weather.Client
+	airQuality airquality.Client
+	news       *news.Client
+	calendar   *calendar.Client
+	home       *homeassistant.Client
 	// dashboards lists every dashboard, for the Home Assistant entities
 	// their widgets show.
 	dashboards func(ctx context.Context) ([]display.Dashboard, error)
@@ -64,9 +66,10 @@ func startData(ctx context.Context, cfg config, db *store.Store, svc *settings.S
 	go republishEveryMinute(ctx, publisher)
 
 	sources := &dataSources{
-		hub:      hub,
-		settings: svc,
-		weather:  weather.Client{BaseURL: weather.DefaultBaseURL, HTTP: &http.Client{Timeout: upstreamTimeout}},
+		hub:        hub,
+		settings:   svc,
+		weather:    weather.Client{BaseURL: weather.DefaultBaseURL, HTTP: &http.Client{Timeout: upstreamTimeout}},
+		airQuality: airquality.Client{BaseURL: airquality.DefaultBaseURL, HTTP: &http.Client{Timeout: upstreamTimeout}},
 		// Feeds and calendars are addresses an admin typed in.
 		news:       &news.Client{HTTP: outbound.NewClient(upstreamTimeout)},
 		calendar:   &calendar.Client{HTTP: outbound.NewClient(upstreamTimeout), Location: time.Local, Now: time.Now},
@@ -132,6 +135,11 @@ func (d *dataSources) build(cfg settings.Sources, entities []string) []datahub.S
 			Interval: weatherInterval,
 			Version:  fingerprint(*loc),
 			Fetch:    func(ctx context.Context) (any, error) { return d.weather.Current(ctx, *loc) },
+		}, datahub.Source{
+			Key:      display.AirQualitySource,
+			Interval: airQualityInterval,
+			Version:  fingerprint(*loc),
+			Fetch:    func(ctx context.Context) (any, error) { return d.airQuality.Current(ctx, *loc) },
 		})
 	}
 	if feeds := cfg.NewsFeeds; len(feeds) > 0 {

@@ -82,6 +82,10 @@ var WidgetTypes = map[string]WidgetType{
 	}},
 }
 
+// AirQualitySource is the data key of the air quality and pollen at the
+// weather location.
+const AirQualitySource = "airquality.current"
+
 // HomeAssistantSource is the data key of the entity states that Home
 // Assistant widgets show.
 const HomeAssistantSource = "homeassistant.default"

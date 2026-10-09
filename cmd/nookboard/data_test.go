@@ -6,6 +6,7 @@ import (
 	"github.com/stijnvandepol/nookboard/internal/display"
 	"github.com/stijnvandepol/nookboard/internal/homeassistant"
 	"github.com/stijnvandepol/nookboard/internal/settings"
+	"github.com/stijnvandepol/nookboard/internal/weather"
 )
 
 func keys(t *testing.T, cfg settings.Sources, entities []string) map[string]string {
@@ -15,6 +16,19 @@ func keys(t *testing.T, cfg settings.Sources, entities []string) map[string]stri
 		out[src.Key] = src.Version
 	}
 	return out
+}
+
+func TestWeatherAndAirQualityFollowTheLocation(t *testing.T) {
+	if got := keys(t, settings.Sources{}, nil); len(got) != 0 {
+		t.Fatalf("sources without a location = %v, want none", got)
+	}
+	oss := keys(t, settings.Sources{Location: &weather.Location{Latitude: 51.77, Longitude: 5.52}}, nil)
+	hall := keys(t, settings.Sources{Location: &weather.Location{Latitude: 52.37, Longitude: 4.9}}, nil)
+	for _, key := range []string{"weather.current", display.AirQualitySource} {
+		if oss[key] == "" || oss[key] == hall[key] {
+			t.Fatalf("%s versions = %q and %q; want a source that restarts when the location changes", key, oss[key], hall[key])
+		}
+	}
 }
 
 func TestHomeAssistantIsFetchedOnlyWhenShown(t *testing.T) {
