@@ -85,6 +85,9 @@ Choose **Schedule** at a display:
   morning dashboard with the calendar from 06:30 to 09:00 on weekdays, or a
   weekend dashboard on Saturday and Sunday. Pick no days for every day.
   When slots overlap, the first one wins.
+- **Pages in turn** show other dashboards one after another with the
+  display's own, for example the overview, then the calendar, then the news,
+  each for 30 seconds. During a time slot only the slot's dashboard shows.
 
 ## Keeping an eye on things
 

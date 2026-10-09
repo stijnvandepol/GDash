@@ -92,3 +92,24 @@ func TestDisplayListShowsCastStatus(t *testing.T) {
 		t.Fatalf("list = %s", body)
 	}
 }
+
+func TestDisplayRotation(t *testing.T) {
+	env := newTestEnv(t, nil)
+	env.setUp(t)
+	if status, body := env.do(t, "POST", "/api/dashboards", `{"id":"news","name":"News","widgets":[]}`); status != http.StatusCreated {
+		t.Fatalf("create dashboard = %d %s", status, body)
+	}
+	status, body := env.do(t, "POST", "/api/displays", `{"id":"keuken","name":"Keuken"}`)
+	if status != http.StatusCreated || !strings.Contains(body, `"rotation":[],"rotateSeconds":0`) {
+		t.Fatalf("create = %d %s", status, body)
+	}
+	if status, body = env.do(t, "PATCH", "/api/displays/keuken", `{"rotation":["news"],"rotateSeconds":30}`); status != http.StatusOK || !strings.Contains(body, `"rotation":["news"],"rotateSeconds":30`) {
+		t.Fatalf("set rotation = %d %s", status, body)
+	}
+	if status, body = env.do(t, "PATCH", "/api/displays/keuken", `{"rotation":["missing"]}`); status != http.StatusUnprocessableEntity || !strings.Contains(body, `"field":"rotation"`) {
+		t.Fatalf("unknown dashboard = %d %s", status, body)
+	}
+	if status, body = env.do(t, "PATCH", "/api/displays/keuken", `{"rotation":[],"rotateSeconds":0}`); status != http.StatusOK {
+		t.Fatalf("clear = %d %s", status, body)
+	}
+}

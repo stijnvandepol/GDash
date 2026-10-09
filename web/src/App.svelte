@@ -2,6 +2,7 @@
   import './theme.css';
   import { clock, display } from './state.svelte';
   import { t } from './i18n.svelte';
+  import { msToNextPage, pageAt } from './pages';
   import Clock from './widgets/Clock.svelte';
   import Weather from './widgets/Weather.svelte';
   import News from './widgets/News.svelte';
@@ -19,7 +20,20 @@
   let innerHeight = $state(STAGE_HEIGHT);
   const scale = $derived(Math.min(innerWidth / STAGE_WIDTH, innerHeight / STAGE_HEIGHT));
 
-  const dashboard = $derived(display.snapshot?.dashboard);
+  // A rotating display turns its page at every boundary of pageSeconds;
+  // one timer to the next boundary, not a tick every second.
+  let now = $state(Date.now());
+  $effect(() => {
+    const seconds = display.snapshot?.pageSeconds ?? 0;
+    if (seconds <= 0 || (display.snapshot?.pages?.length ?? 0) < 2) return;
+    now = Date.now();
+    let timer = setTimeout(function turn() {
+      now = Date.now();
+      timer = setTimeout(turn, msToNextPage(now, seconds));
+    }, msToNextPage(Date.now(), seconds));
+    return () => clearTimeout(timer);
+  });
+  const dashboard = $derived(pageAt(display.snapshot, now));
   const asleep = $derived(display.snapshot?.active === false);
 
   // Pixel shift against burn-in: every few minutes the whole stage moves a

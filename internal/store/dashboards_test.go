@@ -205,3 +205,41 @@ func TestDisplayWithUnknownDashboard(t *testing.T) {
 		t.Fatalf("update: err = %v, want ErrUnknownDashboard", err)
 	}
 }
+
+func TestDisplayRotation(t *testing.T) {
+	ctx := context.Background()
+	s, _ := openTestStore(t)
+	if err := s.EnsureDashboard(ctx, display.DefaultDashboard(false), created); err != nil {
+		t.Fatal(err)
+	}
+	evening := morning()
+	evening.ID, evening.Name = "evening", "Evening"
+	for _, b := range []display.Dashboard{morning(), evening} {
+		if err := s.CreateDashboard(ctx, b, created); err != nil {
+			t.Fatal(err)
+		}
+	}
+	d := displays.Display{ID: "kitchen", Name: "Kitchen", CreatedAt: created, Rotation: []string{"morning", "evening"}, RotateSeconds: 30}
+	if err := s.CreateDisplay(ctx, d); err != nil {
+		t.Fatal(err)
+	}
+	got, err := s.Display(ctx, "kitchen")
+	if err != nil || !reflect.DeepEqual(got.Rotation, d.Rotation) || got.RotateSeconds != 30 {
+		t.Fatalf("Display = %+v, %v", got, err)
+	}
+	views, _ := s.DisplayViews(ctx)
+	if v := views["kitchen"]; len(v.Pages) != 2 || v.Pages[1].ID != "evening" || v.PageSeconds != 30 {
+		t.Fatalf("view pages = %+v, seconds %d", v.Pages, v.PageSeconds)
+	}
+
+	d.Rotation = []string{"missing"}
+	if err := s.UpdateDisplay(ctx, d); !errors.Is(err, ErrUnknownRotationDashboard) {
+		t.Fatalf("unknown dashboard: err = %v", err)
+	}
+	if err := s.DeleteDashboard(ctx, "morning"); err != nil {
+		t.Fatal(err)
+	}
+	if got, _ := s.Display(ctx, "kitchen"); !reflect.DeepEqual(got.Rotation, []string{"evening"}) {
+		t.Fatalf("rotation after deleting morning = %v", got.Rotation)
+	}
+}

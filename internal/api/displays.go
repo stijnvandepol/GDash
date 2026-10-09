@@ -46,12 +46,14 @@ func (s *Server) listDisplays(w http.ResponseWriter, r *http.Request) {
 // is taken or the limit reached, 422 for invalid fields.
 func (s *Server) createDisplay(w http.ResponseWriter, r *http.Request) {
 	var body struct {
-		ID           string          `json:"id"`
-		Name         string          `json:"name"`
-		CastDeviceID string          `json:"castDeviceId"`
-		ActiveFrom   string          `json:"activeFrom"`
-		ActiveUntil  string          `json:"activeUntil"`
-		Schedule     []displays.Slot `json:"schedule"`
+		ID            string          `json:"id"`
+		Name          string          `json:"name"`
+		CastDeviceID  string          `json:"castDeviceId"`
+		ActiveFrom    string          `json:"activeFrom"`
+		ActiveUntil   string          `json:"activeUntil"`
+		Schedule      []displays.Slot `json:"schedule"`
+		Rotation      []string        `json:"rotation"`
+		RotateSeconds int             `json:"rotateSeconds"`
 	}
 	if !decodeJSON(w, r, &body) {
 		return
@@ -60,6 +62,7 @@ func (s *Server) createDisplay(w http.ResponseWriter, r *http.Request) {
 		ID: body.ID, Name: body.Name, CastDeviceID: body.CastDeviceID,
 		Hours:    schedule.Hours{From: body.ActiveFrom, Until: body.ActiveUntil},
 		Schedule: displays.NormalizeSchedule(body.Schedule), CreatedAt: s.Now().UTC(),
+		Rotation: displays.NormalizeRotation(body.Rotation), RotateSeconds: body.RotateSeconds,
 	}
 	if err := displays.Validate(d); err != nil {
 		writeValidationError(w, validation.Fields(err))
@@ -82,12 +85,14 @@ func (s *Server) createDisplay(w http.ResponseWriter, r *http.Request) {
 // the display's URL.
 func (s *Server) updateDisplay(w http.ResponseWriter, r *http.Request) {
 	var body struct {
-		Name         *string          `json:"name"`
-		CastDeviceID *string          `json:"castDeviceId"`
-		DashboardID  *string          `json:"dashboardId"`
-		ActiveFrom   *string          `json:"activeFrom"`
-		ActiveUntil  *string          `json:"activeUntil"`
-		Schedule     *[]displays.Slot `json:"schedule"`
+		Name          *string          `json:"name"`
+		CastDeviceID  *string          `json:"castDeviceId"`
+		DashboardID   *string          `json:"dashboardId"`
+		ActiveFrom    *string          `json:"activeFrom"`
+		ActiveUntil   *string          `json:"activeUntil"`
+		Schedule      *[]displays.Slot `json:"schedule"`
+		Rotation      *[]string        `json:"rotation"`
+		RotateSeconds *int             `json:"rotateSeconds"`
 	}
 	if !decodeJSON(w, r, &body) {
 		return
@@ -114,6 +119,12 @@ func (s *Server) updateDisplay(w http.ResponseWriter, r *http.Request) {
 	}
 	if body.Schedule != nil {
 		d.Schedule = displays.NormalizeSchedule(*body.Schedule)
+	}
+	if body.Rotation != nil {
+		d.Rotation = displays.NormalizeRotation(*body.Rotation)
+	}
+	if body.RotateSeconds != nil {
+		d.RotateSeconds = *body.RotateSeconds
 	}
 	if err := displays.Validate(d); err != nil {
 		writeValidationError(w, validation.Fields(err))
@@ -145,6 +156,8 @@ func (s *Server) writeStoreError(w http.ResponseWriter, op string, err error) {
 		writeValidationError(w, []validation.FieldError{{Field: "dashboardId", Message: "this dashboard does not exist"}})
 	case errors.Is(err, store.ErrUnknownScheduleDashboard):
 		writeValidationError(w, []validation.FieldError{{Field: "schedule", Message: "a time slot uses a dashboard that does not exist"}})
+	case errors.Is(err, store.ErrUnknownRotationDashboard):
+		writeValidationError(w, []validation.FieldError{{Field: "rotation", Message: "a dashboard in the rotation does not exist"}})
 	case errors.Is(err, store.ErrNotFound):
 		writeError(w, http.StatusNotFound, "not_found", "This display does not exist.")
 	case errors.Is(err, store.ErrConflict):

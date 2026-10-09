@@ -42,6 +42,9 @@ export interface Display {
   activeUntil: string;
   /** Other dashboards during parts of the day; the first matching slot wins. */
   schedule: Slot[];
+  /** Dashboards shown in turn with the display's own, each for rotateSeconds. */
+  rotation: string[];
+  rotateSeconds: number;
   /** What Daycast last found on the Cast device; only in the display list. */
   cast?: CastStatus;
 }
@@ -193,6 +196,8 @@ export const api = {
       activeFrom?: string;
       activeUntil?: string;
       schedule?: Slot[];
+      rotation?: string[];
+      rotateSeconds?: number;
     },
   ) =>
     request<Display>('PATCH', `/api/displays/${encodeURIComponent(id)}`, changes),

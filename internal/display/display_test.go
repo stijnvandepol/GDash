@@ -156,6 +156,38 @@ func TestScheduleSwitchesDashboardAndData(t *testing.T) {
 	}
 }
 
+func TestRotationSendsAllPagesAndTheirData(t *testing.T) {
+	b := NewBroadcaster()
+	news := Dashboard{ID: "news", Widgets: []Widget{{ID: "n", Type: "news", Source: "news.default"}}}
+	morning := Dashboard{ID: "morning", Widgets: []Widget{{ID: "c", Type: "clock"}}}
+	views := map[string]View{"kitchen": {
+		Dashboard:   Dashboard{ID: "own", Widgets: []Widget{{ID: "w", Type: "weather", Source: "weather.current"}}},
+		Pages:       []Dashboard{news},
+		PageSeconds: 30,
+		// now is 07:30, inside this slot: then the slot shows, no rotation.
+		Schedule: []ScheduledDashboard{{Window: schedule.Window{Hours: schedule.Hours{From: "07:00", Until: "08:00"}}, Dashboard: morning}},
+	}}
+	data := map[string]datahub.Entry{"weather.current": {Value: []byte(`1`)}, "news.default": {Value: []byte(`2`)}}
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	if err := b.Publish(now.Add(2*time.Hour), views, data, "en"); err != nil {
+		t.Fatal(err)
+	}
+	got := decode(t, <-b.Subscribe(ctx, "kitchen"))
+	if len(got.Pages) != 2 || got.Pages[0].ID != "own" || got.Pages[1].ID != "news" || got.PageSeconds != 30 || len(got.Data) != 2 {
+		t.Fatalf("rotating snapshot = pages %v, seconds %d, data %v", got.Pages, got.PageSeconds, got.Data)
+	}
+
+	if err := b.Publish(now, views, data, "en"); err != nil {
+		t.Fatal(err)
+	}
+	got = decode(t, <-b.Subscribe(ctx, "kitchen"))
+	if got.Dashboard.ID != "morning" || got.Pages != nil || got.PageSeconds != 0 {
+		t.Fatalf("during a slot = dashboard %s, pages %v; want the slot without rotation", got.Dashboard.ID, got.Pages)
+	}
+}
+
 func TestSnapshotCarriesTheLanguage(t *testing.T) {
 	b := NewBroadcaster()
 	if err := b.Publish(now, kitchenOnly(), nil, "nl"); err != nil {

@@ -36,7 +36,7 @@ come from another site (cross-site request forgery protection).
 | `GET /api/audit-events?limit=100` | admin | `200 {"events": [{at, actor, action, detail, ip}]}`, newest first, at most 200 | `400`, `401` |
 | `GET /api/displays` | admin | `200 {"displays": [display + pairedScreens + cast?]}` | `401` |
 | `POST /api/displays` `{id, name, castDeviceId, activeFrom?, activeUntil?, schedule?}` | admin | `201` display | `401`, `409 conflict`, `422` |
-| `PATCH /api/displays/{id}` `{name?, castDeviceId?, dashboardId?, activeFrom?, activeUntil?, schedule?}` | admin | `200` display | `401`, `404 not_found`, `422` (also for an unknown dashboard) |
+| `PATCH /api/displays/{id}` `{name?, castDeviceId?, dashboardId?, activeFrom?, activeUntil?, schedule?, rotation?, rotateSeconds?}` | admin | `200` display | `401`, `404 not_found`, `422` (also for an unknown dashboard) |
 | `DELETE /api/displays/{id}` | admin | `204` | `401`, `404 not_found` |
 | `GET /api/widget-types` | admin | `200 {columns, rows, themes, types: {name: {minW, minH, settings: {key: {kind, min?, max?, required}}}}}` | `401` |
 | `GET /api/dashboards` | admin | `200 {"dashboards": [dashboard]}` | `401` |
@@ -112,6 +112,10 @@ uses GeoNames data; the coordinates can also be entered by hand.
 `activeFrom`/`activeUntil` are HH:MM in the server's time zone (`TZ`), may wrap past midnight, and are both empty for
 always on. Outside them the page is dark, the snapshot has no data and the cast is stopped.
 `schedule` holds at most 6 slots and is replaced as a whole by a `PATCH`; it is always a list, empty when unused.
+`rotation` lists up to 5 dashboard ids shown in turn with the display's own, each for `rotateSeconds` (10 to 600),
+while no slot applies; empty with `rotateSeconds` 0 means no rotation. Deleting a dashboard removes it from every
+rotation. A rotating snapshot carries `pages` (the display's own dashboard first) and `pageSeconds`; the screen turns
+the page on its clock, so every screen of a display shows the same page.
 
 **cast:** `{"state": "showing", "since": "2026-10-09T08:31:00Z", "problem"?: "…"}`, only for a display on a Cast
 device. `state` is `connecting`, `showing`, `standby` (the receiver runs but the TV sleeps), `other_app` (someone else

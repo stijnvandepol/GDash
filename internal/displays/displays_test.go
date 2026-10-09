@@ -35,6 +35,14 @@ func TestValidate(t *testing.T) {
 		}, []string{"schedule[0]"}},
 		{"slot without dashboard", func(d *Display) { d.Schedule = []Slot{{From: "06:30", Until: "09:00"}} }, []string{"schedule[0]"}},
 		{"too many slots", func(d *Display) { d.Schedule = make([]Slot, MaxSlots+1) }, []string{"schedule"}},
+		{"rotation", func(d *Display) { d.Rotation, d.RotateSeconds = []string{"news", "calendar"}, 30 }, nil},
+		{"rotation without interval", func(d *Display) { d.Rotation = []string{"news"} }, []string{"rotation"}},
+		{"interval without rotation", func(d *Display) { d.RotateSeconds = 30 }, []string{"rotation"}},
+		{"rotation too fast", func(d *Display) { d.Rotation, d.RotateSeconds = []string{"news"}, 2 }, []string{"rotation"}},
+		{"rotation twice the same", func(d *Display) { d.Rotation, d.RotateSeconds = []string{"news", "news"}, 30 }, []string{"rotation"}},
+		{"too many pages", func(d *Display) {
+			d.Rotation, d.RotateSeconds = []string{"a", "b", "c", "d", "e", "f"}, 30
+		}, []string{"rotation"}},
 		{"everything wrong", func(d *Display) { d.ID = ""; d.Name = ""; d.CastDeviceID = "x" }, []string{"id", "name", "castDeviceId"}},
 	}
 	for _, tt := range tests {

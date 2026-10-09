@@ -82,6 +82,10 @@ type Snapshot struct {
 	// Language is what the screen shows its texts and dates in: "en" or
 	// "nl".
 	Language string `json:"language"`
+	// Pages, when set, are shown in turn, each for PageSeconds; Dashboard
+	// is then the first of them. The screen turns the pages by its clock.
+	Pages       []Dashboard `json:"pages,omitempty"`
+	PageSeconds int         `json:"pageSeconds,omitempty"`
 }
 
 // View is what one display shows and when.
@@ -90,6 +94,10 @@ type View struct {
 	Hours     schedule.Hours
 	// Schedule replaces Dashboard during parts of the day.
 	Schedule []ScheduledDashboard
+	// Pages are shown in turn with Dashboard, each for PageSeconds, while
+	// no slot of the schedule applies.
+	Pages       []Dashboard
+	PageSeconds int
 }
 
 // ScheduledDashboard is a dashboard shown during a window of the week.
@@ -101,12 +109,28 @@ type ScheduledDashboard struct {
 // DashboardAt returns the dashboard the display shows at t: the first slot
 // of its schedule that contains t, or else its own dashboard.
 func (v View) DashboardAt(t time.Time) Dashboard {
-	for _, slot := range v.Schedule {
-		if slot.Window.Contains(t) {
-			return slot.Dashboard
-		}
+	if slot, ok := v.slotAt(t); ok {
+		return slot.Dashboard
 	}
 	return v.Dashboard
+}
+
+// PagesAt returns the pages to show in turn at t, starting with the
+// display's own dashboard, or nil when a slot applies or nothing rotates.
+func (v View) PagesAt(t time.Time) []Dashboard {
+	if _, ok := v.slotAt(t); ok || len(v.Pages) == 0 {
+		return nil
+	}
+	return append([]Dashboard{v.Dashboard}, v.Pages...)
+}
+
+func (v View) slotAt(t time.Time) (ScheduledDashboard, bool) {
+	for _, slot := range v.Schedule {
+		if slot.Window.Contains(t) {
+			return slot, true
+		}
+	}
+	return ScheduledDashboard{}, false
 }
 
 // Broadcaster holds the latest encoded snapshot of every display and hands
@@ -137,13 +161,18 @@ func (b *Broadcaster) Publish(now time.Time, views map[string]View, data map[str
 	for displayID, view := range views {
 		active := view.Hours.Contains(now)
 		dashboard := view.DashboardAt(now)
+		pages := view.PagesAt(now)
+		seconds := 0
+		if pages != nil {
+			seconds = view.PageSeconds
+		}
 		used := map[string]datahub.Entry{}
 		if active {
-			used = dataFor(dashboard, data)
+			used = dataFor(append([]Dashboard{dashboard}, pages...), data)
 		}
 		msg, err := json.Marshal(Snapshot{
 			Type: "snapshot", Version: b.version, ServerTime: now, Active: active,
-			Dashboard: dashboard, Data: used, Language: language,
+			Dashboard: dashboard, Data: used, Language: language, Pages: pages, PageSeconds: seconds,
 		})
 		if err != nil {
 			return fmt.Errorf("encode snapshot for display %s: %w", displayID, err)
@@ -157,11 +186,14 @@ func (b *Broadcaster) Publish(now time.Time, views map[string]View, data map[str
 	return nil
 }
 
-func dataFor(d Dashboard, data map[string]datahub.Entry) map[string]datahub.Entry {
+// dataFor returns the entries that the widgets of the dashboards show.
+func dataFor(dashboards []Dashboard, data map[string]datahub.Entry) map[string]datahub.Entry {
 	used := map[string]datahub.Entry{}
-	for _, w := range d.Widgets {
-		if entry, ok := data[w.Source]; ok && w.Source != "" {
-			used[w.Source] = entry
+	for _, d := range dashboards {
+		for _, w := range d.Widgets {
+			if entry, ok := data[w.Source]; ok && w.Source != "" {
+				used[w.Source] = entry
+			}
 		}
 	}
 	return used

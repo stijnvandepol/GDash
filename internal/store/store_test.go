@@ -28,7 +28,7 @@ func openTestStore(t *testing.T) (*Store, string) {
 
 func kitchen() displays.Display {
 	return displays.Display{ID: "keuken", Name: "Keuken TV", CastDeviceID: "e542c41e4d94baa86e46f36dfdebf26e",
-		Schedule: []displays.Slot{}, CreatedAt: created}
+		Schedule: []displays.Slot{}, Rotation: []string{}, CreatedAt: created}
 }
 
 func TestDisplayLifecycle(t *testing.T) {

@@ -33,6 +33,8 @@ The first release. Everything below is new.
   a note and a countdown. Widgets fit their type to the size of their tile.
 - Schedules: another dashboard during parts of the day, on every day or on
   chosen days of the week.
+- Pages in turn: up to five dashboards shown one after another with the
+  display's own, each for 15 seconds to 5 minutes.
 
 ### Data
 

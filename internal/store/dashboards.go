@@ -138,7 +138,12 @@ func (s *Store) DisplayViews(ctx context.Context) (map[string]display.View, erro
 		if !ok {
 			continue
 		}
-		v := display.View{Dashboard: dashboard, Hours: d.Hours}
+		v := display.View{Dashboard: dashboard, Hours: d.Hours, PageSeconds: d.RotateSeconds}
+		for _, id := range d.Rotation {
+			if b, ok := byID[id]; ok {
+				v.Pages = append(v.Pages, b)
+			}
+		}
 		for _, slot := range d.Schedule {
 			if b, ok := byID[slot.DashboardID]; ok {
 				v.Schedule = append(v.Schedule, display.ScheduledDashboard{Window: slot.Window(), Dashboard: b})

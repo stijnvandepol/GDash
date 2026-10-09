@@ -5,6 +5,7 @@ State of the project on 8 October 2026, so work can continue on any machine.
 ## What works
 
 - **Backups:** a consistent copy of the database every day in `backups/`, the last seven kept, made while Daycast runs.
+- **Pages in turn:** a display can show up to five other dashboards one after another with its own, each for a chosen time. The screen turns the pages on its clock, so screens of one display stay in step; a time slot pauses the rotation. Tested in the browser with a 15-second interval.
 - **Language on the TV:** English or Dutch for days, dates, weather words and every other text on the screens, chosen under Settings. The pairing screen follows the device's own language, because it shows before the first snapshot. Tested in the browser with both dashboards.
 - **Cast status:** the display list says per TV whether the dashboard is on screen and since when, whether the TV sleeps, another app is on it, or the device cannot be reached and why. It refreshes every 15 seconds. Tested with a display linked to a device that does not exist.
 - **Audit log:** logins and failed logins, password changes, pairings and every change to displays, dashboards and settings, with time, user and IP address, under Settings. Kept for 90 days and at most 5000 events. A failed login stores no username and a calendar only its name.
@@ -74,11 +75,11 @@ simulated device; not yet on the real TV.
 
 ## Not deployed to the TV yet
 
-The living room TV still runs the version from before the dashboard editor and everything after it (themes, active hours, schedules, settings, widgets, languages). Restarting the server restarts the cast, which can switch a TV on through HDMI-CEC, so that waits until someone is home and awake.
+The living room TV runs the current version since 9 October 09:13; the database migrated from version 3 to 10 with a backup before every step, and the location and news feed were copied from the environment. Restarting the server restarts the cast, which can switch a TV on through HDMI-CEC, so that waits until someone is home and awake.
 
 ## Next
 
 1. Deploy the current version to the living room TV during the day, and choose the location and calendars under Settings.
 2. Test the Nest Hub with the 9-minute restart (with permission, in the daytime).
 3. Make the first release (tag `v0.5.0`) and publish the draft after checking it.
-4. Still open from the research's v1.0: page rotation, export and import of the configuration, a Home Assistant add-on, and an external review of the authentication.
+4. Still open from the research's v1.0: export and import of the configuration, a Home Assistant add-on, and an external review of the authentication.

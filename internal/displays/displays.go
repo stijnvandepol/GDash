@@ -18,6 +18,17 @@ import (
 // handful; the limit keeps every list query bounded.
 const MaxDisplays = 50
 
+// MaxRotation bounds how many dashboards a display shows in turn with its
+// own; more pages than that are rarely read on a kitchen screen.
+const MaxRotation = 5
+
+// Rotation intervals, in seconds: long enough to read a page, short enough
+// that every page comes by within a few minutes.
+const (
+	MinRotateSeconds = 10
+	MaxRotateSeconds = 600
+)
+
 // MaxSlots bounds the day plan of one display. Morning, afternoon, evening
 // and a weekend-style exception fit easily.
 const MaxSlots = 6
@@ -45,8 +56,12 @@ type Display struct {
 	// Schedule shows other dashboards during parts of the day. The first
 	// slot that contains the current time wins; outside every slot the
 	// display shows DashboardID.
-	Schedule  []Slot    `json:"schedule"`
-	CreatedAt time.Time `json:"createdAt"`
+	Schedule []Slot `json:"schedule"`
+	// Rotation lists dashboards shown in turn with DashboardID, each for
+	// RotateSeconds, while no time slot applies. Empty means no rotation.
+	Rotation      []string  `json:"rotation"`
+	RotateSeconds int       `json:"rotateSeconds"`
+	CreatedAt     time.Time `json:"createdAt"`
 }
 
 // Slot shows a dashboard during part of the day, such as a morning
@@ -58,6 +73,15 @@ type Slot struct {
 	Until       string   `json:"until"`
 	Days        []string `json:"days"`
 	DashboardID string   `json:"dashboardId"`
+}
+
+// NormalizeRotation returns an empty list instead of nil, so the API always
+// sends a list.
+func NormalizeRotation(ids []string) []string {
+	if ids == nil {
+		return []string{}
+	}
+	return ids
 }
 
 // NormalizeSchedule returns slots with empty lists instead of nil, so the
@@ -107,7 +131,30 @@ func Validate(d Display) error {
 			errs.Add(fmt.Sprintf("schedule[%d]", i), msg)
 		}
 	}
+	if msg := rotationProblem(d.Rotation, d.RotateSeconds); msg != "" {
+		errs.Add("rotation", msg)
+	}
 	return errs.Err()
+}
+
+func rotationProblem(ids []string, seconds int) string {
+	if len(ids) > MaxRotation {
+		return fmt.Sprintf("use at most %d dashboards", MaxRotation)
+	}
+	seen := map[string]bool{}
+	for _, id := range ids {
+		if !display.ValidDashboardID(id) || seen[id] {
+			return "choose each dashboard at most once"
+		}
+		seen[id] = true
+	}
+	switch {
+	case len(ids) == 0 && seconds != 0:
+		return "choose the dashboards to show in turn, or no interval"
+	case len(ids) > 0 && (seconds < MinRotateSeconds || seconds > MaxRotateSeconds):
+		return fmt.Sprintf("show each page for %d to %d seconds", MinRotateSeconds, MaxRotateSeconds)
+	}
+	return ""
 }
 
 func slotProblem(s Slot) string {

@@ -40,6 +40,9 @@ export interface Snapshot {
   data: Record<string, Entry>;
   /** The household's display language, "en" or "nl". */
   language?: string;
+  /** Dashboards shown in turn, each for pageSeconds; see pages.ts. */
+  pages?: Dashboard[];
+  pageSeconds?: number;
 }
 
 function isRecord(v: unknown): v is Record<string, unknown> {

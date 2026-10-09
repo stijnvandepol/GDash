@@ -23,6 +23,10 @@ func splitDays(stored string) []string {
 // schedule refers to a dashboard that does not exist.
 var ErrUnknownScheduleDashboard = errors.New("schedule refers to an unknown dashboard")
 
+// ErrUnknownRotationDashboard is returned when a display's rotation refers
+// to a dashboard that does not exist.
+var ErrUnknownRotationDashboard = errors.New("rotation refers to an unknown dashboard")
+
 type querier interface {
 	QueryContext(ctx context.Context, query string, args ...any) (*sql.Rows, error)
 }
@@ -73,6 +77,53 @@ func replaceSchedule(ctx context.Context, tx *sql.Tx, displayID string, slots []
 			displayID, i, slot.From, slot.Until, strings.Join(slot.Days, ","), slot.DashboardID)
 		if err != nil {
 			return fmt.Errorf("store schedule: %w", err)
+		}
+	}
+	return nil
+}
+
+// rotations returns the rotation of every display, or of one display when
+// displayID is set, in order.
+func rotations(ctx context.Context, q querier, displayID string) (map[string][]string, error) {
+	query := "SELECT display_id, dashboard_id FROM display_rotation"
+	args := []any{}
+	if displayID != "" {
+		query += " WHERE display_id = ?"
+		args = append(args, displayID)
+	}
+	query += " ORDER BY display_id, position LIMIT ?"
+	args = append(args, displays.MaxDisplays*displays.MaxRotation)
+	rows, err := q.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("list rotations: %w", err)
+	}
+	defer rows.Close()
+	result := map[string][]string{}
+	for rows.Next() {
+		var id, dashboard string
+		if err := rows.Scan(&id, &dashboard); err != nil {
+			return nil, err
+		}
+		result[id] = append(result[id], dashboard)
+	}
+	return result, rows.Err()
+}
+
+// replaceRotation stores ids as the whole rotation of a display.
+func replaceRotation(ctx context.Context, tx *sql.Tx, displayID string, ids []string) error {
+	if _, err := tx.ExecContext(ctx, "DELETE FROM display_rotation WHERE display_id = ?", displayID); err != nil {
+		return fmt.Errorf("clear rotation: %w", err)
+	}
+	for i, id := range ids {
+		if err := requireDashboard(ctx, tx, id); err != nil {
+			if errors.Is(err, ErrUnknownDashboard) {
+				return ErrUnknownRotationDashboard
+			}
+			return err
+		}
+		if _, err := tx.ExecContext(ctx,
+			"INSERT INTO display_rotation (display_id, position, dashboard_id) VALUES (?, ?, ?)", displayID, i, id); err != nil {
+			return fmt.Errorf("store rotation: %w", err)
 		}
 	}
 	return nil
