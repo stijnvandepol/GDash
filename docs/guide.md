@@ -9,19 +9,20 @@ the setup token, see [install.md](install.md). The web interface is at
 The **Getting started** card at the top lists what is left to do; it
 disappears when the basics are done.
 
-1. **Settings, Weather location:** type your town or postcode and choose the
+1. **Settings, Data sources, Weather location:** type your town or postcode and choose the
    right result, or enter the coordinates. The weather service only receives
    the location rounded to about 1 km.
-2. **Settings, News and Calendars:** add RSS or Atom feeds, and the secret
+2. **Settings, Data sources, News and Calendars:** add RSS or Atom feeds, and the secret
    iCal address of each calendar you want on the screen. In Google Calendar
    it is under the calendar's settings, "Secret address in iCal format"; in
    Outlook under "Publish a calendar"; in iCloud under "Public calendar".
    GDash stores the address encrypted and never shows it again. Each
    calendar gets its own colour on the TV, so you can see whose appointment
    it is; choose another one next to the calendar.
-3. **Settings, Language on the TVs:** English or Nederlands.
-4. **Displays, Add a display:** give it a name, such as Kitchen, and pick
-   your TV from the list of Cast devices GDash found.
+3. **Settings, Screens, Language on the TVs:** English or Nederlands.
+4. **Displays, Add a display:** pick your TV from the list of Cast devices
+   GDash found and give the display a name, such as Kitchen; without one it
+   takes the TV's name.
 
 Within a few seconds the TV shows the default dashboard: clock, weather,
 calendar and news.
@@ -63,7 +64,7 @@ Small screen (three large widgets for a Nest Hub or tablet) and Family (a large
 calendar, photos, a countdown to the next New Year and a note). Each card shows
 the layout; the button adds it as a new dashboard and opens it in the editor,
 where you can change anything. The calendar and news widgets fill up once you
-add calendars and feeds under Settings, and the photos once you add photos.
+add calendars and feeds under Settings, Data sources, and the photos once you add photos.
 
 - **Add** a widget with the buttons above the canvas, drag it to move it and
   drag its corner to resize it. Click a widget to change its settings, such
@@ -95,7 +96,7 @@ add calendars and feeds under Settings, and the photos once you add photos.
 | Photos | A slideshow of your photos |
 | Home Assistant | Up to eight sensors or switches from Home Assistant |
 
-**Photos** are added under Settings, Photos: JPEG, PNG or WebP, up to 8 MB
+**Photos** are added under Settings, Screens, Photos: JPEG, PNG or WebP, up to 8 MB
 each and 50 in total. They stay on your server and only go to paired
 screens and to you; the rest of the network gets nothing. GDash removes
 the location and other details a phone stores in a photo before it keeps
@@ -118,7 +119,7 @@ only reads; it never switches anything.
 1. In Home Assistant, open your profile, Security, and make a **long-lived
    access token**. A separate Home Assistant user for GDash, without
    admin rights, limits what the token can see.
-2. In GDash, under Settings, Home Assistant, enter the address you
+2. In GDash, under Settings, Data sources, Home Assistant, enter the address you
    open Home Assistant with, such as `http://192.168.1.10:8123`, and the
    token. GDash tries them before it saves them, and stores the token
    encrypted.
@@ -138,11 +139,11 @@ the TVs, such as "The washing machine is done". It appears in a card over the
 dashboard, in the colours of the display's theme, and goes away after the
 time you choose. Nothing else in GDash can be changed with it.
 
-1. In GDash, under Settings, **API tokens**, make a token with the name of
+1. In GDash, under Settings, Automations, **API tokens**, make a token with the name of
    the automation, for example "Home Assistant". Copy it now: it is shown once,
    and GDash keeps only a fingerprint of it. You can make up to 10 and
    revoke any of them later; the list shows when each was last used.
-2. Try it under Settings, **Send a test announcement**. The message shows on
+2. Try it under Settings, Automations, **Send a test announcement**. The message shows on
    every display that is inside its active hours.
 3. Send one from a command line, with your own address and token:
 
@@ -216,7 +217,7 @@ while the machine stands idle. Raise the limit if your machine idles at a few
 watts. Older versions of Home Assistant spell `triggers:` and `trigger:` as
 `trigger:` and `platform:`, and `action:` as `service:`.
 
-If nothing shows up, look at the token under Settings, API tokens:
+If nothing shows up, look at the token under Settings, Automations, API tokens:
 **Never used** means the request does not reach GDash, so check the address
 and port. In Home Assistant, Developer tools, Actions, run the command with a
 `message` and read its answer: `401` means the token is wrong or revoked, `422`
@@ -250,9 +251,9 @@ Choose **Schedule** at a display:
 - The display list says per TV whether the dashboard is on screen and since
   when, whether the TV sleeps, another app is on it, or GDash cannot reach
   it.
-- **Settings** shows per news feed, calendar and the weather when it last
+- **Settings, Data sources** shows per news feed, calendar and the weather when it last
   updated, or that it fails.
-- **Settings, Recent activity** lists logins, failed logins, pairings and
+- **Settings, Account, Recent activity** lists logins, failed logins, pairings and
   changes of the last 90 days.
 
 ## When GDash is not on the TV

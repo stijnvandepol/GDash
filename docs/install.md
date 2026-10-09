@@ -171,7 +171,7 @@ and `gdash.db-shm`, copy the backup to `gdash.db` and start GDash.
 
 ## Security
 
-Under Settings, "Recent activity" lists logins, failed logins, pairings and
+Under Settings, Account, "Recent activity" lists logins, failed logins, pairings and
 changes for 90 days, with the address they came from.
 
 GDash serves plain HTTP on the LAN, because a TV that opens the dashboard
@@ -210,7 +210,7 @@ against this; if it still happens, check the server log for cast errors.
 
 **The calendar says it cannot be read on this server.** The database was
 moved without its `secret.key`. Remove the calendar and add it again under
-Settings.
+Settings, Data sources.
 
 **The TV is dark outside the active hours.** That is the display's
 schedule; change it under Displays, Schedule.
