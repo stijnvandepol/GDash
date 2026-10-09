@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"os"
 	"regexp"
+	"runtime"
 	"strconv"
 	"strings"
 
@@ -72,12 +73,33 @@ func checkDataDir(dir string) error {
 	if err := os.MkdirAll(dir, 0o700); err != nil {
 		return dataDirError(dir, err)
 	}
+	if err := ownerOnlyDir(dir); err != nil {
+		return err
+	}
 	probe, err := os.CreateTemp(dir, ".write-check-*")
 	if err != nil {
 		return dataDirError(dir, err)
 	}
 	probe.Close()
 	return os.Remove(probe.Name())
+}
+
+// ownerOnlyDir takes group and others' access away from an existing data
+// directory, which MkdirAll leaves as it was: it holds the database, the
+// secret key and cached calendar data. Windows has no such modes.
+func ownerOnlyDir(dir string) error {
+	info, err := os.Stat(dir)
+	if err != nil {
+		return dataDirError(dir, err)
+	}
+	if runtime.GOOS == "windows" || info.Mode().Perm()&0o077 == 0 {
+		return nil
+	}
+	if err := os.Chmod(dir, info.Mode().Perm()&0o700); err != nil {
+		return fmt.Errorf("data directory %q can be read by other users and cannot be restricted: %w; "+
+			"run chmod 700 on it", dir, err)
+	}
+	return nil
 }
 
 func dataDirError(dir string, err error) error {

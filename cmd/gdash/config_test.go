@@ -136,3 +136,26 @@ func TestCheckDataDirNeedsWriteAccess(t *testing.T) {
 		t.Fatalf("checkDataDir = %v, want a not-writable error", err)
 	}
 }
+
+func TestCheckDataDirTakesAwayOthersAccess(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("Windows has no Unix file modes")
+	}
+	dir := filepath.Join(t.TempDir(), "data")
+	if err := os.Mkdir(dir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Chmod(dir, 0o755); err != nil { // past the umask
+		t.Fatal(err)
+	}
+	if err := checkDataDir(dir); err != nil {
+		t.Fatalf("checkDataDir: %v", err)
+	}
+	info, err := os.Stat(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if mode := info.Mode().Perm(); mode != 0o700 {
+		t.Fatalf("data directory mode = %o, want 700", mode)
+	}
+}
