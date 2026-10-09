@@ -5,7 +5,11 @@ the format follows [Keep a Changelog](https://keepachangelog.com).
 
 ## Unreleased
 
-The first release. Everything below is new.
+## 0.5.0 – 2026-10-09
+
+The first release, a beta: it runs every day on a Chromecast HD with
+Google TV at home, but it has not been used anywhere else yet. Everything
+below is new.
 
 ### Screens and casting
 
@@ -30,8 +34,8 @@ The first release. Everything below is new.
   themes: Minimal dark, Minimal light, Glass, Warm light, High contrast and
   Night.
 - Widgets: clock, weather, a forecast for up to seven days, calendar, news,
-  a note, a countdown and a photo slideshow. Widgets fit their type to the
-  size of their tile.
+  a note, a countdown and a photo slideshow, with weather icons. Widgets fit
+  their type to the size of their tile.
 - Schedules: another dashboard during parts of the day, on every day or on
   chosen days of the week.
 - Export a dashboard to a file and import it again, here or elsewhere.

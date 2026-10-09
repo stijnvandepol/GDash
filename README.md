@@ -3,8 +3,8 @@
 Your day on every TV in the house. Self-hosted, casts to the Chromecast or
 Google TV you already own. No extra hardware, no subscription, no cloud.
 
-> **Status: prototype.** It works on real hardware at home. Run it only on a
-> network you trust.
+> **Status: beta (0.5).** It runs every day on a TV at home, but has not
+> been used anywhere else yet. Run it only on a network you trust.
 
 ## What works
 
