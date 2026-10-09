@@ -85,7 +85,13 @@ fully trust, such as a guest's phone.
   Google's device CA, which no trust store contains. Home Assistant and
   pychromecast do the same.
 - Anyone who can read the server's log during the first start can create the
-  first account with the setup token printed there.
+  first account with the setup token printed there, and anyone who can run
+  commands on the server can reset a password with `gdash reset-password`.
+  Both already control the server.
+- There is one kind of account, the household's admin, without two-factor
+  authentication: GDash is meant for a home network behind its router, and
+  sessions last 7 days idle so a TV-side admin is not asked to log in daily.
+  Put it behind a reverse proxy with its own login if you expose it.
 - Cast itself does not authenticate senders. With an own registered receiver
   (`GDASH_CAST_APP_ID`), a device on the network could send that receiver a
   made-up dashboard; it only accepts dashboards, shown as plain text, never

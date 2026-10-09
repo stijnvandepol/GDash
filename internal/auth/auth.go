@@ -244,6 +244,30 @@ func (s *Service) ChangePassword(ctx context.Context, session, current, next, cl
 	return s.store.ChangePassword(ctx, stored.ID, hash, token.Hash(session))
 }
 
+// ResetPassword gives an account a new random password and ends all its
+// sessions, for an admin who lost theirs. It is only reachable from the
+// command line on the server: whoever can run that already controls GDash.
+// It returns the new password, or store.ErrNotFound for an unknown user.
+func (s *Service) ResetPassword(ctx context.Context, username string) (string, error) {
+	u, err := s.store.UserByName(ctx, username)
+	if err != nil {
+		return "", err
+	}
+	password, err := token.New()
+	if err != nil {
+		return "", err
+	}
+	hash, err := hashPassword(password)
+	if err != nil {
+		return "", err
+	}
+	// No session is kept: every browser of the account has to log in again.
+	if err := s.store.ChangePassword(ctx, u.ID, hash, ""); err != nil {
+		return "", err
+	}
+	return password, nil
+}
+
 // attemptKeys returns the limiter keys of a password attempt: the address,
 // the account from that address, and the account over all addresses.
 func attemptKeys(username, clientIP string) (perAddress []string, account string) {

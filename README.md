@@ -104,6 +104,9 @@ settings on the first start and ignores them afterwards.
 gdash                    # start the server
 gdash discover           # list Cast devices on the network
 gdash status <address>   # show what a Cast device is doing, without changing it
+gdash reset-password <user>  # give an account a new password, if you lost yours
+gdash healthcheck        # exit 0 when the server answers, for Docker
+gdash version
 ```
 
 ## Development

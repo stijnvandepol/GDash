@@ -300,3 +300,29 @@ func TestChangePasswordIsRateLimited(t *testing.T) {
 		t.Fatalf("after %d wrong guesses: err = %v, want ErrRateLimited", maxFailures, err)
 	}
 }
+
+func TestResetPasswordEndsEverySession(t *testing.T) {
+	ctx := context.Background()
+	s, _ := newTestService(t)
+	session := setUp(t, s)
+
+	password, err := s.ResetPassword(ctx, "STIJN")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if msg := passwordProblem(password, "stijn"); msg != "" {
+		t.Fatalf("the new password breaks the policy: %s", msg)
+	}
+	if _, err := s.Authenticate(ctx, session); !errors.Is(err, ErrNoSession) {
+		t.Fatalf("old session after reset: err = %v, want ErrNoSession", err)
+	}
+	if _, _, err := s.Login(ctx, Credentials{"stijn", "correct horse battery"}, "192.168.1.20"); !errors.Is(err, ErrInvalidCredentials) {
+		t.Fatalf("old password after reset: err = %v", err)
+	}
+	if _, _, err := s.Login(ctx, Credentials{"stijn", password}, "192.168.1.20"); err != nil {
+		t.Fatalf("new password: %v", err)
+	}
+	if _, err := s.ResetPassword(ctx, "nobody"); !errors.Is(err, store.ErrNotFound) {
+		t.Fatalf("reset of an unknown user: err = %v, want ErrNotFound", err)
+	}
+}

@@ -15,6 +15,7 @@ const ACTIONS: Record<string, string> = {
   login_failed: 'Failed login',
   logout: 'Logged out',
   password_changed: 'Changed the password',
+  password_reset: 'Reset the password from the command line for',
   password_change_failed: 'Failed to change the password',
   screen_paired: 'Paired a screen with display',
   screens_unpaired: 'Unpaired the screens of display',

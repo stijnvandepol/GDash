@@ -84,12 +84,14 @@ func main() {
 		err = discover(ctx)
 	case os.Args[1] == "status" && len(os.Args) == 3:
 		err = status(ctx, os.Args[2])
+	case os.Args[1] == "reset-password" && len(os.Args) == 3:
+		err = resetPassword(ctx, os.Getenv, os.Args[2], os.Stdout)
 	case os.Args[1] == "healthcheck":
 		err = healthcheck(ctx, os.Getenv)
 	case os.Args[1] == "version":
 		fmt.Println(currentVersion())
 	default:
-		err = errors.New("usage: gdash | gdash discover | gdash status <device-address> | gdash healthcheck | gdash version")
+		err = errors.New("usage: gdash | gdash discover | gdash status <device-address> | gdash healthcheck | gdash reset-password <user> | gdash version")
 	}
 	if err != nil {
 		logger.Error("gdash stopped", "error", err)

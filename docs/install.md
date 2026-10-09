@@ -188,6 +188,12 @@ cookies are only sent over HTTPS. Displays only receive data after they are pair
 to another user than the one GDash runs as. See
 [Data directory permissions](#data-directory-permissions).
 
+**Lost the password.** On the server, run `gdash reset-password <user>`
+with the same `GDASH_DATA_DIR` as the server; in Docker:
+`docker compose exec gdash /gdash reset-password <user>`. It prints a new
+password, logs out every browser and notes the reset in the activity log.
+Only someone who can run commands on the server can do this.
+
 **"No Cast devices found."** GDash is not in the same network segment as
 the TV, multicast is blocked, or the container has no host networking. Run
 `gdash discover` on the server to see what it finds; in Docker:
