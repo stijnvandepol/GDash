@@ -2,7 +2,8 @@
  * Hides the list items of a widget that do not fit entirely, so a list never
  * ends in a half-cut line on the TV. A group marked data-fit-group, such as a
  * calendar day, is hidden when none of its items is visible. It measures
- * again when the widget's size or content changes.
+ * again when the widget's size or content changes, and when a font has
+ * loaded, which changes the size of the text without touching the widget.
  */
 export function fitItems(node: HTMLElement) {
   const fit = () => {
@@ -26,12 +27,14 @@ export function fitItems(node: HTMLElement) {
   // not trigger another round.
   const content = new MutationObserver(fit);
   content.observe(node, { childList: true, subtree: true, characterData: true });
+  document.fonts.addEventListener('loadingdone', fit);
   fit();
 
   return {
     destroy() {
       resize.disconnect();
       content.disconnect();
+      document.fonts.removeEventListener('loadingdone', fit);
     },
   };
 }
@@ -56,11 +59,13 @@ export function shrinkToFit(node: HTMLElement, minPx: number) {
   resize.observe(node);
   const content = new MutationObserver(fit);
   content.observe(node, { childList: true, subtree: true, characterData: true });
+  document.fonts.addEventListener('loadingdone', fit);
   fit();
   return {
     destroy() {
       resize.disconnect();
       content.disconnect();
+      document.fonts.removeEventListener('loadingdone', fit);
     },
   };
 }
