@@ -80,6 +80,12 @@ func TestValidateDashboard(t *testing.T) {
 			d.Widgets = append(d.Widgets, entities("a.a", "a.b", "a.c", "a.d", "a.e", "a.f", "a.g", "a.h", "a.i"))
 		}, "widgets[2]: choose"},
 		{"home assistant id as number", func(d *Dashboard) { d.Widgets = append(d.Widgets, entities(float64(1))) }, "widgets[2]: choose"},
+		{"sun", func(d *Dashboard) {
+			d.Widgets = append(d.Widgets, Widget{ID: "sun", Type: "sun", X: 0, Y: 5, W: 5, H: 4})
+		}, ""},
+		{"sun too small", func(d *Dashboard) {
+			d.Widgets = append(d.Widgets, Widget{ID: "sun", Type: "sun", X: 0, Y: 5, W: 4, H: 4})
+		}, "widgets[2]: a sun widget needs at least 5x4 cells"},
 		{"forecast days", func(d *Dashboard) {
 			d.Widgets = append(d.Widgets, Widget{ID: "fc", Type: "forecast", X: 0, Y: 5, W: 6, H: 4, Settings: map[string]any{"days": float64(8)}})
 		}, "widgets[2]: days must be a whole number from 1 to 7"},

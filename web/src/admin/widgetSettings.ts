@@ -5,6 +5,7 @@ export const WIDGET_LABELS: Record<string, string> = {
   clock: 'Clock',
   weather: 'Weather',
   forecast: 'Forecast',
+  sun: 'Sun',
   calendar: 'Calendar',
   news: 'News',
   text: 'Note',

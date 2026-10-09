@@ -165,6 +165,7 @@ allows, overlaps another, lacks a required setting, or has a setting its type do
 | `clock` | 4x3 | none | |
 | `weather` | 4x4 | `weather.current` | |
 | `forecast` | 6x4 | `weather.current` | `days`: 1 to 7, default 5 |
+| `sun` | 5x4 | `weather.current` | |
 | `news` | 6x4 | `news.default` | `maxItems`: 1 to 20 |
 | `calendar` | 6x4 | `calendar.default` | `maxItems`: 1 to 20 |
 | `text` | 4x3 | none | `text`: 1 to 300 characters, line breaks allowed (required) |
