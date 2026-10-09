@@ -3,9 +3,9 @@
   import { api, ApiError, type CastDevice, type Dashboard, type Display } from './api';
   import { errorMessage } from './errors';
   import { newestOnly } from './newest';
-  import { describeCast } from './status';
   import ScheduleEditor from './ScheduleEditor.svelte';
   import AddDisplay from './AddDisplay.svelte';
+  import DisplayItem from './DisplayItem.svelte';
 
   let { onSessionEnded }: { onSessionEnded: () => void } = $props();
 
@@ -94,10 +94,10 @@
 
   // Text sizes the server offers (internal/displays.TextScales).
   const TEXT_SIZES: [number, string][] = [
-    [100, 'Text 100 % (TV)'],
-    [125, 'Text 125 %'],
-    [150, 'Text 150 % (small screen)'],
-    [200, 'Text 200 %'],
+    [100, '100 % · a TV across the room'],
+    [125, '125 %'],
+    [150, '150 % · a smart display or tablet'],
+    [200, '200 %'],
   ];
 
   async function chooseTextScale(d: Display, textScale: number) {
@@ -198,47 +198,19 @@
               <button type="button" class="link" onclick={() => (pairingId = null)}>Cancel</button>
             </form>
           {:else}
-            <div class="grow">
-              <strong>{d.name}</strong>
-              <span class="muted">{describeDevice(d.castDeviceId)} · {describeScreens(d)} · {describeHours(d)}</span>
-              {#if d.cast}
-                <span
-                  class="badge"
-                  class:ok={d.cast.state === 'showing'}
-                  class:warn={d.cast.state === 'other_app'}
-                  class:bad={d.cast.state === 'unreachable'}
-                  title={d.cast.problem ?? ''}
-                >
-                  {describeCast(d.cast)}
-                </span>
-              {/if}
-            </div>
-            <select
-              aria-label="Dashboard for {d.name}"
-              value={d.dashboardId || 'default'}
-              onchange={(e) => chooseDashboard(d, (e.target as HTMLSelectElement).value)}
-            >
-              {#each dashboards as b (b.id)}
-                <option value={b.id}>{b.name}</option>
-              {/each}
-            </select>
-            <select
-              aria-label="Text size for {d.name}"
-              value={d.textScale || 100}
-              onchange={(e) => chooseTextScale(d, Number((e.target as HTMLSelectElement).value))}
-            >
-              {#each TEXT_SIZES as [value, label] (value)}
-                <option {value}>{label}</option>
-              {/each}
-            </select>
-            <a href="/d/{d.id}" target="_blank" rel="noopener">Open</a>
-            <button class="link" onclick={() => (scheduleId = d.id)}>Schedule</button>
-            <button class="link" onclick={() => startPairing(d)}>Pair a screen</button>
-            {#if (d.pairedScreens ?? 0) > 0}
-              <button class="link" onclick={() => unpair(d)}>Unpair screens</button>
-            {/if}
-            <button class="link" onclick={() => startRename(d)}>Rename</button>
-            <button class="link danger" onclick={() => remove(d)}>Remove</button>
+            <DisplayItem
+              display={d}
+              {dashboards}
+              textSizes={TEXT_SIZES}
+              meta="{describeDevice(d.castDeviceId)} · {describeScreens(d)} · {describeHours(d)}"
+              ondashboard={(id) => chooseDashboard(d, id)}
+              ontextscale={(percent) => chooseTextScale(d, percent)}
+              onschedule={() => (scheduleId = d.id)}
+              onpair={() => startPairing(d)}
+              onunpair={() => unpair(d)}
+              onrename={() => startRename(d)}
+              onremove={() => remove(d)}
+            />
           {/if}
         </li>
       {/each}
