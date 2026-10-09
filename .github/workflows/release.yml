@@ -1,8 +1,8 @@
 # Builds a release when a version tag such as v1.0.0 is pushed: archives
-# for Linux and Windows with SHA256SUMS as a draft GitHub release, and a
-# Docker image for amd64 and arm64 on GitHub's container registry. The
-# release stays a draft until someone publishes it. Actions are pinned to
-# commit SHAs.
+# for Linux and Windows with SHA256SUMS and a CycloneDX SBOM as a draft
+# GitHub release, and a Docker image for amd64 and arm64 on GitHub's
+# container registry with an SBOM of its own. The release stays a draft until
+# someone publishes it. Actions are pinned to commit SHAs.
 name: Release
 
 on:
@@ -21,6 +21,16 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+      # Before npm ci, so it lists what go.mod and package-lock.json pin and
+      # not every file of node_modules.
+      - name: SBOM of the pinned dependencies
+        uses: anchore/sbom-action@66cbf4bc1f1c0d2edc94016e65bc221b6bb0ad6c # v0.24.3
+        with:
+          path: .
+          format: cyclonedx-json
+          output-file: ${{ runner.temp }}/sbom.cdx.json
+          upload-artifact: false
+          upload-release-assets: false
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 24
@@ -33,7 +43,9 @@ jobs:
         working-directory: web
         run: npm ci && npm run build
       - name: Archives
-        run: scripts/build-release.sh "$GITHUB_REF_NAME"
+        run: |
+          scripts/build-release.sh "$GITHUB_REF_NAME"
+          cp "$RUNNER_TEMP/sbom.cdx.json" "dist-release/gdash_${GITHUB_REF_NAME#v}_sbom.cdx.json"
       - name: Draft release
         env:
           GH_TOKEN: ${{ github.token }}
@@ -68,11 +80,26 @@ jobs:
           tags="$image:${GITHUB_REF_NAME#v}"
           # Only a final release moves "latest"; a pre-release does not.
           if [[ "$GITHUB_REF_NAME" != *-* ]]; then tags="$tags,$image:latest"; fi
+          echo "image=$image" >> "$GITHUB_OUTPUT"
           echo "tags=$tags" >> "$GITHUB_OUTPUT"
       - uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        id: build
         with:
           context: .
           platforms: linux/amd64,linux/arm64
-          build-args: VERSION=${{ github.ref_name }}
+          build-args: |
+            VERSION=${{ github.ref_name }}
+            REVISION=${{ github.sha }}
           tags: ${{ steps.tags.outputs.tags }}
           push: true
+      # The packages of the image itself: the Go modules in the binary and
+      # the base image's. Syft reads the linux/amd64 image; the arm64 one is
+      # built from the same sources and base.
+      - name: SBOM of the image
+        uses: anchore/sbom-action@66cbf4bc1f1c0d2edc94016e65bc221b6bb0ad6c # v0.24.3
+        with:
+          image: ${{ steps.tags.outputs.image }}@${{ steps.build.outputs.digest }}
+          format: cyclonedx-json
+          output-file: gdash-image.cdx.json
+          artifact-name: gdash-image.cdx.json
+          upload-release-assets: false
