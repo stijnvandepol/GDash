@@ -27,7 +27,8 @@ test('a display without a Cast device is paired from the web interface and shows
 
   await openTab(page, 'Displays');
   await page.getByLabel('Name', { exact: true }).fill('E2E Kitchen');
-  await expect(page.getByLabel('Display page address')).toHaveValue('e2e-kitchen');
+  // The address follows from the name and is only shown, not asked for.
+  await expect(page.getByText('/d/e2e-kitchen')).toBeVisible();
   await page.getByRole('button', { name: 'Add display' }).click();
 
   const row = page.getByRole('listitem').filter({ hasText: 'E2E Kitchen' });

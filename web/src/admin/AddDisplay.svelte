@@ -26,9 +26,19 @@
   let newDevice = $state('');
   let createError = $state<ApiError | null>(null);
   let creating = $state(false);
+  let showAddress = $state(false);
 
   const screens = $derived(devices.filter((d) => d.hasScreen));
   const speakers = $derived(devices.filter((d) => !d.hasScreen));
+
+  // Choosing a TV before typing a name names the display after the TV.
+  function nameFromDevice() {
+    const device = devices.find((d) => d.id === newDevice);
+    if (device && !newName.trim()) {
+      newName = device.name;
+      nameChanged();
+    }
+  }
 
   function nameChanged() {
     if (!idEdited) newId = slugify(newName);
@@ -45,6 +55,7 @@
       newId = '';
       idEdited = false;
       newDevice = '';
+      showAddress = false;
       await oncreated();
     } catch (err) {
       const message = onerror(err);
@@ -62,17 +73,26 @@
     <input bind:value={newName} oninput={nameChanged} placeholder="Kitchen" required />
     {#if createError?.fieldMessage('name')}<span class="field-error">{createError.fieldMessage('name')}</span>{/if}
   </label>
+  <!-- The address follows from the name; most people never need to see
+       the field, so it opens on request or when it has a problem. -->
+  {#if showAddress || createError?.fieldMessage('id')}
   <label>
-    Display page address
-    <span class="with-prefix">
-      <span class="prefix">/d/</span>
-      <input bind:value={newId} oninput={() => (idEdited = true)} required spellcheck="false" />
-    </span>
-    {#if createError?.fieldMessage('id')}<span class="field-error">{createError.fieldMessage('id')}</span>{/if}
-  </label>
+      Display page address
+      <span class="with-prefix">
+        <span class="prefix">/d/</span>
+        <input bind:value={newId} oninput={() => (idEdited = true)} required spellcheck="false" />
+      </span>
+      {#if createError?.fieldMessage('id')}<span class="field-error">{createError.fieldMessage('id')}</span>{/if}
+    </label>
+  {:else}
+    <p class="muted small address">
+      Its page will be at <code>/d/{newId || '…'}</code>
+      <button type="button" class="link" onclick={() => (showAddress = true)}>Change</button>
+    </p>
+  {/if}
   <label>
     TV
-    <select bind:value={newDevice}>
+    <select bind:value={newDevice} onchange={nameFromDevice}>
       <option value="">No Cast: I open the page myself in a browser or kiosk</option>
       {#each screens as dev (dev.id)}
         <option value={dev.id}>{dev.name} ({dev.model})</option>
@@ -95,3 +115,13 @@
   {#if createError && createError.fields.length === 0}<p class="error">{createError.message}</p>{/if}
   <button type="submit" disabled={creating}>{creating ? 'Working…' : 'Add display'}</button>
 </form>
+
+<style>
+  .address {
+    margin: 0;
+  }
+  .address code {
+    font-family: var(--mono);
+    color: var(--text-soft);
+  }
+</style>
