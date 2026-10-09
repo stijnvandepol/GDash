@@ -19,17 +19,14 @@ options.disableIdleTimeout = true;
 options.skipPlayersLoad = true;
 options.customNamespaces = { [CAST_NAMESPACE]: cast.framework.system.MessageType.JSON };
 
+// Cast does not authenticate senders: any device on the network can send
+// on this namespace. The receiver therefore only takes snapshots, shown as
+// plain text, and nothing that changes where the screen goes.
 context.addCustomMessageListener(CAST_NAMESPACE, (event) => {
   const message = event.data;
   if (isSnapshot(message)) {
     display.connection = 'live';
     applySnapshot(STORAGE_ID, message);
-    return;
-  }
-  // Transport option B from the research: hand the screen to the server's
-  // own display page. Only http(s) URLs are accepted.
-  if (isNavigate(message)) {
-    window.location.href = message.url;
   }
 });
 
@@ -45,15 +42,3 @@ context.addEventListener(cast.framework.system.EventType.SENDER_DISCONNECTED, ()
 
 context.start(options);
 mount(App, { target: document.getElementById('app')! });
-
-function isNavigate(v: unknown): v is { type: 'navigate'; url: string } {
-  if (typeof v !== 'object' || v === null) return false;
-  const msg = v as Record<string, unknown>;
-  if (msg.type !== 'navigate' || typeof msg.url !== 'string') return false;
-  try {
-    const url = new URL(msg.url);
-    return url.protocol === 'http:' || url.protocol === 'https:';
-  } catch {
-    return false;
-  }
-}

@@ -60,6 +60,10 @@ fully trust, such as a guest's phone.
   pychromecast do the same.
 - Anyone who can read the server's log during the first start can create the
   first account with the setup token printed there.
+- Cast itself does not authenticate senders. With an own registered receiver
+  (`GDASH_CAST_APP_ID`), a device on the network could send that receiver a
+  made-up dashboard; it only accepts dashboards, shown as plain text, never
+  an address to go to. The default DashCast route has no such channel.
 
 The reasons for these choices are in [CODE_GUIDELINES.md](CODE_GUIDELINES.md)
 under "Known oddities".
