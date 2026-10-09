@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { ask } from './confirm.svelte';
   import { ApiError, type SourceStatus } from './api';
   import { describeStatus } from './status';
   import { CALENDAR_COLORS } from '../colors';
@@ -81,7 +82,8 @@
   }
 
   async function remove(item: Item) {
-    if (!confirm(`Remove "${item.name}"?`)) return;
+    const message = 'It is no longer fetched or shown on the TVs.';
+    if (!(await ask({ title: `Remove "${item.name}"?`, message, action: 'Remove' }))) return;
     error = '';
     try {
       await onremove(item.id);

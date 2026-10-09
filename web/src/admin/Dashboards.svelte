@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { ask } from './confirm.svelte';
   import FileButton from './FileButton.svelte';
   import { onMount } from 'svelte';
   import { api, ApiError, slugify, type Dashboard, type DashboardTemplate, type WidgetCatalogue } from './api';
@@ -63,7 +64,8 @@
   }
 
   async function remove(d: Dashboard) {
-    if (!confirm(`Delete dashboard "${d.name}"? Displays showing it switch to the default dashboard.`)) return;
+    const message = `Displays showing "${d.name}" switch to the default dashboard.`;
+    if (!(await ask({ title: 'Delete this dashboard?', message, action: 'Delete' }))) return;
     try {
       await api.deleteDashboard(d.id);
       await load();

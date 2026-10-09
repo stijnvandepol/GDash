@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { ask } from './confirm.svelte';
   import 'gridstack/dist/gridstack.min.css';
   import { GridStack, type GridStackNode, type GridStackWidget } from 'gridstack';
   import { onDestroy, onMount } from 'svelte';
@@ -192,8 +193,9 @@
     return `${w ? (LABELS[w.type] ?? w.type) : f.field}: ${f.message}`;
   }
 
-  function close() {
-    if (dirty && !confirm('Leave without saving your changes?')) return;
+  async function close() {
+    const message = 'Your changes to this dashboard are not saved yet.';
+    if (dirty && !(await ask({ title: 'Leave without saving?', message, action: 'Leave' }))) return;
     onClose();
   }
 </script>

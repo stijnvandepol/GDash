@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { ask } from './confirm.svelte';
   import { onMount } from 'svelte';
   import { api, ApiError, type CastDevice, type Dashboard, type Display } from './api';
   import { errorMessage } from './errors';
@@ -83,7 +84,8 @@
   }
 
   async function remove(d: Display) {
-    if (!confirm(`Remove display "${d.name}"?`)) return;
+    const message = `"${d.name}" stops showing GDash, and its paired screens are unpaired.`;
+    if (!(await ask({ title: 'Remove this display?', message, action: 'Remove' }))) return;
     try {
       await api.deleteDisplay(d.id);
       await load();
@@ -147,7 +149,8 @@
   }
 
   async function unpair(d: Display) {
-    if (!confirm(`Unpair every screen showing "${d.name}"? They will ask for a new code.`)) return;
+    const message = `Every screen showing "${d.name}" will ask for a new code.`;
+    if (!(await ask({ title: 'Unpair the screens?', message, action: 'Unpair' }))) return;
     try {
       await api.unpairScreens(d.id);
       await load();

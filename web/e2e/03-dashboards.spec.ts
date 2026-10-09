@@ -44,5 +44,19 @@ test('create a dashboard, add a clock and a note, edit the note, save and export
 
   // The exported file is a valid dashboard: importing it adds a copy.
   await page.getByLabel('Dashboard file').setInputFiles(await file.path());
-  await expect(page.getByRole('listitem').filter({ hasText: 'E2E Evening' })).toHaveCount(2);
+  const copies = page.getByRole('listitem').filter({ hasText: 'E2E Evening' });
+  await expect(copies).toHaveCount(2);
+
+  // Deleting asks in GDash's own dialog: Escape keeps the dashboard, the
+  // Delete button removes it.
+  await copies.last().getByRole('button', { name: 'Delete' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Delete this dashboard?' });
+  await expect(dialog).toBeVisible();
+  await expect(dialog.getByRole('button', { name: 'Cancel' })).toBeFocused();
+  await page.keyboard.press('Escape');
+  await expect(dialog).toBeHidden();
+  await expect(copies).toHaveCount(2);
+  await copies.last().getByRole('button', { name: 'Delete' }).click();
+  await dialog.getByRole('button', { name: 'Delete' }).click();
+  await expect(copies).toHaveCount(1);
 });

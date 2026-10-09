@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { ask } from './confirm.svelte';
   import { api, ApiError, type Location, type Place, type SourceStatus } from './api';
   import { describeStatus } from './status';
 
@@ -72,7 +73,8 @@
   }
 
   async function clear() {
-    if (!confirm('Remove the location? Weather widgets then show that no location is set.')) return;
+    const message = 'Weather, forecast, sun and air quality widgets then show that no location is set.';
+    if (!(await ask({ title: 'Remove the location?', message, action: 'Remove' }))) return;
     try {
       await api.clearLocation();
       await onchanged();

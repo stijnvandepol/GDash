@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { ask } from './confirm.svelte';
   import FileButton from './FileButton.svelte';
   import { onMount } from 'svelte';
   import { api, ApiError, type Photo } from './api';
@@ -48,7 +49,8 @@
   }
 
   async function remove(p: Photo) {
-    if (!confirm('Remove this photo from GDash?')) return;
+    const message = 'It disappears from every photo widget and is deleted from the server.';
+    if (!(await ask({ title: 'Remove this photo?', message, action: 'Remove' }))) return;
     try {
       await api.deletePhoto(p.name);
       await load();

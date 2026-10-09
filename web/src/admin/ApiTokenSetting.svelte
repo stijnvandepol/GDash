@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { ask } from './confirm.svelte';
   import { onMount } from 'svelte';
   import { api, ApiError, type ApiToken, type NewApiToken } from './api';
   import { describeLastUse } from './apiTokens';
@@ -48,7 +49,8 @@
   }
 
   async function revoke(token: ApiToken) {
-    if (!confirm(`Revoke the token "${token.name}"? Automations that use it stop working at once.`)) return;
+    const message = `Automations that use "${token.name}" stop working at once.`;
+    if (!(await ask({ title: 'Revoke this token?', message, action: 'Revoke' }))) return;
     error = '';
     try {
       await api.revokeApiToken(token.id);

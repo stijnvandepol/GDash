@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { ask } from './confirm.svelte';
   import { api, ApiError, type HomeAssistant, type SourceStatus } from './api';
   import { describeStatus } from './status';
 
@@ -46,7 +47,8 @@
   }
 
   async function disconnect() {
-    if (!confirm('Disconnect Home Assistant? Home Assistant widgets then show that it is not set up.')) return;
+    const message = 'Home Assistant widgets then show that it is not set up. The token is deleted.';
+    if (!(await ask({ title: 'Disconnect Home Assistant?', message, action: 'Disconnect' }))) return;
     error = '';
     try {
       await api.disconnectHomeAssistant();

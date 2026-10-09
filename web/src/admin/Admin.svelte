@@ -11,6 +11,7 @@
   import Icon, { type IconName } from './Icon.svelte';
   import Logo from './Logo.svelte';
   import Toasts from './Toasts.svelte';
+  import ConfirmDialog from './ConfirmDialog.svelte';
   import { toast } from './toast.svelte';
 
   type Screen = { name: 'loading' } | { name: 'error'; message: string } | { name: 'setup' } | { name: 'login' } | { name: 'app'; user: User };
@@ -150,4 +151,5 @@
   </footer>
 
   <Toasts />
+  <ConfirmDialog />
 </div>
