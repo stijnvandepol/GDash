@@ -43,6 +43,8 @@ export interface Snapshot {
   /** Dashboards shown in turn, each for pageSeconds; see pages.ts. */
   pages?: Dashboard[];
   pageSeconds?: number;
+  /** Text size in percent; see stage.ts. */
+  textScale?: number;
 }
 
 function isRecord(v: unknown): v is Record<string, unknown> {

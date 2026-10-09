@@ -5,6 +5,7 @@ package displays
 import (
 	"fmt"
 	"regexp"
+	"slices"
 	"strings"
 	"time"
 	"unicode/utf8"
@@ -28,6 +29,11 @@ const (
 	MinRotateSeconds = 10
 	MaxRotateSeconds = 600
 )
+
+// TextScales are the text sizes a display can have, in percent. A layout
+// is made for a TV across a room; a smart display at arm's length or a
+// small screen in a kitchen shows it larger.
+var TextScales = []int{100, 125, 150, 200}
 
 // MaxSlots bounds the day plan of one display. Morning, afternoon, evening
 // and a weekend-style exception fit easily.
@@ -59,9 +65,11 @@ type Display struct {
 	Schedule []Slot `json:"schedule"`
 	// Rotation lists dashboards shown in turn with DashboardID, each for
 	// RotateSeconds, while no time slot applies. Empty means no rotation.
-	Rotation      []string  `json:"rotation"`
-	RotateSeconds int       `json:"rotateSeconds"`
-	CreatedAt     time.Time `json:"createdAt"`
+	Rotation      []string `json:"rotation"`
+	RotateSeconds int      `json:"rotateSeconds"`
+	// TextScale is the display's text size in percent, one of TextScales.
+	TextScale int       `json:"textScale"`
+	CreatedAt time.Time `json:"createdAt"`
 }
 
 // Slot shows a dashboard during part of the day, such as a morning
@@ -133,6 +141,9 @@ func Validate(d Display) error {
 	}
 	if msg := rotationProblem(d.Rotation, d.RotateSeconds); msg != "" {
 		errs.Add("rotation", msg)
+	}
+	if !slices.Contains(TextScales, d.TextScale) {
+		errs.Add("textScale", "choose 100, 125, 150 or 200 percent")
 	}
 	return errs.Err()
 }

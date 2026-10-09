@@ -8,7 +8,7 @@ import (
 )
 
 func TestValidate(t *testing.T) {
-	valid := Display{ID: "keuken", Name: "Keuken TV", CastDeviceID: "e542c41e4d94baa86e46f36dfdebf26e"}
+	valid := Display{ID: "keuken", Name: "Keuken TV", CastDeviceID: "e542c41e4d94baa86e46f36dfdebf26e", TextScale: 100}
 	tests := []struct {
 		name       string
 		change     func(*Display)
@@ -43,6 +43,8 @@ func TestValidate(t *testing.T) {
 		{"too many pages", func(d *Display) {
 			d.Rotation, d.RotateSeconds = []string{"a", "b", "c", "d", "e", "f"}, 30
 		}, []string{"rotation"}},
+		{"larger text", func(d *Display) { d.TextScale = 150 }, nil},
+		{"odd text size", func(d *Display) { d.TextScale = 130 }, []string{"textScale"}},
 		{"everything wrong", func(d *Display) { d.ID = ""; d.Name = ""; d.CastDeviceID = "x" }, []string{"id", "name", "castDeviceId"}},
 	}
 	for _, tt := range tests {

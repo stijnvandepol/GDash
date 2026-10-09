@@ -87,6 +87,14 @@ in the list at the display.
 Daycast. The file holds the layout, the theme and the widget settings, such
 as the text of a note; it holds no data and no calendar addresses.
 
+## Small screens
+
+A layout is made for a TV across the room. On a Nest Hub, a tablet or a
+small monitor, choose a larger **text size** in the list at the display:
+125, 150 or 200 %. Everything is drawn larger and lists show fewer items,
+so nothing is cut off. The dashboard always fills the screen, also on
+16:10 and 4:3 screens.
+
 ## Schedules
 
 Choose **Schedule** at a display:

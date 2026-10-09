@@ -86,6 +86,9 @@ type Snapshot struct {
 	// is then the first of them. The screen turns the pages by its clock.
 	Pages       []Dashboard `json:"pages,omitempty"`
 	PageSeconds int         `json:"pageSeconds,omitempty"`
+	// TextScale is the text size in percent; the screen draws the stage
+	// smaller by that factor, so everything on it looks larger.
+	TextScale int `json:"textScale"`
 }
 
 // View is what one display shows and when.
@@ -98,6 +101,8 @@ type View struct {
 	// no slot of the schedule applies.
 	Pages       []Dashboard
 	PageSeconds int
+	// TextScale is the display's text size in percent.
+	TextScale int
 }
 
 // ScheduledDashboard is a dashboard shown during a window of the week.
@@ -173,6 +178,7 @@ func (b *Broadcaster) Publish(now time.Time, views map[string]View, data map[str
 		msg, err := json.Marshal(Snapshot{
 			Type: "snapshot", Version: b.version, ServerTime: now, Active: active,
 			Dashboard: dashboard, Data: used, Language: language, Pages: pages, PageSeconds: seconds,
+			TextScale: view.TextScale,
 		})
 		if err != nil {
 			return fmt.Errorf("encode snapshot for display %s: %w", displayID, err)

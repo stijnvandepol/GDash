@@ -113,3 +113,18 @@ func TestDisplayRotation(t *testing.T) {
 		t.Fatalf("clear = %d %s", status, body)
 	}
 }
+
+func TestDisplayTextScale(t *testing.T) {
+	env := newTestEnv(t, nil)
+	env.setUp(t)
+	status, body := env.do(t, "POST", "/api/displays", `{"id":"keuken","name":"Keuken"}`)
+	if status != http.StatusCreated || !strings.Contains(body, `"textScale":100`) {
+		t.Fatalf("create = %d %s; want the default text size", status, body)
+	}
+	if status, body = env.do(t, "PATCH", "/api/displays/keuken", `{"textScale":150}`); status != http.StatusOK || !strings.Contains(body, `"textScale":150`) {
+		t.Fatalf("larger = %d %s", status, body)
+	}
+	if status, body = env.do(t, "PATCH", "/api/displays/keuken", `{"textScale":175}`); status != http.StatusUnprocessableEntity || !strings.Contains(body, `"field":"textScale"`) {
+		t.Fatalf("odd size = %d %s", status, body)
+	}
+}

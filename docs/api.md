@@ -36,7 +36,7 @@ come from another site (cross-site request forgery protection).
 | `GET /api/audit-events?limit=100` | admin | `200 {"events": [{at, actor, action, detail, ip}]}`, newest first, at most 200 | `400`, `401` |
 | `GET /api/displays` | admin | `200 {"displays": [display + pairedScreens + cast?]}` | `401` |
 | `POST /api/displays` `{id, name, castDeviceId, activeFrom?, activeUntil?, schedule?}` | admin | `201` display | `401`, `409 conflict`, `422` |
-| `PATCH /api/displays/{id}` `{name?, castDeviceId?, dashboardId?, activeFrom?, activeUntil?, schedule?, rotation?, rotateSeconds?}` | admin | `200` display | `401`, `404 not_found`, `422` (also for an unknown dashboard) |
+| `PATCH /api/displays/{id}` `{name?, castDeviceId?, dashboardId?, activeFrom?, activeUntil?, schedule?, rotation?, rotateSeconds?, textScale?}` | admin | `200` display | `401`, `404 not_found`, `422` (also for an unknown dashboard) |
 | `DELETE /api/displays/{id}` | admin | `204` | `401`, `404 not_found` |
 | `GET /api/widget-types` | admin | `200 {columns, rows, themes, types: {name: {minW, minH, settings: {key: {kind, min?, max?, required}}}}}` | `401` |
 | `GET /api/dashboards` | admin | `200 {"dashboards": [dashboard]}` | `401` |
@@ -125,6 +125,10 @@ the page on its clock, so every screen of a display shows the same page.
 **cast:** `{"state": "showing", "since": "2026-10-09T08:31:00Z", "problem"?: "…"}`, only for a display on a Cast
 device. `state` is `connecting`, `showing`, `standby` (the receiver runs but the TV sleeps), `other_app` (someone else
 is casting; Daycast waits), `resting` (outside active hours) or `unreachable`, with `problem` saying why.
+
+`textScale` is the display's text size in percent: 100 (default), 125, 150 or 200. The snapshot carries it; the
+screen draws its stage narrower by that factor and in the screen's own shape (between 4:3 and 21:9), so a small
+screen shows the same layout larger and without bars. Widgets then show fewer list items.
 
 **slot:** `{"from": "06:30", "until": "09:00", "days": ["mon", "tue"], "dashboardId": "morning"}`. During the slot the
 display shows that dashboard instead of its own; the first slot that contains the current time wins. `days` holds

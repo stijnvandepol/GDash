@@ -45,6 +45,8 @@ export interface Display {
   /** Dashboards shown in turn with the display's own, each for rotateSeconds. */
   rotation: string[];
   rotateSeconds: number;
+  /** Text size in percent: 100, 125, 150 or 200. */
+  textScale: number;
   /** What Daycast last found on the Cast device; only in the display list. */
   cast?: CastStatus;
 }
@@ -215,6 +217,7 @@ export const api = {
       schedule?: Slot[];
       rotation?: string[];
       rotateSeconds?: number;
+      textScale?: number;
     },
   ) =>
     request<Display>('PATCH', `/api/displays/${encodeURIComponent(id)}`, changes),

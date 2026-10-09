@@ -11,6 +11,9 @@ import (
 	"github.com/stijnvandepol/daycast/internal/validation"
 )
 
+// defaultTextScale is the size a display gets when a client does not choose.
+const defaultTextScale = 100
+
 // listDisplays handles GET /api/displays: {"displays": [...]}, at most
 // displays.MaxDisplays, each with the number of screens paired by code and,
 // for a display on a Cast device, what its keeper last found there.
@@ -54,6 +57,7 @@ func (s *Server) createDisplay(w http.ResponseWriter, r *http.Request) {
 		Schedule      []displays.Slot `json:"schedule"`
 		Rotation      []string        `json:"rotation"`
 		RotateSeconds int             `json:"rotateSeconds"`
+		TextScale     int             `json:"textScale"`
 	}
 	if !decodeJSON(w, r, &body) {
 		return
@@ -63,6 +67,10 @@ func (s *Server) createDisplay(w http.ResponseWriter, r *http.Request) {
 		Hours:    schedule.Hours{From: body.ActiveFrom, Until: body.ActiveUntil},
 		Schedule: displays.NormalizeSchedule(body.Schedule), CreatedAt: s.Now().UTC(),
 		Rotation: displays.NormalizeRotation(body.Rotation), RotateSeconds: body.RotateSeconds,
+		TextScale: body.TextScale,
+	}
+	if d.TextScale == 0 {
+		d.TextScale = defaultTextScale
 	}
 	if err := displays.Validate(d); err != nil {
 		writeValidationError(w, validation.Fields(err))
@@ -93,6 +101,7 @@ func (s *Server) updateDisplay(w http.ResponseWriter, r *http.Request) {
 		Schedule      *[]displays.Slot `json:"schedule"`
 		Rotation      *[]string        `json:"rotation"`
 		RotateSeconds *int             `json:"rotateSeconds"`
+		TextScale     *int             `json:"textScale"`
 	}
 	if !decodeJSON(w, r, &body) {
 		return
@@ -125,6 +134,9 @@ func (s *Server) updateDisplay(w http.ResponseWriter, r *http.Request) {
 	}
 	if body.RotateSeconds != nil {
 		d.RotateSeconds = *body.RotateSeconds
+	}
+	if body.TextScale != nil {
+		d.TextScale = *body.TextScale
 	}
 	if err := displays.Validate(d); err != nil {
 		writeValidationError(w, validation.Fields(err))

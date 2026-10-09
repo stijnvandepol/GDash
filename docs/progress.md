@@ -5,6 +5,7 @@ State of the project on 8 October 2026, so work can continue on any machine.
 ## What works
 
 - **Backups:** a consistent copy of the database every day in `backups/`, the last seven kept, made while Daycast runs.
+- **Small screens:** a text size per display (100, 125, 150 or 200 %) and a stage that takes the screen's shape. Measured on a 1024x600 Nest Hub screen: at 150 % calendar times grew from 15 to 22 px and headlines from 19 to 30 px, the dashboard filled the screen and no tile overflowed.
 - **Weather icons:** the weather and forecast widgets show a line icon for the sky (sun or moon, clouds, rain, drizzle, snow, fog, thunder), drawn for Daycast in the theme's colour. Measured at the minimum tile sizes: everything still fits.
 - **Photos:** up to 50 photos uploaded under Settings and shown by a Photos widget as a slideshow. They are stored in the data directory and only served to admins and paired screens; uploads are checked by content and size. Tested with synthetic images in the browser.
 - **Pages in turn:** a display can show up to five other dashboards one after another with its own, each for a chosen time. The screen turns the pages on its clock, so screens of one display stay in step; a time slot pauses the rotation. Tested in the browser with a 15-second interval.

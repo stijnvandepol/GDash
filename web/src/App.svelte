@@ -3,6 +3,13 @@
   import { clock, display } from './state.svelte';
   import { t } from './i18n.svelte';
   import { msToNextPage, pageAt } from './pages';
+  import { stageFor } from './stage';
+
+  // Spacing of theme.css in design pixels. A larger text size draws the
+  // stage smaller and these with it, so only the text grows.
+  const SPACE_GAP = 24;
+  const SPACE_WIDGET = 48;
+  const RADIUS_WIDGET = 28;
   import Clock from './widgets/Clock.svelte';
   import Weather from './widgets/Weather.svelte';
   import News from './widgets/News.svelte';
@@ -14,12 +21,11 @@
 
   // Dashboards are designed on a fixed 1920x1080 stage and scaled to the
   // screen, so a layout looks the same on a 720p Chromecast and a 4K TV.
-  const STAGE_WIDTH = 1920;
-  const STAGE_HEIGHT = 1080;
-
-  let innerWidth = $state(STAGE_WIDTH);
-  let innerHeight = $state(STAGE_HEIGHT);
-  const scale = $derived(Math.min(innerWidth / STAGE_WIDTH, innerHeight / STAGE_HEIGHT));
+  // The stage follows the screen's shape and the display's text size; see
+  // stage.ts.
+  let innerWidth = $state(1920);
+  let innerHeight = $state(1080);
+  const stage = $derived(stageFor(innerWidth, innerHeight, display.snapshot?.textScale));
 
   // A rotating display turns its page at every boundary of pageSeconds;
   // one timer to the next boundary, not a tick every second.
@@ -66,9 +72,12 @@
   {:else if dashboard}
     <div
       class="stage"
-      style:width="{STAGE_WIDTH}px"
-      style:height="{STAGE_HEIGHT}px"
-      style:transform="translate(-50%, -50%) scale({scale}) translate({shift[0]}px, {shift[1]}px)"
+      style:width="{stage.width}px"
+      style:height="{stage.height}px"
+      style:transform="translate(-50%, -50%) scale({stage.scale}) translate({shift[0]}px, {shift[1]}px)"
+      style:--space-gap="{SPACE_GAP / stage.textScale}px"
+      style:--space-widget="{SPACE_WIDGET / stage.textScale}px"
+      style:--radius-widget="{RADIUS_WIDGET / stage.textScale}px"
       style:grid-template-columns="repeat({dashboard.columns}, 1fr)"
       style:grid-template-rows="repeat({dashboard.rows}, 1fr)"
     >

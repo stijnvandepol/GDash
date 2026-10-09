@@ -5,6 +5,11 @@ the format follows [Keep a Changelog](https://keepachangelog.com).
 
 ## Unreleased
 
+### Added
+
+- Text size per display (100 to 200 %), for smart displays, tablets and
+  small screens; the dashboard now fills screens that are not 16:9.
+
 ## 0.5.0 – 2026-10-09
 
 The first release, a beta: it runs every day on a Chromecast HD with

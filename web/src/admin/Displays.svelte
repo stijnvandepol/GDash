@@ -122,6 +122,23 @@
     }
   }
 
+  // Text sizes the server offers (internal/displays.TextScales).
+  const TEXT_SIZES: [number, string][] = [
+    [100, 'Text 100 % (TV)'],
+    [125, 'Text 125 %'],
+    [150, 'Text 150 % (small screen)'],
+    [200, 'Text 200 %'],
+  ];
+
+  async function chooseTextScale(d: Display, textScale: number) {
+    try {
+      await api.updateDisplay(d.id, { textScale });
+      await load();
+    } catch (err) {
+      rowError = err instanceof ApiError ? (err.fieldMessage('textScale') ?? err.message) : handle(err);
+    }
+  }
+
   async function chooseDashboard(d: Display, dashboardId: string) {
     try {
       await api.updateDisplay(d.id, { dashboardId: dashboardId === 'default' ? '' : dashboardId });
@@ -227,6 +244,15 @@
             >
               {#each dashboards as b (b.id)}
                 <option value={b.id}>{b.name}</option>
+              {/each}
+            </select>
+            <select
+              aria-label="Text size for {d.name}"
+              value={d.textScale || 100}
+              onchange={(e) => chooseTextScale(d, Number((e.target as HTMLSelectElement).value))}
+            >
+              {#each TEXT_SIZES as [value, label] (value)}
+                <option {value}>{label}</option>
               {/each}
             </select>
             <a href="/d/{d.id}" target="_blank" rel="noopener">Open</a>
