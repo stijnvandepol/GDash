@@ -94,6 +94,15 @@
     return { id: w.id, x: w.x, y: w.y, w: w.w, h: w.h, minW: type?.minW, minH: type?.minH, content: LABELS[w.type] ?? w.type };
   }
 
+  // gridstack owns the widget elements, so the selection is marked on them
+  // directly: the widget being edited must stand out on the canvas.
+  $effect(() => {
+    const id = selected;
+    for (const el of container?.querySelectorAll<HTMLElement>('.grid-stack-item') ?? []) {
+      el.classList.toggle('is-selected', el.getAttribute('gs-id') === id);
+    }
+  });
+
   function selectFromEvent(event: PointerEvent) {
     const item = (event.target as HTMLElement).closest<HTMLElement>('.grid-stack-item');
     selected = item?.getAttribute('gs-id') ?? null;
@@ -189,7 +198,7 @@
   }
 </script>
 
-<section class="card">
+<section class="card editor">
   <div class="editor-head">
     <button class="link" onclick={close}>← Dashboards</button>
     <input class="name" bind:value={name} oninput={() => (dirty = true)} aria-label="Dashboard name" />
@@ -233,6 +242,9 @@
 {/if}
 
 <style>
+  .editor {
+    --editor-chrome: 380px;
+  }
   .editor-head {
     display: flex;
     gap: 10px;
@@ -256,20 +268,39 @@
     color: var(--text);
     border: 1px solid var(--border);
   }
+  /* The canvas is the TV: dark, with the 24x14 grid drawn faintly so a
+     widget's place and size can be judged while dragging. */
   .canvas {
-    background: #0b0c0e;
-    border-radius: 8px;
+    --cell-line: rgb(255 255 255 / 0.06);
+    background-color: #15120f;
+    background-image:
+      linear-gradient(to right, var(--cell-line) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--cell-line) 1px, transparent 1px);
+    background-size: calc(100% / 24) calc(100% / 14);
+    border-radius: var(--r-md);
     aspect-ratio: 16 / 9;
     overflow: hidden;
+    /* As wide as the card, but never taller than the window leaves room
+       for: the toolbar above and the selected widget's settings below
+       stay in view. */
+    width: min(100%, calc((100dvh - var(--editor-chrome)) * 16 / 9));
+    margin-inline: auto;
   }
   .canvas :global(.grid-stack-item-content) {
-    background: #1f232a;
-    color: #e8eaee;
+    background: #2a251f;
+    color: #efe8dc;
+    border: 1px solid rgb(255 255 255 / 0.08);
     border-radius: 6px;
+    font-weight: 600;
     display: grid;
     place-items: center;
     font-size: 0.95rem;
     cursor: move;
+  }
+  .canvas :global(.grid-stack-item.is-selected .grid-stack-item-content) {
+    background: #3a322a;
+    border-color: #72c9bd;
+    box-shadow: inset 0 0 0 1px #72c9bd;
   }
   .canvas :global(.grid-stack-item.ui-draggable-dragging .grid-stack-item-content),
   .canvas :global(.grid-stack-item.ui-resizable-resizing .grid-stack-item-content) {

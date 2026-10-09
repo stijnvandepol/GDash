@@ -15,6 +15,10 @@
 .content > * {
   min-width: 0;
 }
+/* The dashboard editor shows the TV; it gets the room a wide screen has. */
+.content:has(.editor) {
+  --page-w: 1320px;
+}
 
 /* A card: an optional header (title left, actions right), then content. */
 .card {
