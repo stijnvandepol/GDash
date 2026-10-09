@@ -3,6 +3,8 @@
   import { GridStack, type GridStackNode, type GridStackWidget } from 'gridstack';
   import { onDestroy, onMount } from 'svelte';
   import { api, ApiError, type Dashboard, type Widget, type WidgetCatalogue } from './api';
+  import type { PreviewDraft } from '../previewApi';
+  import DashboardPreview from './DashboardPreview.svelte';
   import WidgetSettings from './WidgetSettings.svelte';
   import { WIDGET_LABELS as LABELS, defaultSettings } from './widgetSettings';
 
@@ -131,21 +133,34 @@
     dirty = true;
   }
 
+  /** The widgets as they are on the canvas now. */
+  function currentLayout(): Widget[] {
+    // The engine's nodes, not grid.save(): save() leaves out a width or
+    // height that equals the widget's minimum, as a default to omit.
+    const nodes: GridStackNode[] = grid?.engine.nodes ?? [];
+    return nodes.map((n) => {
+      const w = widgets[String(n.id)]!;
+      const settings = w.settings && Object.keys(w.settings).length > 0 ? w.settings : undefined;
+      return { id: w.id, type: w.type, x: n.x ?? 0, y: n.y ?? 0, w: n.w ?? 1, h: n.h ?? 1, settings };
+    });
+  }
+
+  let previewing = $state(false);
+  // The unsaved layout to preview; null shows the saved dashboard.
+  let previewDraft = $state<PreviewDraft | null>(null);
+
+  function openPreview() {
+    previewDraft = dirty ? { name: name.trim(), theme, widgets: currentLayout() } : null;
+    previewing = true;
+  }
+
   async function save() {
     if (!grid) return;
     saving = true;
     message = '';
     errors = [];
-    // The engine's nodes, not grid.save(): save() leaves out a width or
-    // height that equals the widget's minimum, as a default to omit.
-    const nodes: GridStackNode[] = grid.engine.nodes;
-    const layout: Widget[] = nodes.map((n) => {
-      const w = widgets[String(n.id)]!;
-      const settings = w.settings && Object.keys(w.settings).length > 0 ? w.settings : undefined;
-      return { id: w.id, type: w.type, x: n.x ?? 0, y: n.y ?? 0, w: n.w ?? 1, h: n.h ?? 1, settings };
-    });
     try {
-      await api.saveDashboard({ id: dashboard.id, name: name.trim(), theme, widgets: layout });
+      await api.saveDashboard({ id: dashboard.id, name: name.trim(), theme, widgets: currentLayout() });
       dirty = false;
       message = 'Saved. Screens showing this dashboard update now.';
     } catch (err) {
@@ -183,6 +198,7 @@
         <option value={t}>{THEME_NAMES[t] ?? t}</option>
       {/each}
     </select>
+    <button class="chip" onclick={openPreview}>Preview</button>
     <button onclick={save} disabled={saving}>{saving ? 'Saving…' : 'Save'}</button>
   </div>
 
@@ -211,6 +227,10 @@
   {#if message}<p class="muted">{message}</p>{/if}
   {#each errors as e, i (i)}<p class="error">{e}</p>{/each}
 </section>
+
+{#if previewing}
+  <DashboardPreview dashboardId={dashboard.id} draft={previewDraft} onClose={() => (previewing = false)} />
+{/if}
 
 <style>
   .editor-head {

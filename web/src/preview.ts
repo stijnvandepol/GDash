@@ -22,7 +22,9 @@ let latest = 0;
 
 mount(App, { target: document.getElementById('app')! });
 window.addEventListener('message', onMessage);
-void poll();
+// In the editor's frame the first message says what to show, so the stored
+// layout never flashes before an unsaved one.
+if (window.parent === window) void poll();
 
 function onMessage(event: MessageEvent): void {
   // Only the editor that framed this page, from the same origin.

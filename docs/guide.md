@@ -72,6 +72,13 @@ add calendars and feeds under Settings, and the photos once you add photos.
   light and Warm light for bright rooms, Glass, High contrast for reading
   from across the room or with poor eyesight, and Night, dim amber for a
   bedroom.
+- **Preview** shows the dashboard the way a TV draws it, with your real
+  weather, news and calendar, without a display or a paired screen. It
+  includes changes you have not saved yet; nothing is stored and no screen
+  changes until you press Save. Choose a text size (100 to 200 %) and a screen
+  shape (16:9 TV, 16:10 tablet or a 1024 × 600 Nest Hub) to see how the
+  layout holds up on a small screen. Data that only a new widget needs, such
+  as a Home Assistant entity nobody shows yet, appears after you save.
 - **Save** sends the dashboard to every screen that shows it within seconds.
 
 | Widget | Shows |
