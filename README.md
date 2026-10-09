@@ -8,6 +8,8 @@ Google TV you already own. No extra hardware, no subscription, no cloud.
 
 ![GDash on a TV: Home Assistant values, clock, sunrise and sunset, air quality and weather in the Glass theme](docs/images/tv-glass.jpg)
 
+![The web interface: your dashboards and ready-made templates, each shown in its own theme](docs/images/web-dashboards.jpg)
+
 ## What works
 
 - **Weather** from [Open-Meteo](https://open-meteo.com) (no API key): now, and
