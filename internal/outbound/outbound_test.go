@@ -27,6 +27,12 @@ func TestAllowed(t *testing.T) {
 		"fd12:3456::1":           true,  // another unique local address at home
 		"64:ff9b::a9fe:a9fe":     false, // NAT64 form of 169.254.169.254
 		"64:ff9b::5db8:d70e":     true,  // NAT64 form of a public address
+		"2002:a9fe:a9fe::1":      false, // 6to4 form of 169.254.169.254
+		"2002:5db8:d70e::1":      true,  // 6to4 form of a public address
+		"2001:0:1:2::5601:5601":  false, // Teredo, client 169.254.169.254 inverted
+		"::a9fe:a9fe":            false, // IPv4-compatible 169.254.169.254
+		"100.100.100.200":        false, // Alibaba Cloud metadata
+		"2606:4700::1111":        true,  // a public IPv6 address
 	} {
 		if got := Allowed(netip.MustParseAddr(addr)); got != want {
 			t.Errorf("Allowed(%s) = %v, want %v", addr, got, want)

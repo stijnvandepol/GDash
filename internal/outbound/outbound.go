@@ -66,16 +66,43 @@ var (
 	// nat64 addresses carry an IPv4 address in their last four bytes;
 	// 64:ff9b::a9fe:a9fe reaches 169.254.169.254.
 	nat64 = netip.MustParsePrefix("64:ff9b::/96")
+	// sixToFour (6to4) addresses carry an IPv4 address in bytes 2 to 5.
+	sixToFour = netip.MustParsePrefix("2002::/16")
+	// teredo addresses carry the client's IPv4 address, inverted, in their
+	// last four bytes.
+	teredo = netip.MustParsePrefix("2001::/32")
+	// ipv4Compatible is the deprecated ::a.b.c.d form; :: and ::1 in it
+	// are handled as themselves.
+	ipv4Compatible = netip.MustParsePrefix("::/96")
+	// alibabaMetadata is Alibaba Cloud's instance metadata service, on a
+	// shared address that is not link-local.
+	alibabaMetadata = netip.MustParseAddr("100.100.100.200")
 )
+
+// embeddedIPv4 returns the IPv4 address that an IPv6 transition address
+// reaches, or addr itself.
+func embeddedIPv4(addr netip.Addr) netip.Addr {
+	b := addr.As16()
+	switch {
+	case !addr.Is6():
+		return addr
+	case nat64.Contains(addr):
+		return netip.AddrFrom4([4]byte{b[12], b[13], b[14], b[15]})
+	case sixToFour.Contains(addr):
+		return netip.AddrFrom4([4]byte{b[2], b[3], b[4], b[5]})
+	case teredo.Contains(addr):
+		return netip.AddrFrom4([4]byte{^b[12], ^b[13], ^b[14], ^b[15]})
+	case ipv4Compatible.Contains(addr) && !addr.IsLoopback() && !addr.IsUnspecified():
+		return netip.AddrFrom4([4]byte{b[12], b[13], b[14], b[15]})
+	}
+	return addr
+}
 
 // Allowed reports whether Nookboard may fetch from addr.
 func Allowed(addr netip.Addr) bool {
-	addr = addr.Unmap()
-	if nat64.Contains(addr) {
-		b := addr.As16()
-		addr = netip.AddrFrom4([4]byte{b[12], b[13], b[14], b[15]})
-	}
+	addr = embeddedIPv4(addr.Unmap())
 	return addr.IsValid() &&
+		addr != alibabaMetadata &&
 		!awsMetadata.Contains(addr) &&
 		!addr.IsUnspecified() &&
 		!addr.IsLinkLocalUnicast() &&
