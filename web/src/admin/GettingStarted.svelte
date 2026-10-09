@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { api } from './api';
+  import Icon from './Icon.svelte';
 
   let { onopen }: { onopen: (tab: 'displays' | 'dashboards' | 'settings') => void } = $props();
 
@@ -15,6 +16,7 @@
   let hasDisplay = $state(true);
 
   const done = $derived(hasLocation && hasDisplay);
+  const finished = $derived([hasLocation, hasSources, hasDisplay].filter(Boolean).length);
 
   onMount(() => {
     void check();
@@ -41,15 +43,20 @@
 </script>
 
 {#if !done}
-  <section class="card getting-started">
-    <h2>Getting started</h2>
+  <section class="card getting-started" aria-labelledby="getting-started-title">
+    <div class="card-head">
+      <h2 id="getting-started-title">Getting started</h2>
+      <span class="badge info">{finished} of 3 done</span>
+    </div>
     <ol>
       <li class:done={hasLocation}>
-        Choose the location for the weather.
+        <span class="marker" aria-hidden="true">{#if hasLocation}<Icon name="check" size={14} />{:else}1{/if}</span>
+        <span class="step">Choose the location for the weather.</span>
         {#if !hasLocation}<button class="link" onclick={() => onopen('settings')}>Open Settings</button>{/if}
       </li>
       <li class:done={hasSources}>
-        Add news feeds or calendars, if you want them.
+        <span class="marker" aria-hidden="true">{#if hasSources}<Icon name="check" size={14} />{:else}2{/if}</span>
+        <span class="step">Add news feeds or calendars, if you want them.</span>
         {#if !hasSources}<button class="link" onclick={() => onopen('settings')}>Open Settings</button>{/if}
       </li>
       <li class:done={hasDashboard}>
@@ -57,7 +64,8 @@
         {#if !hasDashboard}<button class="link" onclick={() => onopen('dashboards')}>Open Dashboards</button>{/if}
       </li>
       <li class:done={hasDisplay}>
-        Add a display and pick your TV, or pair a browser with the code it shows.
+        <span class="marker" aria-hidden="true">{#if hasDisplay}<Icon name="check" size={14} />{:else}3{/if}</span>
+        <span class="step">Add a display and pick your TV, or pair a browser with the code it shows.</span>
         {#if !hasDisplay}<button class="link" onclick={() => onopen('displays')}>Open Displays</button>{/if}
       </li>
     </ol>
@@ -65,14 +73,44 @@
 {/if}
 
 <style>
-  ol {
-    margin: 0;
-    padding-left: 1.4em;
-    display: grid;
-    gap: 6px;
+  .getting-started {
+    background: var(--accent-soft);
+    border-color: transparent;
   }
-  li.done {
+  ol {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: var(--s-3);
+  }
+  li {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--s-1) var(--s-3);
+  }
+  .marker {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--surface);
+    color: var(--accent);
+    font-size: var(--fs-xs);
+    font-weight: 700;
+  }
+  .step {
+    flex: 1 1 14em;
+    min-width: 0;
+  }
+  li.done .marker {
+    background: var(--success);
+    color: var(--surface);
+  }
+  li.done .step {
     color: var(--muted);
-    text-decoration: line-through;
   }
 </style>

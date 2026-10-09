@@ -202,7 +202,13 @@
               <strong>{d.name}</strong>
               <span class="muted">{describeDevice(d.castDeviceId)} · {describeScreens(d)} · {describeHours(d)}</span>
               {#if d.cast}
-                <span class="small" class:error={d.cast.state === 'unreachable'} title={d.cast.problem ?? ''}>
+                <span
+                  class="badge"
+                  class:ok={d.cast.state === 'showing'}
+                  class:warn={d.cast.state === 'other_app'}
+                  class:bad={d.cast.state === 'unreachable'}
+                  title={d.cast.problem ?? ''}
+                >
                   {describeCast(d.cast)}
                 </span>
               {/if}
