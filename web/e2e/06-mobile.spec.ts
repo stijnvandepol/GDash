@@ -5,11 +5,23 @@ import { ensureAccount, expect, openTab, test } from './fixtures';
 test.use({ viewport: { width: 375, height: 812 } });
 
 async function expectNoHorizontalScroll(page: Page): Promise<void> {
-  const { scrollWidth, innerWidth } = await page.evaluate(() => ({
-    scrollWidth: document.documentElement.scrollWidth,
-    innerWidth: window.innerWidth,
-  }));
-  expect(scrollWidth, `the page is ${scrollWidth}px wide in a ${innerWidth}px window`).toBeLessThanOrEqual(innerWidth);
+  const { scrollWidth, innerWidth, sticking } = await page.evaluate(() => {
+    const width = window.innerWidth;
+    // The innermost elements that reach past the window, to name the culprit.
+    const out = [...document.querySelectorAll('body *')].filter((e) => {
+      const r = e.getBoundingClientRect();
+      return r.width > 0 && r.right > width && ![...e.children].some((c) => c.getBoundingClientRect().right > width);
+    });
+    return {
+      scrollWidth: document.documentElement.scrollWidth,
+      innerWidth: width,
+      sticking: out.slice(0, 5).map((e) => `${e.tagName.toLowerCase()}.${[...e.classList].join('.')} "${(e.textContent ?? '').trim().slice(0, 40)}"`),
+    };
+  });
+  expect(
+    scrollWidth,
+    `the page is ${scrollWidth}px wide in a ${innerWidth}px window; reaching past it: ${sticking.join(', ') || 'none found'}`,
+  ).toBeLessThanOrEqual(innerWidth);
 }
 
 test.describe('mobile width', () => {
