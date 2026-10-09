@@ -16,7 +16,8 @@
   let hasDisplay = $state(true);
 
   const done = $derived(hasLocation && hasDisplay);
-  const finished = $derived([hasLocation, hasSources, hasDisplay].filter(Boolean).length);
+  const steps = $derived([hasLocation, hasSources, hasDashboard, hasDisplay]);
+  const finished = $derived(steps.filter(Boolean).length);
 
   onMount(() => {
     void check();
@@ -46,7 +47,7 @@
   <section class="card getting-started" aria-labelledby="getting-started-title">
     <div class="card-head">
       <h2 id="getting-started-title">Getting started</h2>
-      <span class="badge info">{finished} of 3 done</span>
+      <span class="badge info">{finished} of {steps.length} done</span>
     </div>
     <ol>
       <li class:done={hasLocation}>
@@ -60,11 +61,12 @@
         {#if !hasSources}<button class="link" onclick={() => onopen('settings')}>Open Settings</button>{/if}
       </li>
       <li class:done={hasDashboard}>
-        Start a dashboard from a template, such as Kitchen or Hallway, or keep the default.
+        <span class="marker" aria-hidden="true">{#if hasDashboard}<Icon name="check" size={14} />{:else}3{/if}</span>
+        <span class="step">Start a dashboard from a template, such as Kitchen or Hallway, or keep the default.</span>
         {#if !hasDashboard}<button class="link" onclick={() => onopen('dashboards')}>Open Dashboards</button>{/if}
       </li>
       <li class:done={hasDisplay}>
-        <span class="marker" aria-hidden="true">{#if hasDisplay}<Icon name="check" size={14} />{:else}3{/if}</span>
+        <span class="marker" aria-hidden="true">{#if hasDisplay}<Icon name="check" size={14} />{:else}4{/if}</span>
         <span class="step">Add a display and pick your TV, or pair a browser with the code it shows.</span>
         {#if !hasDisplay}<button class="link" onclick={() => onopen('displays')}>Open Displays</button>{/if}
       </li>
