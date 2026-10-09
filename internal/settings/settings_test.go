@@ -99,6 +99,17 @@ func TestCalendarAddressIsSecret(t *testing.T) {
 	}
 }
 
+func TestFeedAddressMayNotHoldAPassword(t *testing.T) {
+	s := newService(t)
+	_, err := s.AddNewsFeed(context.Background(), "Private", "https://user:secret@feeds.example.org/rss")
+	if fieldNames(err) != "url" {
+		t.Fatalf("feed with a password: fields = %q, want url", fieldNames(err))
+	}
+	if strings.Contains(err.Error(), "secret") {
+		t.Fatalf("the error repeats the password: %v", err)
+	}
+}
+
 func TestSourcesValidationAndLimits(t *testing.T) {
 	ctx := context.Background()
 	s := newService(t)

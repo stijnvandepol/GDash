@@ -268,6 +268,10 @@ func checkSource(name, address string, isCalendar bool) (*url.URL, error) {
 		u.Scheme = "https"
 	case u.Scheme != "http" && u.Scheme != "https":
 		errs.Add("url", "use an http or https address")
+	case !isCalendar && u.User != nil:
+		// Feed addresses are stored and shown as they are; a password in
+		// one would be visible in the web interface and the logs.
+		errs.Add("url", "use the feed's address without a user name or password")
 	}
 	if err := errs.Err(); err != nil {
 		return nil, err
