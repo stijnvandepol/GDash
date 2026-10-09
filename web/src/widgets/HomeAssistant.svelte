@@ -66,7 +66,7 @@
   .big {
     /* As large as the tile allows: a digit is about 0.55em wide, so the
        value fills most of the width whether it is "21" or "Geen beweging". */
-    font-size: min(180px, calc(150cqw / max(var(--length), 3)), 48cqh);
+    font-size: min(180px, calc(140cqw / max(var(--length), 3)), 44cqh);
     font-weight: var(--weight-figure);
     line-height: 1;
     color: var(--text-primary);
@@ -76,8 +76,8 @@
     text-overflow: ellipsis;
   }
   .single .name {
-    margin-top: 16px;
-    font-size: min(40px, 9cqw, 12cqh);
+    margin-top: min(16px, 4cqh);
+    font-size: min(40px, 9cqw, 18cqh);
   }
   .list {
     list-style: none;
@@ -88,24 +88,32 @@
     width: 100%;
     min-width: 0;
   }
+  /* In a narrow tile the value drops below the name instead of squeezing it. */
   li {
     display: flex;
-    gap: 24px;
+    flex-wrap: wrap;
+    gap: 0 24px;
     align-items: baseline;
     justify-content: space-between;
     min-width: 0;
   }
   .name {
     font-size: 32px;
+    font-size: min(32px, 10cqw);
     color: var(--text-muted);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     min-width: 0;
   }
+  li .name {
+    flex: 1 1 4em;
+  }
   .value {
     flex: none;
+    margin-left: auto;
     font-size: 44px;
+    font-size: min(44px, 14cqw);
     font-weight: var(--weight-figure);
     color: var(--text-primary);
     font-variant-numeric: tabular-nums;

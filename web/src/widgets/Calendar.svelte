@@ -178,4 +178,20 @@
     font-size: 38px;
     color: var(--text-muted);
   }
+  /* A narrow tile gives the title the room. */
+  @container (max-width: 440px) {
+    li {
+      gap: 14px;
+    }
+    .dot {
+      margin-right: -6px;
+    }
+    .when {
+      width: 3.6em;
+      font-size: 24px;
+    }
+    .title {
+      font-size: 32px;
+    }
+  }
 </style>

@@ -114,4 +114,10 @@
     color: var(--text-muted);
     font-size: 38px;
   }
+  /* A narrow tile keeps the headline and drops the time. */
+  @container (max-width: 440px) {
+    .when {
+      display: none;
+    }
+  }
 </style>

@@ -36,6 +36,7 @@
   }
   .label {
     font-size: 36px;
+    font-size: min(36px, 15cqh);
     color: var(--text-muted);
     white-space: nowrap;
     overflow: hidden;
@@ -43,7 +44,7 @@
   }
   .number {
     font-size: 110px;
-    font-size: min(110px, 40cqw, 52cqh);
+    font-size: min(110px, 40cqw, 44cqh);
     font-weight: var(--weight-figure);
     line-height: 1.05;
     color: var(--text-primary);
@@ -51,6 +52,7 @@
   }
   .when {
     font-size: 32px;
+    font-size: min(32px, 13cqh);
     color: var(--text-muted);
   }
 </style>
