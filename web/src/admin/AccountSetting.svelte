@@ -47,7 +47,7 @@
     </label>
     <label>
       New password
-      <input type="password" bind:value={next} autocomplete="new-password" minlength="10" required />
+      <input type="password" bind:value={next} autocomplete="new-password" minlength="12" required />
       {#if fieldErrors.next}<span class="field-error">{fieldErrors.next}</span>{/if}
     </label>
     <label>

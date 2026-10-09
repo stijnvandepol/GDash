@@ -64,10 +64,10 @@
         bind:value={password}
         autocomplete="new-password"
         required
-        minlength="10"
+        minlength="12"
         aria-invalid={!!error?.fieldMessage('password')}
       />
-      <span class="muted small">At least 10 characters.</span>
+      <span class="muted small">At least 12 characters; a few words in a row are easy to remember.</span>
       {#if error?.fieldMessage('password')}<span class="field-error">{error.fieldMessage('password')}</span>{/if}
     </label>
 

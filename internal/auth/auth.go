@@ -228,7 +228,7 @@ func (s *Service) ChangePassword(ctx context.Context, session, current, next, cl
 		return ErrWrongPassword
 	}
 	var errs validation.Collector
-	if msg := passwordProblem(next); msg != "" {
+	if msg := passwordProblem(next, user.Username); msg != "" {
 		errs.Add("newPassword", msg)
 		return errs.Err()
 	}
@@ -287,19 +287,8 @@ func validateAccount(c Credentials) error {
 	if !validUsername.MatchString(c.Username) {
 		errs.Add("username", "use 1 to 32 letters, digits, dots, dashes or underscores")
 	}
-	if msg := passwordProblem(c.Password); msg != "" {
+	if msg := passwordProblem(c.Password, c.Username); msg != "" {
 		errs.Add("password", msg)
 	}
 	return errs.Err()
-}
-
-// passwordProblem returns why a new password is not acceptable, or "".
-func passwordProblem(password string) string {
-	switch {
-	case len([]rune(password)) < minPasswordLength:
-		return fmt.Sprintf("use at least %d characters", minPasswordLength)
-	case len(password) > maxPasswordBytes:
-		return fmt.Sprintf("use at most %d bytes", maxPasswordBytes)
-	}
-	return ""
 }

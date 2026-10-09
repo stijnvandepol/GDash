@@ -16,9 +16,13 @@ GDash runs on a home network and shows a household's calendar and other
 data on its TVs. The design assumes the LAN can contain devices you do not
 fully trust, such as a guest's phone.
 
-- **Accounts:** passwords are hashed with argon2id. Logins are rate limited
-  per address and per username. Sessions expire after 7 days idle or 30 days
-  in total, and changing the password logs out every other browser.
+- **Accounts:** passwords follow NIST SP 800-63B: at least 12 characters,
+  up to 128, not the user name and not a well-known password, without rules
+  about kinds of characters. They are hashed with argon2id. Logins are rate
+  limited per address and per account from that address, and per account
+  over all addresses, so a device on the network cannot lock the admin out.
+  Sessions expire after 7 days idle or 30 days in total, and changing the
+  password logs out every other browser.
 - **Screens:** a display only streams data to a screen that was paired with
   a code shown on it, or opened by GDash's own cast with a single-use token
   that expires after two minutes. Unpairing takes effect within 20 seconds,

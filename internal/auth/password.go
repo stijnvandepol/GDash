@@ -21,13 +21,6 @@ const (
 	saltLen      = 16
 )
 
-const (
-	minPasswordLength = 10
-	// Long inputs make argon2 slow for no gain; a cap prevents using the
-	// login form to burn CPU.
-	maxPasswordBytes = 128
-)
-
 var errMalformedHash = errors.New("malformed password hash")
 
 // hashPassword returns an encoded argon2id hash in the common PHC format.
