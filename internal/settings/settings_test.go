@@ -10,9 +10,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stijnvandepol/nookboard/internal/secret"
-	"github.com/stijnvandepol/nookboard/internal/store"
-	"github.com/stijnvandepol/nookboard/internal/validation"
+	"github.com/stijnvandepol/gdash/internal/secret"
+	"github.com/stijnvandepol/gdash/internal/store"
+	"github.com/stijnvandepol/gdash/internal/validation"
 )
 
 const secretURL = "https://calendar.example.org/private-0123456789/basic.ics"
@@ -20,7 +20,7 @@ const secretURL = "https://calendar.example.org/private-0123456789/basic.ics"
 func newService(t *testing.T) *Service {
 	t.Helper()
 	dir := t.TempDir()
-	db, err := store.Open(context.Background(), filepath.Join(dir, "nookboard.db"))
+	db, err := store.Open(context.Background(), filepath.Join(dir, "gdash.db"))
 	if err != nil {
 		t.Fatal(err)
 	}

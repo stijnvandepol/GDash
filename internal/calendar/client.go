@@ -15,14 +15,14 @@ import (
 
 const (
 	// maxCalendarBytes is far above a family calendar with years of history
-	// and stops a broken server from making Nookboard read without end.
+	// and stops a broken server from making GDash read without end.
 	maxCalendarBytes = 10 << 20
 	// maxEvents keeps a snapshot well below the 64 KB Cast message limit.
 	maxEvents = 50
 	// parallelFetches bounds how many calendars download at once: each may
 	// be up to maxCalendarBytes, and a home server has little memory.
 	parallelFetches = 4
-	userAgent       = "Nookboard (self-hosted TV dashboard; +https://github.com/stijnvandepol/nookboard)"
+	userAgent       = "GDash (self-hosted TV dashboard; +https://github.com/stijnvandepol/gdash)"
 )
 
 // Source is one calendar feed. Its URL is a secret: the iCal address of a
@@ -36,7 +36,7 @@ type Source struct {
 }
 
 // ParseSources reads a comma-separated list of ICS URLs, as configured in
-// NOOKBOARD_CALENDAR_URLS. webcal:// is accepted and fetched over https, as
+// GDASH_CALENDAR_URLS. webcal:// is accepted and fetched over https, as
 // calendar apps do.
 func ParseSources(list string) ([]Source, error) {
 	var sources []Source

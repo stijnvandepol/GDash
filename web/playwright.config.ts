@@ -3,7 +3,7 @@ import { baseUrl } from './e2e/env';
 
 // End-to-end tests against the real, already-built server binary; see
 // e2e/global-setup.ts. Chromium only: Cast receivers and the people who
-// run Nookboard use it, and one engine keeps the suite fast.
+// run GDash use it, and one engine keeps the suite fast.
 export default defineConfig({
   testDir: 'e2e',
   globalSetup: './e2e/global-setup.ts',

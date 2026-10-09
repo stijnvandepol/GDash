@@ -67,7 +67,7 @@
 
   function created(user: User) {
     screen = { name: 'app', user };
-    toast.success('Account created. Welcome to Nookboard.');
+    toast.success('Account created. Welcome to GDash.');
   }
 
   function closeMenuOnOutsideClick(event: MouseEvent) {
@@ -88,7 +88,7 @@
   {#if screen.name === 'app'}
     <header class="topbar">
       <div class="topbar-inner">
-        <span class="brand"><Logo size={30} /> Nookboard</span>
+        <span class="brand"><Logo size={30} /> GDash</span>
         <nav class="tabs" aria-label="Main">
           {#each TABS as t (t.id)}
             <button class="tab" aria-current={tab === t.id ? 'page' : undefined} onclick={() => (tab = t.id)}>
@@ -129,7 +129,7 @@
       {#if screen.name === 'loading'}
         <p class="loading muted" role="status">Loading…</p>
       {:else if screen.name === 'error'}
-        <p class="error">Nookboard cannot be reached: {screen.message}</p>
+        <p class="error">GDash cannot be reached: {screen.message}</p>
       {:else}
         <GettingStarted onopen={(next) => (tab = next)} />
         {#if tab === 'displays'}
@@ -144,9 +144,9 @@
   {/if}
 
   <footer class="footer muted small">
-    Nookboard{version ? ` ${version}` : ''} is free software under the
+    GDash{version ? ` ${version}` : ''} is free software under the
     <a href="https://www.gnu.org/licenses/agpl-3.0.html" rel="noopener">AGPL-3.0</a>.
-    <a href="https://github.com/stijnvandepol/nookboard" rel="noopener">Source code</a>
+    <a href="https://github.com/stijnvandepol/gdash" rel="noopener">Source code</a>
   </footer>
 
   <Toasts />

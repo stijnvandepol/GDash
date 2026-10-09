@@ -18,19 +18,19 @@ import (
 	"testing/fstest"
 	"time"
 
-	"github.com/stijnvandepol/nookboard/internal/announcement"
-	"github.com/stijnvandepol/nookboard/internal/apitoken"
-	"github.com/stijnvandepol/nookboard/internal/auth"
-	"github.com/stijnvandepol/nookboard/internal/cast"
-	"github.com/stijnvandepol/nookboard/internal/casting"
-	"github.com/stijnvandepol/nookboard/internal/datahub"
-	"github.com/stijnvandepol/nookboard/internal/homeassistant"
-	"github.com/stijnvandepol/nookboard/internal/pairing"
-	"github.com/stijnvandepol/nookboard/internal/photos"
-	"github.com/stijnvandepol/nookboard/internal/secret"
-	"github.com/stijnvandepol/nookboard/internal/settings"
-	"github.com/stijnvandepol/nookboard/internal/store"
-	"github.com/stijnvandepol/nookboard/internal/weather"
+	"github.com/stijnvandepol/gdash/internal/announcement"
+	"github.com/stijnvandepol/gdash/internal/apitoken"
+	"github.com/stijnvandepol/gdash/internal/auth"
+	"github.com/stijnvandepol/gdash/internal/cast"
+	"github.com/stijnvandepol/gdash/internal/casting"
+	"github.com/stijnvandepol/gdash/internal/datahub"
+	"github.com/stijnvandepol/gdash/internal/homeassistant"
+	"github.com/stijnvandepol/gdash/internal/pairing"
+	"github.com/stijnvandepol/gdash/internal/photos"
+	"github.com/stijnvandepol/gdash/internal/secret"
+	"github.com/stijnvandepol/gdash/internal/settings"
+	"github.com/stijnvandepol/gdash/internal/store"
+	"github.com/stijnvandepol/gdash/internal/weather"
 )
 
 const testSetupToken = "test-setup-token"
@@ -99,7 +99,7 @@ type testEnv struct {
 
 func newTestEnv(t *testing.T, discover func(context.Context) ([]cast.Device, error)) *testEnv {
 	t.Helper()
-	st, err := store.Open(context.Background(), filepath.Join(t.TempDir(), "nookboard.db"))
+	st, err := store.Open(context.Background(), filepath.Join(t.TempDir(), "gdash.db"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -156,7 +156,7 @@ func newTestEnv(t *testing.T, discover func(context.Context) ([]cast.Device, err
 		Logger:               logger,
 	}
 	srv := httptest.NewUnstartedServer(s.Handler())
-	// As in production (cmd/nookboard), short enough to notice in tests.
+	// As in production (cmd/gdash), short enough to notice in tests.
 	srv.Config.ReadTimeout = testReadTimeout
 	srv.Start()
 	t.Cleanup(srv.Close)
@@ -325,7 +325,7 @@ func TestSessionCookieFlags(t *testing.T) {
 	}
 	resp.Body.Close()
 	header := resp.Header.Get("Set-Cookie")
-	for _, want := range []string{"nookboard_session=", "HttpOnly", "SameSite=Lax", "Path=/"} {
+	for _, want := range []string{"gdash_session=", "HttpOnly", "SameSite=Lax", "Path=/"} {
 		if !strings.Contains(header, want) {
 			t.Errorf("Set-Cookie %q lacks %q", header, want)
 		}

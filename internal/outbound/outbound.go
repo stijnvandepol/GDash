@@ -1,5 +1,5 @@
 // Package outbound builds the HTTP client for addresses that an admin types
-// in, such as news feeds and calendars. Nookboard runs on home servers, so
+// in, such as news feeds and calendars. GDash runs on home servers, so
 // LAN and localhost addresses must keep working (a Nextcloud or Radicale at
 // home); what it refuses are link-local addresses, where cloud and container
 // hosts serve instance metadata and credentials, and addresses that are no
@@ -16,7 +16,7 @@ import (
 	"time"
 )
 
-// ErrBlockedAddress is returned for a connection to an address Nookboard does
+// ErrBlockedAddress is returned for a connection to an address GDash does
 // not fetch from.
 var ErrBlockedAddress = errors.New("this address is not allowed for a data source")
 
@@ -98,7 +98,7 @@ func embeddedIPv4(addr netip.Addr) netip.Addr {
 	return addr
 }
 
-// Allowed reports whether Nookboard may fetch from addr.
+// Allowed reports whether GDash may fetch from addr.
 func Allowed(addr netip.Addr) bool {
 	addr = embeddedIPv4(addr.Unmap())
 	return addr.IsValid() &&

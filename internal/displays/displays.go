@@ -10,9 +10,9 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/stijnvandepol/nookboard/internal/display"
-	"github.com/stijnvandepol/nookboard/internal/schedule"
-	"github.com/stijnvandepol/nookboard/internal/validation"
+	"github.com/stijnvandepol/gdash/internal/display"
+	"github.com/stijnvandepol/gdash/internal/schedule"
+	"github.com/stijnvandepol/gdash/internal/validation"
 )
 
 // MaxDisplays bounds how many displays one server manages. A home has a

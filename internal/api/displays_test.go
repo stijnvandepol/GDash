@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stijnvandepol/nookboard/internal/cast"
-	"github.com/stijnvandepol/nookboard/internal/casting"
+	"github.com/stijnvandepol/gdash/internal/cast"
+	"github.com/stijnvandepol/gdash/internal/casting"
 )
 
 func TestDisplayActiveHours(t *testing.T) {

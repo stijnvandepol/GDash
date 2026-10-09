@@ -1,28 +1,28 @@
-# systemd unit for Nookboard on Linux and Raspberry Pi OS. Install with:
+# systemd unit for GDash on Linux and Raspberry Pi OS. Install with:
 #
-#   sudo install -m 755 nookboard /usr/local/bin/nookboard
-#   sudo install -m 644 nookboard.service /etc/systemd/system/nookboard.service
-#   sudo systemctl daemon-reload && sudo systemctl enable --now nookboard
-#   journalctl -u nookboard    # shows the setup token on the first start
+#   sudo install -m 755 gdash /usr/local/bin/gdash
+#   sudo install -m 644 gdash.service /etc/systemd/system/gdash.service
+#   sudo systemctl daemon-reload && sudo systemctl enable --now gdash
+#   journalctl -u gdash    # shows the setup token on the first start
 #
-# Nookboard runs as a throwaway user with only its data directory writable.
+# GDash runs as a throwaway user with only its data directory writable.
 
 [Unit]
-Description=Nookboard TV dashboard
-Documentation=https://github.com/stijnvandepol/nookboard
+Description=GDash TV dashboard
+Documentation=https://github.com/stijnvandepol/gdash
 Wants=network-online.target
 After=network-online.target
 
 [Service]
-ExecStart=/usr/local/bin/nookboard
-Environment=NOOKBOARD_DATA_DIR=/var/lib/nookboard
+ExecStart=/usr/local/bin/gdash
+Environment=GDASH_DATA_DIR=/var/lib/gdash
 # Uncomment to listen on another port; open it in the firewall for your TVs.
-#Environment=NOOKBOARD_ADDR=:8420
+#Environment=GDASH_ADDR=:8420
 Restart=on-failure
 RestartSec=5
 
 DynamicUser=yes
-StateDirectory=nookboard
+StateDirectory=gdash
 StateDirectoryMode=0700
 NoNewPrivileges=yes
 ProtectSystem=strict

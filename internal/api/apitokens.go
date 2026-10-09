@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/stijnvandepol/nookboard/internal/store"
-	"github.com/stijnvandepol/nookboard/internal/validation"
+	"github.com/stijnvandepol/gdash/internal/store"
+	"github.com/stijnvandepol/gdash/internal/validation"
 )
 
 // listAPITokens handles GET /api/api-tokens: {"tokens": [{id, name,

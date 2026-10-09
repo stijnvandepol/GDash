@@ -4,12 +4,12 @@ State of the project on 8 October 2026, so work can continue on any machine.
 
 ## What works
 
-- **Backups:** a consistent copy of the database every day in `backups/`, the last seven kept, made while Nookboard runs.
+- **Backups:** a consistent copy of the database every day in `backups/`, the last seven kept, made while GDash runs.
 - **Built on 9 October 2026 by six agents in parallel, reviewed and merged by the lead:** announcements with API tokens (tested against a throwaway server with curl and in the browser in three themes and at 200 % text), a live preview in the dashboard editor (draft layouts, three screen shapes, four text sizes), five dashboard templates, air quality and sun widgets (checked at their minimum sizes in five themes and both languages), a redesigned web interface for light and dark (contrast AA, checked at 375, 768 and 1280 px), and 19 Playwright browser tests including axe accessibility checks in light and dark mode, also in CI.
 - **Security review (9 October 2026):** a read-only review found eleven points; fixed are parallel login guessing, the launch token that a spoofed Cast device could use, Home Assistant entities reaching screens that do not show them, the token following redirects, missing time-outs, screen tokens that never expired, IPv6 transition addresses to metadata services, widget coordinates that overflow, and the client address and cookie security behind a reverse proxy. Open: a per-username lockout that a LAN device can trigger for 15 minutes, a pending-code pool that rotating IPv6 addresses can fill, unsalted source fingerprints in the cache files, and checking the sender in the own Cast receiver.
 - **Home Assistant:** connected under Settings with an address and a long-lived access token, which is tried first and stored encrypted. A Home Assistant widget shows up to eight entities, chosen in the editor by searching Home Assistant's entity list; one entity is shown large, more as a list. The server reads only the entities that dashboards show, once a minute. Tested on 9 October 2026 against a stand-in for Home Assistant's REST API: a wrong token and an unreachable address are reported at their field, numbers show in the screen's language with their unit, a door as closed, a person as away, an unavailable entity as a dash and an unknown one as not found. Not yet tried with a real Home Assistant.
 - **Small screens:** a text size per display (100, 125, 150 or 200 %) and a stage that takes the screen's shape. Measured on a 1024x600 Nest Hub screen: at 150 % calendar times grew from 15 to 22 px and headlines from 19 to 30 px, the dashboard filled the screen and no tile overflowed.
-- **Weather icons:** the weather and forecast widgets show a line icon for the sky (sun or moon, clouds, rain, drizzle, snow, fog, thunder), drawn for Nookboard in the theme's colour. Measured at the minimum tile sizes: everything still fits.
+- **Weather icons:** the weather and forecast widgets show a line icon for the sky (sun or moon, clouds, rain, drizzle, snow, fog, thunder), drawn for GDash in the theme's colour. Measured at the minimum tile sizes: everything still fits.
 - **Photos:** up to 50 photos uploaded under Settings and shown by a Photos widget as a slideshow. They are stored in the data directory and only served to admins and paired screens; uploads are checked by content and size. Tested with synthetic images in the browser.
 - **Pages in turn:** a display can show up to five other dashboards one after another with its own, each for a chosen time. The screen turns the pages on its clock, so screens of one display stay in step; a time slot pauses the rotation. Tested in the browser with a 15-second interval.
 - **Language on the TV:** English or Dutch for days, dates, weather words and every other text on the screens, chosen under Settings. The pairing screen follows the device's own language, because it shows before the first snapshot. Tested in the browser with both dashboards.
@@ -18,7 +18,7 @@ State of the project on 8 October 2026, so work can continue on any machine.
 - **Account:** change the password under Settings. The current password is checked with the same rate limit as logins, and every other logged-in browser is logged out.
 - **Server (Go):** weather from Open-Meteo without an API key; a data hub with cache, last-known-good on disk and stale markers; an SSE stream per display; SQLite with migrations and backups; accounts with argon2id, sessions and login rate limiting; a JSON API for displays.
 - **Web interface:** first-run setup with a token from the server log, login, and a page to add, rename and remove displays and link them to a Cast device found on the network. Devices without a screen (speakers, soundbars) are shown but cannot be picked.
-- **Pairing:** a display page shows a code until it is paired in the web interface; a TV opened by Nookboard pairs itself with a single-use launch token. Only paired screens and logged-in admins receive dashboard data, and unpairing takes effect within 20 seconds.
+- **Pairing:** a display page shows a code until it is paired in the web interface; a TV opened by GDash pairs itself with a single-use launch token. Only paired screens and logged-in admins receive dashboard data, and unpairing takes effect within 20 seconds.
 - **News:** headlines from any RSS or Atom feed (default NOS), fetched once by the server.
 - **Calendar colours:** every calendar has its own colour, shown as a dot before each event on the TV; chosen under Settings or given by the calendar's place in the list.
 - **Calendar:** the coming week from secret iCal addresses, with recurrences, exceptions and moved occurrences, grouped by day on the TV. Tested with a synthetic calendar; a real Google or iCloud calendar is still to try.
@@ -35,7 +35,7 @@ State of the project on 8 October 2026, so work can continue on any machine.
 
 - Discovery found 8 Cast devices; the `ca` capability flag separated TVs and displays from speakers.
 - A status read over the own CASTV2 client worked on Chromecasts, Google TV devices and a Nest Hub.
-- DashCast showed the Nookboard page on a Chromecast HD (Google TV) and kept a live connection.
+- DashCast showed the GDash page on a Chromecast HD (Google TV) and kept a live connection.
 - **The Google TV screensaver covered the cast after about 19 minutes**, while the device still reported DashCast as running. Stopping and relaunching the receiver brought the dashboard back. The keeper now does this every 15 minutes (every 9 on a Nest Hub), never while the TV is in standby.
 - After the switch to pairing, the TV paired itself through the launch token in the DashCast URL and showed clock, weather and news. The database migrated from version 2 to 3 and wrote its backup first.
 - Soak test of 12 hours, 8 October 19:18 to 9 October 07:14 (144 checks every 5 minutes): DashCast was on screen at every check, with 49 periodic restarts on schedule. Between 01:00 and 01:30 the connection to the TV failed six times (timeouts and EOF); each time the keeper reconnected within a second. The server reached the TV through a Tailscale address that night, so a network hiccup on that route is the likely cause. From 01:13 to 07:09 three or four connections from the TV to port 8420 were open instead of one; the count includes ordinary HTTP connections, so it is worth watching on the next run, not yet a finding.
@@ -46,8 +46,8 @@ State of the project on 8 October 2026, so work can continue on any machine.
 
 A version tag such as `v1.0.0` builds archives for Linux (amd64, arm64,
 armv7) and Windows with checksums as a draft GitHub release, and a Docker
-image for amd64 and arm64 on `ghcr.io/stijnvandepol/nookboard`. The release
-stays a draft until someone publishes it. `nookboard version`, the server log
+image for amd64 and arm64 on `ghcr.io/stijnvandepol/gdash`. The release
+stays a draft until someone publishes it. `gdash version`, the server log
 and the web interface show the version.
 
 **0.5.0** was tagged on 9 October 2026: the workflow made the draft release
@@ -79,10 +79,10 @@ simulated device; not yet on the real TV.
 
 ## Open decisions
 
-- **Relaunch policy** (`ShouldRelaunch` in `internal/cast/keeper.go`): Nookboard only takes over a screen when nothing else runs. Google TV reports "no apps" while a native app such as Netflix is on screen, so Nookboard could start over it.
+- **Relaunch policy** (`ShouldRelaunch` in `internal/cast/keeper.go`): GDash only takes over a screen when nothing else runs. Google TV reports "no apps" while a native app such as Netflix is on screen, so GDash could start over it.
 - **TLS:** the code guidelines require TLS for all traffic, but a TV opening the display page through DashCast can only use plain HTTP on a LAN address. See "Known oddities" in CODE_GUIDELINES.md.
 - **TLS verification towards Cast devices:** off, as in pychromecast. Pinning the certificate on first connection is an option.
-- **Name:** renamed from Daycast to Nookboard on 9 October 2026, after a check of 113 names on GitHub (Daycast had 22 repositories and an iOS app with that name). A trademark check (BOIP, EUIPO) is still to do.
+- **Name:** GDash since 9 October 2026, the owner's choice; before that Daycast (taken by 22 repositories and an iOS app) and, for one day, Nookboard. GDash is not unique either: ripienaar/gdash (a Graphite dashboard, 750 stars) and kadalu/gdash (GlusterFS) exist and the GitHub user `gdash` is taken. A trademark check (BOIP, EUIPO) is still to do.
 
 ## The kitchen TV
 

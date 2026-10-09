@@ -3,7 +3,7 @@
 -- token itself is shown once, when it is made. last_used_at is empty until
 -- the token is used. A token is revoked by deleting its row.
 --
--- Rollback: restore nookboard.db.bak-v13, which Nookboard writes before applying
+-- Rollback: restore gdash.db.bak-v13, which GDash writes before applying
 -- this migration.
 CREATE TABLE api_tokens (
     id           INTEGER PRIMARY KEY AUTOINCREMENT,

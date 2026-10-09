@@ -47,7 +47,7 @@ func TestClientLaunchesAppAndSendsMessage(t *testing.T) {
 	if err := c.Connect(app.TransportID); err != nil {
 		t.Fatalf("Connect: %v", err)
 	}
-	if err := c.Send(app.TransportID, "urn:x-cast:app.nookboard.display", []byte(`{"type":"snapshot"}`)); err != nil {
+	if err := c.Send(app.TransportID, "urn:x-cast:app.gdash.display", []byte(`{"type":"snapshot"}`)); err != nil {
 		t.Fatalf("Send: %v", err)
 	}
 
@@ -135,7 +135,7 @@ func TestKeeperLaunchesOnIdleDeviceAndForwardsState(t *testing.T) {
 	keeper := &Keeper{
 		Resolve:   func(context.Context) (Device, error) { return Device{Addr: device.addr()}, nil },
 		AppID:     "ABCD1234",
-		Namespace: "urn:x-cast:app.nookboard.display",
+		Namespace: "urn:x-cast:app.gdash.display",
 		Messages: func(ctx context.Context) <-chan []byte {
 			ch := make(chan []byte, 1)
 			ch <- []byte(`{"type":"snapshot","version":1}`)
@@ -172,7 +172,7 @@ func newRefreshingKeeper(device *fakeDevice, every time.Duration) *Keeper {
 	return &Keeper{
 		Resolve:   func(context.Context) (Device, error) { return Device{Addr: device.addr()}, nil },
 		AppID:     "ABCD1234",
-		Namespace: "urn:x-cast:app.nookboard.display",
+		Namespace: "urn:x-cast:app.gdash.display",
 		Messages: func(ctx context.Context) <-chan []byte {
 			ch := make(chan []byte, 1)
 			ch <- []byte(`{"type":"snapshot"}`)

@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stijnvandepol/nookboard/internal/weather"
+	"github.com/stijnvandepol/gdash/internal/weather"
 )
 
 func serve(t *testing.T, status int, body []byte) (Client, *http.Request) {

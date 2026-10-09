@@ -1,6 +1,6 @@
-# Using Nookboard
+# Using GDash
 
-This guide assumes Nookboard is installed and you created your account with
+This guide assumes GDash is installed and you created your account with
 the setup token, see [install.md](install.md). The web interface is at
 `http://<server>:8420/`.
 
@@ -16,12 +16,12 @@ disappears when the basics are done.
    iCal address of each calendar you want on the screen. In Google Calendar
    it is under the calendar's settings, "Secret address in iCal format"; in
    Outlook under "Publish a calendar"; in iCloud under "Public calendar".
-   Nookboard stores the address encrypted and never shows it again. Each
+   GDash stores the address encrypted and never shows it again. Each
    calendar gets its own colour on the TV, so you can see whose appointment
    it is; choose another one next to the calendar.
 3. **Settings, Language on the TVs:** English or Nederlands.
 4. **Displays, Add a display:** give it a name, such as Kitchen, and pick
-   your TV from the list of Cast devices Nookboard found.
+   your TV from the list of Cast devices GDash found.
 
 Within a few seconds the TV shows the default dashboard: clock, weather,
 calendar and news.
@@ -104,21 +104,21 @@ in the list at the display.
 
 **Export** saves a dashboard as a file, as a backup or to share a layout.
 **Import a dashboard** adds such a file as a new dashboard, also in another
-Nookboard. The file holds the layout, the theme and the widget settings, such
+GDash. The file holds the layout, the theme and the widget settings, such
 as the text of a note; it holds no data and no calendar addresses.
 
 ## Home Assistant
 
-Nookboard can show what Home Assistant knows, such as the temperature
+GDash can show what Home Assistant knows, such as the temperature
 inside, whether the front door is open or the power used right now. It
 only reads; it never switches anything.
 
 1. In Home Assistant, open your profile, Security, and make a **long-lived
-   access token**. A separate Home Assistant user for Nookboard, without
+   access token**. A separate Home Assistant user for GDash, without
    admin rights, limits what the token can see.
-2. In Nookboard, under Settings, Home Assistant, enter the address you
+2. In GDash, under Settings, Home Assistant, enter the address you
    open Home Assistant with, such as `http://192.168.1.10:8123`, and the
-   token. Nookboard tries them before it saves them, and stores the token
+   token. GDash tries them before it saves them, and stores the token
    encrypted.
 3. Add a **Home Assistant** widget to a dashboard and search for the
    entities it should show, up to eight. With one entity the widget shows
@@ -127,18 +127,18 @@ only reads; it never switches anything.
 Numbers are shown with their unit, doors and windows as open or closed,
 motion as detected or clear, people as home or away. The screen updates
 once a minute. Home Assistant's own dashboards remain the place to control
-things; Nookboard is the calm screen that shows the day.
+things; GDash is the calm screen that shows the day.
 
 ## Announcements from Home Assistant or any automation
 
 Home Assistant, a script or any other automation can put a short message on
 the TVs, such as "The washing machine is done". It appears in a card over the
 dashboard, in the colours of the display's theme, and goes away after the
-time you choose. Nothing else in Nookboard can be changed with it.
+time you choose. Nothing else in GDash can be changed with it.
 
-1. In Nookboard, under Settings, **API tokens**, make a token with the name of
+1. In GDash, under Settings, **API tokens**, make a token with the name of
    the automation, for example "Home Assistant". Copy it now: it is shown once,
-   and Nookboard keeps only a fingerprint of it. You can make up to 10 and
+   and GDash keeps only a fingerprint of it. You can make up to 10 and
    revoke any of them later; the list shows when each was last used.
 2. Try it under Settings, **Send a test announcement**. The message shows on
    every display that is inside its active hours.
@@ -146,7 +146,7 @@ time you choose. Nothing else in Nookboard can be changed with it.
 
    ```sh
    curl -X POST http://192.168.1.10:8420/api/announcements \
-     -H "Authorization: Bearer nbk_your_token" \
+     -H "Authorization: Bearer gdk_your_token" \
      -H "Content-Type: application/json" \
      -d '{"title": "Laundry", "message": "The washing machine is done", "seconds": 60}'
    ```
@@ -159,7 +159,7 @@ time you choose. Nothing else in Nookboard can be changed with it.
 
 A newer announcement replaces the older one on the displays it is aimed at, so
 the screen never shows a backlog. Announcements are not stored: after a restart
-of Nookboard they are gone. A display outside its active hours stays dark.
+of GDash they are gone. A display outside its active hours stays dark.
 
 ### Home Assistant example
 
@@ -168,7 +168,7 @@ Keep the token out of your configuration, in `secrets.yaml`. The word
 
 ```yaml
 # secrets.yaml
-nookboard_authorization: "Bearer nbk_your_token"
+gdash_authorization: "Bearer gdk_your_token"
 ```
 
 Then add a `rest_command` to `configuration.yaml` (restart Home Assistant, or
@@ -177,19 +177,19 @@ reload the REST commands, after changing it):
 ```yaml
 # configuration.yaml
 rest_command:
-  nookboard_announce:
+  gdash_announce:
     url: "http://192.168.1.10:8420/api/announcements"
     method: post
     content_type: "application/json"
     headers:
-      authorization: !secret nookboard_authorization
+      authorization: !secret gdash_authorization
     payload: >-
       {"title": {{ title | default('') | tojson }},
        "message": {{ message | tojson }},
        "seconds": {{ seconds | default(60) }}}
 ```
 
-The address is the one you open Nookboard with, reachable from Home Assistant.
+The address is the one you open GDash with, reachable from Home Assistant.
 An automation that announces when the washing machine is done, which is when
 the power of its smart plug stays below 3 W for two minutes:
 
@@ -202,7 +202,7 @@ the power of its smart plug stays below 3 W for two minutes:
       below: 3
       for: "00:02:00"
   actions:
-    - action: rest_command.nookboard_announce
+    - action: rest_command.gdash_announce
       data:
         title: "Laundry"
         message: "The washing machine is done"
@@ -215,7 +215,7 @@ watts. Older versions of Home Assistant spell `triggers:` and `trigger:` as
 `trigger:` and `platform:`, and `action:` as `service:`.
 
 If nothing shows up, look at the token under Settings, API tokens:
-**Never used** means the request does not reach Nookboard, so check the address
+**Never used** means the request does not reach GDash, so check the address
 and port. In Home Assistant, Developer tools, Actions, run the command with a
 `message` and read its answer: `401` means the token is wrong or revoked, `422`
 names the field to correct, and `429` means more than 30 announcements in a
@@ -233,7 +233,7 @@ so nothing is cut off. The dashboard always fills the screen, also on
 
 Choose **Schedule** at a display:
 
-- **Active hours,** such as 06:30 to 23:00. Outside them Nookboard stops the
+- **Active hours,** such as 06:30 to 23:00. Outside them GDash stops the
   cast and the screen stays dark, so the TV can go to standby.
 - **Time slots** show another dashboard during part of the day, such as a
   morning dashboard with the calendar from 06:30 to 09:00 on weekdays, or a
@@ -246,21 +246,21 @@ Choose **Schedule** at a display:
 ## Keeping an eye on things
 
 - The display list says per TV whether the dashboard is on screen and since
-  when, whether the TV sleeps, another app is on it, or Nookboard cannot reach
+  when, whether the TV sleeps, another app is on it, or GDash cannot reach
   it.
 - **Settings** shows per news feed, calendar and the weather when it last
   updated, or that it fails.
 - **Settings, Recent activity** lists logins, failed logins, pairings and
   changes of the last 90 days.
 
-## When Nookboard is not on the TV
+## When GDash is not on the TV
 
-Nookboard does not take over a TV that someone casts to, such as YouTube from
+GDash does not take over a TV that someone casts to, such as YouTube from
 a phone: it waits, and the dashboard returns within about 30 seconds after
 the cast stops. It also leaves a TV in standby alone, because starting a
 cast could switch it on; when someone switches the TV on, the dashboard
 appears within about 30 seconds. Google TV does not report its own apps, such as Netflix,
-to Nookboard, so there it cannot tell; use active hours to keep the dashboard
+to GDash, so there it cannot tell; use active hours to keep the dashboard
 away when the TV is mostly used for watching.
 
 More answers are in the troubleshooting section of [install.md](install.md).

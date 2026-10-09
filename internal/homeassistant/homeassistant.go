@@ -1,6 +1,6 @@
 // Package homeassistant reads entity states from a Home Assistant server
 // through its REST API, so a dashboard can show sensors and switches that
-// Home Assistant knows about. It only reads: Nookboard never changes
+// Home Assistant knows about. It only reads: GDash never changes
 // anything in Home Assistant.
 package homeassistant
 

@@ -9,8 +9,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/stijnvandepol/nookboard/internal/pairing"
-	"github.com/stijnvandepol/nookboard/internal/photos"
+	"github.com/stijnvandepol/gdash/internal/pairing"
+	"github.com/stijnvandepol/gdash/internal/photos"
 )
 
 var jpegBytes = append([]byte{0xFF, 0xD8, 0xFF, 0xE0}, make([]byte, 200)...)

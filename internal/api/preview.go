@@ -5,9 +5,9 @@ import (
 	"slices"
 	"strconv"
 
-	"github.com/stijnvandepol/nookboard/internal/display"
-	"github.com/stijnvandepol/nookboard/internal/displays"
-	"github.com/stijnvandepol/nookboard/internal/validation"
+	"github.com/stijnvandepol/gdash/internal/display"
+	"github.com/stijnvandepol/gdash/internal/displays"
+	"github.com/stijnvandepol/gdash/internal/validation"
 )
 
 // previewPage is the dashboard shown as a TV shows it, for the editor to

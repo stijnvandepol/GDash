@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	prefix = "nookboard-"
+	prefix = "gdash-"
 	suffix = ".db"
 	// checkInterval is how often Run looks whether a new day began. A
 	// server that sleeps through midnight catches up within the hour.

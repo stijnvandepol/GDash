@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Builds the release archives for one version into dist-release/: nookboard
+# Builds the release archives for one version into dist-release/: gdash
 # for Linux (amd64, arm64, and armv7 for 32-bit Raspberry Pi OS) and for
 # Windows (amd64), each with the license files and the README, plus
 # SHA256SUMS. Expects web/dist to be built first.
@@ -27,18 +27,18 @@ mkdir -p "$out"
 targets=(linux/amd64 linux/arm64 linux/arm/7 windows/amd64)
 for target in "${targets[@]}"; do
   IFS=/ read -r goos goarch goarm <<< "$target"
-  name="nookboard_${version#v}_${goos}_${goarch}${goarm:+v$goarm}"
+  name="gdash_${version#v}_${goos}_${goarch}${goarm:+v$goarm}"
   dir="$out/$name"
   mkdir -p "$dir"
-  binary=nookboard
-  [ "$goos" = windows ] && binary=nookboard.exe
+  binary=gdash
+  [ "$goos" = windows ] && binary=gdash.exe
   CGO_ENABLED=0 GOOS=$goos GOARCH=$goarch GOARM=$goarm \
-    go build -trimpath -ldflags="-s -w -X main.version=$version" -o "$dir/$binary" ./cmd/nookboard
+    go build -trimpath -ldflags="-s -w -X main.version=$version" -o "$dir/$binary" ./cmd/gdash
   cp LICENSE THIRD_PARTY_LICENSES README.md "$dir/"
   if [ "$goos" = windows ]; then
     (cd "$out" && zip -qr "$name.zip" "$name")
   else
-    cp deploy/nookboard.service "$dir/"
+    cp deploy/gdash.service "$dir/"
     tar -czf "$out/$name.tar.gz" -C "$out" "$name"
   fi
   rm -rf "$dir"

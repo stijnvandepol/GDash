@@ -51,7 +51,7 @@ func hasVideoOut(ca string) bool {
 // until ctx ends, or for three seconds if ctx has no deadline.
 //
 // It queries from an ephemeral port, so devices answer by unicast (RFC 6762
-// section 6.7) and Nookboard never needs port 5353, which Avahi on a NAS
+// section 6.7) and GDash never needs port 5353, which Avahi on a NAS
 // usually holds.
 func Discover(ctx context.Context) ([]Device, error) {
 	if _, ok := ctx.Deadline(); !ok {

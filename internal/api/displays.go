@@ -4,11 +4,11 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/stijnvandepol/nookboard/internal/casting"
-	"github.com/stijnvandepol/nookboard/internal/displays"
-	"github.com/stijnvandepol/nookboard/internal/schedule"
-	"github.com/stijnvandepol/nookboard/internal/store"
-	"github.com/stijnvandepol/nookboard/internal/validation"
+	"github.com/stijnvandepol/gdash/internal/casting"
+	"github.com/stijnvandepol/gdash/internal/displays"
+	"github.com/stijnvandepol/gdash/internal/schedule"
+	"github.com/stijnvandepol/gdash/internal/store"
+	"github.com/stijnvandepol/gdash/internal/validation"
 )
 
 // defaultTextScale is the size a display gets when a client does not choose.

@@ -7,10 +7,10 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/stijnvandepol/nookboard/internal/settings"
-	"github.com/stijnvandepol/nookboard/internal/store"
-	"github.com/stijnvandepol/nookboard/internal/validation"
-	"github.com/stijnvandepol/nookboard/internal/weather"
+	"github.com/stijnvandepol/gdash/internal/settings"
+	"github.com/stijnvandepol/gdash/internal/store"
+	"github.com/stijnvandepol/gdash/internal/validation"
+	"github.com/stijnvandepol/gdash/internal/weather"
 )
 
 // PlaceSearcher finds places by name for the location setting.

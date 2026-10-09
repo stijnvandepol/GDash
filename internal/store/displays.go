@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/stijnvandepol/nookboard/internal/displays"
+	"github.com/stijnvandepol/gdash/internal/displays"
 )
 
 // Displays returns all displays ordered by name.

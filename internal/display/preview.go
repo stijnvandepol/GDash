@@ -6,7 +6,7 @@ import (
 	"hash/fnv"
 	"time"
 
-	"github.com/stijnvandepol/nookboard/internal/datahub"
+	"github.com/stijnvandepol/gdash/internal/datahub"
 )
 
 // PreviewSnapshot is what a screen would be sent for dashboard d right now,

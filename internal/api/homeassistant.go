@@ -5,9 +5,9 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/stijnvandepol/nookboard/internal/homeassistant"
-	"github.com/stijnvandepol/nookboard/internal/settings"
-	"github.com/stijnvandepol/nookboard/internal/validation"
+	"github.com/stijnvandepol/gdash/internal/homeassistant"
+	"github.com/stijnvandepol/gdash/internal/settings"
+	"github.com/stijnvandepol/gdash/internal/validation"
 )
 
 // HomeAssistantReader is the part of the Home Assistant client the web
@@ -56,7 +56,7 @@ func connectionProblem(err error) validation.FieldError {
 	case errors.Is(err, homeassistant.ErrNotHomeAssistant):
 		return validation.FieldError{Field: "url", Message: "this address answers, but not as Home Assistant; check the port, usually 8123"}
 	default:
-		return validation.FieldError{Field: "url", Message: "Home Assistant cannot be reached at this address from the Nookboard server"}
+		return validation.FieldError{Field: "url", Message: "Home Assistant cannot be reached at this address from the GDash server"}
 	}
 }
 

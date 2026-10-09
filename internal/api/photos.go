@@ -4,9 +4,9 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/stijnvandepol/nookboard/internal/pairing"
-	"github.com/stijnvandepol/nookboard/internal/photos"
-	"github.com/stijnvandepol/nookboard/internal/validation"
+	"github.com/stijnvandepol/gdash/internal/pairing"
+	"github.com/stijnvandepol/gdash/internal/photos"
+	"github.com/stijnvandepol/gdash/internal/validation"
 )
 
 // uploadOverhead is room for the multipart framing around one photo.

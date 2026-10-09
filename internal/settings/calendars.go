@@ -5,8 +5,8 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/stijnvandepol/nookboard/internal/store"
-	"github.com/stijnvandepol/nookboard/internal/validation"
+	"github.com/stijnvandepol/gdash/internal/store"
+	"github.com/stijnvandepol/gdash/internal/validation"
 )
 
 // CalendarColors are the colours a calendar can have on the TV; the screen

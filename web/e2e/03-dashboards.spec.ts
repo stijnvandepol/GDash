@@ -37,7 +37,7 @@ test('create a dashboard, add a clock and a note, edit the note, save and export
   const download = page.waitForEvent('download');
   await row.getByRole('button', { name: 'Export' }).click();
   const file = await download;
-  expect(file.suggestedFilename()).toBe('e2e-evening.nookboard.json');
+  expect(file.suggestedFilename()).toBe('e2e-evening.gdash.json');
   const exported = JSON.parse(await readFile(await file.path(), 'utf8')) as StoredDashboard;
   expect(exported.name).toBe('E2E Evening');
   expect(exported.widgets.find((w) => w.type === 'text')?.settings?.text).toBe(NOTE_TEXT);

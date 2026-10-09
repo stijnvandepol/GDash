@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stijnvandepol/nookboard/internal/datahub"
-	"github.com/stijnvandepol/nookboard/internal/schedule"
+	"github.com/stijnvandepol/gdash/internal/datahub"
+	"github.com/stijnvandepol/gdash/internal/schedule"
 )
 
 var now = time.Date(2026, 10, 8, 7, 30, 0, 0, time.UTC)

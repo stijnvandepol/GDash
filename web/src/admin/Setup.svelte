@@ -27,7 +27,7 @@
 <div class="auth-card">
   <div class="auth-brand">
     <Logo size={56} />
-    <span class="name">Welcome to Nookboard</span>
+    <span class="name">Welcome to GDash</span>
     <p>Create the administrator account to get started.</p>
   </div>
 
@@ -41,13 +41,13 @@
     <details class="help" open>
       <summary>Where do I find the setup token?</summary>
       <p>
-        Nookboard prints it in its log when it starts for the first time. Only someone with access to the server can read
+        GDash prints it in its log when it starts for the first time. Only someone with access to the server can read
         it, so only you can set up this server.
       </p>
       <ul>
-        <li>Docker: run <code>docker compose logs nookboard</code></li>
+        <li>Docker: run <code>docker compose logs gdash</code></li>
         <li>Synology: open the project in Container Manager and read its log</li>
-        <li>Linux service: run <code>journalctl -u nookboard</code></li>
+        <li>Linux service: run <code>journalctl -u gdash</code></li>
         <li>Started in a terminal: it is in that window</li>
       </ul>
     </details>

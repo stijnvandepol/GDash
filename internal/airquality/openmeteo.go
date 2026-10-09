@@ -14,7 +14,7 @@ import (
 	"net/url"
 	"strconv"
 
-	"github.com/stijnvandepol/nookboard/internal/weather"
+	"github.com/stijnvandepol/gdash/internal/weather"
 )
 
 // DefaultBaseURL is the public Open-Meteo air quality endpoint.

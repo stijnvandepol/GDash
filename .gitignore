@@ -2,10 +2,10 @@
 /web/node_modules/
 /web/dist/*
 !/web/dist/.gitkeep
-/nookboard
-/nookboard.exe
+/gdash
+/gdash.exe
 /data-dev/
-/nookboard-dev.exe
+/gdash-dev.exe
 /data-test/
 /dist-release/
 /data-nesthub/

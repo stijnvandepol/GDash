@@ -65,7 +65,7 @@ func forwardedClient(headers []string, isTrusted func(netip.Addr) bool) (netip.A
 	return netip.Addr{}, false
 }
 
-// isHTTPS reports whether the browser reached Nookboard over HTTPS, directly
+// isHTTPS reports whether the browser reached GDash over HTTPS, directly
 // or through a trusted proxy, so cookies may be marked Secure.
 func isHTTPS(r *http.Request) bool {
 	forwarded, _ := r.Context().Value(forwardedHTTPSKey{}).(bool)

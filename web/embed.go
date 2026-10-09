@@ -1,5 +1,5 @@
 // Package web embeds the built frontend (npm run build in this directory)
-// into the Nookboard binary, so a release is a single file.
+// into the GDash binary, so a release is a single file.
 package web
 
 import (

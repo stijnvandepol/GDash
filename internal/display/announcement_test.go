@@ -7,9 +7,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stijnvandepol/nookboard/internal/announcement"
-	"github.com/stijnvandepol/nookboard/internal/datahub"
-	"github.com/stijnvandepol/nookboard/internal/schedule"
+	"github.com/stijnvandepol/gdash/internal/announcement"
+	"github.com/stijnvandepol/gdash/internal/datahub"
+	"github.com/stijnvandepol/gdash/internal/schedule"
 )
 
 func TestSnapshotCarriesTheAnnouncement(t *testing.T) {

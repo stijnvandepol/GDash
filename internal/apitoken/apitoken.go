@@ -1,5 +1,5 @@
 // Package apitoken manages the tokens that automations, such as a Home
-// Assistant rest_command, use to call Nookboard without a login. Like display
+// Assistant rest_command, use to call GDash without a login. Like display
 // tokens, only a hash is stored: the token is shown once, when it is made.
 package apitoken
 
@@ -10,16 +10,16 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/stijnvandepol/nookboard/internal/ratelimit"
-	"github.com/stijnvandepol/nookboard/internal/store"
-	"github.com/stijnvandepol/nookboard/internal/token"
-	"github.com/stijnvandepol/nookboard/internal/validation"
+	"github.com/stijnvandepol/gdash/internal/ratelimit"
+	"github.com/stijnvandepol/gdash/internal/store"
+	"github.com/stijnvandepol/gdash/internal/token"
+	"github.com/stijnvandepol/gdash/internal/validation"
 )
 
 const (
 	// Prefix makes a token recognisable in a configuration file, and to
 	// secret scanners, without telling anything about its value.
-	Prefix        = "nbk_"
+	Prefix        = "gdk_"
 	maxNameLength = 40
 	// A used token is touched at most once per interval, so a busy
 	// automation does not write to the database on every request.

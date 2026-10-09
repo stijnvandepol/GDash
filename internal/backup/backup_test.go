@@ -45,7 +45,7 @@ func TestOnceWritesOneCopyPerDayAndKeepsTheNewest(t *testing.T) {
 	now := time.Date(2026, 10, 9, 3, 0, 0, 0, time.UTC)
 	d, writes := newDaily(t, &now)
 
-	if made, err := d.Once(ctx); err != nil || made != "nookboard-2026-10-09.db" {
+	if made, err := d.Once(ctx); err != nil || made != "gdash-2026-10-09.db" {
 		t.Fatalf("first Once = %q, %v", made, err)
 	}
 	if made, err := d.Once(ctx); err != nil || made != "" || *writes != 1 {
@@ -57,7 +57,7 @@ func TestOnceWritesOneCopyPerDayAndKeepsTheNewest(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	want := []string{"nookboard-2026-10-11.db", "nookboard-2026-10-12.db", "nookboard-2026-10-13.db"}
+	want := []string{"gdash-2026-10-11.db", "gdash-2026-10-12.db", "gdash-2026-10-13.db"}
 	if got := names(t, d.Dir); !slices.Equal(got, want) {
 		t.Fatalf("backups = %v, want the newest %d: %v", got, d.Keep, want)
 	}
@@ -74,7 +74,7 @@ func TestFailedWriteLeavesNoBackup(t *testing.T) {
 		t.Fatal("Once hid the write error")
 	}
 	for _, n := range names(t, d.Dir) {
-		if n == "nookboard-2026-10-09.db" {
+		if n == "gdash-2026-10-09.db" {
 			t.Fatal("a failed copy was left under the name of a good backup")
 		}
 	}
@@ -92,7 +92,7 @@ func TestPruneLeavesOtherFilesAlone(t *testing.T) {
 	if err := os.MkdirAll(d.Dir, 0o700); err != nil {
 		t.Fatal(err)
 	}
-	for _, n := range []string{"nookboard-2026-01-01.db", "notes.txt"} {
+	for _, n := range []string{"gdash-2026-01-01.db", "notes.txt"} {
 		if err := os.WriteFile(filepath.Join(d.Dir, n), nil, 0o600); err != nil {
 			t.Fatal(err)
 		}
@@ -100,7 +100,7 @@ func TestPruneLeavesOtherFilesAlone(t *testing.T) {
 	if _, err := d.Once(context.Background()); err != nil {
 		t.Fatal(err)
 	}
-	if got := names(t, d.Dir); !slices.Equal(got, []string{"nookboard-2026-10-09.db", "notes.txt"}) {
+	if got := names(t, d.Dir); !slices.Equal(got, []string{"gdash-2026-10-09.db", "notes.txt"}) {
 		t.Fatalf("files = %v", got)
 	}
 }

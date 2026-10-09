@@ -3,7 +3,7 @@ package display
 import (
 	"encoding/json"
 
-	"github.com/stijnvandepol/nookboard/internal/datahub"
+	"github.com/stijnvandepol/gdash/internal/datahub"
 )
 
 // onlyEntities narrows the Home Assistant entry to the entities in ids.

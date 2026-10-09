@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stijnvandepol/nookboard/internal/datahub"
+	"github.com/stijnvandepol/gdash/internal/datahub"
 )
 
 func TestPreviewSnapshot(t *testing.T) {

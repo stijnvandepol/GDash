@@ -11,14 +11,14 @@ import (
 	"sync"
 	"time"
 
-	"github.com/stijnvandepol/nookboard/internal/announcement"
-	"github.com/stijnvandepol/nookboard/internal/datahub"
-	"github.com/stijnvandepol/nookboard/internal/schedule"
+	"github.com/stijnvandepol/gdash/internal/announcement"
+	"github.com/stijnvandepol/gdash/internal/datahub"
+	"github.com/stijnvandepol/gdash/internal/schedule"
 )
 
-// CastNamespace is the Cast message namespace between the Nookboard server
+// CastNamespace is the Cast message namespace between the GDash server
 // and its receiver. web/src/protocol.ts uses the same value.
-const CastNamespace = "urn:x-cast:app.nookboard.display"
+const CastNamespace = "urn:x-cast:app.gdash.display"
 
 // Widget is one tile on the dashboard grid. Positions are in grid units.
 type Widget struct {

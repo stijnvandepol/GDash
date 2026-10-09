@@ -3,10 +3,10 @@ package main
 import (
 	"testing"
 
-	"github.com/stijnvandepol/nookboard/internal/display"
-	"github.com/stijnvandepol/nookboard/internal/homeassistant"
-	"github.com/stijnvandepol/nookboard/internal/settings"
-	"github.com/stijnvandepol/nookboard/internal/weather"
+	"github.com/stijnvandepol/gdash/internal/display"
+	"github.com/stijnvandepol/gdash/internal/homeassistant"
+	"github.com/stijnvandepol/gdash/internal/settings"
+	"github.com/stijnvandepol/gdash/internal/weather"
 )
 
 func keys(t *testing.T, cfg settings.Sources, entities []string) map[string]string {

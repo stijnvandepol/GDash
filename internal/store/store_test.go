@@ -10,14 +10,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stijnvandepol/nookboard/internal/displays"
+	"github.com/stijnvandepol/gdash/internal/displays"
 )
 
 var created = time.Date(2026, 10, 8, 17, 0, 0, 0, time.UTC)
 
 func openTestStore(t *testing.T) (*Store, string) {
 	t.Helper()
-	path := filepath.Join(t.TempDir(), "nookboard.db")
+	path := filepath.Join(t.TempDir(), "gdash.db")
 	s, err := Open(context.Background(), path)
 	if err != nil {
 		t.Fatalf("Open: %v", err)
@@ -138,7 +138,7 @@ func TestOpenRefusesNewerSchema(t *testing.T) {
 	}
 	s.Close()
 	if _, err := Open(ctx, path); err == nil {
-		t.Fatal("Open accepted a database from a newer Nookboard")
+		t.Fatal("Open accepted a database from a newer GDash")
 	}
 }
 
@@ -220,7 +220,7 @@ func TestWriteCopyMakesAUsableDatabase(t *testing.T) {
 func TestOpenCreatesTheDataDirectory(t *testing.T) {
 	// A first start of the binary uses a data directory that does not
 	// exist yet.
-	path := filepath.Join(t.TempDir(), "data", "nookboard.db")
+	path := filepath.Join(t.TempDir(), "data", "gdash.db")
 	s, err := Open(context.Background(), path)
 	if err != nil {
 		t.Fatalf("Open in a missing directory: %v", err)

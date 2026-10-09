@@ -60,9 +60,9 @@
 <section class="card">
   <h2>Home Assistant</h2>
   <p class="muted">
-    Show sensors and switches from Home Assistant, such as the temperature inside or whether a door is open. Nookboard
+    Show sensors and switches from Home Assistant, such as the temperature inside or whether a door is open. GDash
     only reads states and never changes anything. Make a long-lived access token in Home Assistant under your profile,
-    Security; Nookboard stores it encrypted and never shows it again.
+    Security; GDash stores it encrypted and never shows it again.
   </p>
   {#if connection && !editing}
     <ul class="list">

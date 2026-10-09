@@ -12,9 +12,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/stijnvandepol/nookboard/internal/ratelimit"
-	"github.com/stijnvandepol/nookboard/internal/store"
-	"github.com/stijnvandepol/nookboard/internal/token"
+	"github.com/stijnvandepol/gdash/internal/ratelimit"
+	"github.com/stijnvandepol/gdash/internal/store"
+	"github.com/stijnvandepol/gdash/internal/token"
 )
 
 const (

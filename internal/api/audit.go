@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/stijnvandepol/nookboard/internal/store"
+	"github.com/stijnvandepol/gdash/internal/store"
 )
 
 // Actions in the audit log. web/src/admin/audit.ts describes them.

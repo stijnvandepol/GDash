@@ -1,4 +1,4 @@
-// Package store keeps Nookboard's configuration in SQLite. It is the only
+// Package store keeps GDash's configuration in SQLite. It is the only
 // package that writes SQL.
 package store
 
@@ -30,14 +30,14 @@ var ErrConflict = errors.New("already exists")
 // does not exist.
 var ErrUnknownDashboard = errors.New("unknown dashboard")
 
-// Store is an open Nookboard database.
+// Store is an open GDash database.
 type Store struct {
 	db *sql.DB
 }
 
 // Open opens or creates the database at path and brings its schema up to
 // date. Before changing an existing schema it writes a backup next to it.
-// It creates the database's directory, readable by Nookboard only, so a first
+// It creates the database's directory, readable by GDash only, so a first
 // start needs no folder made by hand.
 func Open(ctx context.Context, path string) (*Store, error) {
 	if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
@@ -92,13 +92,13 @@ func (s *Store) migrate(ctx context.Context, path string, scripts []string) erro
 		return fmt.Errorf("read schema version: %w", err)
 	}
 	if version > len(scripts) {
-		return fmt.Errorf("database schema version %d is newer than this Nookboard (%d); use a newer release", version, len(scripts))
+		return fmt.Errorf("database schema version %d is newer than this GDash (%d); use a newer release", version, len(scripts))
 	}
 	if version == len(scripts) {
 		return nil
 	}
 	// An existing database is copied before every step, so each migration's
-	// rollback note ("restore nookboard.db.bak-v<N>") holds, also when one
+	// rollback note ("restore gdash.db.bak-v<N>") holds, also when one
 	// upgrade applies several. A new database has nothing to save.
 	existing := version > 0
 	for i := version; i < len(scripts); i++ {
@@ -126,7 +126,7 @@ func (s *Store) backup(ctx context.Context, path string, version int) error {
 }
 
 // WriteCopy writes a consistent copy of the database to target, which must
-// not exist yet. It is safe while Nookboard runs: SQLite copies from one
+// not exist yet. It is safe while GDash runs: SQLite copies from one
 // read transaction.
 func (s *Store) WriteCopy(ctx context.Context, target string) error {
 	if _, err := s.db.ExecContext(ctx, "VACUUM INTO ?", target); err != nil {

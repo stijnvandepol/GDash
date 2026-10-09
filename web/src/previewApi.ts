@@ -11,7 +11,7 @@ export interface PreviewDraft {
   widgets: Widget[];
 }
 
-export const PREVIEW_MESSAGE = 'nookboard.preview';
+export const PREVIEW_MESSAGE = 'gdash.preview';
 
 /** Sent by the editor to the preview page in its frame. */
 export interface PreviewMessage {

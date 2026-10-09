@@ -47,7 +47,7 @@
   }
 
   async function remove(p: Photo) {
-    if (!confirm('Remove this photo from Nookboard?')) return;
+    if (!confirm('Remove this photo from GDash?')) return;
     try {
       await api.deletePhoto(p.name);
       await load();

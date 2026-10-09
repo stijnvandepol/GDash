@@ -4,7 +4,7 @@
 -- 'cast' for the page a cast keeper opens; a display has at most one 'cast'
 -- token, replaced on every launch.
 --
--- Rollback: restore nookboard.db.bak-v2, which Nookboard writes before applying
+-- Rollback: restore gdash.db.bak-v2, which GDash writes before applying
 -- this migration.
 CREATE TABLE display_tokens (
     token_hash   TEXT PRIMARY KEY,

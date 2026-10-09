@@ -1,4 +1,4 @@
-// Small client for the Nookboard API. Every error response has the shape
+// Small client for the GDash API. Every error response has the shape
 // {"error": {"code", "message", "fields"?}}, see internal/api/server.go.
 import type { AuditEvent } from './audit';
 
@@ -47,7 +47,7 @@ export interface Display {
   rotateSeconds: number;
   /** Text size in percent: 100, 125, 150 or 200. */
   textScale: number;
-  /** What Nookboard last found on the Cast device; only in the display list. */
+  /** What GDash last found on the Cast device; only in the display list. */
   cast?: CastStatus;
 }
 

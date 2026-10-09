@@ -1,9 +1,9 @@
 # API
 
 All endpoints are under `/api` and exchange JSON. Routes marked "admin" need
-the session cookie (`nookboard_session`) that `POST /api/setup` and
+the session cookie (`gdash_session`) that `POST /api/setup` and
 `POST /api/sessions` set. Display streams need a paired screen's cookie
-(`nookboard_display`) or an admin session. `POST /api/announcements` also takes
+(`gdash_display`) or an admin session. `POST /api/announcements` also takes
 an API token, see [Announcements](#announcements).
 The handlers in `internal/api` document each endpoint where it is defined;
 this page is the overview.
@@ -72,7 +72,7 @@ come from another site (cross-site request forgery protection).
 | `GET /api/cast-devices` | admin | `200 {"devices": [device]}` | `401`, `500 discovery_failed` |
 | `GET /api/displays/{id}/events` | paired screen or admin | `text/event-stream`, `snapshot` events | `401 not_paired`, `404` for an invalid id |
 | `POST /api/pairing-requests` `{displayId}` | no | `201 {code, pollToken, expiresAt}` | `404`, `429 rate_limited` |
-| `POST /api/display-sessions` `{pollToken}` or `{launchToken}` | no | `201 {displayId}`, sets `nookboard_display`; `202` while pending | `400`, `401 invalid_token` |
+| `POST /api/display-sessions` `{pollToken}` or `{launchToken}` | no | `201 {displayId}`, sets `gdash_display`; `202` while pending | `400`, `401 invalid_token` |
 | `GET /api/display-sessions/current` | paired screen | `200 {displayId}` | `401 not_paired` |
 | `POST /api/displays/{id}/pairings` `{code}` | admin | `201 {displayId}` | `401`, `422 invalid_code` |
 | `DELETE /api/displays/{id}/pairings` | admin | `200 {removed}` | `401` |
@@ -83,7 +83,7 @@ A display page that is not paired asks `POST /api/pairing-requests` for a code
 and shows it. An admin enters the code in the web interface, which calls
 `POST /api/displays/{id}/pairings`. Meanwhile the page polls
 `POST /api/display-sessions {pollToken}` every few seconds; once approved it
-gets the `nookboard_display` cookie. Codes are valid for 10 minutes.
+gets the `gdash_display` cookie. Codes are valid for 10 minutes.
 
 A page opened by a cast keeper carries a single-use `launch` token in its URL,
 valid for 2 minutes, and exchanges it with
@@ -99,8 +99,8 @@ An automation, such as a Home Assistant `rest_command`, posts a short message
 that every display (or the ones you name) shows over its dashboard for a while:
 
 ```sh
-curl -X POST http://nookboard.local:8420/api/announcements \
-  -H "Authorization: Bearer $NOOKBOARD_TOKEN" \
+curl -X POST http://gdash.local:8420/api/announcements \
+  -H "Authorization: Bearer $GDASH_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"title": "Laundry", "message": "The washing machine is done", "seconds": 60}'
 ```
@@ -116,7 +116,7 @@ Leading and trailing spaces are trimmed. The answer is `201` with the message
 as the screens get it: `{"title": "Laundry", "message": "…", "expiresAt": "…", "displays": ["kitchen", "hall"]}`.
 
 **Authentication.** Make an API token under Settings, API tokens (or with
-`POST /api/api-tokens`) and send it as `Authorization: Bearer nbk_…`. Only the
+`POST /api/api-tokens`) and send it as `Authorization: Bearer gdk_…`. Only the
 token's SHA-256 hash is stored, so the token is shown once. There are at most 10
 tokens, and `lastUsedAt` shows when each was last used. A token is valid for this
 route only: every other route answers `401` to it. Revoking a token takes effect
@@ -150,9 +150,9 @@ The log records who posted and to how many displays, never the token or the mess
 ## Settings
 
 The weather location, news feeds and calendars are managed here instead of
-in environment variables. On the very first start Nookboard copies
-`NOOKBOARD_LATITUDE`, `NOOKBOARD_LONGITUDE`, `NOOKBOARD_NEWS_FEED` (default: NOS)
-and `NOOKBOARD_CALENDAR_URLS` into the settings; later starts ignore them.
+in environment variables. On the very first start GDash copies
+`GDASH_LATITUDE`, `GDASH_LONGITUDE`, `GDASH_NEWS_FEED` (default: NOS)
+and `GDASH_CALENDAR_URLS` into the settings; later starts ignore them.
 
 A calendar's iCal address gives read access to everyone who has it. It is
 stored encrypted with `secret.key` in the data directory and never returned
@@ -166,12 +166,12 @@ and AWS's IPv6 metadata address (fd00:ec2::254), where cloud hosts serve
 instance metadata, are refused when connecting, also in their NAT64 form.
 
 Home Assistant is connected with its address and a long-lived access token,
-made in Home Assistant under the user's profile, Security. Nookboard tries the
+made in Home Assistant under the user's profile, Security. GDash tries the
 connection before storing it, stores address and token encrypted together,
 and never returns or logs the token. It only reads: once a minute it asks
 `/api/states/<entity>` for each entity that a Home Assistant widget shows,
 at most 40. The token gives the rights of the Home Assistant user who made
-it, so a separate, non-admin user for Nookboard is the safer choice.
+it, so a separate, non-admin user for GDash is the safer choice.
 
 Changes apply at once: a changed source is fetched again, a removed one
 disappears from the displays. `status` has an entry per configured source by
@@ -198,7 +198,7 @@ the page on its clock, so every screen of a display shows the same page.
 
 **cast:** `{"state": "showing", "since": "2026-10-09T08:31:00Z", "problem"?: "…"}`, only for a display on a Cast
 device. `state` is `connecting`, `showing`, `standby` (the receiver runs but the TV sleeps), `other_app` (someone else
-is casting; Nookboard waits), `resting` (outside active hours) or `unreachable`, with `problem` saying why.
+is casting; GDash waits), `resting` (outside active hours) or `unreachable`, with `problem` saying why.
 
 `textScale` is the display's text size in percent: 100 (default), 125, 150 or 200. The snapshot carries it; the
 screen draws its stage narrower by that factor and in the screen's own shape (between 4:3 and 21:9), so a small

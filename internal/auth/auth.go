@@ -13,10 +13,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/stijnvandepol/nookboard/internal/ratelimit"
-	"github.com/stijnvandepol/nookboard/internal/store"
-	"github.com/stijnvandepol/nookboard/internal/token"
-	"github.com/stijnvandepol/nookboard/internal/validation"
+	"github.com/stijnvandepol/gdash/internal/ratelimit"
+	"github.com/stijnvandepol/gdash/internal/store"
+	"github.com/stijnvandepol/gdash/internal/token"
+	"github.com/stijnvandepol/gdash/internal/validation"
 )
 
 const (
@@ -56,7 +56,7 @@ type Credentials struct {
 	Password string
 }
 
-// User is the logged-in account as the rest of Nookboard sees it.
+// User is the logged-in account as the rest of GDash sees it.
 type User struct {
 	ID       int64  `json:"id"`
 	Username string `json:"username"`
@@ -74,10 +74,10 @@ type Service struct {
 }
 
 // NewService creates the service. setupToken must be a random secret shown
-// to the person installing Nookboard; it is only accepted while no account
+// to the person installing GDash; it is only accepted while no account
 // exists.
 func NewService(st *store.Store, setupToken string) (*Service, error) {
-	dummy, err := hashPassword("nookboard-timing-equaliser")
+	dummy, err := hashPassword("gdash-timing-equaliser")
 	if err != nil {
 		return nil, err
 	}

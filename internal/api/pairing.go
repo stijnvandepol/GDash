@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/stijnvandepol/nookboard/internal/auth"
-	"github.com/stijnvandepol/nookboard/internal/pairing"
+	"github.com/stijnvandepol/gdash/internal/auth"
+	"github.com/stijnvandepol/gdash/internal/pairing"
 )
 
-const displayCookie = "nookboard_display"
+const displayCookie = "gdash_display"
 
 // displayCookieMaxAge keeps a paired screen paired for a year; unpairing in
 // the web interface revokes it earlier.

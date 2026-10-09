@@ -14,17 +14,17 @@ import (
 	"regexp"
 	"time"
 
-	"github.com/stijnvandepol/nookboard/internal/announcement"
-	"github.com/stijnvandepol/nookboard/internal/apitoken"
-	"github.com/stijnvandepol/nookboard/internal/auth"
-	"github.com/stijnvandepol/nookboard/internal/cast"
-	"github.com/stijnvandepol/nookboard/internal/casting"
-	"github.com/stijnvandepol/nookboard/internal/datahub"
-	"github.com/stijnvandepol/nookboard/internal/pairing"
-	"github.com/stijnvandepol/nookboard/internal/photos"
-	"github.com/stijnvandepol/nookboard/internal/settings"
-	"github.com/stijnvandepol/nookboard/internal/store"
-	"github.com/stijnvandepol/nookboard/internal/validation"
+	"github.com/stijnvandepol/gdash/internal/announcement"
+	"github.com/stijnvandepol/gdash/internal/apitoken"
+	"github.com/stijnvandepol/gdash/internal/auth"
+	"github.com/stijnvandepol/gdash/internal/cast"
+	"github.com/stijnvandepol/gdash/internal/casting"
+	"github.com/stijnvandepol/gdash/internal/datahub"
+	"github.com/stijnvandepol/gdash/internal/pairing"
+	"github.com/stijnvandepol/gdash/internal/photos"
+	"github.com/stijnvandepol/gdash/internal/settings"
+	"github.com/stijnvandepol/gdash/internal/store"
+	"github.com/stijnvandepol/gdash/internal/validation"
 )
 
 const (
@@ -215,7 +215,7 @@ func (s *Server) servePage(w http.ResponseWriter, r *http.Request, name string) 
 	page, err := fs.ReadFile(s.Web, name)
 	if err != nil {
 		s.Logger.Error("frontend page missing; was the frontend built?", "page", name, "error", err)
-		writeError(w, http.StatusInternalServerError, "frontend_missing", "The display page is not available. Build the frontend and restart Nookboard.")
+		writeError(w, http.StatusInternalServerError, "frontend_missing", "The display page is not available. Build the frontend and restart GDash.")
 		return
 	}
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
@@ -233,7 +233,7 @@ func (s *Server) castDevices(w http.ResponseWriter, r *http.Request) {
 	devices, err := s.Discover(ctx)
 	if err != nil {
 		s.Logger.Error("cast discovery failed", "error", err)
-		writeError(w, http.StatusInternalServerError, "discovery_failed", "Searching the network for Cast devices failed. Check that Nookboard runs with host networking.")
+		writeError(w, http.StatusInternalServerError, "discovery_failed", "Searching the network for Cast devices failed. Check that GDash runs with host networking.")
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"devices": devices})
@@ -278,7 +278,7 @@ func decodeJSON(w http.ResponseWriter, r *http.Request, dst any) bool {
 
 func (s *Server) internalError(w http.ResponseWriter, op string, err error) {
 	s.Logger.Error("request failed", "operation", op, "error", err)
-	writeError(w, http.StatusInternalServerError, "internal", "Something went wrong on the server. Check the Nookboard log.")
+	writeError(w, http.StatusInternalServerError, "internal", "Something went wrong on the server. Check the GDash log.")
 }
 
 // writeJSON sends body as JSON. The status line is already sent when the

@@ -1,7 +1,7 @@
 services:
-  nookboard:
+  gdash:
     build: .
-    # Host networking lets Nookboard find Cast devices with mDNS, which does
+    # Host networking lets GDash find Cast devices with mDNS, which does
     # not cross Docker's bridge network.
     network_mode: host
     # Location, news feeds and calendars are set under Settings in the web
@@ -10,11 +10,11 @@ services:
       # The time zone for "today" in the calendar and for times without a zone.
       TZ: "Europe/Amsterdam"
       # Optional: the app ID of an own registered receiver, see
-      # docs/receiver.md. Without it Nookboard uses the public DashCast receiver.
-      # NOOKBOARD_CAST_APP_ID: "ABCD1234"
+      # docs/receiver.md. Without it GDash uses the public DashCast receiver.
+      # GDASH_CAST_APP_ID: "ABCD1234"
     volumes:
-      - nookboard-data:/data
+      - gdash-data:/data
     restart: unless-stopped
 
 volumes:
-  nookboard-data:
+  gdash-data:

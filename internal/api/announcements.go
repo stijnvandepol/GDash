@@ -5,8 +5,8 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/stijnvandepol/nookboard/internal/announcement"
-	"github.com/stijnvandepol/nookboard/internal/validation"
+	"github.com/stijnvandepol/gdash/internal/announcement"
+	"github.com/stijnvandepol/gdash/internal/validation"
 )
 
 // announcementPostWindow is how long a sender that posted too much waits.

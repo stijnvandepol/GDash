@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/stijnvandepol/nookboard/internal/datahub"
+	"github.com/stijnvandepol/gdash/internal/datahub"
 )
 
 func TestEachDisplayGetsOnlyItsOwnEntities(t *testing.T) {

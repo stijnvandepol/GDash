@@ -53,13 +53,13 @@ function connect(): void {
     try {
       parsed = JSON.parse((event as MessageEvent<string>).data);
     } catch {
-      console.warn('nookboard: ignored a snapshot that is not valid JSON');
+      console.warn('gdash: ignored a snapshot that is not valid JSON');
       return;
     }
     if (isSnapshot(parsed)) {
       applySnapshot(displayId, parsed);
     } else {
-      console.warn('nookboard: ignored a snapshot with an unexpected shape');
+      console.warn('gdash: ignored a snapshot with an unexpected shape');
     }
   });
 }

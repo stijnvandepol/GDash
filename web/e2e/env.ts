@@ -6,7 +6,7 @@ export const ADMIN_USERNAME = 'e2e-admin';
 
 /** The port of the test server, on the loopback address only. */
 export function port(): number {
-  return Number(process.env.NOOKBOARD_E2E_PORT ?? DEFAULT_PORT);
+  return Number(process.env.GDASH_E2E_PORT ?? DEFAULT_PORT);
 }
 
 export function baseUrl(): string {
@@ -20,5 +20,5 @@ function required(name: string): string {
   return value;
 }
 
-export const setupToken = () => required('NOOKBOARD_E2E_SETUP_TOKEN');
-export const adminPassword = () => required('NOOKBOARD_E2E_PASSWORD');
+export const setupToken = () => required('GDASH_E2E_SETUP_TOKEN');
+export const adminPassword = () => required('GDASH_E2E_PASSWORD');

@@ -1,7 +1,7 @@
-// Message format between the Nookboard server and every display. Mirrors
+// Message format between the GDash server and every display. Mirrors
 // internal/display/display.go and internal/datahub/hub.go.
 
-export const CAST_NAMESPACE = 'urn:x-cast:app.nookboard.display';
+export const CAST_NAMESPACE = 'urn:x-cast:app.gdash.display';
 
 export interface Entry {
   value?: unknown;

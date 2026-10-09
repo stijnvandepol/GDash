@@ -26,7 +26,7 @@
 <div class="auth-card">
   <div class="auth-brand">
     <Logo size={56} />
-    <span class="name">Nookboard</span>
+    <span class="name">GDash</span>
     <p>Your home dashboard for the TV.</p>
   </div>
 

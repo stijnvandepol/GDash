@@ -3,7 +3,7 @@ package main
 import (
 	"testing"
 
-	"github.com/stijnvandepol/nookboard/internal/cast"
+	"github.com/stijnvandepol/gdash/internal/cast"
 )
 
 func TestRefreshInterval(t *testing.T) {

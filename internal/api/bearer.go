@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/stijnvandepol/nookboard/internal/apitoken"
+	"github.com/stijnvandepol/gdash/internal/apitoken"
 )
 
 // sender is who makes a request that an admin session or an API token may

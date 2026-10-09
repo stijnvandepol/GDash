@@ -7,8 +7,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/stijnvandepol/nookboard/internal/datahub"
-	"github.com/stijnvandepol/nookboard/internal/display"
+	"github.com/stijnvandepol/gdash/internal/datahub"
+	"github.com/stijnvandepol/gdash/internal/display"
 )
 
 const previewLayout = `{"id":"hall","name":"Hall","widgets":[` +

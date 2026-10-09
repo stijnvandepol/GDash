@@ -43,7 +43,7 @@ var (
 	ErrNotFound = errors.New("no such photo")
 )
 
-// extensions maps the detected type to the file extension Nookboard uses.
+// extensions maps the detected type to the file extension GDash uses.
 var extensions = map[string]string{"image/jpeg": ".jpg", "image/png": ".png", "image/webp": ".webp"}
 
 // validName matches the names Add gives photos, so a name from a request
@@ -64,7 +64,7 @@ type Store struct {
 	mu sync.Mutex
 }
 
-// NewStore uses dir, creating it if needed, readable by Nookboard only.
+// NewStore uses dir, creating it if needed, readable by GDash only.
 func NewStore(dir string) (*Store, error) {
 	if err := os.MkdirAll(dir, 0o700); err != nil {
 		return nil, fmt.Errorf("create photo folder: %w", err)

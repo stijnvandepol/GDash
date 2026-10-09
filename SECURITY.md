@@ -10,9 +10,9 @@ seven days of confirming it.
 
 Only the latest release gets security fixes.
 
-## What Nookboard protects, and how
+## What GDash protects, and how
 
-Nookboard runs on a home network and shows a household's calendar and other
+GDash runs on a home network and shows a household's calendar and other
 data on its TVs. The design assumes the LAN can contain devices you do not
 fully trust, such as a guest's phone.
 
@@ -20,14 +20,14 @@ fully trust, such as a guest's phone.
   per address and per username. Sessions expire after 7 days idle or 30 days
   in total, and changing the password logs out every other browser.
 - **Screens:** a display only streams data to a screen that was paired with
-  a code shown on it, or opened by Nookboard's own cast with a single-use token
+  a code shown on it, or opened by GDash's own cast with a single-use token
   that expires after two minutes. Unpairing takes effect within 20 seconds,
   and a screen that has not shown its display for 90 days is unpaired.
   Each display only receives the data its own widgets show.
 - **Secrets:** calendar addresses give read access to a calendar, and a
   Home Assistant token to everything its user can see, so they are
   encrypted (AES-256-GCM) with a key file next to the database, never
-  returned by the API and never logged. Nookboard only reads from Home
+  returned by the API and never logged. GDash only reads from Home
   Assistant.
 - **API tokens:** automations such as Home Assistant post announcements with
   a token made under Settings. Only its SHA-256 hash is stored, it is shown
@@ -52,10 +52,10 @@ fully trust, such as a guest's phone.
 - The web interface and the display pages use **plain HTTP on the LAN**. A TV
   that opens the dashboard through Cast cannot be given a certificate it
   trusts for a LAN address. Put a reverse proxy with HTTPS in front of the
-  web interface if you open it from outside, set `NOOKBOARD_TRUSTED_PROXIES`
+  web interface if you open it from outside, set `GDASH_TRUSTED_PROXIES`
   to its address, and never expose port 8420 to the internet. Forwarding
   headers from any other address are ignored.
-- Nookboard does not verify the TLS certificates of Cast devices: they use
+- GDash does not verify the TLS certificates of Cast devices: they use
   Google's device CA, which no trust store contains. Home Assistant and
   pychromecast do the same.
 - Anyone who can read the server's log during the first start can create the

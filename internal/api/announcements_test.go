@@ -53,7 +53,7 @@ func TestAnnouncementNeedsATokenOrALogin(t *testing.T) {
 		t.Errorf("without credentials = %d, want 401", status)
 	}
 	for name, header := range map[string]string{
-		"wrong token":    "Bearer nbk_" + strings.Repeat("A", 43),
+		"wrong token":    "Bearer gdk_" + strings.Repeat("A", 43),
 		"another scheme": "Basic " + secret,
 		"no token":       "Bearer ",
 		"token only":     secret,
@@ -238,7 +238,7 @@ func TestSessionCookieDoesNotRescueABadToken(t *testing.T) {
 	env := newTestEnv(t, nil)
 	env.withDisplays(t)
 	req, _ := http.NewRequest("POST", env.srv.URL+"/api/announcements", strings.NewReader(`{"message":"x"}`))
-	req.Header.Set("Authorization", "Bearer nbk_wrong")
+	req.Header.Set("Authorization", "Bearer gdk_wrong")
 	resp, err := env.client.Do(req) // carries the admin's session cookie
 	if err != nil {
 		t.Fatal(err)
@@ -253,7 +253,7 @@ func TestWrongTokensAreRateLimitedPerAddress(t *testing.T) {
 	env := newTestEnv(t, nil)
 	secret := env.withDisplays(t)
 	for range 20 {
-		env.bearer(t, "POST", "/api/announcements", `{"message":"x"}`, "nbk_wrong", nil)
+		env.bearer(t, "POST", "/api/announcements", `{"message":"x"}`, "gdk_wrong", nil)
 	}
 	status, body := env.bearer(t, "POST", "/api/announcements", `{"message":"x"}`, secret, nil)
 	if status != http.StatusTooManyRequests || !strings.Contains(body, `"rate_limited"`) {
@@ -265,7 +265,7 @@ func TestTokensNeverReachTheLog(t *testing.T) {
 	env := newTestEnv(t, nil)
 	secret := env.withDisplays(t)
 	env.bearer(t, "POST", "/api/announcements", `{"message":"private message"}`, secret, nil)
-	env.bearer(t, "POST", "/api/announcements", `{"message":"x"}`, "nbk_a-wrong-token-value", nil)
+	env.bearer(t, "POST", "/api/announcements", `{"message":"x"}`, "gdk_a-wrong-token-value", nil)
 	env.bearer(t, "POST", "/api/announcements", `{"message":"x","seconds":0}`, secret, nil)
 	logs := env.logs.String()
 	if !strings.Contains(logs, "announcement posted") {

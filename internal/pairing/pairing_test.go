@@ -9,9 +9,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stijnvandepol/nookboard/internal/displays"
-	"github.com/stijnvandepol/nookboard/internal/ratelimit"
-	"github.com/stijnvandepol/nookboard/internal/store"
+	"github.com/stijnvandepol/gdash/internal/displays"
+	"github.com/stijnvandepol/gdash/internal/ratelimit"
+	"github.com/stijnvandepol/gdash/internal/store"
 )
 
 type testClock struct{ t time.Time }
@@ -21,7 +21,7 @@ func (c *testClock) now() time.Time { return c.t }
 func newTestService(t *testing.T) (*Service, *testClock) {
 	t.Helper()
 	ctx := context.Background()
-	st, err := store.Open(ctx, filepath.Join(t.TempDir(), "nookboard.db"))
+	st, err := store.Open(ctx, filepath.Join(t.TempDir(), "gdash.db"))
 	if err != nil {
 		t.Fatal(err)
 	}

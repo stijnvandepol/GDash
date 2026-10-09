@@ -1,12 +1,12 @@
-// Command nookboard runs the Nookboard server: it fetches dashboard data, serves
+// Command gdash runs the GDash server: it fetches dashboard data, serves
 // display pages and keeps a Cast receiver on a TV.
 //
 // Usage:
 //
-//	nookboard            start the server
-//	nookboard discover   list Cast devices on the local network
-//	nookboard status A   show what the Cast device at address A is doing
-//	nookboard version    print the version
+//	gdash            start the server
+//	gdash discover   list Cast devices on the local network
+//	gdash status A   show what the Cast device at address A is doing
+//	gdash version    print the version
 package main
 
 import (
@@ -24,19 +24,19 @@ import (
 	"time"
 	_ "time/tzdata"
 
-	"github.com/stijnvandepol/nookboard/internal/api"
-	"github.com/stijnvandepol/nookboard/internal/apitoken"
-	"github.com/stijnvandepol/nookboard/internal/auth"
-	"github.com/stijnvandepol/nookboard/internal/backup"
-	"github.com/stijnvandepol/nookboard/internal/cast"
-	"github.com/stijnvandepol/nookboard/internal/display"
-	"github.com/stijnvandepol/nookboard/internal/pairing"
-	"github.com/stijnvandepol/nookboard/internal/photos"
-	"github.com/stijnvandepol/nookboard/internal/secret"
-	"github.com/stijnvandepol/nookboard/internal/settings"
-	"github.com/stijnvandepol/nookboard/internal/store"
-	"github.com/stijnvandepol/nookboard/internal/weather"
-	"github.com/stijnvandepol/nookboard/web"
+	"github.com/stijnvandepol/gdash/internal/api"
+	"github.com/stijnvandepol/gdash/internal/apitoken"
+	"github.com/stijnvandepol/gdash/internal/auth"
+	"github.com/stijnvandepol/gdash/internal/backup"
+	"github.com/stijnvandepol/gdash/internal/cast"
+	"github.com/stijnvandepol/gdash/internal/display"
+	"github.com/stijnvandepol/gdash/internal/pairing"
+	"github.com/stijnvandepol/gdash/internal/photos"
+	"github.com/stijnvandepol/gdash/internal/secret"
+	"github.com/stijnvandepol/gdash/internal/settings"
+	"github.com/stijnvandepol/gdash/internal/store"
+	"github.com/stijnvandepol/gdash/internal/weather"
+	"github.com/stijnvandepol/gdash/web"
 )
 
 const (
@@ -86,17 +86,17 @@ func main() {
 	case os.Args[1] == "version":
 		fmt.Println(currentVersion())
 	default:
-		err = errors.New("usage: nookboard | nookboard discover | nookboard status <device-address> | nookboard version")
+		err = errors.New("usage: gdash | gdash discover | gdash status <device-address> | gdash version")
 	}
 	if err != nil {
-		logger.Error("nookboard stopped", "error", err)
+		logger.Error("gdash stopped", "error", err)
 		os.Exit(1)
 	}
 }
 
 // newAuthService prepares login. On a fresh install it prints a one-time
 // setup token to the log: whoever can read the log (the person who started
-// Nookboard) can create the first account, nobody else on the network.
+// GDash) can create the first account, nobody else on the network.
 func newAuthService(ctx context.Context, db *store.Store, logger *slog.Logger) (*auth.Service, error) {
 	token, err := auth.NewSetupToken()
 	if err != nil {
@@ -111,7 +111,7 @@ func newAuthService(ctx context.Context, db *store.Store, logger *slog.Logger) (
 		return nil, err
 	}
 	if needed {
-		logger.Warn("Nookboard is not set up yet. Open the web interface and enter this setup token.", "setup_token", token)
+		logger.Warn("GDash is not set up yet. Open the web interface and enter this setup token.", "setup_token", token)
 	}
 	return service, nil
 }
@@ -121,11 +121,11 @@ func serve(ctx context.Context, logger *slog.Logger) error {
 	if err != nil {
 		return err
 	}
-	logger.Info("nookboard starting", "version", currentVersion())
+	logger.Info("gdash starting", "version", currentVersion())
 	if adopted, err := adoptOldDatabase(cfg.dataDir); err != nil {
 		return err
-	} else if adopted {
-		logger.Info("renamed the Daycast database to " + databaseName)
+	} else if adopted != "" {
+		logger.Info("renamed the database of an earlier version", "from", adopted, "to", databaseName)
 	}
 	db, err := store.Open(ctx, filepath.Join(cfg.dataDir, databaseName))
 	if err != nil {
@@ -182,7 +182,7 @@ func serve(ctx context.Context, logger *slog.Logger) error {
 		DashboardsChanged: func() {
 			// A dashboard can start or stop showing a Home Assistant entity.
 			if err := sources.sync(ctx); err != nil {
-				logger.Error("could not follow the dashboard change; restart Nookboard", "error", err)
+				logger.Error("could not follow the dashboard change; restart GDash", "error", err)
 			}
 			publisher.Refresh(ctx)
 		},
@@ -195,7 +195,7 @@ func serve(ctx context.Context, logger *slog.Logger) error {
 		},
 		SettingsChanged: func() {
 			if err := sources.sync(ctx); err != nil {
-				logger.Error("could not apply the new settings; restart Nookboard", "error", err)
+				logger.Error("could not apply the new settings; restart GDash", "error", err)
 			}
 			// The display language travels in the snapshots.
 			publisher.Refresh(ctx)
@@ -261,7 +261,7 @@ func listen(ctx context.Context, addr string, handler http.Handler, logger *slog
 			logger.Warn("shutdown did not finish cleanly", "error", err)
 		}
 	}()
-	logger.Info("nookboard listening; open the web interface at / on this address", "addr", addr)
+	logger.Info("gdash listening; open the web interface at / on this address", "addr", addr)
 	if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		return err
 	}

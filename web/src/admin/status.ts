@@ -32,7 +32,7 @@ export function describeCast(status: CastStatus | undefined): string {
     case 'standby':
       return `TV in standby since ${since}`;
     case 'other_app':
-      return 'Another app is on the TV; Nookboard waits until it stops';
+      return 'Another app is on the TV; GDash waits until it stops';
     case 'resting':
       return 'Outside active hours';
     case 'unreachable':

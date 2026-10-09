@@ -7,7 +7,7 @@ import (
 	"text/tabwriter"
 	"time"
 
-	"github.com/stijnvandepol/nookboard/internal/cast"
+	"github.com/stijnvandepol/gdash/internal/cast"
 )
 
 // discover lists the Cast devices on the network, to find a TV's ID.
@@ -43,7 +43,7 @@ func status(ctx context.Context, device string) error {
 	if err != nil {
 		return err
 	}
-	fmt.Printf("standby: %v  active input: %v  nookboard may launch: %v\n", st.IsStandBy, st.IsActiveInput, cast.ShouldRelaunch(st))
+	fmt.Printf("standby: %v  active input: %v  gdash may launch: %v\n", st.IsStandBy, st.IsActiveInput, cast.ShouldRelaunch(st))
 	if len(st.Applications) == 0 {
 		fmt.Println("no apps running")
 		return nil

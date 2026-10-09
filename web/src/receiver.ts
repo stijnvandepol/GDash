@@ -1,4 +1,4 @@
-// Entry point for the Cast receiver. The Nookboard server is the Cast sender
+// Entry point for the Cast receiver. The GDash server is the Cast sender
 // and pushes snapshots over a custom namespace, so this page never connects
 // to the server itself. That avoids mixed content: the receiver is served
 // over HTTPS, the server usually runs on plain HTTP in the home network.
@@ -13,7 +13,7 @@ restoreSnapshot(STORAGE_ID, isSnapshot);
 
 const context = cast.framework.CastReceiverContext.getInstance();
 const options = new cast.framework.CastReceiverOptions();
-// Nookboard shows no media; without this the device closes the receiver
+// GDash shows no media; without this the device closes the receiver
 // when nothing plays.
 options.disableIdleTimeout = true;
 options.skipPlayersLoad = true;

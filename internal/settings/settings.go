@@ -1,4 +1,4 @@
-// Package settings manages what Nookboard fetches: the weather location, news
+// Package settings manages what GDash fetches: the weather location, news
 // feeds, calendars and the Home Assistant connection. They are edited in the web interface and stored in
 // SQLite; environment variables only fill them on the very first start.
 package settings
@@ -14,13 +14,13 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/stijnvandepol/nookboard/internal/calendar"
-	"github.com/stijnvandepol/nookboard/internal/homeassistant"
-	"github.com/stijnvandepol/nookboard/internal/news"
-	"github.com/stijnvandepol/nookboard/internal/secret"
-	"github.com/stijnvandepol/nookboard/internal/store"
-	"github.com/stijnvandepol/nookboard/internal/validation"
-	"github.com/stijnvandepol/nookboard/internal/weather"
+	"github.com/stijnvandepol/gdash/internal/calendar"
+	"github.com/stijnvandepol/gdash/internal/homeassistant"
+	"github.com/stijnvandepol/gdash/internal/news"
+	"github.com/stijnvandepol/gdash/internal/secret"
+	"github.com/stijnvandepol/gdash/internal/store"
+	"github.com/stijnvandepol/gdash/internal/validation"
+	"github.com/stijnvandepol/gdash/internal/weather"
 )
 
 // Limits per kind. Every feed costs a request per refresh, and every
@@ -190,7 +190,7 @@ func (s *Service) Language(ctx context.Context) (string, error) {
 }
 
 // SetLanguage chooses the display language. It returns a
-// *validation.Error for a language Nookboard has no texts for.
+// *validation.Error for a language GDash has no texts for.
 func (s *Service) SetLanguage(ctx context.Context, language string) error {
 	if !slices.Contains(Languages, language) {
 		var errs validation.Collector

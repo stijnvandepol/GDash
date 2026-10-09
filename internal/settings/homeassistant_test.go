@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/stijnvandepol/nookboard/internal/secret"
+	"github.com/stijnvandepol/gdash/internal/secret"
 )
 
 const haToken = "eyJhbGciOiJIUzI1NiJ9.secret-part"

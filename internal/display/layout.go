@@ -11,8 +11,8 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"github.com/stijnvandepol/nookboard/internal/homeassistant"
-	"github.com/stijnvandepol/nookboard/internal/validation"
+	"github.com/stijnvandepol/gdash/internal/homeassistant"
+	"github.com/stijnvandepol/gdash/internal/validation"
 )
 
 // Every dashboard uses the same 16:9 grid, so a layout looks the same on any

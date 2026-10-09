@@ -2,6 +2,6 @@
 -- means the colour follows from the calendar's place in the list
 -- (internal/settings).
 --
--- Rollback: restore nookboard.db.bak-v11, which Nookboard writes before applying
+-- Rollback: restore gdash.db.bak-v11, which GDash writes before applying
 -- this migration.
 ALTER TABLE sources ADD COLUMN color TEXT NOT NULL DEFAULT '';

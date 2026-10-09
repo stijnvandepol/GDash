@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/stijnvandepol/nookboard/internal/validation"
+	"github.com/stijnvandepol/gdash/internal/validation"
 )
 
 func TestValidate(t *testing.T) {

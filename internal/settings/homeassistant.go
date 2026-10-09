@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/stijnvandepol/nookboard/internal/homeassistant"
-	"github.com/stijnvandepol/nookboard/internal/validation"
+	"github.com/stijnvandepol/gdash/internal/homeassistant"
+	"github.com/stijnvandepol/gdash/internal/validation"
 )
 
 const (

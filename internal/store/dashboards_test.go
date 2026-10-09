@@ -6,9 +6,9 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/stijnvandepol/nookboard/internal/display"
-	"github.com/stijnvandepol/nookboard/internal/displays"
-	"github.com/stijnvandepol/nookboard/internal/schedule"
+	"github.com/stijnvandepol/gdash/internal/display"
+	"github.com/stijnvandepol/gdash/internal/displays"
+	"github.com/stijnvandepol/gdash/internal/schedule"
 )
 
 func morning() display.Dashboard {

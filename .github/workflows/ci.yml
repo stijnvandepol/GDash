@@ -61,7 +61,7 @@ jobs:
         run: go test -race -count=1 ./...
       - name: Vulnerability scan
         run: go run golang.org/x/vuln/cmd/govulncheck@v1.8.0 ./...
-      - run: go build ./cmd/nookboard
+      - run: go build ./cmd/gdash
 
   e2e:
     needs: web
@@ -81,7 +81,7 @@ jobs:
           name: web-dist
           path: web/dist
       - name: Build the server the browser tests run against
-        run: go build ./cmd/nookboard
+        run: go build ./cmd/gdash
       - run: npm ci
         working-directory: web
       # The browser download is cached by Playwright version (the lock file);

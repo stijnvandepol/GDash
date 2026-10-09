@@ -1,4 +1,4 @@
-module github.com/stijnvandepol/nookboard
+module github.com/stijnvandepol/gdash
 
 go 1.26.9
 

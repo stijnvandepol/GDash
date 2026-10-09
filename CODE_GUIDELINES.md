@@ -213,13 +213,13 @@ Fill this in per repository. It is the one section an agent cannot infer, and th
 ```
 Stack:            Go 1.26.9+, standard library first (x/net, x/crypto for argon2id, modernc.org/sqlite). Svelte 5,
                   TypeScript 6, Vite 8 in web/. All UI text, docs and code are in English.
-Run locally:      cd web && npm run build && cd .. && go run ./cmd/nookboard
+Run locally:      cd web && npm run build && cd .. && go run ./cmd/gdash
 Run tests:        go test ./... (CI adds -race, which needs cgo) && (cd web && npm test)
 Lint / format:    gofmt -l . && go vet ./... && (cd web && npm run check)
 Security scan:    go run golang.org/x/vuln/cmd/govulncheck@v1.8.0 ./... && (cd web && npm audit --audit-level=high)
-Build:            (cd web && npm ci && npm run build) && go build ./cmd/nookboard, or docker build .
+Build:            (cd web && npm ci && npm run build) && go build ./cmd/gdash, or docker build .
 CI:               .github/workflows/ci.yml runs all of the above on every push.
-Architecture:     One Go binary (cmd/nookboard). internal/datahub fetches external data once for all displays,
+Architecture:     One Go binary (cmd/gdash). internal/datahub fetches external data once for all displays,
                   keeps the last good value and follows the settings at runtime; internal/settings owns the
                   location, feeds and calendars (secrets sealed by internal/secret, fetched through the
                   address guard in internal/outbound); internal/news, internal/weather and internal/calendar

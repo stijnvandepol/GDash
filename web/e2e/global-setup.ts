@@ -16,28 +16,28 @@ const OFFLINE_FEED = 'https://feeds.example.invalid/rss.xml';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 
-/** The server binary: NOOKBOARD_E2E_BINARY, else the one `go build` leaves in the repository root. */
+/** The server binary: GDASH_E2E_BINARY, else the one `go build` leaves in the repository root. */
 function findBinary(): string {
-  const candidates = process.env.NOOKBOARD_E2E_BINARY
-    ? [path.resolve(process.env.NOOKBOARD_E2E_BINARY)]
-    : [path.resolve(here, '../../nookboard'), path.resolve(here, '../../nookboard.exe')];
+  const candidates = process.env.GDASH_E2E_BINARY
+    ? [path.resolve(process.env.GDASH_E2E_BINARY)]
+    : [path.resolve(here, '../../gdash'), path.resolve(here, '../../gdash.exe')];
   const found = candidates.find((candidate) => existsSync(candidate));
   if (!found) {
     throw new Error(
-      `No Nookboard binary found at ${candidates.join(' or ')}. Run "go build ./cmd/nookboard" in the repository root, or set NOOKBOARD_E2E_BINARY.`,
+      `No GDash binary found at ${candidates.join(' or ')}. Run "go build ./cmd/gdash" in the repository root, or set GDASH_E2E_BINARY.`,
     );
   }
   return found;
 }
 
-/** The caller's environment without its NOOKBOARD_* settings, so a developer's own setup never reaches the test server. */
+/** The caller's environment without its GDASH_* settings, so a developer's own setup never reaches the test server. */
 function serverEnvironment(dataDir: string): NodeJS.ProcessEnv {
-  const env = Object.fromEntries(Object.entries(process.env).filter(([key]) => !key.startsWith('NOOKBOARD_')));
+  const env = Object.fromEntries(Object.entries(process.env).filter(([key]) => !key.startsWith('GDASH_')));
   return {
     ...env,
-    NOOKBOARD_ADDR: `127.0.0.1:${port()}`,
-    NOOKBOARD_DATA_DIR: dataDir,
-    NOOKBOARD_NEWS_FEED: OFFLINE_FEED,
+    GDASH_ADDR: `127.0.0.1:${port()}`,
+    GDASH_DATA_DIR: dataDir,
+    GDASH_NEWS_FEED: OFFLINE_FEED,
   };
 }
 
@@ -60,7 +60,7 @@ async function waitUntilServing(): Promise<void> {
  * function that stops it and removes the data afterwards.
  */
 export default async function globalSetup(): Promise<() => Promise<void>> {
-  const dataDir = await mkdtemp(path.join(tmpdir(), 'nookboard-e2e-'));
+  const dataDir = await mkdtemp(path.join(tmpdir(), 'gdash-e2e-'));
   const server = spawn(findBinary(), [], { env: serverEnvironment(dataDir), stdio: ['ignore', 'ignore', 'pipe'] });
 
   let log = '';
@@ -96,13 +96,13 @@ export default async function globalSetup(): Promise<() => Promise<void>> {
     const timeout = new Promise<never>((_, reject) =>
       setTimeout(() => reject(new Error(`No setup token in the server log within ${START_TIMEOUT_MS / 1000}s. Log:\n${log}`)), START_TIMEOUT_MS),
     );
-    process.env.NOOKBOARD_E2E_SETUP_TOKEN = await Promise.race([token, timeout]);
+    process.env.GDASH_E2E_SETUP_TOKEN = await Promise.race([token, timeout]);
     await waitUntilServing();
   } catch (err) {
     await stop();
     throw err;
   }
   // 24 hex characters: longer than the 10 the server asks for, and new every run.
-  process.env.NOOKBOARD_E2E_PASSWORD = randomBytes(12).toString('hex');
+  process.env.GDASH_E2E_PASSWORD = randomBytes(12).toString('hex');
   return stop;
 }

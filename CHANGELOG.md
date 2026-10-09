@@ -1,16 +1,16 @@
 # Changelog
 
-All notable changes to Nookboard. Versions follow [Semantic Versioning](https://semver.org);
+All notable changes to GDash. Versions follow [Semantic Versioning](https://semver.org);
 the format follows [Keep a Changelog](https://keepachangelog.com).
 
 ## Unreleased
 
 ### Changed
 
-- The project is renamed from Daycast to Nookboard: the program is
-  `nookboard`, the image `ghcr.io/stijnvandepol/nookboard` and the
-  environment variables start with `NOOKBOARD_`. On its first start
-  Nookboard renames an existing `daycast.db`, so the configuration stays,
+- The project is renamed from Daycast to GDash: the program is
+  `gdash`, the image `ghcr.io/stijnvandepol/gdash` and the
+  environment variables start with `GDASH_`. On its first start
+  GDash renames an existing `daycast.db`, so the configuration stays,
   and dashboard files exported by Daycast still import. Log in again, and
   pair screens that show the page in a browser again; cast screens carry on.
 
@@ -34,11 +34,11 @@ the format follows [Keep a Changelog](https://keepachangelog.com).
   branded login and setup screens that explain where the setup token is.
 - Browser tests of the main journeys and an accessibility check of every
   page in light and dark mode, in CI.
-- `NOOKBOARD_TRUSTED_PROXIES`: behind a reverse proxy, its forwarding
+- `GDASH_TRUSTED_PROXIES`: behind a reverse proxy, its forwarding
   headers set the client address and make cookies Secure over HTTPS.
 - Home Assistant: connect it with a long-lived access token under Settings
   and add a Home Assistant widget that shows up to eight sensors or
-  switches, in English or Dutch. Nookboard only reads, once a minute, and
+  switches, in English or Dutch. GDash only reads, once a minute, and
   stores the token encrypted.
 - Text size per display (100 to 200 %), for smart displays, tablets and
   small screens; the dashboard now fills screens that are not 16:9.

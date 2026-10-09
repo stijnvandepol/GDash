@@ -13,17 +13,17 @@ const snapshot = {
 
 describe('isPreviewMessage', () => {
   it('accepts a text size with or without a draft', () => {
-    expect(isPreviewMessage({ type: 'nookboard.preview', textScale: 150, draft: null })).toBe(true);
-    expect(isPreviewMessage({ type: 'nookboard.preview', textScale: 100, draft })).toBe(true);
+    expect(isPreviewMessage({ type: 'gdash.preview', textScale: 150, draft: null })).toBe(true);
+    expect(isPreviewMessage({ type: 'gdash.preview', textScale: 100, draft })).toBe(true);
   });
 
   it('refuses anything else', () => {
     expect(isPreviewMessage(null)).toBe(false);
-    expect(isPreviewMessage('nookboard.preview')).toBe(false);
+    expect(isPreviewMessage('gdash.preview')).toBe(false);
     expect(isPreviewMessage({ type: 'other', textScale: 100, draft: null })).toBe(false);
-    expect(isPreviewMessage({ type: 'nookboard.preview', textScale: '150', draft: null })).toBe(false);
-    expect(isPreviewMessage({ type: 'nookboard.preview', textScale: 100 })).toBe(false);
-    expect(isPreviewMessage({ type: 'nookboard.preview', textScale: 100, draft: { name: 'x' } })).toBe(false);
+    expect(isPreviewMessage({ type: 'gdash.preview', textScale: '150', draft: null })).toBe(false);
+    expect(isPreviewMessage({ type: 'gdash.preview', textScale: 100 })).toBe(false);
+    expect(isPreviewMessage({ type: 'gdash.preview', textScale: 100, draft: { name: 'x' } })).toBe(false);
   });
 });
 
