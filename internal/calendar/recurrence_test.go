@@ -51,7 +51,7 @@ func TestParseBoundsHostileRecurrences(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			began := time.Now()
 			events := parseOne(t, tt.props...)
-			if took := time.Since(began); took > 200*time.Millisecond {
+			if took := time.Since(began); took > raceSlowdown*200*time.Millisecond {
 				t.Errorf("Parse took %v, want under 200ms", took)
 			}
 			if len(events) > maxOccurrencesPerEvent {

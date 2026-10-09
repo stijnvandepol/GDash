@@ -79,7 +79,8 @@ func (f *fakeSources) set(places []weather.Place, err error, entries map[string]
 }
 
 // testReadTimeout is the test server's read timeout.
-const testReadTimeout = 300 * time.Millisecond
+// It must leave room for an 8 MB photo upload under the race detector.
+const testReadTimeout = 2 * time.Second
 
 type testEnv struct {
 	srv     *httptest.Server
