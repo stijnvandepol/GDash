@@ -1,0 +1,26 @@
+# Configuration for the secret scan in .github/workflows/ci.yml: the default
+# rules plus an allowlist of the three findings that were checked by hand and
+# are not secrets. Each entry needs the path and the exact text, so a real
+# secret in the same file is still found.
+title = "GDash secret scan"
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Placeholder token in the curl example of the announcements guide (nbk_ and gdk_ in earlier versions)"
+condition = "AND"
+paths = ['''docs/guide\.md''']
+regexes = ['''[a-z]{3}_your_token''']
+
+[[allowlists]]
+description = "Made-up Home Assistant token in a test that checks it is never returned"
+condition = "AND"
+paths = ['''internal/settings/homeassistant_test\.go''']
+regexes = ['''eyJhbGciOiJIUzI1NiJ9\.secret-part''']
+
+[[allowlists]]
+description = "Made-up password in a test that checks it is never written to the audit log"
+condition = "AND"
+paths = ['''internal/api/audit_test\.go''']
+regexes = ['''private-0123456789''']

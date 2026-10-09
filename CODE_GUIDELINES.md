@@ -215,8 +215,9 @@ Stack:            Go 1.26.9+, standard library first (x/net, x/crypto for argon2
                   TypeScript 6, Vite 8 in web/. All UI text, docs and code are in English.
 Run locally:      cd web && npm run build && cd .. && go run ./cmd/gdash
 Run tests:        go test ./... (CI adds -race, which needs cgo) && (cd web && npm test)
-Lint / format:    gofmt -l . && go vet ./... && (cd web && npm run check)
+Lint / format:    gofmt -l . && go vet ./... && go run honnef.co/go/tools/cmd/staticcheck@v0.8.1 ./... && (cd web && npm run check)
 Security scan:    go run golang.org/x/vuln/cmd/govulncheck@v1.8.0 ./... && (cd web && npm audit --audit-level=high)
+                  go run github.com/zricethezav/gitleaks/v8@v8.30.1 git --config .gitleaks.toml .  (whole history)
 Build:            (cd web && npm ci && npm run build) && go build ./cmd/gdash, or docker build .
 CI:               .github/workflows/ci.yml runs all of the above on every push.
 Architecture:     One Go binary (cmd/gdash). internal/datahub fetches external data once for all displays,
