@@ -69,7 +69,8 @@ func TestFingerprintDependsOnTheKey(t *testing.T) {
 	one, _ := NewBox(make([]byte, keySize))
 	other, _ := NewBox(append(make([]byte, keySize-1), 1))
 	data := []byte("https://calendar.example.org/private-0123456789/basic.ics")
-	if one.Fingerprint(data) != one.Fingerprint(data) {
+	first, again := one.Fingerprint(data), one.Fingerprint(data)
+	if first != again {
 		t.Fatal("a fingerprint changes between calls")
 	}
 	if one.Fingerprint(data) == other.Fingerprint(data) {
