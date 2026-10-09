@@ -1,10 +1,11 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { api, ApiError, slugify, type CastDevice, type Dashboard, type Display } from './api';
+  import { api, ApiError, type CastDevice, type Dashboard, type Display } from './api';
   import { errorMessage } from './errors';
   import { newestOnly } from './newest';
   import { describeCast } from './status';
   import ScheduleEditor from './ScheduleEditor.svelte';
+  import AddDisplay from './AddDisplay.svelte';
 
   let { onSessionEnded }: { onSessionEnded: () => void } = $props();
 
@@ -17,12 +18,6 @@
   let searchMessage = $state('');
   let loadError = $state('');
 
-  let newName = $state('');
-  let newId = $state('');
-  let idEdited = $state(false);
-  let newDevice = $state('');
-  let createError = $state<ApiError | null>(null);
-  let creating = $state(false);
 
   let editingId = $state<string | null>(null);
   let editName = $state('');
@@ -32,8 +27,6 @@
   let rowError = $state('');
 
   const deviceNames = $derived(new Map(devices.map((d) => [d.id, d.name])));
-  const screens = $derived(devices.filter((d) => d.hasScreen));
-  const speakers = $derived(devices.filter((d) => !d.hasScreen));
 
   onMount(() => {
     void load();
@@ -69,29 +62,6 @@
       searchMessage = handle(err);
     } finally {
       searching = false;
-    }
-  }
-
-  function nameChanged() {
-    if (!idEdited) newId = slugify(newName);
-  }
-
-  async function create(event: SubmitEvent) {
-    event.preventDefault();
-    creating = true;
-    createError = null;
-    try {
-      await api.createDisplay({ id: newId, name: newName.trim(), castDeviceId: newDevice });
-      newName = '';
-      newId = '';
-      idEdited = false;
-      newDevice = '';
-      await load();
-    } catch (err) {
-      const message = handle(err);
-      createError = err instanceof ApiError ? err : new ApiError(0, 'unknown', message);
-    } finally {
-      creating = false;
     }
   }
 
@@ -271,43 +241,4 @@
   {/if}
 </section>
 
-<form class="card" onsubmit={create}>
-  <h2>Add a display</h2>
-  <label>
-    Name
-    <input bind:value={newName} oninput={nameChanged} placeholder="Kitchen" required />
-    {#if createError?.fieldMessage('name')}<span class="field-error">{createError.fieldMessage('name')}</span>{/if}
-  </label>
-  <label>
-    Display page address
-    <span class="with-prefix">
-      <span class="prefix">/d/</span>
-      <input bind:value={newId} oninput={() => (idEdited = true)} required spellcheck="false" />
-    </span>
-    {#if createError?.fieldMessage('id')}<span class="field-error">{createError.fieldMessage('id')}</span>{/if}
-  </label>
-  <label>
-    TV
-    <select bind:value={newDevice}>
-      <option value="">No Cast: I open the page myself in a browser or kiosk</option>
-      {#each screens as dev (dev.id)}
-        <option value={dev.id}>{dev.name} ({dev.model})</option>
-      {/each}
-      {#if speakers.length > 0}
-        <optgroup label="No screen, cannot show a dashboard">
-          {#each speakers as dev (dev.id)}
-            <option value={dev.id} disabled>{dev.name} ({dev.model})</option>
-          {/each}
-        </optgroup>
-      {/if}
-    </select>
-  </label>
-  <p class="muted small">
-    {#if searching}Searching for Cast devices…{:else}
-      {searchMessage || `Found ${screens.length} TVs and screens.`}
-      <button type="button" class="link" onclick={search}>Search again</button>
-    {/if}
-  </p>
-  {#if createError && createError.fields.length === 0}<p class="error">{createError.message}</p>{/if}
-  <button type="submit" disabled={creating}>{creating ? 'Working…' : 'Add display'}</button>
-</form>
+<AddDisplay {devices} {searching} {searchMessage} onsearch={search} oncreated={load} onerror={handle} />
