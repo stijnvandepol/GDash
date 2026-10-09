@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"runtime"
 	"testing"
 	"time"
 
@@ -229,5 +230,34 @@ func TestOpenCreatesTheDataDirectory(t *testing.T) {
 	info, err := os.Stat(filepath.Dir(path))
 	if err != nil || !info.IsDir() {
 		t.Fatalf("data directory = %v, %v", info, err)
+	}
+}
+
+func TestDatabaseAndCopiesAreOwnerOnly(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("Windows has no Unix file modes")
+	}
+	ctx := context.Background()
+	path := filepath.Join(t.TempDir(), "gdash.db")
+	if err := os.WriteFile(path, nil, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	s, err := Open(ctx, path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer s.Close()
+	copyPath := path + ".copy"
+	if err := s.WriteCopy(ctx, copyPath); err != nil {
+		t.Fatal(err)
+	}
+	for _, p := range []string{path, path + "-wal", copyPath} {
+		info, err := os.Stat(p)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if mode := info.Mode().Perm(); mode != 0o600 {
+			t.Errorf("%s has mode %o, want 600", filepath.Base(p), mode)
+		}
 	}
 }

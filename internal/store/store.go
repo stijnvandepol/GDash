@@ -43,6 +43,9 @@ func Open(ctx context.Context, path string) (*Store, error) {
 	if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
 		return nil, fmt.Errorf("create data directory: %w", err)
 	}
+	if err := ownerOnly(path); err != nil {
+		return nil, err
+	}
 	dsn := "file:" + url.PathEscape(path) +
 		"?_pragma=foreign_keys(1)&_pragma=journal_mode(WAL)&_pragma=busy_timeout(5000)"
 	db, err := sql.Open("sqlite", dsn)
@@ -131,6 +134,28 @@ func (s *Store) backup(ctx context.Context, path string, version int) error {
 func (s *Store) WriteCopy(ctx context.Context, target string) error {
 	if _, err := s.db.ExecContext(ctx, "VACUUM INTO ?", target); err != nil {
 		return fmt.Errorf("copy database: %w", err)
+	}
+	if err := os.Chmod(target, databaseMode); err != nil {
+		return fmt.Errorf("restrict database copy: %w", err)
+	}
+	return nil
+}
+
+// databaseMode keeps the database, its journal and its copies readable by
+// GDash only: they hold sessions, token hashes and the sealed secrets.
+const databaseMode = 0o600
+
+// ownerOnly makes the database file at path readable by its owner only,
+// creating it empty when it does not exist yet. SQLite gives its journal
+// files the mode of the database file.
+func ownerOnly(path string) error {
+	f, err := os.OpenFile(path, os.O_CREATE|os.O_RDONLY, databaseMode)
+	if err != nil {
+		return fmt.Errorf("create database file: %w", err)
+	}
+	f.Close()
+	if err := os.Chmod(path, databaseMode); err != nil {
+		return fmt.Errorf("restrict database file: %w", err)
 	}
 	return nil
 }
