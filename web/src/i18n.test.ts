@@ -37,6 +37,12 @@ describe('i18n', () => {
     expect(t('pairTitle')).toBe('Koppel dit scherm');
   });
 
+  it('tells a new screen where to pair it', () => {
+    const help = t('pairHelp', { address: '192.168.1.20:8420', id: 'kitchen' });
+    expect(help).toContain('192.168.1.20:8420');
+    expect(help).toContain('"kitchen"');
+  });
+
   it('fills in placeholders', () => {
     expect(t('updated', { time: '10:31' })).toBe('Updated 10:31');
     speak('nl');

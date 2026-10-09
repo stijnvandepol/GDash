@@ -75,6 +75,11 @@
     [4, -6],
   ];
   const shift = $derived(SHIFTS[Math.floor(clock.now.getTime() / 60000 / SHIFT_EVERY_MINUTES) % SHIFTS.length] ?? [0, 0]);
+
+  /** The display this page shows, from its address /d/<id>. */
+  function pairingDisplayId(): string {
+    return location.pathname.split('/').filter(Boolean).pop() ?? '';
+  }
 </script>
 
 <svelte:window bind:innerWidth bind:innerHeight />
@@ -86,9 +91,12 @@
     <p class="message">{display.problem}</p>
   {:else if display.pairingCode}
     <div class="pairing">
+      <p class="pairing-brand">GDash</p>
       <p class="pairing-title">{t('pairTitle')}</p>
       <p class="pairing-code">{display.pairingCode.code}</p>
-      <p class="pairing-help">{t('pairHelp')}</p>
+      <!-- Where to go and what to pick: this page knows its own address and
+           display, which is exactly what the person with the phone needs. -->
+      <p class="pairing-help">{t('pairHelp', { address: location.host, id: pairingDisplayId() })}</p>
     </div>
   {:else if dashboard}
     <div
@@ -196,6 +204,15 @@
     justify-content: center;
     gap: 3vmin;
     text-align: center;
+  }
+  .pairing-brand {
+    position: absolute;
+    top: 6vmin;
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: 3.4vmin;
+    font-weight: 600;
+    color: var(--text-muted);
   }
   .pairing-title {
     margin: 0;
