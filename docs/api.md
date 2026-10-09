@@ -3,7 +3,8 @@
 All endpoints are under `/api` and exchange JSON. Routes marked "admin" need
 the session cookie (`nookboard_session`) that `POST /api/setup` and
 `POST /api/sessions` set. Display streams need a paired screen's cookie
-(`nookboard_display`) or an admin session.
+(`nookboard_display`) or an admin session. `POST /api/announcements` also takes
+an API token, see [Announcements](#announcements).
 The handlers in `internal/api` document each endpoint where it is defined;
 this page is the overview.
 
@@ -34,6 +35,10 @@ come from another site (cross-site request forgery protection).
 | `PUT /api/me/password` `{currentPassword, newPassword}` | admin | `204`; every other session of the account ends | `401`, `422` (wrong current or too short new password), `429 rate_limited` |
 | `GET /api/system` | admin | `200 {"version"}` | `401` |
 | `GET /api/audit-events?limit=100` | admin | `200 {"events": [{at, actor, action, detail, ip}]}`, newest first, at most 200 | `400`, `401` |
+| `GET /api/api-tokens` | admin | `200 {"tokens": [{id, name, createdAt, lastUsedAt}]}`, oldest first, never the secrets | `401` |
+| `POST /api/api-tokens` `{name}` | admin | `201` token with its secret in `token`, shown this once | `401`, `409` at 10 tokens, `422` |
+| `DELETE /api/api-tokens/{id}` | admin | `204`; automations that use it get `401` from then on | `401`, `404` |
+| `POST /api/announcements` `{message, title?, seconds?, displays?}` | API token or admin | `201 {title?, message, expiresAt, displays}` | `400`, `401 invalid_token` or `not_logged_in`, `422`, `429 rate_limited` |
 | `GET /api/displays` | admin | `200 {"displays": [display + pairedScreens + cast?]}` | `401` |
 | `POST /api/displays` `{id, name, castDeviceId, activeFrom?, activeUntil?, schedule?}` | admin | `201` display | `401`, `409 conflict`, `422` |
 | `PATCH /api/displays/{id}` `{name?, castDeviceId?, dashboardId?, activeFrom?, activeUntil?, schedule?, rotation?, rotateSeconds?, textScale?}` | admin | `200` display | `401`, `404 not_found`, `422` (also for an unknown dashboard) |
@@ -87,6 +92,60 @@ replaced on every launch.
 
 Open streams re-check their access every 20 seconds, so unpairing stops a
 screen within that time. Deleting a display unpairs all its screens.
+
+## Announcements
+
+An automation, such as a Home Assistant `rest_command`, posts a short message
+that every display (or the ones you name) shows over its dashboard for a while:
+
+```sh
+curl -X POST http://nookboard.local:8420/api/announcements \
+  -H "Authorization: Bearer $NOOKBOARD_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"title": "Laundry", "message": "The washing machine is done", "seconds": 60}'
+```
+
+| Field | Rules |
+|---|---|
+| `message` | required, 1 to 280 characters, plain text without line breaks or other control characters |
+| `title` | optional, up to 60 characters, same rules |
+| `seconds` | optional, 5 to 3600, default 60: how long it stays on screen |
+| `displays` | optional list of display IDs, default all displays. An unknown ID is a `422`, and so is an empty list |
+
+Leading and trailing spaces are trimmed. The answer is `201` with the message
+as the screens get it: `{"title": "Laundry", "message": "…", "expiresAt": "…", "displays": ["kitchen", "hall"]}`.
+
+**Authentication.** Make an API token under Settings, API tokens (or with
+`POST /api/api-tokens`) and send it as `Authorization: Bearer nbk_…`. Only the
+token's SHA-256 hash is stored, so the token is shown once. There are at most 10
+tokens, and `lastUsedAt` shows when each was last used. A token is valid for this
+route only: every other route answers `401` to it. Revoking a token takes effect
+at once. A request with an `Authorization` header is judged on that header alone,
+so a session cookie sent along never rescues a wrong token. Without the header an
+admin session works as well, which is how the web interface sends its test
+announcement. Twenty wrong tokens from one address block that address for 15
+minutes (`429`).
+
+**Cross-site requests.** The cross-site request forgery protection covers this route
+for sessions and tokens alike: a browser request that is marked cross-site, or
+that carries another `Origin`, is refused with `403`, also with a valid token.
+Scripts and automations send neither header and are not affected. A web page on
+another site can therefore not use the token, even if it had it.
+
+**Delivery.** Announcements are kept in memory, so they are gone after a restart.
+Each display shows the newest announcement aimed at it: a newer one replaces the
+older one on the displays it names and leaves the other displays alone, so there
+is no queue of messages that went stale while they waited. The snapshot carries
+`announcement: {title?, message, expiresAt}` next to its `serverTime`; the screen
+drops the message at `expiresAt` by itself, with the server's clock when the
+device clock is far off, and the server publishes again at the expiry for
+screens that connect later. A display outside its active hours gets no
+announcement. Browser screens get it over the event stream and Cast screens over
+the Cast channel, in the same snapshot. The message is shown as text, never as HTML.
+
+**Limits.** A token (or admin) may post 30 announcements per minute; more is
+`429 rate_limited` with `Retry-After: 60`, counted before the body is checked.
+The log records who posted and to how many displays, never the token or the message.
 
 ## Settings
 
@@ -206,7 +265,8 @@ without `id`; an entity Home Assistant does not know is left out.
 
 **snapshot event:** `{"type": "snapshot", "version": 3, "serverTime": "…", "language": "nl", "dashboard": {…}, "data": {"weather.current": {"value": {…}, "fetchedAt": "…", "staleAfter": "…", "failing": false}}}`.
 Each display gets the dashboard for the current time (its schedule or its own), and `data` only holds the sources its widgets use. `active` is false outside the
-display's active hours; `data` is then empty.
+display's active hours; `data` is then empty. `announcement` is only present while a message is shown, see
+[Announcements](#announcements).
 A preview snapshot has the same shape: `active` is true, the household's `language` and the chosen `textScale`
 (default 100) are set, there are no `pages`, and `data` holds the sources of that one dashboard. Its `version` is a
 hash of the content, so a poller sees whether anything changed. Data a draft needs that no saved dashboard uses yet

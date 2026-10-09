@@ -29,6 +29,13 @@ fully trust, such as a guest's phone.
   encrypted (AES-256-GCM) with a key file next to the database, never
   returned by the API and never logged. Nookboard only reads from Home
   Assistant.
+- **API tokens:** automations such as Home Assistant post announcements with
+  a token made under Settings. Only its SHA-256 hash is stored, it is shown
+  once, there are at most 10, and revoking one works at once. A token opens
+  the announcement route only, wrong tokens block the sending address for 15
+  minutes, each token is limited to 30 announcements a minute, and tokens
+  and messages are never logged. Announcements are plain text, kept in memory
+  and removed from the screen on time.
 - **Photos:** only served to logged-in admins and paired screens; an
   upload is accepted by its content (JPEG, PNG or WebP), not by its name.
 - **Outgoing requests:** feeds, calendars and Home Assistant are fetched with a

@@ -129,6 +129,98 @@ motion as detected or clear, people as home or away. The screen updates
 once a minute. Home Assistant's own dashboards remain the place to control
 things; Nookboard is the calm screen that shows the day.
 
+## Announcements from Home Assistant or any automation
+
+Home Assistant, a script or any other automation can put a short message on
+the TVs, such as "The washing machine is done". It appears in a card over the
+dashboard, in the colours of the display's theme, and goes away after the
+time you choose. Nothing else in Nookboard can be changed with it.
+
+1. In Nookboard, under Settings, **API tokens**, make a token with the name of
+   the automation, for example "Home Assistant". Copy it now: it is shown once,
+   and Nookboard keeps only a fingerprint of it. You can make up to 10 and
+   revoke any of them later; the list shows when each was last used.
+2. Try it under Settings, **Send a test announcement**. The message shows on
+   every display that is inside its active hours.
+3. Send one from a command line, with your own address and token:
+
+   ```sh
+   curl -X POST http://192.168.1.10:8420/api/announcements \
+     -H "Authorization: Bearer nbk_your_token" \
+     -H "Content-Type: application/json" \
+     -d '{"title": "Laundry", "message": "The washing machine is done", "seconds": 60}'
+   ```
+
+   `message` is required (up to 280 characters of plain text), `title` is
+   optional (up to 60), `seconds` is how long it stays (5 to 3600, default 60)
+   and `displays` is a list of display IDs such as `["kitchen"]` (default: all
+   displays). Anything wrong comes back as a list of fields to correct, see
+   [the API](api.md#announcements).
+
+A newer announcement replaces the older one on the displays it is aimed at, so
+the screen never shows a backlog. Announcements are not stored: after a restart
+of Nookboard they are gone. A display outside its active hours stays dark.
+
+### Home Assistant example
+
+Keep the token out of your configuration, in `secrets.yaml`. The word
+`Bearer` and the space belong to the value:
+
+```yaml
+# secrets.yaml
+nookboard_authorization: "Bearer nbk_your_token"
+```
+
+Then add a `rest_command` to `configuration.yaml` (restart Home Assistant, or
+reload the REST commands, after changing it):
+
+```yaml
+# configuration.yaml
+rest_command:
+  nookboard_announce:
+    url: "http://192.168.1.10:8420/api/announcements"
+    method: post
+    content_type: "application/json"
+    headers:
+      authorization: !secret nookboard_authorization
+    payload: >-
+      {"title": {{ title | default('') | tojson }},
+       "message": {{ message | tojson }},
+       "seconds": {{ seconds | default(60) }}}
+```
+
+The address is the one you open Nookboard with, reachable from Home Assistant.
+An automation that announces when the washing machine is done, which is when
+the power of its smart plug stays below 3 W for two minutes:
+
+```yaml
+# automations.yaml
+- alias: "Announce that the washing machine is done"
+  triggers:
+    - trigger: numeric_state
+      entity_id: sensor.washing_machine_power
+      below: 3
+      for: "00:02:00"
+  actions:
+    - action: rest_command.nookboard_announce
+      data:
+        title: "Laundry"
+        message: "The washing machine is done"
+        seconds: 120
+```
+
+The trigger fires when the power drops below the limit, so it does not repeat
+while the machine stands idle. Raise the limit if your machine idles at a few
+watts. Older versions of Home Assistant spell `triggers:` and `trigger:` as
+`trigger:` and `platform:`, and `action:` as `service:`.
+
+If nothing shows up, look at the token under Settings, API tokens:
+**Never used** means the request does not reach Nookboard, so check the address
+and port. In Home Assistant, Developer tools, Actions, run the command with a
+`message` and read its answer: `401` means the token is wrong or revoked, `422`
+names the field to correct, and `429` means more than 30 announcements in a
+minute.
+
 ## Small screens
 
 A layout is made for a TV across the room. On a Nest Hub, a tablet or a

@@ -18,6 +18,9 @@ Google TV you already own. No extra hardware, no subscription, no cloud.
   inside or whether a door is open, with a long-lived access token. Read
   only; the token is stored encrypted. Nookboard works without Home
   Assistant too.
+- **Announcements**: an automation, such as a Home Assistant rest_command,
+  posts "The washing machine is done" with an API token and every TV, or the
+  ones you choose, shows it over the dashboard for a while.
 - **Notes and countdowns**: a short text for the household, and the days
   left until a date such as a holiday or a birthday.
 - **Calendar** from secret iCal addresses (Google, Outlook, iCloud,

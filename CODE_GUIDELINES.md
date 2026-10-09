@@ -226,7 +226,9 @@ Architecture:     One Go binary (cmd/nookboard). internal/datahub fetches extern
                   read the sources; internal/display validates layouts and builds one snapshot per display
                   with only the data its widgets use; internal/store is the only package with SQL;
                   internal/auth (accounts, sessions) and internal/pairing (which screens may show a display)
-                  share internal/token and internal/ratelimit; internal/api serves pages, SSE and the JSON
+                  share internal/token and internal/ratelimit; internal/apitoken holds the tokens that
+                  automations use and internal/announcement the messages they put over the displays (in
+                  memory, never in SQLite); internal/api serves pages, SSE and the JSON
                   API (docs/api.md); internal/cast talks CASTV2 and mDNS and keeps a receiver on screen;
                   internal/casting runs one keeper per display. web/ holds the web interface (/), the display
                   runtime (/d/<id>) and the receiver. Research (Dutch): GoogleHome-Dashboard/docs/onderzoek.
