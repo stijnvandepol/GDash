@@ -16,5 +16,17 @@ services:
       - gdash-data:/data
     restart: unless-stopped
 
+    # Hardening: GDash needs no root, no capabilities and writes only to
+    # /data. A data folder you mount yourself must belong to this user, see
+    # "Data directory permissions" in docs/install.md.
+    user: "65532:65532"
+    read_only: true
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
+    # SQLite may spill a large sort to a temporary file.
+    tmpfs:
+      - /tmp
+
 volumes:
   gdash-data:
