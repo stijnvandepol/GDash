@@ -1,4 +1,5 @@
 <script lang="ts">
+  import './themes.css';
   import './theme.css';
   import { clock, display } from './state.svelte';
   import { t } from './i18n.svelte';
