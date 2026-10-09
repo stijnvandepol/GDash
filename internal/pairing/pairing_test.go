@@ -135,6 +135,31 @@ func TestLaunchTokenIsSingleUseAndExpires(t *testing.T) {
 	}
 }
 
+func TestIdleScreenIsUnpaired(t *testing.T) {
+	ctx := context.Background()
+	s, clock := newTestService(t)
+	launch, err := s.NewLaunchToken("kitchen")
+	if err != nil {
+		t.Fatal(err)
+	}
+	displayToken, _, err := s.Exchange(ctx, launch)
+	if err != nil {
+		t.Fatal(err)
+	}
+	clock.t = clock.t.Add(screenIdleTimeout - time.Hour)
+	if _, err := s.Authenticate(ctx, displayToken); err != nil {
+		t.Fatalf("Authenticate just before the idle timeout: %v", err)
+	}
+	// That use renewed the token; a full idle period later it is gone.
+	clock.t = clock.t.Add(screenIdleTimeout + time.Second)
+	if _, err := s.Authenticate(ctx, displayToken); !errors.Is(err, ErrInvalidToken) {
+		t.Fatalf("Authenticate after the idle timeout: err = %v, want ErrInvalidToken", err)
+	}
+	if counts, _ := s.store.PairedScreenCounts(ctx); counts["kitchen"] != 0 {
+		t.Fatalf("paired screens = %v, want the idle one removed", counts)
+	}
+}
+
 func TestEveryLaunchReplacesTheCastToken(t *testing.T) {
 	ctx := context.Background()
 	s, _ := newTestService(t)

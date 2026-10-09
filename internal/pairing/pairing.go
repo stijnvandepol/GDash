@@ -32,6 +32,10 @@ const (
 	maxCodeRequests = 10
 	requestWindow   = 15 * time.Minute
 	touchInterval   = time.Hour
+	// screenIdleTimeout unpairs a screen that has not shown its display for
+	// this long: a tablet given away or a token copied off a screen stops
+	// working on its own, while a screen in use renews it every hour.
+	screenIdleTimeout = 90 * 24 * time.Hour
 )
 
 var (
@@ -217,6 +221,12 @@ func (s *Service) Authenticate(ctx context.Context, displayToken string) (string
 	}
 	if err != nil {
 		return "", err
+	}
+	if s.now().Sub(t.LastSeenAt) > screenIdleTimeout {
+		if err := s.store.DeleteDisplayToken(ctx, hash); err != nil {
+			return "", err
+		}
+		return "", ErrInvalidToken
 	}
 	if s.now().Sub(t.LastSeenAt) > touchInterval {
 		if err := s.store.TouchDisplayToken(ctx, hash, s.now()); err != nil {

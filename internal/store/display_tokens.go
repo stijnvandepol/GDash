@@ -121,6 +121,14 @@ func (s *Store) PairedScreenCounts(ctx context.Context) (map[string]int, error) 
 	return counts, rows.Err()
 }
 
+// DeleteDisplayToken unpairs one screen, if its token still exists.
+func (s *Store) DeleteDisplayToken(ctx context.Context, tokenHash string) error {
+	if _, err := s.db.ExecContext(ctx, "DELETE FROM display_tokens WHERE token_hash = ?", tokenHash); err != nil {
+		return fmt.Errorf("delete display token: %w", err)
+	}
+	return nil
+}
+
 // DeleteDisplayTokens unpairs every screen of a display and returns how
 // many there were.
 func (s *Store) DeleteDisplayTokens(ctx context.Context, displayID string) (int64, error) {

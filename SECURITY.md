@@ -21,7 +21,8 @@ fully trust, such as a guest's phone.
   in total, and changing the password logs out every other browser.
 - **Screens:** a display only streams data to a screen that was paired with
   a code shown on it, or opened by Nookboard's own cast with a single-use token
-  that expires after two minutes. Unpairing takes effect within 20 seconds.
+  that expires after two minutes. Unpairing takes effect within 20 seconds,
+  and a screen that has not shown its display for 90 days is unpaired.
   Each display only receives the data its own widgets show.
 - **Secrets:** calendar addresses give read access to a calendar, and a
   Home Assistant token to everything its user can see, so they are
