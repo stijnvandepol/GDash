@@ -2,6 +2,7 @@ package news
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"net/http"
 	"net/http/httptest"
@@ -68,6 +69,20 @@ func TestParseRejectsOtherDocuments(t *testing.T) {
 		if _, err := Parse(strings.NewReader(doc), 5); err == nil {
 			t.Errorf("Parse(%q) accepted a non-feed", doc)
 		}
+	}
+}
+
+func TestParseDropsDatesJSONCannotWrite(t *testing.T) {
+	// 23:00 at -01:00 on the last day of 9999 is already year 10000 in UTC.
+	feed, err := Parse(strings.NewReader(`<rss><channel><item><title>t</title><pubDate>Fri, 31 Dec 9999 23:00:00 -0100</pubDate></item></channel></rss>`), 5)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(feed.Items) != 1 || !feed.Items[0].Published.IsZero() {
+		t.Fatalf("items = %+v, want one without a date", feed.Items)
+	}
+	if _, err := json.Marshal(feed); err != nil {
+		t.Errorf("Marshal: %v", err)
 	}
 }
 

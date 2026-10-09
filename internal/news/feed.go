@@ -141,7 +141,17 @@ func newItem(title, link string, published time.Time) (Item, bool) {
 	if t == "" {
 		return Item{}, false
 	}
-	return Item{Title: t, Link: safeLink(link), Published: published.UTC()}, true
+	return Item{Title: t, Link: safeLink(link), Published: inJSONRange(published.UTC())}, true
+}
+
+// inJSONRange returns the zero time for a date in year 0 or past 9999, which
+// JSON cannot write: one such date would fail the snapshot of every display
+// that shows the feed. An absurd date is as good as an unknown one.
+func inJSONRange(t time.Time) time.Time {
+	if t.Year() < 1 || t.Year() > 9999 {
+		return time.Time{}
+	}
+	return t
 }
 
 // rssDateLayouts covers RFC 822 dates as feeds really write them: with and
