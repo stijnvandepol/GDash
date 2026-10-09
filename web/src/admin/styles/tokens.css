@@ -4,32 +4,35 @@
  * on the surfaces they are used on; field borders reach 3:1.
  */
 :root {
-  /* Colour roles, light. */
-  --bg: #f3f5f8;
-  --surface: #ffffff;
+  /* Colour roles, light: warm paper and ink, like a note on the fridge,
+     with one deep teal for what you can act on and amber only as a spark
+     in the logo. Every text colour reaches 4.5:1 on bg and surface. */
+  --bg: #f5f1ea;
+  --surface: #fffcf7;
   --raised: #ffffff;
-  --field: #ffffff;
-  --border: #e0e4ea;
-  --border-strong: #8a93a1;
-  --text: #15181d;
-  --text-soft: #3b4452;
-  --muted: #566070;
-  --primary: #2b62d9;
-  --primary-hover: #2253bd;
+  --field: #fffefb;
+  --border: #e3dacc;
+  --border-strong: #8c7f6e;
+  --text: #1e1a16;
+  --text-soft: #3f372f;
+  --muted: #6a5f53;
+  --primary: #12665f;
+  --primary-hover: #0d524c;
   --on-primary: #ffffff;
-  --accent: #2b62d9;
+  --accent: #12665f;
   --accent-text: #ffffff;
-  --accent-soft: #e8effd;
+  --accent-soft: #e1efec;
+  --spark: #e09a1f;
   --danger: #b42318;
   --danger-solid: #b42318;
-  --danger-soft: #fdecea;
-  --danger-border: #f3b9b3;
+  --danger-soft: #fbebe7;
+  --danger-border: #efb9ae;
   --warning: #8a5300;
-  --warning-soft: #fff3d6;
+  --warning-soft: #fbefd6;
   --success: #17734a;
-  --success-soft: #e3f6ec;
-  --neutral-soft: #eceff3;
-  --focus: #2b62d9;
+  --success-soft: #e3f3e8;
+  --neutral-soft: #efe9df;
+  --focus: #12665f;
 
   /* Spacing scale. */
   --s-1: 4px;
@@ -47,11 +50,14 @@
   --r-pill: 999px;
 
   /* Shadow. */
-  --shadow-sm: 0 1px 2px rgb(16 24 40 / 0.06), 0 1px 3px rgb(16 24 40 / 0.04);
-  --shadow-md: 0 8px 24px rgb(16 24 40 / 0.12), 0 2px 6px rgb(16 24 40 / 0.06);
+  --shadow-sm: 0 1px 2px rgb(60 40 20 / 0.06), 0 1px 3px rgb(60 40 20 / 0.05);
+  --shadow-md: 0 10px 28px rgb(60 40 20 / 0.12), 0 2px 6px rgb(60 40 20 / 0.06);
 
-  /* Type scale and system font stacks. */
-  --font: system-ui, -apple-system, 'Segoe UI', Roboto, 'Noto Sans', sans-serif;
+  /* Type: Atkinson Hyperlegible for reading, the same face as on the TV;
+     Fraunces, a soft serif, for headings and the name. Both ship with
+     GDash, so nothing is loaded from outside. */
+  --font: 'Atkinson Hyperlegible Next Variable', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-display: 'Fraunces Variable', Georgia, 'Times New Roman', serif;
   --mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
   --fs-xs: 0.8125rem;
   --fs-sm: 0.875rem;
@@ -75,20 +81,23 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #0d0f12;
-    --surface: #161a1f;
-    --raised: #1e232a;
-    --field: #0f1216;
-    --border: #272d35;
-    --border-strong: #6b7482;
-    --text: #eceff3;
-    --text-soft: #c3cad4;
-    --muted: #9aa3af;
-    --primary: #3d6fe0;
-    --primary-hover: #335fc7;
-    --accent: #86a8f8;
-    --accent-text: #0b1530;
-    --accent-soft: #1c2a4a;
+    /* Dark: warm charcoal rather than blue-black, so the room stays calm
+       in the evening. */
+    --bg: #14110e;
+    --surface: #1d1915;
+    --raised: #26211c;
+    --field: #110e0b;
+    --border: #332c25;
+    --border-strong: #7a6e61;
+    --text: #f2ece3;
+    --text-soft: #d0c7ba;
+    --muted: #a79c8f;
+    --primary: #1e7a71;
+    --primary-hover: #19685f;
+    --accent: #72c9bd;
+    --accent-text: #0b1f1c;
+    --accent-soft: #16302c;
+    --spark: #f2b84b;
     --danger: #ff8f86;
     --danger-solid: #c63b30;
     --danger-soft: #3a1c1b;
@@ -97,8 +106,8 @@
     --warning-soft: #33290f;
     --success: #5fd79b;
     --success-soft: #11291d;
-    --neutral-soft: #232930;
-    --focus: #86a8f8;
+    --neutral-soft: #2a241e;
+    --focus: #72c9bd;
     --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
     --shadow-md: 0 8px 24px rgb(0 0 0 / 0.5), 0 2px 6px rgb(0 0 0 / 0.4);
   }

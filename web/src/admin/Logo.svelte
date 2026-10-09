@@ -17,10 +17,10 @@
     fill: var(--primary);
   }
   .sun {
-    fill: #ffd76a;
+    fill: var(--spark);
   }
   .rays {
-    stroke: #ffd76a;
+    stroke: var(--spark);
   }
   .stand {
     stroke: var(--primary);
