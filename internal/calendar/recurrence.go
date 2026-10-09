@@ -37,7 +37,16 @@ var errTooFrequent = errors.New("recurrence repeats more than hourly")
 // UNTIL say: the library generates occurrences one by one from DTSTART, so a
 // start a century back or a rule without an end would otherwise run for
 // minutes on a feed anyone can put in a shared calendar.
-func expand(e ical.Event, w Window, limit int) ([]occurrence, error) {
+//
+// rrule-go panics on some rules that pass its checks, such as
+// MONTHLY;BYDAY=7MO,10FR;BYSETPOS=1,100,1; that becomes an error, which
+// skips the event like any other broken rule.
+func expand(e ical.Event, w Window, limit int) (occs []occurrence, err error) {
+	defer func() {
+		if recover() != nil {
+			occs, err = nil, errors.New("recurrence rule cannot be expanded")
+		}
+	}()
 	first, err := single(e, w.Location)
 	if err != nil {
 		return nil, err
@@ -58,7 +67,6 @@ func expand(e ical.Event, w Window, limit int) ([]occurrence, error) {
 	}
 
 	next := set.Iterator()
-	var occs []occurrence
 	for scanned := 0; scanned < maxScanned && len(occs) < min(limit, maxOccurrencesPerEvent); scanned++ {
 		start, ok := next()
 		if !ok || start.After(w.To) {

@@ -61,6 +61,19 @@ func TestParseBoundsHostileRecurrences(t *testing.T) {
 	}
 }
 
+func TestParseSkipsRulesThatPanicTheLibrary(t *testing.T) {
+	broken := vevent("DTSTART:20261009T080000Z", "RRULE:FREQ=MONTHLY;BYDAY=7MO,10FR;BYSETPOS=1,0100,01", "SUMMARY:Broken")
+	fine := "BEGIN:VEVENT\r\nUID:b\r\nDTSTART:20261009T090000Z\r\nSUMMARY:Fine\r\nEND:VEVENT\r\n"
+	ics := strings.Replace(broken, "END:VCALENDAR", fine+"END:VCALENDAR", 1)
+	events, err := Parse(strings.NewReader(ics), window(t), "Test")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(events) != 1 || events[0].Title != "Fine" {
+		t.Fatalf("events = %+v, want only the event with a working rule", events)
+	}
+}
+
 func TestParseKeepsOldSeriesInTheWindow(t *testing.T) {
 	tests := []struct {
 		name  string
