@@ -11,7 +11,7 @@ cloud account and no extra hardware at the TV.
 | Nookboard | TVs and Cast devices, TCP 8009 | Start and keep the dashboard on screen |
 | Nookboard | the network, UDP 5353 multicast | Find Cast devices (mDNS) |
 | TVs and browsers | Nookboard, TCP 8420 | Load the dashboard and receive updates |
-| Nookboard | the internet, HTTPS | Weather, news, calendars and place search |
+| Nookboard | the internet, HTTPS | Weather, air quality, news, calendars and place search |
 
 Nookboard and the TVs must be in the same network segment (VLAN). A guest
 network that isolates devices, or a switch that drops multicast, hides the

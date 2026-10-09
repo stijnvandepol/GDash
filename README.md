@@ -9,7 +9,8 @@ Google TV you already own. No extra hardware, no subscription, no cloud.
 ## What works
 
 - **Weather** from [Open-Meteo](https://open-meteo.com) (no API key): now, and
-  a forecast for up to seven days. The last good value is kept when the
+  a forecast for up to seven days, sunrise and sunset, the air quality and
+  the pollen count (Europe). The last good value is kept when the
   internet drops, and stale data is marked.
 - **Dutch or English on the TV**: days, dates, weather and other texts on the
   screens follow the household's choice; the web interface is in English.

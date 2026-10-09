@@ -87,6 +87,7 @@ add calendars and feeds under Settings, and the photos once you add photos.
 | Weather | Now, today's range and wind |
 | Forecast | Up to seven days, with the chance of rain |
 | Sun | Sunrise, sunset, the length of the day and how it compares with yesterday |
+| Air quality | The European air quality index in words, and the pollen in the air (Europe only) |
 | Calendar | The coming week from your calendars |
 | News | Headlines from your feeds |
 | Note | A short text for the household |

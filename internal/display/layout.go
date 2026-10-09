@@ -65,14 +65,15 @@ var maxItems = map[string]Setting{"maxItems": {Kind: SettingInteger, Min: 1, Max
 // WidgetTypes is the catalogue of widgets. A widget's data source follows
 // from its type, so a dashboard cannot point a widget at arbitrary data.
 var WidgetTypes = map[string]WidgetType{
-	"clock":    {MinW: 4, MinH: 3},
-	"weather":  {Source: "weather.current", MinW: 4, MinH: 4},
-	"forecast": {Source: "weather.current", MinW: 6, MinH: 4, Settings: map[string]Setting{"days": {Kind: SettingInteger, Min: 1, Max: 7}}},
-	"sun":      {Source: "weather.current", MinW: 5, MinH: 4},
-	"news":     {Source: "news.default", MinW: 6, MinH: 4, Settings: maxItems},
-	"calendar": {Source: "calendar.default", MinW: 6, MinH: 4, Settings: maxItems},
-	"text":     {MinW: 4, MinH: 3, Settings: map[string]Setting{"text": {Kind: SettingText, Min: 1, Max: 300, Required: true}}},
-	"photos":   {Source: PhotosSource, MinW: 4, MinH: 3, Settings: map[string]Setting{"seconds": {Kind: SettingInteger, Min: 5, Max: 600}}},
+	"clock":      {MinW: 4, MinH: 3},
+	"weather":    {Source: "weather.current", MinW: 4, MinH: 4},
+	"forecast":   {Source: "weather.current", MinW: 6, MinH: 4, Settings: map[string]Setting{"days": {Kind: SettingInteger, Min: 1, Max: 7}}},
+	"sun":        {Source: "weather.current", MinW: 5, MinH: 4},
+	"airquality": {Source: AirQualitySource, MinW: 5, MinH: 4},
+	"news":       {Source: "news.default", MinW: 6, MinH: 4, Settings: maxItems},
+	"calendar":   {Source: "calendar.default", MinW: 6, MinH: 4, Settings: maxItems},
+	"text":       {MinW: 4, MinH: 3, Settings: map[string]Setting{"text": {Kind: SettingText, Min: 1, Max: 300, Required: true}}},
+	"photos":     {Source: PhotosSource, MinW: 4, MinH: 3, Settings: map[string]Setting{"seconds": {Kind: SettingInteger, Min: 5, Max: 600}}},
 	"countdown": {MinW: 4, MinH: 4, Settings: map[string]Setting{
 		"label": {Kind: SettingText, Min: 1, Max: 60, Required: true},
 		"date":  {Kind: SettingDate, Required: true},

@@ -116,8 +116,8 @@ it, so a separate, non-admin user for Nookboard is the safer choice.
 
 Changes apply at once: a changed source is fetched again, a removed one
 disappears from the displays. `status` has an entry per configured source by
-data key (`weather.current`, `news.default`, `calendar.default`,
-`homeassistant.default`).
+data key (`weather.current`, `airquality.current`, `news.default`,
+`calendar.default`, `homeassistant.default`).
 
 Place search sends the typed name to Open-Meteo's geocoding service, which
 uses GeoNames data; the coordinates can also be entered by hand.
@@ -166,6 +166,7 @@ allows, overlaps another, lacks a required setting, or has a setting its type do
 | `weather` | 4x4 | `weather.current` | |
 | `forecast` | 6x4 | `weather.current` | `days`: 1 to 7, default 5 |
 | `sun` | 5x4 | `weather.current` | |
+| `airquality` | 5x4 | `airquality.current` | |
 | `news` | 6x4 | `news.default` | `maxItems`: 1 to 20 |
 | `calendar` | 6x4 | `calendar.default` | `maxItems`: 1 to 20 |
 | `text` | 4x3 | none | `text`: 1 to 300 characters, line breaks allowed (required) |
@@ -187,6 +188,15 @@ an empty `title`, which the screen fills in in its own language.
 **place:** `{"name": "Oss", "region": "North Brabant, Netherlands", "latitude": 51.765, "longitude": 5.518}`
 
 **settings.homeAssistant:** `{"url": "http://192.168.1.10:8123", "unreadable": false}`, or `null` when not connected.
+
+**weather data (`weather.current`):** the current values, `days` for the forecast and `sun`, the sunrise and sunset
+of yesterday and the coming days as local times, `{"date": "2026-10-09", "sunrise": "2026-10-09T07:50", "sunset": "2026-10-09T18:56"}`.
+Both times are empty on a day without a sunrise or sunset.
+
+**air quality data (`airquality.current`):** `{"europeanAqi": 20, "observedAt": "2026-10-09T13:00", "pollen": [{"type": "birch", "grainsPerM3": 12.5}]}`.
+The index runs from 0 to 100 and above (good, fair, moderate, poor, very poor, extremely poor at 20, 40, 60, 80, 100).
+`pollen` only lists the kinds (alder, birch, grass, mugwort, olive, ragweed) that Open-Meteo has a value for; it is
+empty outside Europe and, depending on the model, outside the pollen season.
 
 **entity:** `{"id": "sensor.living_room_temperature", "name": "Living room", "state": "21.4", "unit": "°C", "deviceClass": "temperature"}`.
 The `homeassistant.default` data on a screen maps the entity IDs that its own widgets show to the same object

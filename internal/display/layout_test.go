@@ -83,6 +83,12 @@ func TestValidateDashboard(t *testing.T) {
 		{"sun", func(d *Dashboard) {
 			d.Widgets = append(d.Widgets, Widget{ID: "sun", Type: "sun", X: 0, Y: 5, W: 5, H: 4})
 		}, ""},
+		{"air quality", func(d *Dashboard) {
+			d.Widgets = append(d.Widgets, Widget{ID: "air", Type: "airquality", X: 0, Y: 5, W: 5, H: 4})
+		}, ""},
+		{"air quality too small", func(d *Dashboard) {
+			d.Widgets = append(d.Widgets, Widget{ID: "air", Type: "airquality", X: 0, Y: 5, W: 5, H: 3})
+		}, "widgets[2]: a airquality widget needs at least 5x4 cells"},
 		{"sun too small", func(d *Dashboard) {
 			d.Widgets = append(d.Widgets, Widget{ID: "sun", Type: "sun", X: 0, Y: 5, W: 4, H: 4})
 		}, "widgets[2]: a sun widget needs at least 5x4 cells"},

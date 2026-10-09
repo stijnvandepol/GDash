@@ -26,6 +26,7 @@ describe('waitingText', () => {
     expect(waitingText(undefined, 'forecast')).toBe('No location set. Choose one under Settings.');
     expect(waitingText(undefined, 'calendar')).toBe('No calendar. Add one under Settings.');
     expect(waitingText(undefined, 'sun')).toBe('No location set. Choose one under Settings.');
+    expect(waitingText(undefined, 'airquality')).toBe('No location set. Choose one under Settings.');
   });
 
   it('says loading while the first fetch runs', () => {
@@ -35,12 +36,14 @@ describe('waitingText', () => {
   it('says the fetch failed', () => {
     expect(waitingText({ ...entry, failing: true }, 'weather')).toBe('Could not load the weather');
     expect(waitingText({ ...entry, failing: true }, 'sun')).toBe('Could not load the sun times');
+    expect(waitingText({ ...entry, failing: true }, 'airquality')).toBe('Could not load the air quality');
   });
 
   it('speaks the household language', () => {
     speak('nl');
     expect(waitingText(entry, 'calendar')).toBe('Agenda laden…');
     expect(waitingText(entry, 'sun')).toBe('Zonnetijden laden…');
+    expect(waitingText(entry, 'airquality')).toBe('Luchtkwaliteit laden…');
     expect(waitingText(undefined, 'news')).toBe('Geen nieuwsfeed. Voeg er een toe onder Settings.');
   });
 });

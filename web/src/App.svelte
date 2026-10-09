@@ -15,6 +15,7 @@
   import News from './widgets/News.svelte';
   import Forecast from './widgets/Forecast.svelte';
   import Sun from './widgets/Sun.svelte';
+  import AirQuality from './widgets/AirQuality.svelte';
   import Note from './widgets/Note.svelte';
   import Countdown from './widgets/Countdown.svelte';
   import Photos from './widgets/Photos.svelte';
@@ -101,6 +102,8 @@
             <Forecast entry={widget.source ? display.snapshot?.data[widget.source] : undefined} settings={widget.settings} />
           {:else if widget.type === 'sun'}
             <Sun entry={widget.source ? display.snapshot?.data[widget.source] : undefined} />
+          {:else if widget.type === 'airquality'}
+            <AirQuality entry={widget.source ? display.snapshot?.data[widget.source] : undefined} />
           {:else if widget.type === 'text'}
             <Note settings={widget.settings} />
           {:else if widget.type === 'countdown'}
