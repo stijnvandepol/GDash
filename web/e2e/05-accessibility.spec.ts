@@ -10,15 +10,6 @@ interface Finding {
   detail: string;
 }
 
-// Violations the suite found and the app does not fix yet. The footer links
-// (#2f6fde on #f4f5f7) have a contrast of 4.32:1 and WCAG AA asks for 4.5:1.
-// Both are on every page; the test fails when an entry stops matching, so
-// remove it together with the fix.
-const KNOWN_FINDINGS: Pick<Finding, 'rule' | 'html'>[] = [
-  { rule: 'color-contrast', html: '<a href="https://www.gnu.org/licenses/agpl-3.0.html" rel="noopener">AGPL-3.0</a>' },
-  { rule: 'color-contrast', html: '<a href="https://github.com/stijnvandepol/nookboard" rel="noopener">Source code</a>' },
-];
-
 async function blockingFindings(page: Page): Promise<Finding[]> {
   const { violations } = await new AxeBuilder({ page }).analyze();
   return violations
@@ -32,30 +23,33 @@ async function blockingFindings(page: Page): Promise<Finding[]> {
     );
 }
 
-const isKnown = (f: Pick<Finding, 'rule' | 'html'>) => KNOWN_FINDINGS.some((k) => k.rule === f.rule && k.html === f.html);
-
-/** Fails on a serious or critical violation that is not a known one, and on a known one that is gone. */
-async function expectNoNewBlockingViolations(page: Page): Promise<void> {
-  const findings = await blockingFindings(page);
-  const unexpected = findings.filter((f) => !isKnown(f)).map((f) => f.detail);
-  expect(unexpected, unexpected.join('\n')).toEqual([]);
-
-  const fixed = KNOWN_FINDINGS.filter((k) => !findings.some((f) => f.rule === k.rule && f.html === k.html)).map((k) => `${k.rule} ${k.html}`);
-  expect(fixed, 'These known violations no longer occur: remove them from KNOWN_FINDINGS.').toEqual([]);
+/** Fails on any serious or critical violation, listing each one. */
+async function expectNoBlockingViolations(page: Page): Promise<void> {
+  const findings = (await blockingFindings(page)).map((f) => f.detail);
+  expect(findings, findings.join('\n')).toEqual([]);
 }
 
-test.describe('accessibility', () => {
-  test('the login page has no new serious or critical violations', async ({ page, request }) => {
-    await ensureAccount(request);
-    await page.goto('/');
-    await expect(page.getByRole('heading', { name: 'Log in' })).toBeVisible();
-    await expectNoNewBlockingViolations(page);
-  });
-
-  for (const tab of ['Displays', 'Dashboards', 'Settings'] as const) {
-    test(`the ${tab} page has no new serious or critical violations`, async ({ adminPage: page }) => {
-      await openTab(page, tab);
-      await expectNoNewBlockingViolations(page);
+// Both colour schemes: the web interface follows the system's light or dark
+// mode, and contrast has to hold in each.
+for (const colorScheme of ['light', 'dark'] as const) {
+  test.describe(`accessibility in ${colorScheme} mode`, () => {
+    test.beforeEach(async ({ page }) => {
+      await page.emulateMedia({ colorScheme });
     });
-  }
-});
+
+    test('the login page has no serious or critical violations', async ({ page, request }) => {
+      await ensureAccount(request);
+      await page.goto('/');
+      await expect(page.getByRole('heading', { name: 'Log in' })).toBeVisible();
+      await expectNoBlockingViolations(page);
+    });
+
+    for (const tab of ['Displays', 'Dashboards', 'Settings'] as const) {
+      test(`the ${tab} page has no serious or critical violations`, async ({ adminPage: page }) => {
+        await page.emulateMedia({ colorScheme });
+        await openTab(page, tab);
+        await expectNoBlockingViolations(page);
+      });
+    }
+  });
+}

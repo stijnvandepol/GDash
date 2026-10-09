@@ -5,7 +5,7 @@ import { ADMIN_USERNAME, adminPassword, setupToken } from './env';
 // journeys log in with.
 test('first run: set up with the token, log out, log in, and a wrong password is refused', async ({ page }) => {
   await page.goto('/');
-  await expect(page.getByRole('heading', { name: 'Set up Nookboard' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Set up this server' })).toBeVisible();
 
   await page.getByLabel('Username').fill(ADMIN_USERNAME);
   await page.getByLabel('Password').fill(adminPassword());
@@ -16,10 +16,11 @@ test('first run: set up with the token, log out, log in, and a wrong password is
 
   await page.getByLabel('Setup token').fill(setupToken());
   await page.getByRole('button', { name: 'Create account' }).click();
-  await expect(page.getByRole('button', { name: 'Log out' })).toBeVisible();
+  await expect(page.getByRole('button', { name: /Account menu/ })).toBeVisible();
   await expect(page.getByRole('banner').getByText(ADMIN_USERNAME)).toBeVisible();
 
-  await page.getByRole('button', { name: 'Log out' }).click();
+  await page.getByRole('button', { name: /Account menu/ }).click();
+  await page.getByRole('menuitem', { name: 'Log out' }).click();
   await expect(page.getByRole('heading', { name: 'Log in' })).toBeVisible();
 
   await page.getByLabel('Username').fill(ADMIN_USERNAME);
@@ -30,7 +31,7 @@ test('first run: set up with the token, log out, log in, and a wrong password is
 
   await page.getByLabel('Password').fill(adminPassword());
   await page.getByRole('button', { name: 'Log in' }).click();
-  await expect(page.getByRole('button', { name: 'Log out' })).toBeVisible();
+  await expect(page.getByRole('button', { name: /Account menu/ })).toBeVisible();
 
   // The session is a cookie: a reload stays logged in.
   await page.reload();
