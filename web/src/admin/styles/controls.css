@@ -95,6 +95,8 @@ button.link.danger:hover:not(:disabled) {
 /* Fields. */
 label {
   display: grid;
+  /* May shrink below a wide control, like a card's column. */
+  grid-template-columns: minmax(0, 1fr);
   gap: 6px;
   font-weight: 500;
 }
