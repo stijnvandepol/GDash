@@ -16,12 +16,47 @@ the format follows [Keep a Changelog](https://keepachangelog.com).
 
 ### Added
 
+- Announcements: an automation, such as a Home Assistant `rest_command`,
+  posts a short message with an API token and the TVs show it over the
+  dashboard for a while. API tokens are made and revoked under Settings,
+  where a test announcement can be sent too.
+- Live preview in the dashboard editor: the dashboard as a TV draws it,
+  with real data and unsaved changes, as a TV, a tablet or a Nest Hub and
+  at every text size.
+- Dashboard templates: Kitchen, Hallway, Bedroom, Small screen and Family,
+  each with a fitting theme, to start from in one click.
+- Air quality widget: the European air quality index now and the pollen in
+  the air, from Open-Meteo without a key.
+- Sun widget: sunrise, sunset, the length of the day and how much longer or
+  shorter it is than yesterday.
+- A new look for the web interface: light and dark following the system,
+  icons, a tab bar at the bottom on phones, messages after an action, and
+  branded login and setup screens that explain where the setup token is.
+- Browser tests of the main journeys and an accessibility check of every
+  page in light and dark mode, in CI.
+- `NOOKBOARD_TRUSTED_PROXIES`: behind a reverse proxy, its forwarding
+  headers set the client address and make cookies Secure over HTTPS.
 - Home Assistant: connect it with a long-lived access token under Settings
   and add a Home Assistant widget that shows up to eight sensors or
   switches, in English or Dutch. Nookboard only reads, once a minute, and
   stores the token encrypted.
 - Text size per display (100 to 200 %), for smart displays, tablets and
   small screens; the dashboard now fills screens that are not 16:9.
+
+### Security
+
+- Login attempts count before the password is checked, so parallel wrong
+  logins cannot exceed the limit, and at most two password hashes run at a
+  time.
+- A launch token only works from the Cast device it was sent to, so a
+  device that answers discovery in the TV's name cannot pair itself.
+- Each screen only receives the Home Assistant entities its own widgets
+  show, and the Home Assistant token never follows a redirect.
+- Screens that have not been used for 90 days are unpaired.
+- Slow request bodies and stalled event streams time out.
+- IPv6 transition addresses (6to4, Teredo, IPv4-compatible) that reach a
+  cloud metadata address are refused, like NAT64 already was.
+- Widget positions so large that they wrap around are rejected.
 
 ## 0.5.0 – 2026-10-09
 
