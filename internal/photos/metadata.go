@@ -156,7 +156,7 @@ func stripPNG(data []byte) ([]byte, error) {
 		if length < 0 || end > len(data) {
 			return nil, errMalformed
 		}
-		if kind := string(data[i+4 : i+8]); !pngDropped[kind] {
+		if !pngDropped[string(data[i+4:i+8])] {
 			out.Write(data[i:end])
 		}
 		i = end
