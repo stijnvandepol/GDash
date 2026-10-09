@@ -110,6 +110,21 @@ cd web && npm run check       # Svelte and TypeScript checks
 cd web && npm run dev         # frontend with hot reload, proxies /api to :8420
 ```
 
+The browser tests (Playwright, Chromium) run against the built server, so
+build the web interface and the binary first. They start the binary on
+`127.0.0.1:8435` with a temporary data directory and stop it afterwards; they
+never touch your own data or any device on your network.
+
+```bash
+cd web && npm run build && cd .. && go build ./cmd/nookboard
+cd web && npx playwright install chromium    # once
+cd web && npm run e2e                        # about 30 seconds
+```
+
+`NOOKBOARD_E2E_BINARY` points to another binary and `NOOKBOARD_E2E_PORT` to
+another port. Screenshots and traces of failed tests, and the server's log, end
+up in `web/test-results/`.
+
 The code follows [CODE_GUIDELINES.md](CODE_GUIDELINES.md). The API is described
 in [docs/api.md](docs/api.md).
 
