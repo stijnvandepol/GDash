@@ -81,7 +81,7 @@
 
   <SourceList
     title="Calendars"
-    intro="Paste the secret iCal address of a Google, Outlook or iCloud calendar. Anyone with it can read the calendar, so Daycast stores it encrypted and never shows it again."
+    intro="Paste the secret iCal address of a Google, Outlook or iCloud calendar. Anyone with it can read the calendar, so Nookboard stores it encrypted and never shows it again."
     items={settings.calendars.map((c) => ({
       id: c.id,
       name: c.name,

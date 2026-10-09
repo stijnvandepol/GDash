@@ -11,7 +11,7 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"github.com/stijnvandepol/daycast/internal/validation"
+	"github.com/stijnvandepol/nookboard/internal/validation"
 )
 
 // Every dashboard uses the same 16:9 grid, so a layout looks the same on any

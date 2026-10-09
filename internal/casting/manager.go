@@ -9,8 +9,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/stijnvandepol/daycast/internal/cast"
-	"github.com/stijnvandepol/daycast/internal/displays"
+	"github.com/stijnvandepol/nookboard/internal/cast"
+	"github.com/stijnvandepol/nookboard/internal/displays"
 )
 
 // reconcileInterval catches changes made outside the API, such as an

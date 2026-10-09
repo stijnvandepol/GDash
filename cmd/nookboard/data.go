@@ -12,15 +12,15 @@ import (
 	"sync"
 	"time"
 
-	"github.com/stijnvandepol/daycast/internal/calendar"
-	"github.com/stijnvandepol/daycast/internal/datahub"
-	"github.com/stijnvandepol/daycast/internal/display"
-	"github.com/stijnvandepol/daycast/internal/news"
-	"github.com/stijnvandepol/daycast/internal/outbound"
-	"github.com/stijnvandepol/daycast/internal/photos"
-	"github.com/stijnvandepol/daycast/internal/settings"
-	"github.com/stijnvandepol/daycast/internal/store"
-	"github.com/stijnvandepol/daycast/internal/weather"
+	"github.com/stijnvandepol/nookboard/internal/calendar"
+	"github.com/stijnvandepol/nookboard/internal/datahub"
+	"github.com/stijnvandepol/nookboard/internal/display"
+	"github.com/stijnvandepol/nookboard/internal/news"
+	"github.com/stijnvandepol/nookboard/internal/outbound"
+	"github.com/stijnvandepol/nookboard/internal/photos"
+	"github.com/stijnvandepol/nookboard/internal/settings"
+	"github.com/stijnvandepol/nookboard/internal/store"
+	"github.com/stijnvandepol/nookboard/internal/weather"
 )
 
 // dataSources keeps the data hub in line with the settings.

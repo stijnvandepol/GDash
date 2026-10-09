@@ -56,7 +56,7 @@
     const url = URL.createObjectURL(new Blob([toFile(d)], { type: 'application/json' }));
     const link = document.createElement('a');
     link.href = url;
-    link.download = `${d.id}.daycast.json`;
+    link.download = `${d.id}.nookboard.json`;
     link.click();
     URL.revokeObjectURL(url);
   }
@@ -129,7 +129,7 @@
 
   <section class="card">
     <h2>Import a dashboard</h2>
-    <p class="muted">Choose a file that Export saved, from this Daycast or another one. It is added as a new dashboard.</p>
+    <p class="muted">Choose a file that Export saved, from this Nookboard or another one. It is added as a new dashboard.</p>
     <input type="file" accept=".json,application/json" aria-label="Dashboard file" onchange={importDashboard} />
     {#if importError}<p class="error">{importError}</p>{/if}
   </section>

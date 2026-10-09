@@ -11,13 +11,13 @@ import (
 	"sync"
 	"time"
 
-	"github.com/stijnvandepol/daycast/internal/datahub"
-	"github.com/stijnvandepol/daycast/internal/schedule"
+	"github.com/stijnvandepol/nookboard/internal/datahub"
+	"github.com/stijnvandepol/nookboard/internal/schedule"
 )
 
-// CastNamespace is the Cast message namespace between the Daycast server
+// CastNamespace is the Cast message namespace between the Nookboard server
 // and its receiver. web/src/protocol.ts uses the same value.
-const CastNamespace = "urn:x-cast:app.daycast.display"
+const CastNamespace = "urn:x-cast:app.nookboard.display"
 
 // Widget is one tile on the dashboard grid. Positions are in grid units.
 type Widget struct {

@@ -14,7 +14,7 @@ import (
 const maxFrameSize = 64 * 1024
 
 // Message is one CASTV2 CastMessage. Only UTF-8 payloads are supported,
-// because every namespace Daycast uses exchanges JSON.
+// because every namespace Nookboard uses exchanges JSON.
 type Message struct {
 	SourceID      string
 	DestinationID string
@@ -98,7 +98,7 @@ func unmarshalMessage(b []byte) (Message, error) {
 				m.Payload = value
 			case fieldPayloadBinary:
 				// Binary payloads are only used for device authentication,
-				// which Daycast does not perform.
+				// which Nookboard does not perform.
 			}
 		default:
 			return Message{}, fmt.Errorf("%w: unsupported wire type %d", errMalformed, wire)

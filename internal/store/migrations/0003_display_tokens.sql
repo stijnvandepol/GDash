@@ -4,7 +4,7 @@
 -- 'cast' for the page a cast keeper opens; a display has at most one 'cast'
 -- token, replaced on every launch.
 --
--- Rollback: restore daycast.db.bak-v2, which Daycast writes before applying
+-- Rollback: restore nookboard.db.bak-v2, which Nookboard writes before applying
 -- this migration.
 CREATE TABLE display_tokens (
     token_hash   TEXT PRIMARY KEY,

@@ -1,4 +1,4 @@
-// Package token creates bearer tokens and the hashes Daycast stores instead
+// Package token creates bearer tokens and the hashes Nookboard stores instead
 // of them, so a leaked database cannot be used to log in or show a display.
 package token
 

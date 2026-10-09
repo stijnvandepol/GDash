@@ -3,7 +3,7 @@
 -- device by its device ID, not its IP address, because DHCP can change the
 -- address.
 --
--- Rollback: Daycast copies the database to daycast.db.bak-v<old version>
+-- Rollback: Nookboard copies the database to nookboard.db.bak-v<old version>
 -- before applying a migration; restore that file to undo.
 CREATE TABLE displays (
     id             TEXT PRIMARY KEY,

@@ -1,4 +1,4 @@
-module github.com/stijnvandepol/daycast
+module github.com/stijnvandepol/nookboard
 
 go 1.26.9
 

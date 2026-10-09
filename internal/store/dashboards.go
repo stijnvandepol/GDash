@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/stijnvandepol/daycast/internal/display"
+	"github.com/stijnvandepol/nookboard/internal/display"
 )
 
 // MaxDashboards bounds how many dashboards one server keeps.

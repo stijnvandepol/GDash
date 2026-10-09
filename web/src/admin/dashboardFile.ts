@@ -1,8 +1,10 @@
 import { slugify, type Dashboard, type Widget } from './api';
 
-// Marks a file as an exported Daycast dashboard, so importing any other
+// Marks a file as an exported Nookboard dashboard, so importing any other
 // JSON file fails with a clear message instead of a list of field errors.
-const FORMAT = 'daycast-dashboard';
+const FORMAT = 'nookboard-dashboard';
+// Files exported before the project was renamed from Daycast.
+const OLD_FORMAT = 'daycast-dashboard';
 const VERSION = 1;
 // The server accepts request bodies up to 64 KiB.
 const MAX_FILE_BYTES = 64 * 1024;
@@ -35,13 +37,13 @@ export function fromFile(text: string): ImportedDashboard {
   try {
     data = JSON.parse(text);
   } catch {
-    throw new Error('This is not a Daycast dashboard file.');
+    throw new Error('This is not a Nookboard dashboard file.');
   }
   const d = data as Record<string, unknown>;
-  if (typeof d !== 'object' || d === null || d.format !== FORMAT) {
-    throw new Error('This is not a Daycast dashboard file.');
+  if (typeof d !== 'object' || d === null || (d.format !== FORMAT && d.format !== OLD_FORMAT)) {
+    throw new Error('This is not a Nookboard dashboard file.');
   }
-  if (d.version !== VERSION) throw new Error('This dashboard file comes from a newer Daycast. Update Daycast first.');
+  if (d.version !== VERSION) throw new Error('This dashboard file comes from a newer Nookboard. Update Nookboard first.');
   if (typeof d.name !== 'string' || !Array.isArray(d.widgets)) throw new Error('This dashboard file is damaged.');
   return {
     name: d.name,

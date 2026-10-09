@@ -10,7 +10,7 @@ func TestFrameRoundTrip(t *testing.T) {
 	want := Message{
 		SourceID:      "sender-0",
 		DestinationID: "web-7",
-		Namespace:     "urn:x-cast:app.daycast.display",
+		Namespace:     "urn:x-cast:app.nookboard.display",
 		Payload:       `{"type":"snapshot","version":3}`,
 	}
 	var buf bytes.Buffer

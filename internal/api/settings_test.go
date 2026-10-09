@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stijnvandepol/daycast/internal/datahub"
-	"github.com/stijnvandepol/daycast/internal/weather"
+	"github.com/stijnvandepol/nookboard/internal/datahub"
+	"github.com/stijnvandepol/nookboard/internal/weather"
 )
 
 func TestSettingsNeedLogin(t *testing.T) {

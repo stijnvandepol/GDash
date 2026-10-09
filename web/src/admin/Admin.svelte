@@ -47,7 +47,7 @@
 </script>
 
 <header class="topbar">
-  <span class="brand">Daycast</span>
+  <span class="brand">Nookboard</span>
   {#if screen.name === 'app'}
     <nav class="tabs">
       <button class="tab" class:active={tab === 'displays'} onclick={() => (tab = 'displays')}>Displays</button>
@@ -64,7 +64,7 @@
   {#if screen.name === 'loading'}
     <p class="muted">Loading…</p>
   {:else if screen.name === 'error'}
-    <p class="error">Daycast cannot be reached: {screen.message}</p>
+    <p class="error">Nookboard cannot be reached: {screen.message}</p>
   {:else if screen.name === 'setup'}
     <Setup onDone={(user) => (screen = { name: 'app', user })} />
   {:else if screen.name === 'login'}
@@ -82,7 +82,7 @@
 </main>
 
 <footer class="footer muted small">
-  Daycast{version ? ` ${version}` : ''} is free software under the
+  Nookboard{version ? ` ${version}` : ''} is free software under the
   <a href="https://www.gnu.org/licenses/agpl-3.0.html" rel="noopener">AGPL-3.0</a>.
-  <a href="https://github.com/stijnvandepol/daycast" rel="noopener">Source code</a>
+  <a href="https://github.com/stijnvandepol/nookboard" rel="noopener">Source code</a>
 </footer>

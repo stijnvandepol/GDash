@@ -10,9 +10,9 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/stijnvandepol/daycast/internal/display"
-	"github.com/stijnvandepol/daycast/internal/schedule"
-	"github.com/stijnvandepol/daycast/internal/validation"
+	"github.com/stijnvandepol/nookboard/internal/display"
+	"github.com/stijnvandepol/nookboard/internal/schedule"
+	"github.com/stijnvandepol/nookboard/internal/validation"
 )
 
 // MaxDisplays bounds how many displays one server manages. A home has a

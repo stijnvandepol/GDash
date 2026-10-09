@@ -3,7 +3,7 @@ import type { Snapshot } from './protocol';
 
 export type ConnectionState = 'connecting' | 'live' | 'offline';
 
-const STORAGE_PREFIX = 'daycast.snapshot.';
+const STORAGE_PREFIX = 'nookboard.snapshot.';
 
 /**
  * Display state shared by all components. The last snapshot is kept in

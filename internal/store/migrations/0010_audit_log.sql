@@ -3,7 +3,7 @@
 -- events (internal/store/audit.go). A failed login stores no username,
 -- because people sometimes type their password into that field.
 --
--- Rollback: restore daycast.db.bak-v9, which Daycast writes before applying
+-- Rollback: restore nookboard.db.bak-v9, which Nookboard writes before applying
 -- this migration.
 CREATE TABLE audit_log (
     id     INTEGER PRIMARY KEY AUTOINCREMENT,

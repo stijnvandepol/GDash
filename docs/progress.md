@@ -4,9 +4,9 @@ State of the project on 8 October 2026, so work can continue on any machine.
 
 ## What works
 
-- **Backups:** a consistent copy of the database every day in `backups/`, the last seven kept, made while Daycast runs.
+- **Backups:** a consistent copy of the database every day in `backups/`, the last seven kept, made while Nookboard runs.
 - **Small screens:** a text size per display (100, 125, 150 or 200 %) and a stage that takes the screen's shape. Measured on a 1024x600 Nest Hub screen: at 150 % calendar times grew from 15 to 22 px and headlines from 19 to 30 px, the dashboard filled the screen and no tile overflowed.
-- **Weather icons:** the weather and forecast widgets show a line icon for the sky (sun or moon, clouds, rain, drizzle, snow, fog, thunder), drawn for Daycast in the theme's colour. Measured at the minimum tile sizes: everything still fits.
+- **Weather icons:** the weather and forecast widgets show a line icon for the sky (sun or moon, clouds, rain, drizzle, snow, fog, thunder), drawn for Nookboard in the theme's colour. Measured at the minimum tile sizes: everything still fits.
 - **Photos:** up to 50 photos uploaded under Settings and shown by a Photos widget as a slideshow. They are stored in the data directory and only served to admins and paired screens; uploads are checked by content and size. Tested with synthetic images in the browser.
 - **Pages in turn:** a display can show up to five other dashboards one after another with its own, each for a chosen time. The screen turns the pages on its clock, so screens of one display stay in step; a time slot pauses the rotation. Tested in the browser with a 15-second interval.
 - **Language on the TV:** English or Dutch for days, dates, weather words and every other text on the screens, chosen under Settings. The pairing screen follows the device's own language, because it shows before the first snapshot. Tested in the browser with both dashboards.
@@ -15,7 +15,7 @@ State of the project on 8 October 2026, so work can continue on any machine.
 - **Account:** change the password under Settings. The current password is checked with the same rate limit as logins, and every other logged-in browser is logged out.
 - **Server (Go):** weather from Open-Meteo without an API key; a data hub with cache, last-known-good on disk and stale markers; an SSE stream per display; SQLite with migrations and backups; accounts with argon2id, sessions and login rate limiting; a JSON API for displays.
 - **Web interface:** first-run setup with a token from the server log, login, and a page to add, rename and remove displays and link them to a Cast device found on the network. Devices without a screen (speakers, soundbars) are shown but cannot be picked.
-- **Pairing:** a display page shows a code until it is paired in the web interface; a TV opened by Daycast pairs itself with a single-use launch token. Only paired screens and logged-in admins receive dashboard data, and unpairing takes effect within 20 seconds.
+- **Pairing:** a display page shows a code until it is paired in the web interface; a TV opened by Nookboard pairs itself with a single-use launch token. Only paired screens and logged-in admins receive dashboard data, and unpairing takes effect within 20 seconds.
 - **News:** headlines from any RSS or Atom feed (default NOS), fetched once by the server.
 - **Calendar colours:** every calendar has its own colour, shown as a dot before each event on the TV; chosen under Settings or given by the calendar's place in the list.
 - **Calendar:** the coming week from secret iCal addresses, with recurrences, exceptions and moved occurrences, grouped by day on the TV. Tested with a synthetic calendar; a real Google or iCloud calendar is still to try.
@@ -32,7 +32,7 @@ State of the project on 8 October 2026, so work can continue on any machine.
 
 - Discovery found 8 Cast devices; the `ca` capability flag separated TVs and displays from speakers.
 - A status read over the own CASTV2 client worked on Chromecasts, Google TV devices and a Nest Hub.
-- DashCast showed the Daycast page on a Chromecast HD (Google TV) and kept a live connection.
+- DashCast showed the Nookboard page on a Chromecast HD (Google TV) and kept a live connection.
 - **The Google TV screensaver covered the cast after about 19 minutes**, while the device still reported DashCast as running. Stopping and relaunching the receiver brought the dashboard back. The keeper now does this every 15 minutes (every 9 on a Nest Hub), never while the TV is in standby.
 - After the switch to pairing, the TV paired itself through the launch token in the DashCast URL and showed clock, weather and news. The database migrated from version 2 to 3 and wrote its backup first.
 - Soak test of 12 hours, 8 October 19:18 to 9 October 07:14 (144 checks every 5 minutes): DashCast was on screen at every check, with 49 periodic restarts on schedule. Between 01:00 and 01:30 the connection to the TV failed six times (timeouts and EOF); each time the keeper reconnected within a second. The server reached the TV through a Tailscale address that night, so a network hiccup on that route is the likely cause. From 01:13 to 07:09 three or four connections from the TV to port 8420 were open instead of one; the count includes ordinary HTTP connections, so it is worth watching on the next run, not yet a finding.
@@ -43,14 +43,15 @@ State of the project on 8 October 2026, so work can continue on any machine.
 
 A version tag such as `v1.0.0` builds archives for Linux (amd64, arm64,
 armv7) and Windows with checksums as a draft GitHub release, and a Docker
-image for amd64 and arm64 on `ghcr.io/stijnvandepol/daycast`. The release
-stays a draft until someone publishes it. `daycast version`, the server log
+image for amd64 and arm64 on `ghcr.io/stijnvandepol/nookboard`. The release
+stays a draft until someone publishes it. `nookboard version`, the server log
 and the web interface show the version.
 
 **0.5.0** was tagged on 9 October 2026: the workflow made the draft release
 with the four archives and checksums, and the image. The Windows archive was
 downloaded again, its checksum verified, and it started from an empty data
-directory. The draft is waiting to be published.
+directory. The draft is waiting to be published. It still carries the old
+name Daycast, so it is better replaced by a new draft with the next tag.
 
 ## Checked by CI on every push
 
@@ -75,10 +76,10 @@ simulated device; not yet on the real TV.
 
 ## Open decisions
 
-- **Relaunch policy** (`ShouldRelaunch` in `internal/cast/keeper.go`): Daycast only takes over a screen when nothing else runs. Google TV reports "no apps" while a native app such as Netflix is on screen, so Daycast could start over it.
+- **Relaunch policy** (`ShouldRelaunch` in `internal/cast/keeper.go`): Nookboard only takes over a screen when nothing else runs. Google TV reports "no apps" while a native app such as Netflix is on screen, so Nookboard could start over it.
 - **TLS:** the code guidelines require TLS for all traffic, but a TV opening the display page through DashCast can only use plain HTTP on a LAN address. See "Known oddities" in CODE_GUIDELINES.md.
 - **TLS verification towards Cast devices:** off, as in pychromecast. Pinning the certificate on first connection is an option.
-- **Name:** Daycast is the working name; a trademark check (BOIP, EUIPO) is still to do.
+- **Name:** renamed from Daycast to Nookboard on 9 October 2026, after a check of 113 names on GitHub (Daycast had 22 repositories and an iOS app with that name). A trademark check (BOIP, EUIPO) is still to do.
 
 ## The kitchen TV
 

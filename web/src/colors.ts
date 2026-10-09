@@ -11,7 +11,7 @@ export const CALENDAR_COLORS: Record<string, string> = {
   yellow: '#d9b30f',
 };
 
-/** The shade for a colour name, or undefined for one Daycast does not know. */
+/** The shade for a colour name, or undefined for one Nookboard does not know. */
 export function calendarColor(name: unknown): string | undefined {
   return typeof name === 'string' && Object.prototype.hasOwnProperty.call(CALENDAR_COLORS, name)
     ? CALENDAR_COLORS[name]

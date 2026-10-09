@@ -47,7 +47,7 @@
   }
 
   async function remove(p: Photo) {
-    if (!confirm('Remove this photo from Daycast?')) return;
+    if (!confirm('Remove this photo from Nookboard?')) return;
     try {
       await api.deletePhoto(p.name);
       await load();

@@ -3,7 +3,7 @@
 -- weather location. sources holds news feeds and calendars; a calendar's
 -- address is a secret and is stored encrypted by internal/secret.
 --
--- Rollback: restore daycast.db.bak-v7, which Daycast writes before applying
+-- Rollback: restore nookboard.db.bak-v7, which Nookboard writes before applying
 -- this migration.
 CREATE TABLE settings (
     key   TEXT PRIMARY KEY,

@@ -1,12 +1,12 @@
-// Command daycast runs the Daycast server: it fetches dashboard data, serves
+// Command nookboard runs the Nookboard server: it fetches dashboard data, serves
 // display pages and keeps a Cast receiver on a TV.
 //
 // Usage:
 //
-//	daycast            start the server
-//	daycast discover   list Cast devices on the local network
-//	daycast status A   show what the Cast device at address A is doing
-//	daycast version    print the version
+//	nookboard            start the server
+//	nookboard discover   list Cast devices on the local network
+//	nookboard status A   show what the Cast device at address A is doing
+//	nookboard version    print the version
 package main
 
 import (
@@ -25,18 +25,18 @@ import (
 	"time"
 	_ "time/tzdata"
 
-	"github.com/stijnvandepol/daycast/internal/api"
-	"github.com/stijnvandepol/daycast/internal/auth"
-	"github.com/stijnvandepol/daycast/internal/backup"
-	"github.com/stijnvandepol/daycast/internal/cast"
-	"github.com/stijnvandepol/daycast/internal/display"
-	"github.com/stijnvandepol/daycast/internal/pairing"
-	"github.com/stijnvandepol/daycast/internal/photos"
-	"github.com/stijnvandepol/daycast/internal/secret"
-	"github.com/stijnvandepol/daycast/internal/settings"
-	"github.com/stijnvandepol/daycast/internal/store"
-	"github.com/stijnvandepol/daycast/internal/weather"
-	"github.com/stijnvandepol/daycast/web"
+	"github.com/stijnvandepol/nookboard/internal/api"
+	"github.com/stijnvandepol/nookboard/internal/auth"
+	"github.com/stijnvandepol/nookboard/internal/backup"
+	"github.com/stijnvandepol/nookboard/internal/cast"
+	"github.com/stijnvandepol/nookboard/internal/display"
+	"github.com/stijnvandepol/nookboard/internal/pairing"
+	"github.com/stijnvandepol/nookboard/internal/photos"
+	"github.com/stijnvandepol/nookboard/internal/secret"
+	"github.com/stijnvandepol/nookboard/internal/settings"
+	"github.com/stijnvandepol/nookboard/internal/store"
+	"github.com/stijnvandepol/nookboard/internal/weather"
+	"github.com/stijnvandepol/nookboard/web"
 )
 
 const (
@@ -78,10 +78,10 @@ func main() {
 	case os.Args[1] == "version":
 		fmt.Println(currentVersion())
 	default:
-		err = errors.New("usage: daycast | daycast discover | daycast status <device-address> | daycast version")
+		err = errors.New("usage: nookboard | nookboard discover | nookboard status <device-address> | nookboard version")
 	}
 	if err != nil {
-		logger.Error("daycast stopped", "error", err)
+		logger.Error("nookboard stopped", "error", err)
 		os.Exit(1)
 	}
 }
@@ -118,7 +118,7 @@ func status(ctx context.Context, device string) error {
 	if err != nil {
 		return err
 	}
-	fmt.Printf("standby: %v  active input: %v  daycast may launch: %v\n", st.IsStandBy, st.IsActiveInput, cast.ShouldRelaunch(st))
+	fmt.Printf("standby: %v  active input: %v  nookboard may launch: %v\n", st.IsStandBy, st.IsActiveInput, cast.ShouldRelaunch(st))
 	if len(st.Applications) == 0 {
 		fmt.Println("no apps running")
 		return nil
@@ -133,7 +133,7 @@ func status(ctx context.Context, device string) error {
 
 // newAuthService prepares login. On a fresh install it prints a one-time
 // setup token to the log: whoever can read the log (the person who started
-// Daycast) can create the first account, nobody else on the network.
+// Nookboard) can create the first account, nobody else on the network.
 func newAuthService(ctx context.Context, db *store.Store, logger *slog.Logger) (*auth.Service, error) {
 	token, err := auth.NewSetupToken()
 	if err != nil {
@@ -148,7 +148,7 @@ func newAuthService(ctx context.Context, db *store.Store, logger *slog.Logger) (
 		return nil, err
 	}
 	if needed {
-		logger.Warn("Daycast is not set up yet. Open the web interface and enter this setup token.", "setup_token", token)
+		logger.Warn("Nookboard is not set up yet. Open the web interface and enter this setup token.", "setup_token", token)
 	}
 	return service, nil
 }
@@ -158,8 +158,13 @@ func serve(ctx context.Context, logger *slog.Logger) error {
 	if err != nil {
 		return err
 	}
-	logger.Info("daycast starting", "version", currentVersion())
-	db, err := store.Open(ctx, filepath.Join(cfg.dataDir, "daycast.db"))
+	logger.Info("nookboard starting", "version", currentVersion())
+	if adopted, err := adoptOldDatabase(cfg.dataDir); err != nil {
+		return err
+	} else if adopted {
+		logger.Info("renamed the Daycast database to " + databaseName)
+	}
+	db, err := store.Open(ctx, filepath.Join(cfg.dataDir, databaseName))
 	if err != nil {
 		return err
 	}
@@ -211,7 +216,7 @@ func serve(ctx context.Context, logger *slog.Logger) error {
 		DashboardsChanged: func() { publisher.Refresh(ctx) },
 		SettingsChanged: func() {
 			if err := sources.sync(ctx); err != nil {
-				logger.Error("could not apply the new settings; restart Daycast", "error", err)
+				logger.Error("could not apply the new settings; restart Nookboard", "error", err)
 			}
 			// The display language travels in the snapshots.
 			publisher.Refresh(ctx)
@@ -271,7 +276,7 @@ func listen(ctx context.Context, addr string, handler http.Handler, logger *slog
 			logger.Warn("shutdown did not finish cleanly", "error", err)
 		}
 	}()
-	logger.Info("daycast listening; open the web interface at / on this address", "addr", addr)
+	logger.Info("nookboard listening; open the web interface at / on this address", "addr", addr)
 	if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		return err
 	}

@@ -1,6 +1,6 @@
 # Using an own Cast receiver
 
-By default Daycast uses the public DashCast receiver, which opens the display
+By default Nookboard uses the public DashCast receiver, which opens the display
 page on the TV. That needs no account, and it is what was tested at home (see
 [progress.md](progress.md)). An own receiver is option A from the research: the
 server pushes snapshots over the Cast message channel, so the TV never has to
@@ -9,9 +9,9 @@ reach the server over plain HTTP. This guide sets one up for testing.
 ## 1. Register a development receiver
 
 1. Sign up at the [Cast SDK Developer Console](https://cast.google.com/publish)
-   (one-time USD 5 fee, paid by you; Daycast cannot do this for you).
+   (one-time USD 5 fee, paid by you; Nookboard cannot do this for you).
 2. **Add new application → Custom Receiver.**
-   - Name: `Daycast (dev)`
+   - Name: `Nookboard (dev)`
    - Receiver URL: `http://<server-ip>:8420/receiver/`
 
    An unpublished receiver may use plain HTTP and a LAN address. A published
@@ -21,16 +21,16 @@ reach the server over plain HTTP. This guide sets one up for testing.
    TV (Settings → System → About, or on the box). Wait about 15 minutes, then
    restart the device. Unpublished receivers only run on registered devices.
 
-## 2. Start Daycast with the app ID
+## 2. Start Nookboard with the app ID
 
 ```bash
-DAYCAST_LATITUDE=51.65 DAYCAST_LONGITUDE=5.95 DAYCAST_CAST_APP_ID=ABCD1234 daycast
+NOOKBOARD_LATITUDE=51.65 NOOKBOARD_LONGITUDE=5.95 NOOKBOARD_CAST_APP_ID=ABCD1234 nookboard
 ```
 
-With Docker, set `DAYCAST_CAST_APP_ID` in `compose.yaml` and keep
+With Docker, set `NOOKBOARD_CAST_APP_ID` in `compose.yaml` and keep
 `network_mode: host`. Then link a display to the TV in the web interface.
 
-Daycast only launches the receiver when nothing else is on screen. If the TV
+Nookboard only launches the receiver when nothing else is on screen. If the TV
 shows YouTube or another cast, it waits.
 
 ## 3. What to check and write down

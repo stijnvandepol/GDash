@@ -3,7 +3,7 @@
 -- The first slot that contains the current time wins. Deleting a display
 -- or a dashboard removes its slots.
 --
--- Rollback: restore daycast.db.bak-v6, which Daycast writes before applying
+-- Rollback: restore nookboard.db.bak-v6, which Nookboard writes before applying
 -- this migration.
 CREATE TABLE display_schedule (
     display_id   TEXT NOT NULL REFERENCES displays (id) ON DELETE CASCADE,

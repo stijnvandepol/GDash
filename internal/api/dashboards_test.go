@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stijnvandepol/daycast/internal/display"
+	"github.com/stijnvandepol/nookboard/internal/display"
 )
 
 const morningLayout = `{"id":"morning","name":"Morning","widgets":[` +

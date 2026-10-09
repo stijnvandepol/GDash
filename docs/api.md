@@ -1,9 +1,9 @@
 # API
 
 All endpoints are under `/api` and exchange JSON. Routes marked "admin" need
-the session cookie (`daycast_session`) that `POST /api/setup` and
+the session cookie (`nookboard_session`) that `POST /api/setup` and
 `POST /api/sessions` set. Display streams need a paired screen's cookie
-(`daycast_display`) or an admin session.
+(`nookboard_display`) or an admin session.
 The handlers in `internal/api` document each endpoint where it is defined;
 this page is the overview.
 
@@ -61,7 +61,7 @@ come from another site (cross-site request forgery protection).
 | `GET /api/cast-devices` | admin | `200 {"devices": [device]}` | `401`, `500 discovery_failed` |
 | `GET /api/displays/{id}/events` | paired screen or admin | `text/event-stream`, `snapshot` events | `401 not_paired`, `404` for an invalid id |
 | `POST /api/pairing-requests` `{displayId}` | no | `201 {code, pollToken, expiresAt}` | `404`, `429 rate_limited` |
-| `POST /api/display-sessions` `{pollToken}` or `{launchToken}` | no | `201 {displayId}`, sets `daycast_display`; `202` while pending | `400`, `401 invalid_token` |
+| `POST /api/display-sessions` `{pollToken}` or `{launchToken}` | no | `201 {displayId}`, sets `nookboard_display`; `202` while pending | `400`, `401 invalid_token` |
 | `GET /api/display-sessions/current` | paired screen | `200 {displayId}` | `401 not_paired` |
 | `POST /api/displays/{id}/pairings` `{code}` | admin | `201 {displayId}` | `401`, `422 invalid_code` |
 | `DELETE /api/displays/{id}/pairings` | admin | `200 {removed}` | `401` |
@@ -72,7 +72,7 @@ A display page that is not paired asks `POST /api/pairing-requests` for a code
 and shows it. An admin enters the code in the web interface, which calls
 `POST /api/displays/{id}/pairings`. Meanwhile the page polls
 `POST /api/display-sessions {pollToken}` every few seconds; once approved it
-gets the `daycast_display` cookie. Codes are valid for 10 minutes.
+gets the `nookboard_display` cookie. Codes are valid for 10 minutes.
 
 A page opened by a cast keeper carries a single-use `launch` token in its URL,
 valid for 2 minutes, and exchanges it with
@@ -85,9 +85,9 @@ screen within that time. Deleting a display unpairs all its screens.
 ## Settings
 
 The weather location, news feeds and calendars are managed here instead of
-in environment variables. On the very first start Daycast copies
-`DAYCAST_LATITUDE`, `DAYCAST_LONGITUDE`, `DAYCAST_NEWS_FEED` (default: NOS)
-and `DAYCAST_CALENDAR_URLS` into the settings; later starts ignore them.
+in environment variables. On the very first start Nookboard copies
+`NOOKBOARD_LATITUDE`, `NOOKBOARD_LONGITUDE`, `NOOKBOARD_NEWS_FEED` (default: NOS)
+and `NOOKBOARD_CALENDAR_URLS` into the settings; later starts ignore them.
 
 A calendar's iCal address gives read access to everyone who has it. It is
 stored encrypted with `secret.key` in the data directory and never returned
@@ -124,7 +124,7 @@ the page on its clock, so every screen of a display shows the same page.
 
 **cast:** `{"state": "showing", "since": "2026-10-09T08:31:00Z", "problem"?: "…"}`, only for a display on a Cast
 device. `state` is `connecting`, `showing`, `standby` (the receiver runs but the TV sleeps), `other_app` (someone else
-is casting; Daycast waits), `resting` (outside active hours) or `unreachable`, with `problem` saying why.
+is casting; Nookboard waits), `resting` (outside active hours) or `unreachable`, with `problem` saying why.
 
 `textScale` is the display's text size in percent: 100 (default), 125, 150 or 200. The snapshot carries it; the
 screen draws its stage narrower by that factor and in the screen's own shape (between 4:3 and 21:9), so a small

@@ -71,11 +71,11 @@ func checkSeed(seed Seed) error {
 // trim drops feeds and calendars beyond the limits, and says so.
 func (s *Service) trim(seed Seed) Seed {
 	if n := len(seed.NewsFeeds); n > MaxNewsFeeds {
-		s.Logger.Warn("more news feeds in the environment than Daycast keeps; the rest are skipped", "given", n, "kept", MaxNewsFeeds)
+		s.Logger.Warn("more news feeds in the environment than Nookboard keeps; the rest are skipped", "given", n, "kept", MaxNewsFeeds)
 		seed.NewsFeeds = seed.NewsFeeds[:MaxNewsFeeds]
 	}
 	if n := len(seed.Calendars); n > MaxCalendars {
-		s.Logger.Warn("more calendars in the environment than Daycast keeps; the rest are skipped", "given", n, "kept", MaxCalendars)
+		s.Logger.Warn("more calendars in the environment than Nookboard keeps; the rest are skipped", "given", n, "kept", MaxCalendars)
 		seed.Calendars = seed.Calendars[:MaxCalendars]
 	}
 	return seed

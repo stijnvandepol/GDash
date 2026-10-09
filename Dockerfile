@@ -20,16 +20,16 @@ ARG TARGETARCH
 # Set by the release workflow, for example v1.0.0; empty reports "dev".
 ARG VERSION=""
 RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH \
-    go build -trimpath -ldflags="-s -w -X main.version=$VERSION" -o /out/daycast ./cmd/daycast \
+    go build -trimpath -ldflags="-s -w -X main.version=$VERSION" -o /out/nookboard ./cmd/nookboard \
  && mkdir /out/data
 
 # distroless has no shell or package manager: nothing to exploit besides
-# Daycast itself.
+# Nookboard itself.
 FROM gcr.io/distroless/static-debian12:nonroot
-COPY --from=server /out/daycast /daycast
-COPY LICENSE THIRD_PARTY_LICENSES /usr/share/doc/daycast/
+COPY --from=server /out/nookboard /nookboard
+COPY LICENSE THIRD_PARTY_LICENSES /usr/share/doc/nookboard/
 COPY --from=server --chown=65532:65532 /out/data /data
-ENV DAYCAST_DATA_DIR=/data
+ENV NOOKBOARD_DATA_DIR=/data
 VOLUME /data
 EXPOSE 8420
-ENTRYPOINT ["/daycast"]
+ENTRYPOINT ["/nookboard"]

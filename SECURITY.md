@@ -10,9 +10,9 @@ seven days of confirming it.
 
 Only the latest release gets security fixes.
 
-## What Daycast protects, and how
+## What Nookboard protects, and how
 
-Daycast runs on a home network and shows a household's calendar and other
+Nookboard runs on a home network and shows a household's calendar and other
 data on its TVs. The design assumes the LAN can contain devices you do not
 fully trust, such as a guest's phone.
 
@@ -20,7 +20,7 @@ fully trust, such as a guest's phone.
   per address and per username. Sessions expire after 7 days idle or 30 days
   in total, and changing the password logs out every other browser.
 - **Screens:** a display only streams data to a screen that was paired with
-  a code shown on it, or opened by Daycast's own cast with a single-use token
+  a code shown on it, or opened by Nookboard's own cast with a single-use token
   that expires after two minutes. Unpairing takes effect within 20 seconds.
   Each display only receives the data its own widgets show.
 - **Secrets:** calendar addresses give read access to a calendar, so they
@@ -44,7 +44,7 @@ fully trust, such as a guest's phone.
   trusts for a LAN address. Put a reverse proxy with HTTPS in front of the
   web interface if you open it from outside, and never expose port 8420 to
   the internet.
-- Daycast does not verify the TLS certificates of Cast devices: they use
+- Nookboard does not verify the TLS certificates of Cast devices: they use
   Google's device CA, which no trust store contains. Home Assistant and
   pychromecast do the same.
 - Anyone who can read the server's log during the first start can create the

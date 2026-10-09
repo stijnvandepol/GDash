@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/stijnvandepol/daycast/internal/validation"
+	"github.com/stijnvandepol/nookboard/internal/validation"
 )
 
 func valid() Dashboard {

@@ -24,9 +24,9 @@
 </script>
 
 <form class="card narrow" onsubmit={submit}>
-  <h1>Set up Daycast</h1>
+  <h1>Set up Nookboard</h1>
   <p class="muted">
-    Create the administrator account. The setup token is printed in the Daycast log, for example in Container Manager on
+    Create the administrator account. The setup token is printed in the Nookboard log, for example in Container Manager on
     your NAS or in the terminal window. That way only you can set up this server.
   </p>
 

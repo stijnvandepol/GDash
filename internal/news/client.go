@@ -13,12 +13,12 @@ import (
 
 // maxFeedBytes is far above any real headline feed (the NOS feed with full
 // article bodies is about 60 KB) and stops a broken server from making
-// Daycast read without end.
+// Nookboard read without end.
 const maxFeedBytes = 2 << 20
 
 var errFeedTooLarge = errors.New("feed is larger than the limit")
 
-const userAgent = "Daycast (self-hosted TV dashboard; +https://github.com/stijnvandepol/daycast)"
+const userAgent = "Nookboard (self-hosted TV dashboard; +https://github.com/stijnvandepol/nookboard)"
 
 // Client fetches feeds with conditional requests: when a server sends an
 // ETag or Last-Modified, an unchanged feed costs it a 304 instead of the

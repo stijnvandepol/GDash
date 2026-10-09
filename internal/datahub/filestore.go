@@ -14,7 +14,7 @@ import (
 var validKey = regexp.MustCompile(`^[a-z0-9][a-z0-9.-]{0,63}$`)
 
 // FileStore keeps the last good entry of each source as a JSON file, so data
-// survives a restart. SQLite replaces this once Daycast stores configuration.
+// survives a restart. SQLite replaces this once Nookboard stores configuration.
 type FileStore struct {
 	dir string
 }

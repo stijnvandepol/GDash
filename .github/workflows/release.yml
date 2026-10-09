@@ -39,7 +39,7 @@ jobs:
           prerelease=""
           if [[ "$GITHUB_REF_NAME" == *-* ]]; then prerelease="--prerelease"; fi
           gh release create "$GITHUB_REF_NAME" dist-release/* --draft $prerelease \
-            --title "Daycast $GITHUB_REF_NAME" --generate-notes
+            --title "Nookboard $GITHUB_REF_NAME" --generate-notes
 
   image:
     # The archives job checks the version format first; a tag such as

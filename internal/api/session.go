@@ -6,11 +6,11 @@ import (
 	"net"
 	"net/http"
 
-	"github.com/stijnvandepol/daycast/internal/auth"
-	"github.com/stijnvandepol/daycast/internal/validation"
+	"github.com/stijnvandepol/nookboard/internal/auth"
+	"github.com/stijnvandepol/nookboard/internal/validation"
 )
 
-const sessionCookie = "daycast_session"
+const sessionCookie = "nookboard_session"
 
 type userKey struct{}
 
@@ -193,9 +193,9 @@ func (s *Server) writeAuthError(w http.ResponseWriter, op string, err error) boo
 	case errors.Is(err, auth.ErrRateLimited):
 		writeError(w, http.StatusTooManyRequests, "rate_limited", "Too many failed attempts. Wait 15 minutes and try again.")
 	case errors.Is(err, auth.ErrInvalidSetupToken):
-		writeError(w, http.StatusForbidden, "invalid_setup_token", "The setup token is not correct. It is printed in the Daycast log.")
+		writeError(w, http.StatusForbidden, "invalid_setup_token", "The setup token is not correct. It is printed in the Nookboard log.")
 	case errors.Is(err, auth.ErrSetupDone):
-		writeError(w, http.StatusConflict, "setup_done", "Daycast is already set up. Log in instead.")
+		writeError(w, http.StatusConflict, "setup_done", "Nookboard is already set up. Log in instead.")
 	case validation.Fields(err) != nil:
 		writeValidationError(w, validation.Fields(err))
 	default:

@@ -1,4 +1,4 @@
-// The part of the Cast Web Receiver framework (CAF v3) that Daycast uses.
+// The part of the Cast Web Receiver framework (CAF v3) that Nookboard uses.
 // The framework is loaded as a global script from gstatic, see
 // https://developers.google.com/cast/docs/reference/web_receiver
 

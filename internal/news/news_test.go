@@ -86,7 +86,7 @@ func TestFetchUsesConditionalRequests(t *testing.T) {
 	var requests, notModified atomic.Int32
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		requests.Add(1)
-		if !strings.HasPrefix(r.Header.Get("User-Agent"), "Daycast") {
+		if !strings.HasPrefix(r.Header.Get("User-Agent"), "Nookboard") {
 			t.Errorf("User-Agent = %q", r.Header.Get("User-Agent"))
 		}
 		if r.Header.Get("If-None-Match") == `"v1"` {

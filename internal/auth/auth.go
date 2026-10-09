@@ -13,10 +13,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/stijnvandepol/daycast/internal/ratelimit"
-	"github.com/stijnvandepol/daycast/internal/store"
-	"github.com/stijnvandepol/daycast/internal/token"
-	"github.com/stijnvandepol/daycast/internal/validation"
+	"github.com/stijnvandepol/nookboard/internal/ratelimit"
+	"github.com/stijnvandepol/nookboard/internal/store"
+	"github.com/stijnvandepol/nookboard/internal/token"
+	"github.com/stijnvandepol/nookboard/internal/validation"
 )
 
 const (
@@ -56,7 +56,7 @@ type Credentials struct {
 	Password string
 }
 
-// User is the logged-in account as the rest of Daycast sees it.
+// User is the logged-in account as the rest of Nookboard sees it.
 type User struct {
 	ID       int64  `json:"id"`
 	Username string `json:"username"`
@@ -74,10 +74,10 @@ type Service struct {
 }
 
 // NewService creates the service. setupToken must be a random secret shown
-// to the person installing Daycast; it is only accepted while no account
+// to the person installing Nookboard; it is only accepted while no account
 // exists.
 func NewService(st *store.Store, setupToken string) (*Service, error) {
-	dummy, err := hashPassword("daycast-timing-equaliser")
+	dummy, err := hashPassword("nookboard-timing-equaliser")
 	if err != nil {
 		return nil, err
 	}

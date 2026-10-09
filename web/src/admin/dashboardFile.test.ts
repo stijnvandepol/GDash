@@ -15,11 +15,16 @@ describe('dashboard files', () => {
     expect(back).toEqual({ name: 'Evening', theme: 'night', widgets: [{ id: 'clock', type: 'clock', x: 0, y: 0, w: 6, h: 4 }] });
   });
 
+  it('reads files exported by Daycast, its former name', () => {
+    const old = toFile(evening).replace('nookboard-dashboard', 'daycast-dashboard');
+    expect(fromFile(old).name).toBe('Evening');
+  });
+
   it('rejects other files with a clear message', () => {
-    expect(() => fromFile('not json')).toThrow('not a Daycast dashboard file');
-    expect(() => fromFile('{"name":"x","widgets":[]}')).toThrow('not a Daycast dashboard file');
-    expect(() => fromFile('{"format":"daycast-dashboard","version":2,"name":"x","widgets":[]}')).toThrow('newer Daycast');
-    expect(() => fromFile('{"format":"daycast-dashboard","version":1,"name":"x"}')).toThrow('damaged');
+    expect(() => fromFile('not json')).toThrow('not a Nookboard dashboard file');
+    expect(() => fromFile('{"name":"x","widgets":[]}')).toThrow('not a Nookboard dashboard file');
+    expect(() => fromFile('{"format":"nookboard-dashboard","version":2,"name":"x","widgets":[]}')).toThrow('newer Nookboard');
+    expect(() => fromFile('{"format":"nookboard-dashboard","version":1,"name":"x"}')).toThrow('damaged');
     expect(() => fromFile('"' + 'x'.repeat(70_000) + '"')).toThrow('too large');
   });
 });

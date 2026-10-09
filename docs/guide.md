@@ -1,6 +1,6 @@
-# Using Daycast
+# Using Nookboard
 
-This guide assumes Daycast is installed and you created your account with
+This guide assumes Nookboard is installed and you created your account with
 the setup token, see [install.md](install.md). The web interface is at
 `http://<server>:8420/`.
 
@@ -16,12 +16,12 @@ disappears when the basics are done.
    iCal address of each calendar you want on the screen. In Google Calendar
    it is under the calendar's settings, "Secret address in iCal format"; in
    Outlook under "Publish a calendar"; in iCloud under "Public calendar".
-   Daycast stores the address encrypted and never shows it again. Each
+   Nookboard stores the address encrypted and never shows it again. Each
    calendar gets its own colour on the TV, so you can see whose appointment
    it is; choose another one next to the calendar.
 3. **Settings, Language on the TVs:** English or Nederlands.
 4. **Displays, Add a display:** give it a name, such as Kitchen, and pick
-   your TV from the list of Cast devices Daycast found.
+   your TV from the list of Cast devices Nookboard found.
 
 Within a few seconds the TV shows the default dashboard: clock, weather,
 calendar and news.
@@ -84,7 +84,7 @@ in the list at the display.
 
 **Export** saves a dashboard as a file, as a backup or to share a layout.
 **Import a dashboard** adds such a file as a new dashboard, also in another
-Daycast. The file holds the layout, the theme and the widget settings, such
+Nookboard. The file holds the layout, the theme and the widget settings, such
 as the text of a note; it holds no data and no calendar addresses.
 
 ## Small screens
@@ -99,7 +99,7 @@ so nothing is cut off. The dashboard always fills the screen, also on
 
 Choose **Schedule** at a display:
 
-- **Active hours,** such as 06:30 to 23:00. Outside them Daycast stops the
+- **Active hours,** such as 06:30 to 23:00. Outside them Nookboard stops the
   cast and the screen stays dark, so the TV can go to standby.
 - **Time slots** show another dashboard during part of the day, such as a
   morning dashboard with the calendar from 06:30 to 09:00 on weekdays, or a
@@ -112,21 +112,21 @@ Choose **Schedule** at a display:
 ## Keeping an eye on things
 
 - The display list says per TV whether the dashboard is on screen and since
-  when, whether the TV sleeps, another app is on it, or Daycast cannot reach
+  when, whether the TV sleeps, another app is on it, or Nookboard cannot reach
   it.
 - **Settings** shows per news feed, calendar and the weather when it last
   updated, or that it fails.
 - **Settings, Recent activity** lists logins, failed logins, pairings and
   changes of the last 90 days.
 
-## When Daycast is not on the TV
+## When Nookboard is not on the TV
 
-Daycast does not take over a TV that someone casts to, such as YouTube from
+Nookboard does not take over a TV that someone casts to, such as YouTube from
 a phone: it waits, and the dashboard returns within about 30 seconds after
 the cast stops. It also leaves a TV in standby alone, because starting a
 cast could switch it on; when someone switches the TV on, the dashboard
 appears within about 30 seconds. Google TV does not report its own apps, such as Netflix,
-to Daycast, so there it cannot tell; use active hours to keep the dashboard
+to Nookboard, so there it cannot tell; use active hours to keep the dashboard
 away when the TV is mostly used for watching.
 
 More answers are in the troubleshooting section of [install.md](install.md).

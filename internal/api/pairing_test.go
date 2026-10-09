@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stijnvandepol/daycast/internal/pairing"
+	"github.com/stijnvandepol/nookboard/internal/pairing"
 )
 
 func TestEventStreamRequiresPairing(t *testing.T) {

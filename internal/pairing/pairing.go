@@ -11,9 +11,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/stijnvandepol/daycast/internal/ratelimit"
-	"github.com/stijnvandepol/daycast/internal/store"
-	"github.com/stijnvandepol/daycast/internal/token"
+	"github.com/stijnvandepol/nookboard/internal/ratelimit"
+	"github.com/stijnvandepol/nookboard/internal/store"
+	"github.com/stijnvandepol/nookboard/internal/token"
 )
 
 const (

@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/stijnvandepol/daycast/internal/auth"
-	"github.com/stijnvandepol/daycast/internal/pairing"
+	"github.com/stijnvandepol/nookboard/internal/auth"
+	"github.com/stijnvandepol/nookboard/internal/pairing"
 )
 
-const displayCookie = "daycast_display"
+const displayCookie = "nookboard_display"
 
 // displayCookieMaxAge keeps a paired screen paired for a year; unpairing in
 // the web interface revokes it earlier.

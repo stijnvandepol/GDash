@@ -4,9 +4,9 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/stijnvandepol/daycast/internal/display"
-	"github.com/stijnvandepol/daycast/internal/store"
-	"github.com/stijnvandepol/daycast/internal/validation"
+	"github.com/stijnvandepol/nookboard/internal/display"
+	"github.com/stijnvandepol/nookboard/internal/store"
+	"github.com/stijnvandepol/nookboard/internal/validation"
 )
 
 type dashboardBody struct {

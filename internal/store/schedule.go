@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/stijnvandepol/daycast/internal/displays"
+	"github.com/stijnvandepol/nookboard/internal/displays"
 )
 
 // splitDays reads the stored day list; empty means every day and is

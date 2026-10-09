@@ -1,7 +1,7 @@
 -- Accounts for the web interface. Sessions store only a SHA-256 hash of the
 -- session token, so a leaked database backup cannot be used to log in.
 --
--- Rollback: restore daycast.db.bak-v1, which Daycast writes before applying
+-- Rollback: restore nookboard.db.bak-v1, which Nookboard writes before applying
 -- this migration.
 CREATE TABLE users (
     id            INTEGER PRIMARY KEY,

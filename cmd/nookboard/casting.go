@@ -9,12 +9,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/stijnvandepol/daycast/internal/cast"
-	"github.com/stijnvandepol/daycast/internal/casting"
-	"github.com/stijnvandepol/daycast/internal/display"
-	"github.com/stijnvandepol/daycast/internal/displays"
-	"github.com/stijnvandepol/daycast/internal/pairing"
-	"github.com/stijnvandepol/daycast/internal/store"
+	"github.com/stijnvandepol/nookboard/internal/cast"
+	"github.com/stijnvandepol/nookboard/internal/casting"
+	"github.com/stijnvandepol/nookboard/internal/display"
+	"github.com/stijnvandepol/nookboard/internal/displays"
+	"github.com/stijnvandepol/nookboard/internal/pairing"
+	"github.com/stijnvandepol/nookboard/internal/store"
 )
 
 // newCastManager keeps the dashboard on every display that is linked to a
@@ -32,7 +32,7 @@ func newCastManager(cfg config, deps castDeps) (*casting.Manager, error) {
 	db, snapshots, pairings, logger := deps.db, deps.snapshots, deps.pairings, deps.logger
 	_, port, err := net.SplitHostPort(cfg.addr)
 	if err != nil {
-		return nil, fmt.Errorf("DAYCAST_ADDR %q has no port: %w", cfg.addr, err)
+		return nil, fmt.Errorf("NOOKBOARD_ADDR %q has no port: %w", cfg.addr, err)
 	}
 	runDisplay := func(ctx context.Context, d displays.Display, report func(cast.State, error)) {
 		keeper := &cast.Keeper{

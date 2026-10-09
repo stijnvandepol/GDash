@@ -10,7 +10,7 @@ func env(values map[string]string) func(string) string {
 }
 
 func TestLoadConfigDefaults(t *testing.T) {
-	cfg, err := loadConfig(env(map[string]string{"DAYCAST_LATITUDE": "51.6461", "DAYCAST_LONGITUDE": "5.9449"}))
+	cfg, err := loadConfig(env(map[string]string{"NOOKBOARD_LATITUDE": "51.6461", "NOOKBOARD_LONGITUDE": "5.9449"}))
 	if err != nil {
 		t.Fatalf("loadConfig: %v", err)
 	}
@@ -36,7 +36,7 @@ func TestLoadConfigWithoutLocation(t *testing.T) {
 }
 
 func TestLoadConfigCalendarsAreSeeded(t *testing.T) {
-	cfg, err := loadConfig(env(map[string]string{"DAYCAST_CALENDAR_URLS": "webcal://example.org/a.ics, https://example.org/b.ics"}))
+	cfg, err := loadConfig(env(map[string]string{"NOOKBOARD_CALENDAR_URLS": "webcal://example.org/a.ics, https://example.org/b.ics"}))
 	if err != nil || len(cfg.seed.Calendars) != 2 || cfg.seed.Calendars[0].URL != "https://example.org/a.ics" {
 		t.Fatalf("calendars = %+v, %v", cfg.seed.Calendars, err)
 	}
@@ -44,7 +44,7 @@ func TestLoadConfigCalendarsAreSeeded(t *testing.T) {
 
 func TestLoadConfigCastAppID(t *testing.T) {
 	cfg, err := loadConfig(env(map[string]string{
-		"DAYCAST_LATITUDE": "51.65", "DAYCAST_LONGITUDE": "5.95", "DAYCAST_CAST_APP_ID": "ABCD1234",
+		"NOOKBOARD_LATITUDE": "51.65", "NOOKBOARD_LONGITUDE": "5.95", "NOOKBOARD_CAST_APP_ID": "ABCD1234",
 	}))
 	if err != nil {
 		t.Fatalf("loadConfig: %v", err)
@@ -69,12 +69,12 @@ func TestLoadConfigErrors(t *testing.T) {
 		env     map[string]string
 		wantErr string
 	}{
-		{"half a location", map[string]string{"DAYCAST_LATITUDE": "51"}, "DAYCAST_LONGITUDE"},
-		{"latitude not a number", map[string]string{"DAYCAST_LATITUDE": "noord", "DAYCAST_LONGITUDE": "5"}, "not a number"},
-		{"latitude out of range", map[string]string{"DAYCAST_LATITUDE": "95", "DAYCAST_LONGITUDE": "5"}, "invalid location"},
-		{"news feed not http", map[string]string{"DAYCAST_LATITUDE": "51", "DAYCAST_LONGITUDE": "5", "DAYCAST_NEWS_FEED": "file:///etc/passwd"}, "DAYCAST_NEWS_FEED"},
-		{"calendar not a URL", map[string]string{"DAYCAST_LATITUDE": "51", "DAYCAST_LONGITUDE": "5", "DAYCAST_CALENDAR_URLS": "ftp://x/y.ics"}, "DAYCAST_CALENDAR_URLS"},
-		{"malformed app id", map[string]string{"DAYCAST_LATITUDE": "51", "DAYCAST_LONGITUDE": "5", "DAYCAST_CAST_APP_ID": "dashcast"}, "8-character"},
+		{"half a location", map[string]string{"NOOKBOARD_LATITUDE": "51"}, "NOOKBOARD_LONGITUDE"},
+		{"latitude not a number", map[string]string{"NOOKBOARD_LATITUDE": "noord", "NOOKBOARD_LONGITUDE": "5"}, "not a number"},
+		{"latitude out of range", map[string]string{"NOOKBOARD_LATITUDE": "95", "NOOKBOARD_LONGITUDE": "5"}, "invalid location"},
+		{"news feed not http", map[string]string{"NOOKBOARD_LATITUDE": "51", "NOOKBOARD_LONGITUDE": "5", "NOOKBOARD_NEWS_FEED": "file:///etc/passwd"}, "NOOKBOARD_NEWS_FEED"},
+		{"calendar not a URL", map[string]string{"NOOKBOARD_LATITUDE": "51", "NOOKBOARD_LONGITUDE": "5", "NOOKBOARD_CALENDAR_URLS": "ftp://x/y.ics"}, "NOOKBOARD_CALENDAR_URLS"},
+		{"malformed app id", map[string]string{"NOOKBOARD_LATITUDE": "51", "NOOKBOARD_LONGITUDE": "5", "NOOKBOARD_CAST_APP_ID": "dashcast"}, "8-character"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

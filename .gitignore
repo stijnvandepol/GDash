@@ -2,10 +2,10 @@
 /web/node_modules/
 /web/dist/*
 !/web/dist/.gitkeep
-/daycast
-/daycast.exe
+/nookboard
+/nookboard.exe
 /data-dev/
-/daycast-dev.exe
+/nookboard-dev.exe
 /data-test/
 /dist-release/
 /data-nesthub/

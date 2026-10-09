@@ -100,7 +100,7 @@ func TestOpenAndDeleteRefuseOtherNames(t *testing.T) {
 	if err := os.WriteFile(s.dir+"/notes.txt", []byte("x"), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	for _, name := range []string{"notes.txt", "../daycast.db", "..%2fdaycast.db", ""} {
+	for _, name := range []string{"notes.txt", "../nookboard.db", "..%2fnookboard.db", ""} {
 		if _, _, err := s.Open(name); !errors.Is(err, ErrNotFound) {
 			t.Errorf("Open(%q): err = %v, want ErrNotFound", name, err)
 		}

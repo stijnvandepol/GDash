@@ -18,16 +18,16 @@ import (
 	"testing/fstest"
 	"time"
 
-	"github.com/stijnvandepol/daycast/internal/auth"
-	"github.com/stijnvandepol/daycast/internal/cast"
-	"github.com/stijnvandepol/daycast/internal/casting"
-	"github.com/stijnvandepol/daycast/internal/datahub"
-	"github.com/stijnvandepol/daycast/internal/pairing"
-	"github.com/stijnvandepol/daycast/internal/photos"
-	"github.com/stijnvandepol/daycast/internal/secret"
-	"github.com/stijnvandepol/daycast/internal/settings"
-	"github.com/stijnvandepol/daycast/internal/store"
-	"github.com/stijnvandepol/daycast/internal/weather"
+	"github.com/stijnvandepol/nookboard/internal/auth"
+	"github.com/stijnvandepol/nookboard/internal/cast"
+	"github.com/stijnvandepol/nookboard/internal/casting"
+	"github.com/stijnvandepol/nookboard/internal/datahub"
+	"github.com/stijnvandepol/nookboard/internal/pairing"
+	"github.com/stijnvandepol/nookboard/internal/photos"
+	"github.com/stijnvandepol/nookboard/internal/secret"
+	"github.com/stijnvandepol/nookboard/internal/settings"
+	"github.com/stijnvandepol/nookboard/internal/store"
+	"github.com/stijnvandepol/nookboard/internal/weather"
 )
 
 const testSetupToken = "test-setup-token"
@@ -88,7 +88,7 @@ type testEnv struct {
 
 func newTestEnv(t *testing.T, discover func(context.Context) ([]cast.Device, error)) *testEnv {
 	t.Helper()
-	st, err := store.Open(context.Background(), filepath.Join(t.TempDir(), "daycast.db"))
+	st, err := store.Open(context.Background(), filepath.Join(t.TempDir(), "nookboard.db"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -303,7 +303,7 @@ func TestSessionCookieFlags(t *testing.T) {
 	}
 	resp.Body.Close()
 	header := resp.Header.Get("Set-Cookie")
-	for _, want := range []string{"daycast_session=", "HttpOnly", "SameSite=Lax", "Path=/"} {
+	for _, want := range []string{"nookboard_session=", "HttpOnly", "SameSite=Lax", "Path=/"} {
 		if !strings.Contains(header, want) {
 			t.Errorf("Set-Cookie %q lacks %q", header, want)
 		}

@@ -1,28 +1,28 @@
-# systemd unit for Daycast on Linux and Raspberry Pi OS. Install with:
+# systemd unit for Nookboard on Linux and Raspberry Pi OS. Install with:
 #
-#   sudo install -m 755 daycast /usr/local/bin/daycast
-#   sudo install -m 644 daycast.service /etc/systemd/system/daycast.service
-#   sudo systemctl daemon-reload && sudo systemctl enable --now daycast
-#   journalctl -u daycast    # shows the setup token on the first start
+#   sudo install -m 755 nookboard /usr/local/bin/nookboard
+#   sudo install -m 644 nookboard.service /etc/systemd/system/nookboard.service
+#   sudo systemctl daemon-reload && sudo systemctl enable --now nookboard
+#   journalctl -u nookboard    # shows the setup token on the first start
 #
-# Daycast runs as a throwaway user with only its data directory writable.
+# Nookboard runs as a throwaway user with only its data directory writable.
 
 [Unit]
-Description=Daycast TV dashboard
-Documentation=https://github.com/stijnvandepol/daycast
+Description=Nookboard TV dashboard
+Documentation=https://github.com/stijnvandepol/nookboard
 Wants=network-online.target
 After=network-online.target
 
 [Service]
-ExecStart=/usr/local/bin/daycast
-Environment=DAYCAST_DATA_DIR=/var/lib/daycast
+ExecStart=/usr/local/bin/nookboard
+Environment=NOOKBOARD_DATA_DIR=/var/lib/nookboard
 # Uncomment to listen on another port; open it in the firewall for your TVs.
-#Environment=DAYCAST_ADDR=:8420
+#Environment=NOOKBOARD_ADDR=:8420
 Restart=on-failure
 RestartSec=5
 
 DynamicUser=yes
-StateDirectory=daycast
+StateDirectory=nookboard
 StateDirectoryMode=0700
 NoNewPrivileges=yes
 ProtectSystem=strict

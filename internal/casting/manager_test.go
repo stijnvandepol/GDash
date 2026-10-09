@@ -11,8 +11,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stijnvandepol/daycast/internal/cast"
-	"github.com/stijnvandepol/daycast/internal/displays"
+	"github.com/stijnvandepol/nookboard/internal/cast"
+	"github.com/stijnvandepol/nookboard/internal/displays"
 )
 
 // recorder tracks which displays have a running keeper.

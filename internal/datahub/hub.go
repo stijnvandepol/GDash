@@ -1,4 +1,4 @@
-// Package datahub is the only part of Daycast that talks to external data
+// Package datahub is the only part of Nookboard that talks to external data
 // services. It refreshes each source on a schedule, keeps the last good value
 // when a refresh fails, and tells displays when data is stale. However many
 // TVs are on, every source is fetched once.

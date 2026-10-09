@@ -129,7 +129,7 @@ func (k *Keeper) refreshInterval(d Device) time.Duration {
 	return k.Refresh(d)
 }
 
-// ShouldRelaunch decides whether the keeper may start Daycast on a device
+// ShouldRelaunch decides whether the keeper may start Nookboard on a device
 // that is not showing it. Starting an app on a Cast device takes over the
 // screen, and through HDMI-CEC it can also switch the TV on.
 //
@@ -152,7 +152,7 @@ func isReadySignal(payload string) bool {
 }
 
 // LocalIP returns this machine's address on the connection to the device:
-// the address the device can use to reach Daycast.
+// the address the device can use to reach Nookboard.
 func (c *Client) LocalIP() string {
 	if addr, ok := c.conn.LocalAddr().(*net.TCPAddr); ok {
 		return addr.IP.String()
