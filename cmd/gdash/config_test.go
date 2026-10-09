@@ -2,6 +2,9 @@ package main
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 )
@@ -96,5 +99,40 @@ func TestLoadConfigErrors(t *testing.T) {
 				t.Fatalf("error = %v, want it to mention %q", err, tt.wantErr)
 			}
 		})
+	}
+}
+
+func TestCheckDataDirCreatesTheDirectoryAndLeavesNothingBehind(t *testing.T) {
+	dir := filepath.Join(t.TempDir(), "data")
+	if err := checkDataDir(dir); err != nil {
+		t.Fatalf("checkDataDir: %v", err)
+	}
+	entries, err := os.ReadDir(dir)
+	if err != nil || len(entries) != 0 {
+		t.Fatalf("directory = %v, %v; want it created and empty", entries, err)
+	}
+}
+
+func TestCheckDataDirExplainsAnUnusableDirectory(t *testing.T) {
+	file := filepath.Join(t.TempDir(), "not-a-directory")
+	if err := os.WriteFile(file, nil, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	err := checkDataDir(file)
+	if err == nil || !strings.Contains(err.Error(), "is not writable") || !strings.Contains(err.Error(), "docs/install.md") {
+		t.Fatalf("checkDataDir = %v, want a message that says what to do", err)
+	}
+}
+
+func TestCheckDataDirNeedsWriteAccess(t *testing.T) {
+	if runtime.GOOS == "windows" || os.Geteuid() == 0 {
+		t.Skip("permission bits do not stop this user")
+	}
+	dir := filepath.Join(t.TempDir(), "data")
+	if err := os.Mkdir(dir, 0o500); err != nil {
+		t.Fatal(err)
+	}
+	if err := checkDataDir(dir); err == nil || !strings.Contains(err.Error(), "is not writable") {
+		t.Fatalf("checkDataDir = %v, want a not-writable error", err)
 	}
 }

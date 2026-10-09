@@ -122,6 +122,9 @@ func serve(ctx context.Context, logger *slog.Logger) error {
 		return err
 	}
 	logger.Info("gdash starting", "version", currentVersion())
+	if err := checkDataDir(cfg.dataDir); err != nil {
+		return err
+	}
 	if adopted, err := adoptOldDatabase(cfg.dataDir); err != nil {
 		return err
 	} else if adopted != "" {

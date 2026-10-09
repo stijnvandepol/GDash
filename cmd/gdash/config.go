@@ -6,6 +6,7 @@ import (
 	"net"
 	"net/netip"
 	"net/url"
+	"os"
 	"regexp"
 	"strconv"
 	"strings"
@@ -59,6 +60,30 @@ func loadConfig(getenv func(string) string) (config, error) {
 		return config{}, fmt.Errorf("GDASH_CAST_APP_ID %q is not an 8-character Cast application ID", cfg.castAppID)
 	}
 	return cfg, nil
+}
+
+// checkDataDir makes sure GDash can write in its data directory, creating
+// it when it is missing, so a wrong owner on a Docker volume or a mounted
+// folder is reported at the start instead of as a database error later.
+func checkDataDir(dir string) error {
+	if err := os.MkdirAll(dir, 0o700); err != nil {
+		return dataDirError(dir, err)
+	}
+	probe, err := os.CreateTemp(dir, ".write-check-*")
+	if err != nil {
+		return dataDirError(dir, err)
+	}
+	probe.Close()
+	return os.Remove(probe.Name())
+}
+
+func dataDirError(dir string, err error) error {
+	owner := ""
+	if uid := os.Getuid(); uid >= 0 {
+		owner = fmt.Sprintf(" for user id %d", uid)
+	}
+	return fmt.Errorf("data directory %q is not writable%s: %w; give that user write access to it, "+
+		`see "Data directory permissions" in docs/install.md`, dir, owner, err)
 }
 
 // parsePrefixes reads a comma-separated list of IP addresses and CIDR
