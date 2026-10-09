@@ -1,0 +1,236 @@
+/* The frame around the pages: top bar, tabs, user menu, sign-in screens, footer.
+   Wide screens: tabs sit in the top bar. Phones: they move to a bar at the bottom. */
+
+.shell {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+.topbar-inner {
+  max-width: var(--page-w);
+  height: var(--topbar-h);
+  margin: 0 auto;
+  padding: 0 var(--s-4);
+  display: flex;
+  align-items: center;
+  gap: var(--s-5);
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  font-size: var(--fs-lg);
+  letter-spacing: -0.01em;
+}
+.spacer {
+  flex: 1;
+}
+
+.tabs {
+  display: flex;
+  gap: var(--s-1);
+}
+button.tab {
+  min-height: 36px;
+  padding: 0 var(--s-3);
+  background: none;
+  color: var(--muted);
+  font-weight: 500;
+}
+button.tab:hover:not(:disabled) {
+  background: var(--neutral-soft);
+  color: var(--text);
+}
+button.tab[aria-current='page'] {
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 600;
+}
+.tab-icon {
+  flex: none;
+}
+
+/* The user menu. */
+.user {
+  position: relative;
+}
+button.user-button {
+  min-height: 40px;
+  padding: 0 var(--s-2) 0 var(--s-1);
+  background: none;
+  color: var(--text);
+  font-weight: 500;
+  border-radius: var(--r-pill);
+}
+button.user-button:hover:not(:disabled) {
+  background: var(--neutral-soft);
+}
+.avatar {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  text-transform: uppercase;
+}
+.user-name {
+  max-width: 14ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + var(--s-2));
+  min-width: 220px;
+  padding: var(--s-2);
+  display: grid;
+  gap: var(--s-1);
+  background: var(--raised);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow-md);
+}
+.menu-label {
+  padding: var(--s-2) var(--s-3);
+  border-bottom: 1px solid var(--border);
+  margin-bottom: var(--s-1);
+  font-size: var(--fs-sm);
+  color: var(--muted);
+}
+.menu-label strong {
+  display: block;
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+button.menu-item {
+  justify-self: stretch;
+  justify-content: flex-start;
+  background: none;
+  color: var(--text);
+  font-weight: 500;
+}
+button.menu-item:hover:not(:disabled) {
+  background: var(--neutral-soft);
+}
+
+/* Sign-in and setup: one centred card with the brand above it. */
+.auth {
+  flex: 1;
+  display: grid;
+  place-items: center;
+  padding: var(--s-5) var(--s-4);
+}
+.auth-card {
+  width: 100%;
+  max-width: 420px;
+  display: grid;
+  gap: var(--s-5);
+}
+.auth-brand {
+  display: grid;
+  justify-items: center;
+  gap: var(--s-2);
+  text-align: center;
+}
+.auth-brand .name {
+  font-size: var(--fs-2xl);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.auth-brand p {
+  color: var(--muted);
+}
+.auth-form {
+  display: grid;
+  gap: var(--s-4);
+}
+.auth-form > button {
+  justify-self: stretch;
+}
+.auth-form h1 {
+  font-size: var(--fs-lg);
+}
+.help {
+  display: grid;
+  gap: var(--s-2);
+  padding: var(--s-3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--bg);
+  font-size: var(--fs-sm);
+}
+.help summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+.help ul {
+  margin: var(--s-2) 0 0;
+  padding-left: 1.2em;
+  display: grid;
+  gap: var(--s-1);
+}
+
+.footer {
+  max-width: var(--page-w);
+  width: 100%;
+  margin: 0 auto;
+  padding: 0 var(--s-4) var(--s-6);
+  text-align: center;
+}
+.footer a {
+  white-space: nowrap;
+}
+
+/* Phones: logo and user at the top, tabs in a bar at the bottom. */
+@media (max-width: 640px) {
+  .topbar-inner {
+    padding: 0 var(--s-3);
+    gap: var(--s-3);
+  }
+  .tabs {
+    position: fixed;
+    inset: auto 0 0;
+    z-index: 20;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0;
+    padding-bottom: env(safe-area-inset-bottom);
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+  }
+  button.tab {
+    flex-direction: column;
+    justify-self: stretch;
+    gap: 2px;
+    min-height: var(--tabbar-h);
+    padding: var(--s-2) 0;
+    border-radius: 0;
+    font-size: var(--fs-xs);
+  }
+  button.tab[aria-current='page'] {
+    background: none;
+    box-shadow: inset 0 2px 0 var(--accent);
+  }
+  .with-tabs {
+    padding-bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom));
+  }
+  .user-name {
+    display: none;
+  }
+}
