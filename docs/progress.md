@@ -30,7 +30,7 @@ State of the project on 8 October 2026, so work can continue on any machine.
 - DashCast showed the Daycast page on a Chromecast HD (Google TV) and kept a live connection.
 - **The Google TV screensaver covered the cast after about 19 minutes**, while the device still reported DashCast as running. Stopping and relaunching the receiver brought the dashboard back. The keeper now does this every 15 minutes (every 9 on a Nest Hub), never while the TV is in standby.
 - After the switch to pairing, the TV paired itself through the launch token in the DashCast URL and showed clock, weather and news. The database migrated from version 2 to 3 and wrote its backup first.
-- Soak test from 19:18 to 00:53 (68 checks every 5 minutes): never without a connection, always DashCast on screen, 21 periodic restarts and no warnings or errors in the server log. The run continues overnight.
+- Soak test of 12 hours, 8 October 19:18 to 9 October 07:14 (144 checks every 5 minutes): DashCast was on screen at every check, with 49 periodic restarts on schedule. Between 01:00 and 01:30 the connection to the TV failed six times (timeouts and EOF); each time the keeper reconnected within a second. The server reached the TV through a Tailscale address that night, so a network hiccup on that route is the likely cause. From 01:13 to 07:09 three or four connections from the TV to port 8420 were open instead of one; the count includes ordinary HTTP connections, so it is worth watching on the next run, not yet a finding.
 - Memory: the TV server used 26 MB (working set) after five and a half hours; a freshly started server with all features 47 MB. The research's limit is 50 MB.
 - Three more problems found and fixed: the URL for the TV used the Tailscale address instead of the home network address; a DashCast session that was already running ignored the new URL; a late status update after a stop caused a second launch.
 
@@ -58,7 +58,7 @@ simulated device; not yet on the real TV.
 
 ## Not tested yet
 
-- **A full 24-hour run** with the periodic restart (five and a half hours done, see above).
+- **A full 24-hour run** with the periodic restart (12 hours done, see above), on the current version.
 - **The Nest Hub** with the 9-minute restart.
 - **An own receiver** (option A from the research): needs a Cast developer account (USD 5) and a registered device, see [receiver.md](receiver.md).
 - **Running the Docker image** on a NAS or Raspberry Pi. CI builds it for amd64 and arm64, but nobody has started it yet; Docker Desktop on the development PC did not start its engine.
