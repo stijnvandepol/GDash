@@ -36,15 +36,24 @@ func NewClient(timeout time.Duration) *http.Client {
 	transport := http.DefaultTransport.(*http.Transport).Clone()
 	transport.DialContext = dialer.DialContext
 	return &http.Client{
-		Timeout:   timeout,
-		Transport: transport,
-		CheckRedirect: func(_ *http.Request, via []*http.Request) error {
-			if len(via) >= maxRedirects {
-				return fmt.Errorf("stopped after %d redirects", maxRedirects)
-			}
-			return nil
-		},
+		Timeout:       timeout,
+		Transport:     transport,
+		CheckRedirect: checkRedirect,
 	}
+}
+
+// ErrDowngrade is returned for a redirect from https to plain http, which
+// would send a secret address, such as a calendar's, unencrypted.
+var ErrDowngrade = errors.New("refused a redirect from https to http")
+
+func checkRedirect(req *http.Request, via []*http.Request) error {
+	if len(via) >= maxRedirects {
+		return fmt.Errorf("stopped after %d redirects", maxRedirects)
+	}
+	if via[0].URL.Scheme == "https" && req.URL.Scheme != "https" {
+		return ErrDowngrade
+	}
+	return nil
 }
 
 func control(_, address string, _ syscall.RawConn) error {

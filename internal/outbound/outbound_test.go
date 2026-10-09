@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/netip"
+	"net/url"
 	"testing"
 	"time"
 )
@@ -55,5 +56,27 @@ func TestClientConnectsToAllowedAndRefusesBlocked(t *testing.T) {
 
 	if _, err := client.Get("http://169.254.169.254/latest/meta-data/"); !errors.Is(err, ErrBlockedAddress) {
 		t.Fatalf("GET metadata address: err = %v, want ErrBlockedAddress", err)
+	}
+}
+
+func TestRedirectsMayNotLeaveHTTPS(t *testing.T) {
+	https := func(scheme string) *http.Request {
+		return &http.Request{URL: &url.URL{Scheme: scheme, Host: "calendar.example.org"}}
+	}
+	if err := checkRedirect(https("http"), []*http.Request{https("https")}); !errors.Is(err, ErrDowngrade) {
+		t.Fatalf("https to http: err = %v, want ErrDowngrade", err)
+	}
+	if err := checkRedirect(https("https"), []*http.Request{https("http")}); err != nil {
+		t.Fatalf("http to https: err = %v, want none", err)
+	}
+	if err := checkRedirect(https("http"), []*http.Request{https("http")}); err != nil {
+		t.Fatalf("http to http: err = %v, want none", err)
+	}
+	many := make([]*http.Request, maxRedirects)
+	for i := range many {
+		many[i] = https("https")
+	}
+	if err := checkRedirect(https("https"), many); err == nil {
+		t.Fatal("no error after the maximum number of redirects")
 	}
 }
