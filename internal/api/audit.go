@@ -12,6 +12,8 @@ const (
 	auditAccountCreated         = "account_created"
 	auditLogin                  = "login"
 	auditLoginFailed            = "login_failed"
+	auditSetupFailed            = "setup_failed"
+	auditAPITokenRejected       = "api_token_rejected"
 	auditLogout                 = "logout"
 	auditPasswordChanged        = "password_changed"
 	auditPasswordWrong          = "password_change_failed"

@@ -21,15 +21,27 @@ describe('describeAction', () => {
     expect(describeAction({ ...base, action: 'photo_added', detail: '17ffba802f212d49844c20cc3dca1edb.png' })).toBe('Added a photo');
   });
 
+  it('describes failed setups, rejected tokens and resets', () => {
+    expect(describeAction({ ...base, actor: '', action: 'setup_failed', detail: 'wrong setup token' })).toBe(
+      'Setup attempt failed: wrong setup token',
+    );
+    expect(describeAction({ ...base, actor: '', action: 'api_token_rejected' })).toBe('An automation used an invalid API token');
+    expect(describeAction({ ...base, actor: 'command line', action: 'password_reset', detail: 'stijn' })).toBe(
+      'Reset the password from the command line for stijn',
+    );
+  });
+
   it('shows an action from a newer server as it is', () => {
     expect(describeAction({ ...base, action: 'backup_restored' })).toBe('backup_restored');
   });
 });
 
 describe('isWarning', () => {
-  it('flags failed attempts only', () => {
+  it('flags failed attempts and rejected tokens only', () => {
     expect(isWarning({ ...base, action: 'login_failed' })).toBe(true);
     expect(isWarning({ ...base, action: 'password_change_failed' })).toBe(true);
+    expect(isWarning({ ...base, action: 'setup_failed' })).toBe(true);
+    expect(isWarning({ ...base, action: 'api_token_rejected' })).toBe(true);
     expect(isWarning(base)).toBe(false);
   });
 });

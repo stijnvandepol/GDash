@@ -15,6 +15,8 @@ const ACTIONS: Record<string, string> = {
   login_failed: 'Failed login',
   logout: 'Logged out',
   password_changed: 'Changed the password',
+  setup_failed: 'Setup attempt failed',
+  api_token_rejected: 'An automation used an invalid API token',
   password_reset: 'Reset the password from the command line for',
   password_change_failed: 'Failed to change the password',
   screen_paired: 'Paired a screen with display',
@@ -48,12 +50,12 @@ const WITHOUT_DETAIL = new Set(['photo_added', 'photo_removed']);
 export function describeAction(event: AuditEvent): string {
   const text = ACTIONS[event.action] ?? event.action;
   if (!event.detail || WITHOUT_DETAIL.has(event.action)) return text;
-  return event.action === 'login_failed' || event.action === 'password_change_failed'
+  return event.action.endsWith('_failed')
     ? `${text}: ${event.detail}`
     : `${text} ${event.detail}`;
 }
 
 /** Whether an event deserves attention, such as a failed login. */
 export function isWarning(event: AuditEvent): boolean {
-  return event.action.endsWith('_failed');
+  return event.action.endsWith('_failed') || event.action.endsWith('_rejected');
 }

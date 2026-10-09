@@ -54,6 +54,8 @@ func (s *Server) requireUserOrToken(next http.HandlerFunc) http.Handler {
 			writeError(w, http.StatusTooManyRequests, "rate_limited", "Too many invalid API tokens. Wait 15 minutes and try again.")
 			return
 		case errors.Is(err, apitoken.ErrInvalidToken):
+			// Anonymous: the token names no one, and it is never logged.
+			s.audit(r, "", auditAPITokenRejected, "")
 			writeBearerError(w, "invalid_token", "This API token is not valid, or it was revoked. Make a new one under Settings.")
 			return
 		case err != nil:

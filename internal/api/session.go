@@ -94,6 +94,9 @@ func (s *Server) postSetup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	token, user, err := s.Auth.Setup(r.Context(), body.SetupToken, auth.Credentials{Username: body.Username, Password: body.Password}, clientIP(r))
+	if errors.Is(err, auth.ErrInvalidSetupToken) {
+		s.audit(r, "", auditSetupFailed, "wrong setup token")
+	}
 	if !s.writeAuthError(w, "setup", err) {
 		return
 	}
