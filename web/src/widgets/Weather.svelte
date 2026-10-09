@@ -4,9 +4,11 @@
   import { clock } from '../state.svelte';
   import { currentLanguage, locale, t } from '../i18n.svelte';
   import { describeWeather } from './wmo';
+  import WeatherIcon from './WeatherIcon.svelte';
 
   interface WeatherReport {
     temperatureC: number;
+    isDay?: boolean;
     weatherCode: number;
     windKmh: number;
     todayMaxC: number;
@@ -29,7 +31,10 @@
 
 <div class="weather">
   {#if report && entry}
-    <span class="temperature">{Math.round(report.temperatureC)}°</span>
+    <div class="now">
+      <span class="temperature">{Math.round(report.temperatureC)}°</span>
+      <span class="icon"><WeatherIcon code={report.weatherCode} day={report.isDay !== false} /></span>
+    </div>
     <span class="description">{describeWeather(report.weatherCode, currentLanguage()) ?? t('unknownWeather')}</span>
     <span class="range">{Math.round(report.todayMinC)}° / {Math.round(report.todayMaxC)}°</span>
     <span class="wind">{t('wind', { speed: Math.round(report.windKmh) })}</span>
@@ -49,6 +54,17 @@
     flex-direction: column;
     justify-content: center;
     width: 100%;
+  }
+  .now {
+    display: flex;
+    align-items: center;
+    gap: 0.25em;
+  }
+  .icon {
+    display: flex;
+    font-size: 140px;
+    font-size: min(140px, 32cqw, 32cqh);
+    color: var(--text-primary);
   }
   .temperature {
     font-size: 220px;

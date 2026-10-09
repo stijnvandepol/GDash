@@ -5,6 +5,7 @@
   import { daysUntil, parseLocalDate } from './dates';
   import { waitingText } from './waiting';
   import { describeWeather } from './wmo';
+  import WeatherIcon from './WeatherIcon.svelte';
 
   interface Day {
     date: string;
@@ -56,6 +57,7 @@
     {#each days as day, i (i)}
       <li title={describeWeather(day.weatherCode, currentLanguage()) ?? t('unknownWeather')}>
         <span class="day">{dayName(day.date, day.offset)}</span>
+        <span class="icon"><WeatherIcon code={day.weatherCode} /></span>
         <span class="max">{Math.round(day.maxC)}°</span>
         <span class="min">{Math.round(day.minC)}°</span>
         <span class="rain">{day.rainChance}%</span>
@@ -88,6 +90,12 @@
     font-size: min(30px, calc(100cqw / var(--days) * 0.3), 14cqh);
     color: var(--text-muted);
     white-space: nowrap;
+  }
+  .icon {
+    display: flex;
+    font-size: 44px;
+    font-size: min(44px, calc(100cqw / var(--days) * 0.4), 18cqh);
+    color: var(--text-primary);
   }
   .max {
     font-size: 48px;

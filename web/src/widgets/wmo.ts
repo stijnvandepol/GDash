@@ -67,3 +67,18 @@ const dutch: Record<number, string> = {
 export function describeWeather(code: number, language: 'en' | 'nl'): string | undefined {
   return (language === 'nl' ? dutch : english)[code];
 }
+
+/** The icon groups WeatherIcon draws. */
+export type IconKind = 'sun' | 'moon' | 'partly' | 'cloud' | 'fog' | 'drizzle' | 'rain' | 'snow' | 'thunder';
+
+/** The icon for a WMO code; a clear night gets a moon. Unknown codes get a cloud. */
+export function iconFor(code: number, day = true): IconKind {
+  if (code === 0) return day ? 'sun' : 'moon';
+  if (code === 1 || code === 2) return 'partly';
+  if (code === 45 || code === 48) return 'fog';
+  if (code >= 51 && code <= 57) return 'drizzle';
+  if ((code >= 61 && code <= 67) || (code >= 80 && code <= 82)) return 'rain';
+  if ((code >= 71 && code <= 77) || code === 85 || code === 86) return 'snow';
+  if (code >= 95 && code <= 99) return 'thunder';
+  return 'cloud';
+}
