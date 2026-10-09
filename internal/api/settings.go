@@ -144,6 +144,29 @@ func (s *Server) postCalendar(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusCreated, cal)
 }
 
+// patchCalendar handles PATCH /api/calendars/{id} {color}: 204; 404 for an
+// unknown calendar, 422 for a colour that is not offered.
+func (s *Server) patchCalendar(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		Color string `json:"color"`
+	}
+	if !decodeJSON(w, r, &body) {
+		return
+	}
+	id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
+	if err != nil {
+		writeError(w, http.StatusNotFound, "not_found", "This source does not exist.")
+		return
+	}
+	if err := s.Settings.SetCalendarColor(r.Context(), id, body.Color); err != nil {
+		s.writeSettingsError(w, "set calendar color", err)
+		return
+	}
+	s.auditUser(r, auditCalendarChanged, "id "+strconv.FormatInt(id, 10)+": "+body.Color)
+	s.SettingsChanged()
+	w.WriteHeader(http.StatusNoContent)
+}
+
 // deleteNewsFeed handles DELETE /api/news-feeds/{id}: 204, or 404.
 func (s *Server) deleteNewsFeed(w http.ResponseWriter, r *http.Request) {
 	s.deleteSource(w, r, s.Settings.DeleteNewsFeed, auditNewsFeedRemoved)

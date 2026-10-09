@@ -118,6 +118,7 @@ func (s *Server) Handler() http.Handler {
 	mux.Handle("POST /api/news-feeds", s.requireUser(s.postNewsFeed))
 	mux.Handle("DELETE /api/news-feeds/{id}", s.requireUser(s.deleteNewsFeed))
 	mux.Handle("POST /api/calendars", s.requireUser(s.postCalendar))
+	mux.Handle("PATCH /api/calendars/{id}", s.requireUser(s.patchCalendar))
 	mux.Handle("DELETE /api/calendars/{id}", s.requireUser(s.deleteCalendar))
 	mux.Handle("GET /api/places", s.requireUser(s.getPlaces))
 

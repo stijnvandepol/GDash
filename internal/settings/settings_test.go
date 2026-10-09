@@ -231,3 +231,27 @@ func TestSeedKeepsAtMostTheLimit(t *testing.T) {
 		t.Fatalf("calendars = %d, want %d", len(got.Calendars), MaxCalendars)
 	}
 }
+
+func TestCalendarColors(t *testing.T) {
+	ctx := context.Background()
+	s := newService(t)
+	for _, name := range []string{"Family", "Work"} {
+		if _, err := s.AddCalendar(ctx, name, secretURL+"?"+name); err != nil {
+			t.Fatal(err)
+		}
+	}
+	got, _ := s.Get(ctx)
+	if got.Calendars[0].Color != "blue" || got.Calendars[1].Color != "green" {
+		t.Fatalf("default colours = %s, %s; want them to follow the list", got.Calendars[0].Color, got.Calendars[1].Color)
+	}
+	if err := s.SetCalendarColor(ctx, got.Calendars[0].ID, "magenta"); fieldNames(err) != "color" {
+		t.Fatalf("unknown colour: fields = %q", fieldNames(err))
+	}
+	if err := s.SetCalendarColor(ctx, got.Calendars[0].ID, "orange"); err != nil {
+		t.Fatal(err)
+	}
+	src, _ := s.Sources(ctx)
+	if src.Calendars[0].Color != "orange" || src.Calendars[1].Color != "green" {
+		t.Fatalf("source colours = %s, %s", src.Calendars[0].Color, src.Calendars[1].Color)
+	}
+}

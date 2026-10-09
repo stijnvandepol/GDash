@@ -16,7 +16,9 @@ disappears when the basics are done.
    iCal address of each calendar you want on the screen. In Google Calendar
    it is under the calendar's settings, "Secret address in iCal format"; in
    Outlook under "Publish a calendar"; in iCloud under "Public calendar".
-   Daycast stores the address encrypted and never shows it again.
+   Daycast stores the address encrypted and never shows it again. Each
+   calendar gets its own colour on the TV, so you can see whose appointment
+   it is; choose another one next to the calendar.
 3. **Settings, Language on the TVs:** English or Nederlands.
 4. **Displays, Add a display:** give it a name, such as Kitchen, and pick
    your TV from the list of Cast devices Daycast found.

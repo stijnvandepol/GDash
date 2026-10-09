@@ -30,6 +30,8 @@ type Event struct {
 	End      string `json:"end"`
 	AllDay   bool   `json:"allDay"`
 	Calendar string `json:"calendar"`
+	// Color is the calendar's colour on the TV, such as "blue".
+	Color string `json:"color,omitempty"`
 
 	sortKey time.Time
 }

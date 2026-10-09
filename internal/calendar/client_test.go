@@ -52,13 +52,18 @@ func TestUpcomingMergesCalendarsFromStartOfToday(t *testing.T) {
 		// the whole day and greys out what is past.
 		Now: func() time.Time { return time.Date(2026, 10, 8, 21, 0, 0, 0, loc) },
 	}
-	events, err := c.Upcoming(context.Background(), []Source{{Name: "a", URL: srv.URL + "/family.ics"}, {Name: "b", URL: srv.URL + "/work.ics"}}, 2)
+	events, err := c.Upcoming(context.Background(), []Source{{Name: "a", URL: srv.URL + "/family.ics", Color: "blue"}, {Name: "b", URL: srv.URL + "/work.ics", Color: "red"}}, 2)
 	if err != nil {
 		t.Fatalf("Upcoming: %v", err)
 	}
 	var got []string
 	for _, e := range events {
 		got = append(got, e.Calendar+": "+e.Title)
+	}
+	for _, e := range events {
+		if (e.Calendar == "Family") != (e.Color == "blue") {
+			t.Fatalf("event %q of %s has colour %q; want each calendar's own", e.Title, e.Calendar, e.Color)
+		}
 	}
 	want := "Family: Autumn holiday|Work: Stand-up|Family: Dentist"
 	if strings.Join(got, "|") != want {

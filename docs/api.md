@@ -52,6 +52,7 @@ come from another site (cross-site request forgery protection).
 | `POST /api/news-feeds` `{name, url}` | admin | `201` news feed | `401`, `409` at 5 feeds, `422` |
 | `DELETE /api/news-feeds/{id}` | admin | `204` | `401`, `404` |
 | `POST /api/calendars` `{name, url}` | admin | `201` calendar, without its address | `401`, `409` at 10 calendars, `422` |
+| `PATCH /api/calendars/{id}` `{color}` | admin | `204` | `401`, `404`, `422` for another colour |
 | `DELETE /api/calendars/{id}` | admin | `204` | `401`, `404` |
 | `GET /api/photos` | admin | `200 {"photos": [{name, size, addedAt}]}`, oldest first | `401` |
 | `POST /api/photos` multipart, field `photo` | admin | `201` photo | `401`, `409` at 50 photos, `422` for another kind of file or one over 8 MB |
@@ -154,7 +155,9 @@ allows, overlaps another, lacks a required setting, or has a setting its type do
 A setting's `kind` is `integer`, `text` or `date`; `min` and `max` bound an integer, or a text's length in characters.
 Text settings are shown as plain text on the screen, never as HTML.
 
-**settings:** `{"language": "nl", "location": {"name": "Oss", "latitude": 51.77, "longitude": 5.52} | null, "newsFeeds": [{"id": 1, "name": "NOS", "url": "https://…"}], "calendars": [{"id": 2, "name": "Family", "host": "calendar.google.com", "unreadable": false}]}`.
+**settings:** `{"language": "nl", "location": {"name": "Oss", "latitude": 51.77, "longitude": 5.52} | null, "newsFeeds": [{"id": 1, "name": "NOS", "url": "https://…"}], "calendars": [{"id": 2, "name": "Family", "host": "calendar.google.com", "color": "blue", "unreadable": false}]}`.
+A calendar's `color` is one of `blue`, `green`, `orange`, `purple`, `red`, `teal`, `pink` and `yellow`; until one is
+chosen it follows the calendar's place in the list. Its events carry the colour to the TV.
 Names are 1 to 60 characters; addresses use http or https, and calendars also webcal.
 Several news feeds are merged into one list, newest first, each headline with `source` set to its feed's name and
 an empty `title`, which the screen fills in in its own language.

@@ -21,11 +21,13 @@ const maxSourcesPerKind = 50
 // Source is a news feed or calendar. For a calendar, Address is sealed by
 // internal/secret; Host is stored apart so it can be shown.
 type Source struct {
-	ID        int64
-	Kind      string
-	Name      string
-	Address   string
-	Host      string
+	ID      int64
+	Kind    string
+	Name    string
+	Address string
+	Host    string
+	// Color is a palette name chosen in the web interface, or empty.
+	Color     string
 	CreatedAt time.Time
 }
 
@@ -62,7 +64,7 @@ func (s *Store) DeleteSetting(ctx context.Context, key string) error {
 // Sources returns the sources of one kind in the order they were added.
 func (s *Store) Sources(ctx context.Context, kind string) ([]Source, error) {
 	rows, err := s.db.QueryContext(ctx,
-		"SELECT id, kind, name, address, host, created_at FROM sources WHERE kind = ? ORDER BY id LIMIT ?", kind, maxSourcesPerKind)
+		"SELECT id, kind, name, address, host, color, created_at FROM sources WHERE kind = ? ORDER BY id LIMIT ?", kind, maxSourcesPerKind)
 	if err != nil {
 		return nil, fmt.Errorf("list sources: %w", err)
 	}
@@ -71,7 +73,7 @@ func (s *Store) Sources(ctx context.Context, kind string) ([]Source, error) {
 	for rows.Next() {
 		var src Source
 		var created string
-		if err := rows.Scan(&src.ID, &src.Kind, &src.Name, &src.Address, &src.Host, &created); err != nil {
+		if err := rows.Scan(&src.ID, &src.Kind, &src.Name, &src.Address, &src.Host, &src.Color, &created); err != nil {
 			return nil, err
 		}
 		if src.CreatedAt, err = parseTime(created); err != nil {
@@ -98,8 +100,8 @@ func (s *Store) AddSource(ctx context.Context, src Source, limit int) (int64, er
 		return 0, fmt.Errorf("%w: limit of %d %s sources reached", ErrConflict, limit, src.Kind)
 	}
 	res, err := tx.ExecContext(ctx,
-		"INSERT INTO sources (kind, name, address, host, created_at) VALUES (?, ?, ?, ?, ?)",
-		src.Kind, src.Name, src.Address, src.Host, formatTime(src.CreatedAt))
+		"INSERT INTO sources (kind, name, address, host, color, created_at) VALUES (?, ?, ?, ?, ?, ?)",
+		src.Kind, src.Name, src.Address, src.Host, src.Color, formatTime(src.CreatedAt))
 	if err != nil {
 		return 0, fmt.Errorf("add source: %w", err)
 	}
@@ -108,6 +110,16 @@ func (s *Store) AddSource(ctx context.Context, src Source, limit int) (int64, er
 		return 0, err
 	}
 	return id, tx.Commit()
+}
+
+// SetSourceColor changes the colour of a source of the given kind, or
+// returns ErrNotFound.
+func (s *Store) SetSourceColor(ctx context.Context, kind string, id int64, color string) error {
+	res, err := s.db.ExecContext(ctx, "UPDATE sources SET color = ? WHERE kind = ? AND id = ?", color, kind, id)
+	if err != nil {
+		return fmt.Errorf("set source color: %w", err)
+	}
+	return requireOneRow(res)
 }
 
 // DeleteSource removes a source of the given kind, or returns ErrNotFound.

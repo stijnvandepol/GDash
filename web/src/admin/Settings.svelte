@@ -87,6 +87,7 @@
       name: c.name,
       detail: c.host,
       warning: c.unreadable ? 'This address cannot be read on this server. Remove it and add it again.' : undefined,
+      color: c.color,
     }))}
     status={status['calendar.default']}
     max={MAX_CALENDARS}
@@ -99,6 +100,10 @@
     }}
     onremove={async (id) => {
       await api.deleteCalendar(id);
+      await load();
+    }}
+    oncolor={async (id, color) => {
+      await api.setCalendarColor(id, color);
       await load();
     }}
     onerror={handle}

@@ -55,12 +55,27 @@ type NewsFeed struct {
 	URL  string `json:"url"`
 }
 
+// CalendarColors are the colours a calendar can have on the TV; the screen
+// and the web interface map the names to the same shades.
+var CalendarColors = []string{"blue", "green", "orange", "purple", "red", "teal", "pink", "yellow"}
+
+// calendarColor returns the chosen colour, or one from the calendar's place
+// in the list, so calendars differ without anyone choosing.
+func calendarColor(chosen string, index int) string {
+	if slices.Contains(CalendarColors, chosen) {
+		return chosen
+	}
+	return CalendarColors[index%len(CalendarColors)]
+}
+
 // Calendar is a calendar as the web interface sees it: never its secret
 // address, only the host it comes from.
 type Calendar struct {
 	ID   int64  `json:"id"`
 	Name string `json:"name"`
 	Host string `json:"host"`
+	// Color marks the calendar's events on the TV.
+	Color string `json:"color"`
 	// Unreadable is true when the address cannot be decrypted, for example
 	// after the database was moved without its secret.key.
 	Unreadable bool `json:"unreadable"`
@@ -118,9 +133,11 @@ func (s *Service) Get(ctx context.Context) (Settings, error) {
 	if err != nil {
 		return Settings{}, err
 	}
-	for _, c := range calendars {
+	for i, c := range calendars {
 		_, openErr := s.Box.Open(c.Address)
-		out.Calendars = append(out.Calendars, Calendar{ID: c.ID, Name: c.Name, Host: c.Host, Unreadable: openErr != nil})
+		out.Calendars = append(out.Calendars, Calendar{
+			ID: c.ID, Name: c.Name, Host: c.Host, Color: calendarColor(c.Color, i), Unreadable: openErr != nil,
+		})
 	}
 	return out, nil
 }
@@ -151,13 +168,13 @@ func (s *Service) Sources(ctx context.Context) (Sources, error) {
 	if err != nil {
 		return Sources{}, err
 	}
-	for _, c := range calendars {
+	for i, c := range calendars {
 		address, err := s.Box.Open(c.Address)
 		if err != nil {
 			s.Logger.Error("calendar address cannot be decrypted; remove the calendar and add it again", "calendar", c.Name, "error", err)
 			continue
 		}
-		out.Calendars = append(out.Calendars, calendar.Source{Name: c.Name, URL: address})
+		out.Calendars = append(out.Calendars, calendar.Source{Name: c.Name, URL: address, Color: calendarColor(c.Color, i)})
 	}
 	return out, nil
 }
@@ -236,6 +253,18 @@ func (s *Service) AddCalendar(ctx context.Context, name, address string) (Calend
 		return Calendar{}, err
 	}
 	return Calendar{ID: id, Name: name, Host: u.Hostname()}, nil
+}
+
+// SetCalendarColor chooses the colour of a calendar. It returns a
+// *validation.Error for a colour that is not in CalendarColors and
+// store.ErrNotFound for an unknown calendar.
+func (s *Service) SetCalendarColor(ctx context.Context, id int64, color string) error {
+	if !slices.Contains(CalendarColors, color) {
+		var errs validation.Collector
+		errs.Add("color", "choose one of: "+strings.Join(CalendarColors, ", "))
+		return errs.Err()
+	}
+	return s.Store.SetSourceColor(ctx, store.SourceCalendar, id, color)
 }
 
 // DeleteNewsFeed removes a feed, or returns store.ErrNotFound.

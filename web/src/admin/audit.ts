@@ -31,6 +31,7 @@ const ACTIONS: Record<string, string> = {
   news_feed_removed: 'Removed news feed',
   calendar_added: 'Added calendar',
   calendar_removed: 'Removed calendar',
+  calendar_changed: 'Changed the colour of calendar',
   photo_added: 'Added a photo',
   photo_removed: 'Removed a photo',
 };

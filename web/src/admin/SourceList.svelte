@@ -1,6 +1,7 @@
 <script lang="ts">
   import { ApiError, type SourceStatus } from './api';
   import { describeStatus } from './status';
+  import { CALENDAR_COLORS } from '../colors';
 
   interface Item {
     id: number;
@@ -9,6 +10,8 @@
     detail: string;
     /** A problem with this one item. */
     warning?: string;
+    /** The item's colour, for calendars; see colors.ts. */
+    color?: string;
   }
 
   let {
@@ -22,6 +25,7 @@
     urlPlaceholder,
     onadd,
     onremove,
+    oncolor,
     onerror,
   }: {
     title: string;
@@ -36,8 +40,19 @@
     urlPlaceholder: string;
     onadd: (name: string, url: string) => Promise<void>;
     onremove: (id: number) => Promise<void>;
+    /** Changes an item's colour; without it no colour is shown. */
+    oncolor?: (id: number, color: string) => Promise<void>;
     onerror: (err: unknown) => string;
   } = $props();
+
+  async function recolor(item: Item, color: string) {
+    error = '';
+    try {
+      await oncolor?.(item.id, color);
+    } catch (err) {
+      error = onerror(err);
+    }
+  }
 
   let name = $state('');
   let url = $state('');
@@ -89,6 +104,18 @@
             <span class="muted address">{item.detail}</span>
             {#if item.warning}<span class="field-error">{item.warning}</span>{/if}
           </div>
+          {#if oncolor && item.color}
+            <span class="swatch" style:background={CALENDAR_COLORS[item.color]}></span>
+            <select
+              aria-label="Colour of {item.name}"
+              value={item.color}
+              onchange={(e) => recolor(item, (e.target as HTMLSelectElement).value)}
+            >
+              {#each Object.keys(CALENDAR_COLORS) as c (c)}
+                <option value={c}>{c}</option>
+              {/each}
+            </select>
+          {/if}
           <button class="link danger" onclick={() => remove(item)}>Remove</button>
         </li>
       {/each}
@@ -128,6 +155,12 @@
   .address {
     display: block;
     overflow-wrap: anywhere;
+  }
+  .swatch {
+    flex: none;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
   }
   .masked {
     -webkit-text-security: disc;

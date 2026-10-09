@@ -43,7 +43,7 @@ The first release. Everything below is new.
 - Weather and place search from Open-Meteo, without an API key.
 - Up to five RSS or Atom feeds, merged newest first.
 - Up to ten calendars from secret iCal addresses, with recurrences and
-  exceptions, stored encrypted.
+  exceptions, stored encrypted, each with its own colour on the TV.
 - Everything is fetched once by the server for all screens; the last good
   value is kept when the internet drops and stale data is marked.
 

@@ -121,6 +121,8 @@ export interface Calendar {
   id: number;
   name: string;
   host: string;
+  /** One of the names in colors.ts. */
+  color: string;
   /** True when the address cannot be decrypted with this server's key. */
   unreadable: boolean;
 }
@@ -226,6 +228,7 @@ export const api = {
   deleteNewsFeed: (id: number) => request<void>('DELETE', `/api/news-feeds/${id}`),
   addCalendar: (name: string, url: string) => request<Calendar>('POST', '/api/calendars', { name, url }),
   deleteCalendar: (id: number) => request<void>('DELETE', `/api/calendars/${id}`),
+  setCalendarColor: (id: number, color: string) => request<void>('PATCH', `/api/calendars/${id}`, { color }),
   deleteDisplay: (id: string) => request<void>('DELETE', `/api/displays/${encodeURIComponent(id)}`),
   pairScreen: (id: string, code: string) =>
     request<void>('POST', `/api/displays/${encodeURIComponent(id)}/pairings`, { code }),

@@ -30,6 +30,7 @@ const (
 	auditNewsFeedRemoved     = "news_feed_removed"
 	auditCalendarAdded       = "calendar_added"
 	auditCalendarRemoved     = "calendar_removed"
+	auditCalendarChanged     = "calendar_changed"
 	auditPhotoAdded          = "photo_added"
 	auditPhotoRemoved        = "photo_removed"
 	defaultAuditPage         = 100

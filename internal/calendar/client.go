@@ -31,6 +31,8 @@ const (
 type Source struct {
 	Name string
 	URL  string
+	// Color is copied onto every event of the calendar, for the TV.
+	Color string
 }
 
 // ParseSources reads a comma-separated list of ICS URLs, as configured in
@@ -92,6 +94,9 @@ func (c *Client) Upcoming(ctx context.Context, sources []Source, days int) ([]Ev
 			body, err := c.fetch(ctx, src)
 			if err == nil {
 				found[i], err = Parse(bytes.NewReader(body), w, src.Name)
+			}
+			for j := range found[i] {
+				found[i][j].Color = src.Color
 			}
 			if err != nil {
 				errs[i] = fmt.Errorf("calendar %d: %w", i+1, err)

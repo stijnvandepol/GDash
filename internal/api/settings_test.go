@@ -174,3 +174,26 @@ func TestLanguageSetting(t *testing.T) {
 		t.Fatalf("after setting nl = %s", body)
 	}
 }
+
+func TestCalendarColor(t *testing.T) {
+	env := newTestEnv(t, nil)
+	env.setUp(t)
+	if status, body := env.do(t, "POST", "/api/calendars", `{"name":"Family","url":"https://calendar.example.org/a.ics"}`); status != http.StatusCreated {
+		t.Fatalf("add = %d %s", status, body)
+	}
+	if _, body := env.do(t, "GET", "/api/settings", ""); !strings.Contains(body, `"color":"blue"`) {
+		t.Fatalf("default colour = %s", body)
+	}
+	if status, body := env.do(t, "PATCH", "/api/calendars/1", `{"color":"purple"}`); status != http.StatusNoContent {
+		t.Fatalf("set colour = %d %s", status, body)
+	}
+	if _, body := env.do(t, "GET", "/api/settings", ""); !strings.Contains(body, `"color":"purple"`) {
+		t.Fatalf("settings = %s", body)
+	}
+	if status, body := env.do(t, "PATCH", "/api/calendars/1", `{"color":"magenta"}`); status != http.StatusUnprocessableEntity || !strings.Contains(body, `"field":"color"`) {
+		t.Fatalf("unknown colour = %d %s", status, body)
+	}
+	if status, _ := env.do(t, "PATCH", "/api/calendars/9", `{"color":"red"}`); status != http.StatusNotFound {
+		t.Fatalf("unknown calendar = %d, want 404", status)
+	}
+}

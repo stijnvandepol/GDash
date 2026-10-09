@@ -4,6 +4,7 @@
   import { fitItems } from './fit';
   import { clock } from '../state.svelte';
   import { locale, t } from '../i18n.svelte';
+  import { calendarColor } from '../colors';
 
   interface CalendarEvent {
     title: string;
@@ -11,6 +12,7 @@
     end: string;
     allDay: boolean;
     calendar: string;
+    color?: string;
   }
   interface Day {
     key: string;
@@ -88,6 +90,7 @@
         <ul>
           {#each day.events as e, i (i)}
             <li class:past={isPast(e, clock.now)}>
+              {#if calendarColor(e.color)}<span class="dot" style:background={calendarColor(e.color)}></span>{/if}
               <span class="when">{when(e)}</span>
               <span class="title">{e.title}</span>
             </li>
@@ -136,6 +139,15 @@
   }
   li.past {
     opacity: 0.45;
+  }
+  .dot {
+    flex: none;
+    align-self: center;
+    width: 0.55em;
+    height: 0.55em;
+    margin-right: -12px;
+    border-radius: 50%;
+    font-size: 28px;
   }
   .when {
     flex: none;
