@@ -1,4 +1,5 @@
 <script lang="ts">
+  import DashboardThumb from './DashboardThumb.svelte';
   import { toast } from './toast.svelte';
   import { ask } from './confirm.svelte';
   import FileButton from './FileButton.svelte';
@@ -129,6 +130,11 @@
     <ul class="list">
       {#each dashboards as d (d.id)}
         <li>
+          {#if catalogue}
+            <div class="thumb">
+              <DashboardThumb widgets={d.widgets} theme={d.theme ?? 'minimal-dark'} columns={catalogue.columns} rows={catalogue.rows} labels={false} />
+            </div>
+          {/if}
           <div class="grow">
             <strong>{d.name}</strong>
             <span class="muted">{d.widgets.length === 1 ? '1 widget' : `${d.widgets.length} widgets`}{d.id === 'default' ? ' · shown on displays without a choice' : ''}</span>
@@ -169,3 +175,11 @@
     {#if importError}<p class="error">{importError}</p>{/if}
   </section>
 {/if}
+
+<style>
+  /* Small enough not to crowd the row, large enough to tell layouts apart. */
+  .thumb {
+    flex: none;
+    width: 112px;
+  }
+</style>
