@@ -20,6 +20,11 @@ updates:
     groups:
       npm-minor-and-patch:
         update-types: [minor, patch]
+    ignore:
+      # TypeScript 7 is the compiler rewritten in Go; svelte-check does not
+      # run on it yet. Lift this once Svelte's tooling supports it.
+      - dependency-name: typescript
+        update-types: [version-update:semver-major]
 
   - package-ecosystem: github-actions
     directory: /
@@ -36,3 +41,8 @@ updates:
     groups:
       docker-minor-and-patch:
         update-types: [minor, patch]
+    ignore:
+      # The build stays on a Node.js LTS line; odd majors such as 25 are
+      # never LTS. Move to the next even major by hand once it is LTS.
+      - dependency-name: node
+        update-types: [version-update:semver-major]
