@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 )
@@ -117,5 +118,23 @@ func TestNormalizeURL(t *testing.T) {
 		if got != tt.want || (msg == "") != tt.ok {
 			t.Errorf("NormalizeURL(%q) = %q, %q; want %q, ok %v", tt.in, got, msg, tt.want, tt.ok)
 		}
+	}
+}
+
+func TestTokenDoesNotFollowRedirects(t *testing.T) {
+	var leaked atomic.Bool
+	other := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Header.Get("Authorization") != "" {
+			leaked.Store(true)
+		}
+	}))
+	defer other.Close()
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, other.URL+r.URL.Path, http.StatusFound)
+	}))
+	defer srv.Close()
+	err := client().Check(context.Background(), Connection{URL: srv.URL, Token: testToken})
+	if !errors.Is(err, ErrNotHomeAssistant) || leaked.Load() {
+		t.Fatalf("Check = %v, token sent on: %v; want ErrNotHomeAssistant and no request to the target", err, leaked.Load())
 	}
 }

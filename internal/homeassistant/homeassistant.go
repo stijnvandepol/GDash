@@ -65,8 +65,18 @@ type Entity struct {
 
 // Client calls Home Assistant.
 type Client struct {
-	// HTTP must have a timeout; the caller owns that choice.
+	// HTTP must have a timeout; the caller owns that choice. Redirects are
+	// never followed, whatever HTTP's own policy says.
 	HTTP *http.Client
+}
+
+// noRedirects returns c's HTTP client with redirects turned off. Home
+// Assistant's API does not redirect, and Go would resend the token to
+// another port or from https to http on the same host.
+func (c *Client) noRedirects() *http.Client {
+	hc := *c.HTTP
+	hc.CheckRedirect = func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }
+	return &hc
 }
 
 // apiState is Home Assistant's JSON for one entity.
@@ -149,7 +159,7 @@ func (c *Client) get(ctx context.Context, conn Connection, path string, limit in
 	}
 	req.Header.Set("Authorization", "Bearer "+conn.Token)
 	req.Header.Set("Accept", "application/json")
-	resp, err := c.HTTP.Do(req)
+	resp, err := c.noRedirects().Do(req)
 	if err != nil {
 		return false, err
 	}
