@@ -47,7 +47,7 @@
   <section class="card wide object getting-started" aria-labelledby="getting-started-title">
     <div class="card-head">
       <h2 id="getting-started-title">Getting started</h2>
-      <span class="progress mono">{finished} of {steps.length} done</span>
+      <span class="progress num">{finished} of {steps.length} done</span>
     </div>
     <ol>
       <li class:done={hasLocation}>

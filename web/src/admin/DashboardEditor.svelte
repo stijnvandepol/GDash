@@ -7,7 +7,7 @@
   import { api, ApiError, type Dashboard, type Widget, type WidgetCatalogue } from './api';
   import type { PreviewDraft } from '../previewApi';
   import DashboardPreview from './DashboardPreview.svelte';
-  import WidgetSettings from './WidgetSettings.svelte';
+  import WidgetInspector from './WidgetInspector.svelte';
   import { WIDGET_LABELS as LABELS, defaultSettings } from './widgetSettings';
 
   let {
@@ -213,13 +213,13 @@
   <p class="muted small">Drag widgets to move them, drag a corner to resize. The canvas is the TV screen.</p>
 
   {#if selectedWidget}
-    <div class="inspector">
-      <strong>{LABELS[selectedWidget.type] ?? selectedWidget.type}</strong>
-      {#if selectedType}
-        <WidgetSettings type={selectedType} settings={selectedWidget.settings ?? {}} onchange={setSettings} />
-      {/if}
-      <button class="link danger" onclick={removeSelected}>Remove widget</button>
-    </div>
+    <WidgetInspector
+      label={LABELS[selectedWidget.type] ?? selectedWidget.type}
+      type={selectedType}
+      settings={selectedWidget.settings ?? {}}
+      onchange={setSettings}
+      onremove={removeSelected}
+    />
   {/if}
 
   {#if message}<p class="muted">{message}</p>{/if}
@@ -271,13 +271,5 @@
   .canvas :global(.grid-stack-item.ui-draggable-dragging .grid-stack-item-content),
   .canvas :global(.grid-stack-item.ui-resizable-resizing .grid-stack-item-content) {
     outline: 2px solid var(--spark);
-  }
-  .inspector {
-    display: flex;
-    gap: var(--s-3) var(--s-4);
-    align-items: center;
-    flex-wrap: wrap;
-    padding: var(--s-3) 0;
-    border-block: 1px solid var(--border);
   }
 </style>
