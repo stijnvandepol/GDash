@@ -1,0 +1,137 @@
+/*
+ * Style presets inspired by films and series: a space opera, a ship's
+ * computer, a wizard's kitchen, a synthwave night, a world turned upside
+ * down, film noir and a red planet. Same rules as presets.css: only custom
+ * properties, textures drawn once with gradients, text at 4.5:1 or more,
+ * and no names, logos or typefaces of the originals.
+ */
+
+/* Galaxy: a field of stars, letters in the yellow of an opening crawl. */
+.screen[data-theme='galaxy'] {
+  --surface-0: #000000;
+  --surface-1: rgba(6, 8, 16, 0.82);
+  --widget-border: rgba(255, 232, 31, 0.3);
+  --text-primary: #ffe81f;
+  --text-muted: #b7c0d1;
+  --accent: #6fd3ff;
+  --warning: #ff9d3a;
+  --backdrop: radial-gradient(1.4px 1.4px at 23px 41px, #ffffff 50%, transparent 100%) 0 0 / 197px 211px,
+    radial-gradient(1px 1px at 131px 87px, rgba(255, 255, 255, 0.8) 50%, transparent 100%) 0 0 / 197px 211px,
+    radial-gradient(1.2px 1.2px at 71px 163px, rgba(220, 230, 255, 0.85) 50%, transparent 100%) 0 0 / 197px 211px,
+    radial-gradient(1px 1px at 233px 301px, rgba(255, 255, 255, 0.6) 50%, transparent 100%) 0 0 / 331px 347px,
+    radial-gradient(ellipse at 80% 10%, rgba(80, 90, 160, 0.18) 0%, transparent 55%);
+  --measure-backdrop: #ffffff;
+  --font-ui: var(--face-news-cycle);
+  --radius-scale: 0.3;
+  --weight-figure: 700;
+}
+
+/* Terminal: green phosphor on black, scan lines, a mono face. */
+.screen[data-theme='terminal'] {
+  --surface-0: #010603;
+  --surface-1: #03120a;
+  --widget-border: rgba(72, 255, 130, 0.4);
+  --text-primary: #48ff82;
+  --text-muted: #34c768;
+  --accent: #b8ffcf;
+  --warning: #ffcc33;
+  --dot-tint: var(--text-muted);
+  --backdrop: repeating-linear-gradient(0deg, rgba(72, 255, 130, 0.03) 0 1px, transparent 1px 4px);
+  --tile-image: repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.22) 0 1px, transparent 1px 3px);
+  --text-glow: 0 0 0.35em rgba(72, 255, 130, 0.45);
+  --font-ui: var(--face-jetbrains-mono);
+  /* A mono face is wide; a little tighter keeps words in their tiles. */
+  --tracking: -0.04em;
+  --radius-scale: 0;
+}
+
+/* Parchment: aged paper and ink, a face cut for books three centuries old,
+   for a wizard's or a hobbit's kitchen. */
+.screen[data-theme='parchment'] {
+  --surface-0: #d8c398;
+  --surface-1: rgba(250, 240, 214, 0.62);
+  --widget-border: #8b6b3d;
+  --text-primary: #2b1b0c;
+  --text-muted: #574024;
+  --accent: #7d1d1d;
+  --warning: #864500;
+  --backdrop: radial-gradient(ellipse at 15% 20%, rgba(255, 248, 225, 0.55) 0%, transparent 50%),
+    radial-gradient(ellipse at 85% 80%, rgba(120, 80, 30, 0.24) 0%, transparent 55%),
+    radial-gradient(circle at 60% 45%, rgba(255, 245, 215, 0.3) 0%, transparent 40%);
+  --measure-backdrop: #b49465;
+  --font-ui: var(--face-im-fell);
+  --radius-scale: 0.15;
+  --weight-figure: 400;
+}
+
+/* Neon: a synthwave night, magenta and cyan over deep violet. */
+.screen[data-theme='neon'] {
+  --surface-0: #0b0420;
+  --surface-1: rgba(18, 6, 42, 0.8);
+  --widget-border: rgba(5, 217, 232, 0.55);
+  --text-primary: #fdf2ff;
+  --text-muted: #cdb6e8;
+  --accent: #ff4d94;
+  --warning: #ffd23f;
+  --backdrop: repeating-linear-gradient(90deg, rgba(5, 217, 232, 0.07) 0 1px, transparent 1px 96px),
+    linear-gradient(180deg, transparent 64%, rgba(255, 77, 148, 0.16) 64.3%, transparent 65%),
+    linear-gradient(180deg, #0b0420 0%, #22093f 70%, #3b0a4a 100%);
+  --measure-backdrop: #3b0a4a;
+  --text-glow: 0 0 0.4em rgba(5, 217, 232, 0.35);
+  --font-ui: var(--face-outfit);
+  --radius-scale: 0.6;
+  --weight-figure: 600;
+}
+
+/* Upside down: red letters glowing on black, as in a certain small town in
+   the eighties. */
+.screen[data-theme='upside-down'] {
+  --surface-0: #050000;
+  --surface-1: rgba(14, 2, 2, 0.86);
+  --widget-border: rgba(255, 59, 48, 0.32);
+  --text-primary: #ff5a4f;
+  --text-muted: #cfa9a5;
+  --accent: #ff3b30;
+  --warning: #ffb000;
+  --backdrop: radial-gradient(ellipse at 50% 115%, rgba(170, 0, 0, 0.32) 0%, transparent 60%);
+  --measure-backdrop: #3a0303;
+  --text-glow: 0 0 0.3em rgba(255, 40, 30, 0.5);
+  --font-ui: var(--face-bodoni);
+  --radius-scale: 0.15;
+  --weight-figure: 700;
+}
+
+/* Noir: black and white with film grain and a dark edge, typed out. */
+.screen[data-theme='noir'] {
+  --surface-0: #0b0b0b;
+  --surface-1: rgba(20, 20, 20, 0.86);
+  --widget-border: rgba(255, 255, 255, 0.18);
+  --text-primary: #ececec;
+  --text-muted: #a9a9a9;
+  --accent: #f5f5f5;
+  --warning: #e8c547;
+  --dot-tint: var(--text-muted);
+  --backdrop: radial-gradient(ellipse at 50% 45%, transparent 45%, rgba(0, 0, 0, 0.65) 100%),
+    repeating-radial-gradient(circle at 17% 32%, rgba(255, 255, 255, 0.03) 0 1px, transparent 1px 3px),
+    linear-gradient(180deg, #1c1c1c 0%, #0b0b0b 100%);
+  --measure-backdrop: #1c1c1c;
+  --font-ui: var(--face-courier-prime);
+  --radius-scale: 0.1;
+  --weight-figure: 700;
+}
+
+/* Mars: rust-red dust and a low sun, white text like a habitat's screens. */
+.screen[data-theme='mars'] {
+  --surface-0: #2a0f08;
+  --surface-1: rgba(30, 10, 5, 0.72);
+  --widget-border: rgba(255, 170, 120, 0.25);
+  --text-primary: #fff1e8;
+  --text-muted: #e3bea8;
+  --accent: #ff8a4c;
+  --warning: #ffd166;
+  --backdrop: radial-gradient(ellipse at 70% 0%, rgba(255, 140, 80, 0.35) 0%, transparent 55%),
+    linear-gradient(180deg, #5a2312 0%, #3a150b 55%, #220a05 100%);
+  --measure-backdrop: #8a3c22;
+  --font-ui: var(--face-space-grotesk);
+  --radius-scale: 0.5;
+}

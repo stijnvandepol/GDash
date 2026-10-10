@@ -216,8 +216,9 @@ active hours, but both are required. Deleting a dashboard removes the slots that
 
 **dashboard:** `{"id": "default", "name": "Default", "columns": 24, "rows": 14, "theme": "minimal-dark", "font": "", "widgets": [widget]}`.
 `theme` is one of `minimal-dark` (default), `minimal-light`, `glass`, `warm-light`, `high-contrast`, `night`, `frost`, `walnut`,
-`swiss`, `tonal`, `gilded`, `riviera`, `galaxy`, `terminal`, `parchment` and `neon`; `font` is empty for the theme's own typeface or one of
-`geist`, `inter`, `outfit`, `space-grotesk`, `lora`, `cormorant`, `bodoni`, `news-cycle`, `jetbrains-mono` and `im-fell`. An unknown theme
+`swiss`, `tonal`, `gilded`, `riviera`, `galaxy`, `terminal`, `parchment`, `neon`, `frost-night`, `candy`, `upside-down`, `noir` and
+`mars`; `font` is empty for the theme's own typeface or one of `geist`, `inter`, `outfit`, `space-grotesk`, `lora`, `cormorant`, `bodoni`,
+`news-cycle`, `jetbrains-mono`, `im-fell` and `courier-prime`. An unknown theme
 or font is a `422`. The grid size and
 every widget's `source` are set by the server; values sent by a client are ignored.
 

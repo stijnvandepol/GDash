@@ -6,10 +6,12 @@ package display
 var Themes = []string{
 	"minimal-dark", "minimal-light", "glass", "warm-light", "high-contrast", "night",
 	"frost", "walnut", "swiss", "tonal", "gilded", "riviera", "galaxy", "terminal", "parchment", "neon",
+	"frost-night", "candy", "upside-down", "noir", "mars",
 }
 
 // Fonts are the typefaces a dashboard can choose instead of its theme's own;
 // web/src/fonts.css loads them. Empty means the theme's font.
 var Fonts = []string{
 	"geist", "inter", "outfit", "space-grotesk", "lora", "cormorant", "bodoni", "news-cycle", "jetbrains-mono", "im-fell",
+	"courier-prime",
 }

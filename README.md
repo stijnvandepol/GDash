@@ -37,7 +37,7 @@ Google TV you already own. No extra hardware, no subscription, no cloud.
   displays and set the location, news feeds and calendars. Calendar addresses
   are stored encrypted and never shown again.
 - **A dashboard editor**: drag and resize widgets on the TV's 16:9 grid, make
-  several dashboards, pick one of sixteen styles (from Minimal dark and High contrast to Walnut, Swiss, Frost and Galaxy) and a typeface, and
+  several dashboards, pick one of twenty-one styles (from Minimal dark and High contrast to Walnut, Swiss, Frost, Galaxy and Noir) and a typeface, and
   choose a dashboard per display. Saving updates the TVs within
   seconds. A display only receives the data its own widgets show.
 - **Displays**: link a display to a Cast device found on your network, and

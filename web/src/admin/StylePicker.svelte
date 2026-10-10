@@ -1,6 +1,6 @@
 <script lang="ts">
   import StyleSample from './StyleSample.svelte';
-  import { FONTS, THEMES, type FontId } from './styles';
+  import { FONTS, GROUPS, THEMES, type FontId } from './styles';
 
   // The dashboard's style: a theme from a gallery of samples, and a typeface
   // that is the theme's own or one of the others. Choices apply at once;
@@ -40,6 +40,12 @@
     onchange();
   }
 
+  // The server's themes in its order, sorted into the picker's sections; a
+  // theme this editor has no notes for goes with the essentials.
+  const sections = $derived(
+    GROUPS.map((g) => ({ ...g, themes: themes.filter((id) => (THEMES[id]?.group ?? 'essentials') === g.id) })),
+  );
+
   const ownFont = $derived(FONTS[(THEMES[theme]?.font ?? 'geist') as FontId]);
 </script>
 
@@ -51,8 +57,13 @@
 
   <fieldset>
     <legend>Theme</legend>
+    {#each sections as section (section.id)}
+    <div class="section-head">
+      <h3>{section.name}</h3>
+      <p class="muted small">{section.note}</p>
+    </div>
     <div class="themes">
-      {#each themes as id (id)}
+      {#each section.themes as id (id)}
         <label class="choice" class:chosen={theme === id}>
           <input class="sr-only" type="radio" name="theme" value={id} checked={theme === id} onchange={() => pickTheme(id)} />
           <StyleSample theme={id} {font} />
@@ -61,6 +72,7 @@
         </label>
       {/each}
     </div>
+    {/each}
   </fieldset>
 
   <fieldset>
@@ -123,9 +135,24 @@
     padding: 0;
     font-weight: 600;
   }
-  .themes,
+  .section-head,
   .fonts {
     clear: both;
+  }
+  .section-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--s-1) var(--s-3);
+    margin: var(--s-5) 0 var(--s-3);
+    padding-top: var(--s-3);
+    border-top: 1px solid var(--border);
+  }
+  legend + .section-head {
+    margin-top: 0;
+  }
+  .section-head h3 {
+    font-size: var(--fs-md);
   }
   .themes {
     display: grid;

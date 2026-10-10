@@ -70,18 +70,21 @@ add calendars and feeds under Settings, Data sources, and the photos once you ad
 - **Add** a widget with the buttons above the canvas, drag it to move it and
   drag its corner to resize it. Click a widget to change its settings, such
   as the number of headlines or the text of a note.
-- **Style:** the Style button opens a gallery of sixteen themes, each shown
-  as a small screen. Minimal dark (the default, best for OLED screens),
+- **Style:** the Style button opens a gallery of twenty-one themes in three
+  groups, each shown as a small screen. Minimal dark (the default, best for OLED screens),
   Minimal light and Warm light for bright rooms, Glass, High contrast for
   reading from across the room or with poor eyesight, and Night, dim amber
   for a bedroom. Ten more have a character of their own: Frost (frosted
   tiles on a pastel wallpaper, like a phone's widgets), Walnut (dark wood and
   brass), Swiss (square tiles and heavy rules), Tonal (soft tonal colours and
   very round tiles), Gilded (black and gold), Riviera (cream and terracotta
-  in an Italian serif), Galaxy (a field of stars and yellow letters),
-  Terminal (green phosphor), Parchment (aged paper and ink) and Neon (a
-  synthwave night). Each theme has its own typeface; under **Typeface** you
-  can pick another of the ten for this dashboard. All of them ship with
+  in an Italian serif), Frost night (Frost in dark mode) and Candy (hot
+  pink, the roundest of all). Under Film and series: Galaxy (a field of
+  stars and yellow letters), Terminal (green phosphor), Parchment (aged
+  paper and ink), Neon (a synthwave night), Upside down (red letters
+  glowing on black), Noir (black and white, typed out) and Mars (rust-red
+  dust). Each theme has its own typeface; under **Typeface** you can pick
+  another of the eleven for this dashboard. All of them ship with
   GDash and work offline.
 - **Preview** shows the dashboard the way a TV draws it, with your real
   weather, news and calendar, without a display or a paired screen. It

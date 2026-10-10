@@ -1,9 +1,19 @@
 // What the editor says about each theme and typeface. The themes themselves
-// are in ../themes.css and ../presets.css; internal/display lists the same
+// are in ../themes.css and the presets files; internal/display lists the same
 // names, and themes.test.ts keeps the three in step.
+
+/** The sections of the style picker. */
+export const GROUPS = [
+  { id: 'essentials', name: 'Essentials', note: 'Calm and readable in any room.' },
+  { id: 'character', name: 'Character', note: 'Wood, gold, glass and paper, each with a typeface of its own.' },
+  { id: 'screen', name: 'Film and series', note: 'Inspired by a film or a series, without its names or logos.' },
+] as const;
+
+export type GroupId = (typeof GROUPS)[number]['id'];
 
 export interface ThemeInfo {
   name: string;
+  group: GroupId;
   /** One line about the look, for the style picker. */
   note: string;
   /** The typeface the theme uses unless a dashboard picks another. */
@@ -20,25 +30,31 @@ export type FontId =
   | 'bodoni'
   | 'news-cycle'
   | 'jetbrains-mono'
-  | 'im-fell';
+  | 'im-fell'
+  | 'courier-prime';
 
 export const THEMES: Record<string, ThemeInfo> = {
-  'minimal-dark': { name: 'Minimal dark', note: 'Graphite with a signal orange. Calm on any TV.', font: 'geist' },
-  'minimal-light': { name: 'Minimal light', note: 'Light grey and white for bright rooms.', font: 'geist' },
-  glass: { name: 'Glass', note: 'Translucent tiles over slate green.', font: 'geist' },
-  'warm-light': { name: 'Warm light', note: 'Cream and brown, softer than white.', font: 'geist' },
-  'high-contrast': { name: 'High contrast', note: 'White on black with clear borders.', font: 'geist' },
-  night: { name: 'Night', note: 'Dim amber on black for a bedroom.', font: 'geist' },
-  frost: { name: 'Frost', note: 'Frosted white tiles on a pastel wallpaper, round and airy.', font: 'inter' },
-  walnut: { name: 'Walnut', note: 'Dark wood with a straight grain and brass.', font: 'lora' },
-  swiss: { name: 'Swiss', note: 'Square tiles, heavy black rules, one red.', font: 'space-grotesk' },
-  tonal: { name: 'Tonal', note: 'Soft tonal greens and very round tiles.', font: 'outfit' },
-  gilded: { name: 'Gilded', note: 'Black and gold with a classic serif.', font: 'cormorant' },
-  riviera: { name: 'Riviera', note: 'Cream and terracotta in an Italian serif.', font: 'bodoni' },
-  galaxy: { name: 'Galaxy', note: 'A field of stars and the yellow of an opening crawl.', font: 'news-cycle' },
-  terminal: { name: 'Terminal', note: 'Green phosphor and scan lines.', font: 'jetbrains-mono' },
-  parchment: { name: 'Parchment', note: 'Aged paper and ink, for a wizard’s kitchen.', font: 'im-fell' },
-  neon: { name: 'Neon', note: 'A synthwave night in magenta and cyan.', font: 'outfit' },
+  'minimal-dark': { name: 'Minimal dark', group: 'essentials', note: 'Graphite with a signal orange. Calm on any TV.', font: 'geist' },
+  'minimal-light': { name: 'Minimal light', group: 'essentials', note: 'Light grey and white for bright rooms.', font: 'geist' },
+  glass: { name: 'Glass', group: 'essentials', note: 'Translucent tiles over slate green.', font: 'geist' },
+  'warm-light': { name: 'Warm light', group: 'essentials', note: 'Cream and brown, softer than white.', font: 'geist' },
+  'high-contrast': { name: 'High contrast', group: 'essentials', note: 'White on black with clear borders.', font: 'geist' },
+  night: { name: 'Night', group: 'essentials', note: 'Dim amber on black for a bedroom.', font: 'geist' },
+  frost: { name: 'Frost', group: 'character', note: 'Frosted white tiles on a pastel wallpaper, round and airy.', font: 'inter' },
+  'frost-night': { name: 'Frost night', group: 'character', note: 'Frost after dark, like a phone in dark mode.', font: 'inter' },
+  walnut: { name: 'Walnut', group: 'character', note: 'Dark wood with a straight grain and brass.', font: 'lora' },
+  swiss: { name: 'Swiss', group: 'character', note: 'Square tiles, heavy black rules, one red.', font: 'space-grotesk' },
+  tonal: { name: 'Tonal', group: 'character', note: 'Soft tonal greens and very round tiles.', font: 'outfit' },
+  candy: { name: 'Candy', group: 'character', note: 'Hot pink and white, the roundest of all.', font: 'outfit' },
+  gilded: { name: 'Gilded', group: 'character', note: 'Black and gold with a classic serif.', font: 'cormorant' },
+  riviera: { name: 'Riviera', group: 'character', note: 'Cream and terracotta in an Italian serif.', font: 'bodoni' },
+  galaxy: { name: 'Galaxy', group: 'screen', note: 'A field of stars and the yellow of an opening crawl.', font: 'news-cycle' },
+  terminal: { name: 'Terminal', group: 'screen', note: 'Green phosphor and scan lines, like a ship’s computer.', font: 'jetbrains-mono' },
+  parchment: { name: 'Parchment', group: 'screen', note: 'Aged paper and ink, for a wizard’s kitchen.', font: 'im-fell' },
+  neon: { name: 'Neon', group: 'screen', note: 'A synthwave night in magenta and cyan.', font: 'outfit' },
+  'upside-down': { name: 'Upside down', group: 'screen', note: 'Red letters glowing on black, in a small town in the eighties.', font: 'bodoni' },
+  noir: { name: 'Noir', group: 'screen', note: 'Black and white with film grain, typed out.', font: 'courier-prime' },
+  mars: { name: 'Mars', group: 'screen', note: 'Rust-red dust and a low sun.', font: 'space-grotesk' },
 };
 
 export const FONTS: Record<FontId, string> = {
@@ -52,6 +68,7 @@ export const FONTS: Record<FontId, string> = {
   'news-cycle': 'News Cycle',
   'jetbrains-mono': 'JetBrains Mono',
   'im-fell': 'IM Fell',
+  'courier-prime': 'Courier Prime',
 };
 
 export function themeName(id: string): string {

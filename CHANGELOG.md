@@ -37,12 +37,14 @@ the format follows [Keep a Changelog](https://keepachangelog.com).
 
 ### Added
 
-- Ten style presets for the TV besides the six themes, each with its own
-  typeface, tile shape and, for some, a texture: Frost, Walnut, Swiss,
-  Tonal, Gilded, Riviera, Galaxy, Terminal, Parchment and Neon. A dashboard
-  can also take another typeface than its theme's, out of ten that ship
-  with GDash. The editor shows them in a gallery of small screens, and
-  three new templates use them: Living room, Study and Movie night.
+- Fifteen style presets for the TV besides the six themes, each with its
+  own typeface, tile shape and, for some, a texture: Frost, Frost night,
+  Walnut, Swiss, Tonal, Candy, Gilded and Riviera, and, inspired by films
+  and series, Galaxy, Terminal, Parchment, Neon, Upside down, Noir and
+  Mars. A dashboard can also take another typeface than its theme's, out
+  of eleven that ship with GDash. The editor shows them in a gallery of
+  small screens in three groups, and three new templates use them: Living
+  room, Study and Movie night.
 - A backup to download under Settings → Account: one zip file with the
   database, the encryption key and the photos, behind your password. Unzipped
   into an empty data directory it is a working GDash again; see
