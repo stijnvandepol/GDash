@@ -15,11 +15,17 @@ await build({
     {
       name: 'list-bundled-packages',
       generateBundle(_, bundle) {
-        for (const chunk of Object.values(bundle)) {
-          if (chunk.type !== 'chunk') continue;
-          for (const id of Object.keys(chunk.modules)) {
-            const match = id.split('\\').join('/').match(/node_modules\/((@[^/]+\/)?[^/]+)/);
-            if (match) packages.add(match[1]);
+        const add = (path) => {
+          const match = path.split('\\').join('/').match(/node_modules\/((@[^/]+\/)?[^/]+)/);
+          if (match) packages.add(match[1]);
+        };
+        for (const output of Object.values(bundle)) {
+          if (output.type === 'chunk') {
+            for (const id of Object.keys(output.modules)) add(id);
+          } else {
+            // Files a stylesheet points to with url(), such as the fonts in
+            // src/fonts.css, are assets rather than modules.
+            for (const name of output.originalFileNames ?? []) add(name);
           }
         }
       },
