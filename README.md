@@ -10,6 +10,8 @@ Google TV you already own. No extra hardware, no subscription, no cloud.
 
 ![The web interface: your dashboards and ready-made templates, each shown in its own theme](docs/images/web-dashboards.jpg)
 
+![Eight of the twenty-one styles on the same dashboard: Frost, Walnut, Swiss, Gilded, Galaxy, Terminal, Noir and Candy](docs/images/styles.jpg)
+
 ## What works
 
 - **Weather** from [Open-Meteo](https://open-meteo.com) (no API key): now, and
