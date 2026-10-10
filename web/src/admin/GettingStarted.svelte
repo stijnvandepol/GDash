@@ -103,7 +103,7 @@
   }
   li > :global(button) {
     grid-column: 2;
-    margin-left: calc(-1 * var(--s-2));
+    justify-self: start;
   }
   .marker {
     display: grid;

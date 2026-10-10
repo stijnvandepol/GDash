@@ -173,13 +173,15 @@ button.menu-item:hover:not(:disabled) {
   max-width: 920px;
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 400px);
-  align-items: center;
+  /* Both columns hang from the same top line; the form may be long. */
+  align-items: start;
   gap: var(--s-7) var(--s-8);
 }
 .auth-brand {
   display: grid;
   justify-items: start;
   gap: var(--s-4);
+  padding-top: var(--s-5);
 }
 .auth-brand .name {
   font-size: clamp(3rem, 2rem + 4vw, 5rem);
@@ -250,6 +252,22 @@ button.menu-item:hover:not(:disabled) {
   .auth-card {
     grid-template-columns: minmax(0, 1fr);
     gap: var(--s-6);
+  }
+}
+
+/* A narrow window or a zoomed page, wider than a phone: the tabs stay in
+   the top bar as words; the icons and the user's name make way. */
+@media (max-width: 880px) {
+  .topbar-inner {
+    gap: var(--s-4);
+  }
+  .user-name {
+    display: none;
+  }
+}
+@media (min-width: 641px) and (max-width: 880px) {
+  button.tab svg {
+    display: none;
   }
 }
 

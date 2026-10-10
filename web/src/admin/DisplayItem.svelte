@@ -224,7 +224,7 @@
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: var(--s-2);
+    gap: var(--s-2) var(--s-4);
   }
   /* Removing is rare and cannot be undone: apart from the rest. */
   .remove {

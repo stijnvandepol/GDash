@@ -77,9 +77,11 @@ button.danger:hover:not(:disabled) {
 
 /* Quiet text button, used for the actions on a row: graphite text whose
    underline appears on hover, like a link. */
+/* No padding: the text lines up with the text above it, and the rows it
+   sits in keep their own gaps. */
 button.link {
   min-height: 32px;
-  padding: 0 var(--s-2);
+  padding: 0;
   background: none;
   color: var(--accent);
   font-weight: 550;

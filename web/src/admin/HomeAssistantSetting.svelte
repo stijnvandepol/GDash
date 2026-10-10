@@ -108,8 +108,10 @@
         <input bind:value={token} class="masked" autocomplete="off" spellcheck="false" required />
         {#if fieldErrors.token}<span class="field-error">{fieldErrors.token}</span>{/if}
       </label>
-      <button type="submit" disabled={busy}>{busy ? 'Connecting…' : 'Connect'}</button>
-      {#if editing}<button type="button" class="link" onclick={() => (editing = false)}>Cancel</button>{/if}
+      <div class="inline">
+        <button type="submit" disabled={busy}>{busy ? 'Connecting…' : 'Connect'}</button>
+        {#if editing}<button type="button" class="link" onclick={() => (editing = false)}>Cancel</button>{/if}
+      </div>
     </form>
   {/if}
   {#if error}<p class="error">{error}</p>{/if}

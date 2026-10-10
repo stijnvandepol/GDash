@@ -127,7 +127,7 @@
 .list li {
   display: flex;
   align-items: center;
-  gap: var(--s-2) var(--s-3);
+  gap: var(--s-2) var(--s-4);
   padding: var(--s-3) 0;
   border-top: 1px solid var(--border);
   flex-wrap: wrap;
@@ -140,7 +140,6 @@
   display: inline-flex;
   align-items: center;
   min-height: 32px;
-  padding: 0 var(--s-2);
   font-weight: 550;
   text-decoration-color: transparent;
   text-underline-offset: 4px;
@@ -156,7 +155,7 @@
 }
 .inline {
   display: flex;
-  gap: var(--s-2);
+  gap: var(--s-2) var(--s-4);
   flex: 1;
   flex-wrap: wrap;
   align-items: center;

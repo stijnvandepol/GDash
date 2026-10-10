@@ -68,6 +68,5 @@
   }
   .use {
     justify-self: start;
-    margin-left: calc(-1 * var(--s-2));
   }
 </style>

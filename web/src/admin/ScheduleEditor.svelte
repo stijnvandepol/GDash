@@ -200,7 +200,7 @@
 <style>
   .schedule {
     display: grid;
-    gap: var(--s-4);
+    gap: var(--s-5);
     width: 100%;
   }
   .schedule p {
@@ -209,23 +209,27 @@
   h3 {
     font-size: var(--fs-lg);
   }
+  /* Each part of the schedule is ruled off, like the sections of a page. */
   fieldset {
     display: grid;
     gap: var(--s-2);
     margin: 0;
-    padding: var(--s-3) var(--s-4) var(--s-4);
-    border: 1px solid var(--border);
-    border-radius: var(--r-md);
+    padding: var(--s-3) 0 0;
+    border: 0;
+    border-top: 1px solid var(--border);
     min-width: 0;
   }
   legend {
-    padding: 0 var(--s-1);
-    font-weight: 700;
+    float: left;
+    width: 100%;
+    margin-bottom: var(--s-2);
+    padding: 0;
+    font-weight: 600;
   }
   .slot {
     display: grid;
     gap: var(--s-2);
-    padding-bottom: var(--s-2);
+    padding-bottom: var(--s-3);
     border-bottom: 1px dashed var(--border);
   }
   .days {
@@ -234,19 +238,36 @@
     gap: 4px;
     align-items: center;
   }
+  /* A key that is pressed in or not, with its light on when it is. */
   .day {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
+    gap: 6px;
     min-width: 2.6em;
-    padding: 4px 6px;
-    background: transparent;
-    color: var(--muted);
-    border: 1px solid var(--border);
+    min-height: 34px;
+    padding: 0 var(--s-3);
+    background: var(--surface);
+    color: var(--text-soft);
+    border: 1px solid var(--border-strong);
+    font-size: var(--fs-sm);
+    transition: none;
   }
-  .day.on {
-    background: var(--accent);
-    color: var(--accent-text);
-    border-color: var(--accent);
+  .day:hover:not(:disabled) {
+    background: var(--surface);
+    border-color: var(--text);
+    color: var(--text);
+  }
+  .day.on,
+  .day.on:hover:not(:disabled) {
+    background: var(--primary);
+    color: var(--on-primary);
+    border-color: var(--primary);
+  }
+  .day.on::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--spark-on-primary);
   }
 </style>

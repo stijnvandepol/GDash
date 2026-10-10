@@ -218,7 +218,7 @@
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: var(--s-2);
+    gap: var(--s-2) var(--s-4);
   }
   .section-intro {
     display: grid;
