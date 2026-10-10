@@ -5,9 +5,10 @@
 /gdash
 /gdash.exe
 /data-dev/
-/gdash-dev.exe
+/gdash-dev*.exe
 /data-test/
 /dist-release/
 /data-nesthub/
 /web/test-results/
 /web/playwright-report/
+/gdash.exe~

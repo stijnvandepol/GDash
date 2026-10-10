@@ -33,6 +33,10 @@ the format follows [Keep a Changelog](https://keepachangelog.com).
 
 ### Added
 
+- A backup to download under Settings → Account: one zip file with the
+  database, the encryption key and the photos, behind your password. Unzipped
+  into an empty data directory it is a working GDash again; see
+  [docs/install.md](docs/install.md#a-backup-to-keep-elsewhere).
 - Announcements: an automation, such as a Home Assistant `rest_command`,
   posts a short message with an API token and the TVs show it over the
   dashboard for a while. API tokens are made and revoked under Settings,

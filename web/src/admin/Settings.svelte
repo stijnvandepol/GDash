@@ -5,6 +5,7 @@
   import { newestOnly } from './newest';
   import AccountSetting from './AccountSetting.svelte';
   import ActivityLog from './ActivityLog.svelte';
+  import BackupSetting from './BackupSetting.svelte';
   import HomeAssistantSetting from './HomeAssistantSetting.svelte';
   import LocationSetting from './LocationSetting.svelte';
   import PhotoSetting from './PhotoSetting.svelte';
@@ -34,7 +35,7 @@
     { id: 'sources', label: 'Data sources', hint: 'Weather, news, calendars and Home Assistant' },
     { id: 'screens', label: 'Screens', hint: 'Language on the TVs and photos' },
     { id: 'automations', label: 'Automations', hint: 'API tokens and announcements' },
-    { id: 'account', label: 'Account', hint: 'Password and recent activity' },
+    { id: 'account', label: 'Account', hint: 'Password, backup and recent activity' },
   ] as const;
   type Section = (typeof SECTIONS)[number]['id'];
   let section = $state<Section>('sources');
@@ -170,6 +171,7 @@
   <AnnouncementSetting onerror={handle} />
 {:else if section === 'account'}
   <AccountSetting onerror={handle} />
+  <BackupSetting onerror={handle} />
   <ActivityLog onerror={handle} />
 {/if}
 

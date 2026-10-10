@@ -1,3 +1,4 @@
+import { adminPassword } from './env';
 import { expect, openTab, test } from './fixtures';
 
 // The sources are fetched in the background and may fail without internet:
@@ -60,5 +61,20 @@ test.describe('settings', () => {
     await expect(language).toHaveValue('nl');
     const stored = await page.request.get('/api/settings');
     expect(((await stored.json()) as { settings: { language: string } }).settings.language).toBe('nl');
+  });
+
+  test('a backup is refused with a wrong password and downloads with the right one', async ({ adminPage: page }) => {
+    await page.getByRole('navigation', { name: 'Settings' }).getByRole('button', { name: 'Account' }).click();
+    const section = page.locator('section.card', { has: page.getByRole('heading', { name: 'Backup' }) });
+
+    await section.getByLabel('Your password').fill('not the password at all');
+    await section.getByRole('button', { name: 'Download backup' }).click();
+    await expect(section.getByText('this is not your password')).toBeVisible();
+
+    await section.getByLabel('Your password').fill(adminPassword());
+    const download = page.waitForEvent('download');
+    await section.getByRole('button', { name: 'Download backup' }).click();
+    expect((await download).suggestedFilename()).toMatch(/^gdash-backup-\d{4}-\d{2}-\d{2}\.zip$/);
+    await expect(section.getByLabel('Your password')).toHaveValue('');
   });
 });

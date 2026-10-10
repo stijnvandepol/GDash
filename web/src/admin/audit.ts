@@ -17,6 +17,8 @@ const ACTIONS: Record<string, string> = {
   password_changed: 'Changed the password',
   setup_failed: 'Setup attempt failed',
   api_token_rejected: 'An automation used an invalid API token',
+  backup_downloaded: 'Downloaded a backup',
+  backup_failed: 'Backup refused',
   password_reset: 'Reset the password from the command line for',
   password_change_failed: 'Failed to change the password',
   screen_paired: 'Paired a screen with display',

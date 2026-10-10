@@ -56,20 +56,39 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
     credentials: 'same-origin',
   });
   if (response.status === 204) return undefined as T;
-  let payload: unknown;
+  if (!response.ok) throw await toApiError(response);
   try {
-    payload = await response.json();
+    return (await response.json()) as T;
   } catch {
     throw new ApiError(response.status, 'invalid_response', 'The server sent an unexpected response.');
   }
-  if (!response.ok) {
-    const err = (payload as { error?: { code?: string; message?: string; fields?: FieldError[] } }).error;
-    throw new ApiError(response.status, err?.code ?? 'unknown', err?.message ?? 'Something went wrong.', err?.fields ?? []);
+}
+
+/** Posts a JSON body and returns the answer as a file, such as a backup. */
+async function download(path: string, body: unknown): Promise<Blob> {
+  const response = await fetch(path, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+    credentials: 'same-origin',
+  });
+  if (!response.ok) throw await toApiError(response);
+  return response.blob();
+}
+
+/** The ApiError for a failed response, from its {"error": …} body. */
+async function toApiError(response: Response): Promise<ApiError> {
+  try {
+    const payload = (await response.json()) as { error?: { code?: string; message?: string; fields?: FieldError[] } };
+    const err = payload.error;
+    return new ApiError(response.status, err?.code ?? 'unknown', err?.message ?? 'Something went wrong.', err?.fields ?? []);
+  } catch {
+    return new ApiError(response.status, 'invalid_response', 'The server sent an unexpected response.');
   }
-  return payload as T;
 }
 
 export const api = {
+  backup: (password: string) => download('/api/backup', { password }),
   setupNeeded: () => request<{ needed: boolean }>('GET', '/api/setup').then((r) => r.needed),
   setup: (setupToken: string, username: string, password: string) =>
     request<User>('POST', '/api/setup', { setupToken, username, password }),

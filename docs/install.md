@@ -169,6 +169,20 @@ works, but its calendars have to be added again.
 To restore a daily copy: stop GDash, remove `gdash.db`, `gdash.db-wal`
 and `gdash.db-shm`, copy the backup to `gdash.db` and start GDash.
 
+### A backup to keep elsewhere
+
+Settings → Account → Backup downloads one zip file with a fresh copy of the
+database, `secret.key` and the photos, after asking for your password again.
+It is everything needed to run GDash on another machine. Because it holds
+`secret.key`, anyone with the file can read your calendar addresses and Home
+Assistant token: keep it like a password. Every download is in the activity log.
+
+To restore it: stop GDash, unzip the file into an empty data directory (for
+Docker, the directory mounted at `/data`, owned by user `65532`), and start
+GDash with that directory. Log in with the account and password the backup
+was made with. Paired screens keep working as long as they reach GDash at the
+same address.
+
 ## Security
 
 Under Settings, Account, "Recent activity" lists logins, failed logins, pairings and

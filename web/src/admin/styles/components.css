@@ -45,6 +45,10 @@
 .card > h2 {
   padding-bottom: var(--s-1);
 }
+/* Explanations keep a readable line length on a wide screen. */
+.card > p {
+  max-width: 72ch;
+}
 
 .list {
   list-style: none;
