@@ -45,5 +45,5 @@ function tabButton(page: Page, tab: Tab) {
 export async function openTab(page: Page, tab: Tab): Promise<void> {
   await tabButton(page, tab).click();
   const heading = tab === 'Settings' ? 'Weather location' : tab;
-  await expect(page.getByRole('heading', { name: heading })).toBeVisible();
+  await expect(page.getByRole('heading', { name: heading, exact: true })).toBeVisible();
 }
