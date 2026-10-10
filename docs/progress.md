@@ -77,8 +77,6 @@ simulated device; not yet on the real TV.
 
 ## Not tested yet
 
-- **A full 24-hour run** with the periodic restart (12 hours done, see above), on the current version.
-- **The Nest Hub** with the 9-minute restart.
 - **An own receiver** (option A from the research): needs a Cast developer account (USD 5) and a registered device, see [receiver.md](receiver.md).
 - **Running the Docker image** on a NAS or Raspberry Pi. CI builds it for amd64 and arm64, but nobody has started it yet; Docker Desktop on the development PC did not start its engine.
 - **A real Google or iCloud calendar** and a Dutch display on a real TV.
@@ -92,7 +90,9 @@ simulated device; not yet on the real TV.
 
 ## The kitchen TV
 
-The kitchen TV (a Chromecast HD with Google TV, called "tv woonkamer" in Google Home) runs the current version: first on 9 October at 09:13, when the database migrated from version 3 to 10 with a backup before every step and the location and news feed were copied from the environment, and again at 09:38 and 09:58 with the later features (migrations 11 and 12). A 24-hour soak test on it started at 09:14. Restarting the server restarts the cast, which can switch a TV on through HDMI-CEC, so that waits until someone is home and awake.
+The kitchen TV (a Chromecast HD with Google TV, called "tv woonkamer" in Google Home) runs the current version: first on 9 October at 09:13, when the database migrated from version 3 to 10 with a backup before every step and the location and news feed were copied from the environment, and again at 09:38 and 09:58 with the later features (migrations 11 and 12). A 24-hour soak test ran from 9 October 09:14 to 10 October 09:11: in all 288 checks, one every five minutes, the dashboard (DashCast) was on screen, and the event stream was connected in 287 of them (the one miss fell in a restart of the cast). Restarting the server restarts the cast, which can switch a TV on through HDMI-CEC, so that waits until someone is home and awake.
+
+The Nest Hub ("Keuken", 192.168.1.33) ran an 8-hour test on 9 October from a separate instance, with the 9-minute restart: in 240 checks, one every two minutes, the dashboard was on screen 198 times; 40 times radio was playing, and GDash waited instead of taking the screen; twice the device did not answer for a moment and the dashboard came back by itself.
 
 ## Next
 
