@@ -1,4 +1,5 @@
 <script lang="ts">
+  import EditorToolbar from './EditorToolbar.svelte';
   import { ask } from './confirm.svelte';
   import 'gridstack/dist/gridstack.min.css';
   import { GridStack, type GridStackNode, type GridStackWidget } from 'gridstack';
@@ -26,14 +27,6 @@
   let name = $state('');
   let theme = $state('minimal-dark');
 
-  const THEME_NAMES: Record<string, string> = {
-    'minimal-dark': 'Minimal dark',
-    'minimal-light': 'Minimal light',
-    glass: 'Glass',
-    'warm-light': 'Warm light',
-    'high-contrast': 'High contrast',
-    night: 'Night',
-  };
   let selected = $state<string | null>(null);
   let message = $state('');
   let errors = $state<string[]>([]);
@@ -202,24 +195,17 @@
 </script>
 
 <section class="card editor">
-  <div class="editor-head">
-    <button class="link" onclick={close}>← Dashboards</button>
-    <input class="name" bind:value={name} oninput={() => (dirty = true)} aria-label="Dashboard name" />
-    <select bind:value={theme} onchange={() => (dirty = true)} aria-label="Theme">
-      {#each catalogue.themes as t (t)}
-        <option value={t}>{THEME_NAMES[t] ?? t}</option>
-      {/each}
-    </select>
-    <button class="chip" onclick={openPreview}>Preview</button>
-    <button onclick={save} disabled={saving}>{saving ? 'Saving…' : 'Save'}</button>
-  </div>
-
-  <div class="palette">
-    <span class="muted small">Add:</span>
-    {#each Object.keys(catalogue.types) as type (type)}
-      <button class="chip" onclick={() => addWidget(type)}>{LABELS[type] ?? type}</button>
-    {/each}
-  </div>
+  <EditorToolbar
+    bind:name
+    bind:theme
+    {catalogue}
+    {saving}
+    onchange={() => (dirty = true)}
+    onclose={close}
+    onpreview={openPreview}
+    onsave={save}
+    onadd={addWidget}
+  />
 
   <div class="canvas">
     <div class="grid-stack" bind:this={container}></div>
@@ -247,29 +233,6 @@
 <style>
   .editor {
     --editor-chrome: 380px;
-  }
-  .editor-head {
-    display: flex;
-    gap: 10px;
-    align-items: center;
-    flex-wrap: wrap;
-  }
-  .name {
-    flex: 1;
-    min-width: 160px;
-    font-weight: 600;
-  }
-  .palette {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-    flex-wrap: wrap;
-  }
-  .chip {
-    padding: 6px 12px;
-    background: var(--bg);
-    color: var(--text);
-    border: 1px solid var(--border);
   }
   /* The canvas is the TV: dark, with the 24x14 grid drawn faintly so a
      widget's place and size can be judged while dragging. */
