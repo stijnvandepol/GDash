@@ -58,13 +58,14 @@ name Daycast, so it is better replaced by a new draft with the next tag.
 
 ## Checked by CI on every push
 
-gofmt, go vet, staticcheck, the Go tests with the race detector (fuzz seeds included), govulncheck, svelte-check with zero warnings, the web unit tests (Vitest), npm audit, an up-to-date THIRD_PARTY_LICENSES, a gitleaks scan of the whole history, 23 Playwright browser tests (setup, settings, backup, dashboards, pairing, schedule) with axe accessibility checks in light and dark mode and a check that every button keeps 4.5:1 while hovered, and a Docker build for amd64 and arm64. The first run passed on 8 October 2026; all of it passed on 9 October 2026 after the security and design rounds.
+gofmt, go vet, staticcheck, the Go tests with the race detector (fuzz seeds included), govulncheck, svelte-check with zero warnings, the web unit tests (Vitest), npm audit, an up-to-date THIRD_PARTY_LICENSES, a gitleaks scan of the whole history, 24 Playwright browser tests (setup, settings, backup, dashboards, styles, pairing, schedule) with axe accessibility checks in light and dark mode and a check that every button keeps 4.5:1 while hovered, and a Docker build for amd64 and arm64. The first run passed on 8 October 2026; all of it passed on 9 October 2026 after the security and design rounds.
 
 ## Security and design rounds (9 October 2026)
 
 - **OWASP ASVS 4.0.3 level 2 review** (read-only agent): one medium finding, a recurrence rule that cost minutes of CPU per refresh, and a fuzz-found crash on a malformed calendar line, both fixed; all low findings fixed (password policy after NIST SP 800-63B, caching and security headers, content type checks, audit gaps, data directory and database file modes, https-to-http redirects, recovery with `gdash reset-password`). Left as information: no two-factor login (one household admin on a LAN, written down in SECURITY.md), photos keep their EXIF data, the TV's cached snapshot is not cleared on its own.
 - **Supply chain:** image bases pinned by digest, non-root image with a read-only compose example, hardened systemd unit, Dependabot, SBOM and provenance (provenance starts once the repository is public). The Docker image built in CI; it has not been run on a NAS yet.
 - **Design:** checked in a real Chromium at 1920x1080, 1440x900 and 390 px wide, light and dark. On 10 October the first look (warm paper, teal, Fraunces and Atkinson) was replaced after Stijn chose from three directions: "Apparaat", graphite with signal orange, Geist and Geist Mono, a screen-with-power-light logo, and pages laid out as ruled panels instead of cards. Every text colour computed to reach 4.5:1 in the web interface and in all six TV themes; axe finds nothing serious in light or dark mode.
+- **Style presets (10 October):** ten themes with their own typeface besides the six (Frost, Walnut, Swiss, Tonal, Gilded, Riviera, Galaxy, Terminal, Parchment, Neon) and a typeface per dashboard. Checked at 1920x1080 with every widget at its smallest size, also in the widest typeface (JetBrains Mono): no text leaves its tile. themes.test.ts measures every theme's text at 4.5:1 or more.
 
 ## Standby
 
