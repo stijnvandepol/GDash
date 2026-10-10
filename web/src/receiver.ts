@@ -2,7 +2,7 @@
 // and pushes snapshots over a custom namespace, so this page never connects
 // to the server itself. That avoids mixed content: the receiver is served
 // over HTTPS, the server usually runs on plain HTTP in the home network.
-import '@fontsource-variable/atkinson-hyperlegible-next';
+import '@fontsource-variable/geist';
 import { mount } from 'svelte';
 import App from './App.svelte';
 import { CAST_NAMESPACE, isSnapshot } from './protocol';

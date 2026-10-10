@@ -27,8 +27,8 @@
 <div class="auth-card">
   <div class="auth-brand">
     <Logo size={56} />
-    <span class="name">Welcome to GDash</span>
-    <p>Create the administrator account to get started.</p>
+    <span class="name">GDash</span>
+    <p>Welcome. Create the administrator account to get started.</p>
   </div>
 
   <form class="card auth-form" onsubmit={submit}>

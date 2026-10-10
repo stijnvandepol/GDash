@@ -10,29 +10,30 @@
  * theme names.
  */
 
-/* Minimal Dark: the default, and the safest choice for OLED screens. A warm
-   charcoal, like the web interface in the evening. */
+/* Minimal Dark: the default, and the safest choice for OLED screens.
+   Graphite, like the web interface in the evening, with the signal orange
+   for what needs to stand out. */
 .screen,
 .screen[data-theme='minimal-dark'] {
-  --surface-0: #100e0c;
-  --surface-1: #1d1915;
+  --surface-0: #0e0f10;
+  --surface-1: #1a1b1e;
   --widget-border: transparent;
-  --text-primary: #f4eee5;
-  --text-muted: #b5aa9b;
-  --accent: #eaa75e;
-  --warning: #f2b441;
+  --text-primary: #f1f1ee;
+  --text-muted: #a7a8ad;
+  --accent: #ff7a45;
+  --warning: #f2b84b;
   --backdrop: none;
 }
 
-/* Minimal Light: warm paper for bright rooms in the daytime. */
+/* Minimal Light: light grey and white for bright rooms in the daytime. */
 .screen[data-theme='minimal-light'] {
-  --surface-0: #ece6db;
-  --surface-1: #fffcf7;
-  --widget-border: #ddd3c3;
-  --text-primary: #1e1a16;
-  --text-muted: #61564a;
-  --accent: #9c4a1c;
-  --warning: #8a5300;
+  --surface-0: #e9e9e5;
+  --surface-1: #ffffff;
+  --widget-border: #d9d9d3;
+  --text-primary: #17181a;
+  --text-muted: #5a5b60;
+  --accent: #b33a0b;
+  --warning: #855000;
   --backdrop: none;
 }
 

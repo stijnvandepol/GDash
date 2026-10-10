@@ -91,7 +91,15 @@
     <p class="message">{display.problem}</p>
   {:else if display.pairingCode}
     <div class="pairing">
-      <p class="pairing-brand">GDash</p>
+      <p class="pairing-brand">
+        <!-- The logo: a screen with its power light on. -->
+        <svg viewBox="0 0 32 32" fill="none" aria-hidden="true">
+          <rect x="2.5" y="4.5" width="27" height="19" rx="4" stroke="currentColor" stroke-width="3" />
+          <circle cx="23.5" cy="18" r="2.5" fill="var(--signal)" />
+          <rect x="11" y="26.5" width="10" height="3" rx="1.5" fill="currentColor" />
+        </svg>
+        GDash
+      </p>
       <p class="pairing-title">{t('pairTitle')}</p>
       <p class="pairing-code">{display.pairingCode.code}</p>
       <!-- Where to go and what to pick: this page knows its own address and
@@ -209,10 +217,19 @@
     position: absolute;
     top: 6vmin;
     margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 1.2vmin;
     font-family: var(--font-display);
     font-size: 3.4vmin;
-    font-weight: 600;
-    color: var(--text-muted);
+    font-weight: 700;
+    letter-spacing: -0.05em;
+    text-transform: lowercase;
+    color: var(--text-primary);
+  }
+  .pairing-brand svg {
+    width: 1.3em;
+    height: 1.3em;
   }
   .pairing-title {
     margin: 0;

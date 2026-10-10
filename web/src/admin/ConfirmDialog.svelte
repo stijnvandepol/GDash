@@ -54,7 +54,7 @@
     box-shadow: var(--shadow-md);
   }
   dialog::backdrop {
-    background: rgb(20 17 14 / 0.45);
+    background: var(--scrim);
   }
   p {
     margin: var(--s-3) 0 var(--s-5);

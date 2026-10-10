@@ -160,6 +160,8 @@
   .address {
     display: block;
     overflow-wrap: anywhere;
+    font-family: var(--mono);
+    font-size: var(--fs-sm);
   }
   .swatch {
     flex: none;

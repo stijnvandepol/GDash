@@ -103,6 +103,6 @@
     width: 100%;
     aspect-ratio: 16 / 9;
     object-fit: cover;
-    border-radius: 6px;
+    border-radius: var(--r-md);
   }
 </style>

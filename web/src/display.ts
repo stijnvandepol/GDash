@@ -1,5 +1,5 @@
 // Entry point for browser and kiosk displays (/d/<display-id>).
-import '@fontsource-variable/atkinson-hyperlegible-next';
+import '@fontsource-variable/geist';
 import { mount } from 'svelte';
 import App from './App.svelte';
 import { ensureAccess, useLaunchToken } from './pairing';

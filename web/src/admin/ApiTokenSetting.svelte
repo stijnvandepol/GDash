@@ -109,14 +109,14 @@
   .fresh {
     display: grid;
     gap: 8px;
-    padding: 12px;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    background: var(--bg);
+    padding: var(--s-4);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--r-lg);
+    background: var(--surface);
   }
   .fresh input {
-    font-family: ui-monospace, monospace;
-    font-size: 0.9rem;
+    font-family: var(--mono);
+    font-size: var(--fs-sm);
   }
   .list {
     overflow-wrap: anywhere;

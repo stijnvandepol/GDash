@@ -19,7 +19,8 @@
   let searching = $state(false);
   let searchMessage = $state('');
   let loadError = $state('');
-
+  // The TV grid, to draw each display's dashboard; fetched once.
+  let grid = $state<{ columns: number; rows: number } | null>(null);
 
   let editingId = $state<string | null>(null);
   let editName = $state('');
@@ -33,6 +34,10 @@
   onMount(() => {
     void load();
     void search();
+    api
+      .widgetTypes()
+      .then((c) => (grid = { columns: c.columns, rows: c.rows }))
+      .catch(() => (grid = null));
     // Keeps "On screen since" and similar current while the page is open.
     const timer = setInterval(() => void load(), STATUS_REFRESH_MS);
     return () => clearInterval(timer);
@@ -173,11 +178,26 @@
   }
 </script>
 
-<section class="card">
-  <h1>Displays</h1>
+<header class="page-head">
+  <div>
+    <h1 class="page-title">Displays</h1>
+    <p class="page-lede">
+      {#if displays.length === 0}
+        A display is a TV or a browser that shows one of your dashboards. Add your first one below.
+      {:else}
+        {displays.length === 1 ? 'One TV or browser' : `${displays.length} TVs and browsers`}, each showing a dashboard.
+      {/if}
+    </p>
+  </div>
+  {#if displays.length > 0}
+    <button class="secondary" onclick={() => document.getElementById('display-name')?.focus()}>Add a display</button>
+  {/if}
+</header>
+
+<section class="card wide" aria-label="Your displays">
   {#if loadError}<p class="error">{loadError}</p>{/if}
   {#if displays.length === 0 && !loadError}
-    <p class="muted">No displays yet. Add your first TV below.</p>
+    <p class="muted">No displays yet.</p>
   {:else}
     <ul class="list">
       {#each displays as d (d.id)}
@@ -208,6 +228,7 @@
               display={d}
               {dashboards}
               textSizes={TEXT_SIZES}
+              {grid}
               meta="{describeDevice(d.castDeviceId)} · {describeScreens(d)} · {describeHours(d)}"
               ondashboard={(id) => chooseDashboard(d, id)}
               ontextscale={(percent) => chooseTextScale(d, percent)}

@@ -22,14 +22,17 @@ h3 {
   line-height: 1.2;
   font-family: var(--font-display);
   font-weight: 600;
-  letter-spacing: -0.005em;
-  font-optical-sizing: auto;
+  letter-spacing: -0.015em;
 }
 h1 {
   font-size: var(--fs-xl);
+  letter-spacing: -0.025em;
 }
 h2 {
   font-size: var(--fs-lg);
+}
+h3 {
+  font-size: var(--fs-md);
 }
 p {
   margin: 0;
@@ -37,26 +40,46 @@ p {
 
 a {
   color: var(--accent);
-  text-underline-offset: 2px;
+  text-decoration-color: var(--border-strong);
+  text-underline-offset: 3px;
 }
 a:hover {
-  text-decoration-thickness: 2px;
+  text-decoration-color: currentColor;
 }
 
 code {
   font-family: var(--mono);
   font-size: 0.9em;
-  padding: 1px 6px;
+  padding: 1px 5px;
   border-radius: var(--r-sm);
-  background: var(--neutral-soft);
+  background: var(--sunken);
   color: var(--text);
   overflow-wrap: anywhere;
 }
 
-/* One visible focus ring for everything that can be tabbed to. */
+/* One visible focus ring for everything that can be tabbed to: the signal
+   colour, so the place you are at is the one thing that is "on". */
 :focus-visible {
   outline: 2px solid var(--focus);
   outline-offset: 2px;
+}
+
+/* Whatever is scrolled to or focused stays clear of the sticky top bar. */
+:target,
+input,
+select,
+textarea {
+  scroll-margin-top: calc(var(--topbar-h) + var(--s-5));
+}
+
+/* Figures that are compared or read one by one: times, counts, codes. */
+.mono {
+  font-family: var(--mono);
+  font-size: 0.92em;
+  letter-spacing: -0.01em;
+}
+.num {
+  font-variant-numeric: tabular-nums;
 }
 
 .muted {
@@ -71,7 +94,8 @@ code {
 p.error {
   padding: var(--s-2) var(--s-3);
   border: 1px solid var(--danger-border);
-  border-radius: var(--r-md);
+  border-left: 3px solid var(--danger);
+  border-radius: 0;
   background: var(--danger-soft);
   color: var(--danger);
   font-size: var(--fs-sm);

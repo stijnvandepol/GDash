@@ -71,16 +71,22 @@
   }
 </script>
 
-<nav class="subnav" aria-label="Settings">
-  {#each SECTIONS as s (s.id)}
-    <button
-      class="subtab"
-      aria-current={section === s.id ? 'page' : undefined}
-      title={s.hint}
-      onclick={() => (section = s.id)}>{s.label}</button
-    >
-  {/each}
-</nav>
+<header class="page-head settings-head">
+  <div>
+    <h1 class="page-title">Settings</h1>
+    <p class="page-lede">{SECTIONS.find((s) => s.id === section)?.hint}.</p>
+  </div>
+  <!-- A selector, like the mode switch on a device: four positions, one
+       pressed in. -->
+  <nav class="subnav" aria-label="Settings">
+    {#each SECTIONS as s, i (s.id)}
+      <button class="subtab" aria-current={section === s.id ? 'page' : undefined} onclick={() => (section = s.id)}>
+        <span class="index mono" aria-hidden="true">0{i + 1}</span>
+        {s.label}
+      </button>
+    {/each}
+  </nav>
+</header>
 
 {#if loadError}<p class="error">{loadError}</p>{/if}
 {#if section === 'sources' || section === 'screens'}
@@ -176,32 +182,45 @@
 {/if}
 
 <style>
+  .settings-head {
+    align-items: flex-end;
+  }
   .subnav {
     display: flex;
     flex-wrap: wrap;
-    gap: var(--s-1);
-    padding: var(--s-1);
-    border: 1px solid var(--border);
-    border-radius: var(--r-lg);
-    background: var(--surface);
-    justify-self: start;
+    gap: 2px;
+    padding: 3px;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--r-md);
     max-width: 100%;
   }
   .subtab {
-    min-height: 36px;
-    padding: 0 var(--s-4);
+    min-height: 34px;
+    padding: 0 var(--s-3);
     border: 0;
-    border-radius: var(--r-md);
+    border-radius: var(--r-sm);
     background: transparent;
     color: var(--text-soft);
-    font-weight: 600;
+    font-weight: 550;
+    /* A switch has no in-between position. */
+    transition: none;
   }
   .subtab:hover:not(:disabled) {
     background: var(--neutral-soft);
   }
+  .index {
+    color: var(--muted);
+    font-size: var(--fs-xs);
+  }
   .subtab[aria-current='page'],
   .subtab[aria-current='page']:hover:not(:disabled) {
-    background: var(--accent-soft);
-    color: var(--accent);
+    background: var(--primary);
+    color: var(--on-primary);
+  }
+  .subtab[aria-current='page'] .index {
+    color: var(--spark-on-primary);
+  }
+  .subtab:active:not(:disabled) {
+    transform: none;
   }
 </style>

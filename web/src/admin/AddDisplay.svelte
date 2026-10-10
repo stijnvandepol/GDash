@@ -70,7 +70,7 @@
   <h2>Add a display</h2>
   <label>
     Name
-    <input bind:value={newName} oninput={nameChanged} placeholder="Kitchen" required />
+    <input id="display-name" bind:value={newName} oninput={nameChanged} placeholder="Kitchen" required />
     {#if createError?.fieldMessage('name')}<span class="field-error">{createError.fieldMessage('name')}</span>{/if}
   </label>
   <!-- The address follows from the name; most people never need to see

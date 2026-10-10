@@ -194,7 +194,7 @@
   }
 </script>
 
-<section class="card editor">
+<section class="card wide editor">
   <EditorToolbar
     bind:name
     bind:theme
@@ -237,8 +237,8 @@
   /* The canvas is the TV: dark, with the 24x14 grid drawn faintly so a
      widget's place and size can be judged while dragging. */
   .canvas {
-    --cell-line: rgb(255 255 255 / 0.06);
-    background-color: #15120f;
+    --cell-line: var(--device-line);
+    background-color: var(--device-screen);
     background-image:
       linear-gradient(to right, var(--cell-line) 1px, transparent 1px),
       linear-gradient(to bottom, var(--cell-line) 1px, transparent 1px);
@@ -253,32 +253,31 @@
     margin-inline: auto;
   }
   .canvas :global(.grid-stack-item-content) {
-    background: #2a251f;
-    color: #efe8dc;
-    border: 1px solid rgb(255 255 255 / 0.08);
-    border-radius: 6px;
-    font-weight: 600;
+    background: var(--device-tile);
+    color: var(--device-text);
+    border: 1px solid var(--device-line);
+    border-radius: var(--r-md);
+    font-weight: 550;
     display: grid;
     place-items: center;
     font-size: 0.95rem;
     cursor: move;
   }
   .canvas :global(.grid-stack-item.is-selected .grid-stack-item-content) {
-    background: #3a322a;
-    border-color: #72c9bd;
-    box-shadow: inset 0 0 0 1px #72c9bd;
+    background: var(--device-tile-selected);
+    border-color: var(--spark);
+    box-shadow: inset 0 0 0 1px var(--spark);
   }
   .canvas :global(.grid-stack-item.ui-draggable-dragging .grid-stack-item-content),
   .canvas :global(.grid-stack-item.ui-resizable-resizing .grid-stack-item-content) {
-    outline: 2px solid var(--accent);
+    outline: 2px solid var(--spark);
   }
   .inspector {
     display: flex;
-    gap: 14px;
+    gap: var(--s-3) var(--s-4);
     align-items: center;
     flex-wrap: wrap;
-    padding: 10px 12px;
-    border: 1px solid var(--border);
-    border-radius: 8px;
+    padding: var(--s-3) 0;
+    border-block: 1px solid var(--border);
   }
 </style>

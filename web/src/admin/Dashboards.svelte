@@ -124,35 +124,44 @@
 {#if editing && catalogue}
   <DashboardEditor dashboard={editing} {catalogue} onClose={closeEditor} {onSessionEnded} />
 {:else}
-  <section class="card">
-    <h1>Dashboards</h1>
+  <header class="page-head">
+    <div>
+      <h1 class="page-title">Dashboards</h1>
+      <p class="page-lede">What a display shows: widgets on the TV's grid, in a theme. One dashboard can be on several displays.</p>
+    </div>
+    <button class="secondary" onclick={() => document.getElementById('dashboard-name')?.focus()}>New dashboard</button>
+  </header>
+
+  <section class="card wide" aria-label="Your dashboards">
     {#if loadError}<p class="error">{loadError}</p>{/if}
-    <ul class="list">
+    <ul class="shelf">
       {#each dashboards as d (d.id)}
         <li>
           {#if catalogue}
-            <div class="thumb">
-              <DashboardThumb widgets={d.widgets} theme={d.theme ?? 'minimal-dark'} columns={catalogue.columns} rows={catalogue.rows} labels={false} />
-            </div>
+            <DashboardThumb widgets={d.widgets} theme={d.theme ?? 'minimal-dark'} columns={catalogue.columns} rows={catalogue.rows} />
           {/if}
-          <div class="grow">
-            <strong>{d.name}</strong>
-            <span class="muted">{d.widgets.length === 1 ? '1 widget' : `${d.widgets.length} widgets`}{d.id === 'default' ? ' · shown on displays without a choice' : ''}</span>
+          <div class="about">
+            <h2>{d.name}</h2>
+            <span class="muted small">{d.widgets.length === 1 ? '1 widget' : `${d.widgets.length} widgets`}{d.id === 'default' ? ' · shown on displays without a choice' : ''}</span>
           </div>
-          <button class="link" onclick={() => (editing = d)}>Edit</button>
-          <button class="link" onclick={() => exportDashboard(d)}>Export</button>
-          {#if d.id !== 'default'}
-            <button class="link danger" onclick={() => remove(d)}>Delete</button>
-          {/if}
+          <div class="actions">
+            <button class="secondary" onclick={() => (editing = d)}>Edit</button>
+            <button class="link" onclick={() => exportDashboard(d)}>Export</button>
+            {#if d.id !== 'default'}
+              <button class="link danger" onclick={() => remove(d)}>Delete</button>
+            {/if}
+          </div>
         </li>
       {/each}
     </ul>
   </section>
 
   {#if catalogue && templates.length > 0}
-    <section class="card" id="templates">
-      <h2>Start from a template</h2>
-      <p class="muted small">A ready-made layout with a fitting theme. It is added as a new dashboard that you can change in the editor.</p>
+    <section class="card wide" id="templates">
+      <div class="section-intro">
+        <h2>Start from a template</h2>
+        <p class="muted">A ready-made layout with a fitting theme. It is added as a new dashboard that you can change in the editor.</p>
+      </div>
       <TemplateGallery {templates} columns={catalogue.columns} rows={catalogue.rows} busyId={creatingTemplate} onUse={createFromTemplate} />
       {#if templateError}<p class="error">{templateError}</p>{/if}
     </section>
@@ -162,7 +171,7 @@
     <h2>New empty dashboard</h2>
     <label>
       Name
-      <input bind:value={newName} placeholder="Evening" required />
+      <input id="dashboard-name" bind:value={newName} placeholder="Evening" required />
     </label>
     {#if createError}<p class="error">{createError}</p>{/if}
     <button type="submit">Create and edit</button>
@@ -177,9 +186,43 @@
 {/if}
 
 <style>
-  /* Small enough not to crowd the row, large enough to tell layouts apart. */
-  .thumb {
-    flex: none;
-    width: 112px;
+  /* Your dashboards side by side, each as the screen it draws. */
+  .shelf {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
+    gap: var(--s-6) var(--s-5);
+  }
+  .shelf li {
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    gap: var(--s-3);
+    min-width: 0;
+  }
+  .shelf :global(.thumbnail) {
+    border-radius: var(--r-md);
+  }
+  .about {
+    display: grid;
+    gap: 2px;
+  }
+  .about h2 {
+    font-size: var(--fs-lg);
+    font-weight: 650;
+    letter-spacing: -0.02em;
+    overflow-wrap: anywhere;
+  }
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--s-2);
+  }
+  .section-intro {
+    display: grid;
+    gap: var(--s-2);
+    max-width: 68ch;
   }
 </style>

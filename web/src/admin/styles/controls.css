@@ -15,7 +15,8 @@ button {
   background: var(--primary);
   color: var(--on-primary);
   font: inherit;
-  font-weight: 600;
+  font-weight: 550;
+  letter-spacing: -0.005em;
   line-height: 1.2;
   cursor: pointer;
   justify-self: start;
@@ -61,7 +62,8 @@ button.secondary {
   border-color: var(--border-strong);
 }
 button.secondary:hover:not(:disabled) {
-  background: var(--neutral-soft);
+  background: var(--surface);
+  border-color: var(--text);
 }
 
 button.danger {
@@ -73,22 +75,28 @@ button.danger:hover:not(:disabled) {
   filter: brightness(0.9);
 }
 
-/* Quiet text button, used for the actions on a row. */
+/* Quiet text button, used for the actions on a row: graphite text whose
+   underline appears on hover, like a link. */
 button.link {
   min-height: 32px;
   padding: 0 var(--s-2);
   background: none;
   color: var(--accent);
-  font-weight: 500;
+  font-weight: 550;
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  text-underline-offset: 4px;
+  transition: text-decoration-color var(--t-fast) var(--ease);
 }
 button.link:hover:not(:disabled) {
-  background: var(--accent-soft);
+  background: none;
+  text-decoration-color: currentColor;
 }
 button.link.danger {
   color: var(--danger);
 }
 button.link.danger:hover:not(:disabled) {
-  background: var(--danger-soft);
+  background: none;
   filter: none;
 }
 
@@ -98,7 +106,9 @@ label {
   /* May shrink below a wide control, like a card's column. */
   grid-template-columns: minmax(0, 1fr);
   gap: 6px;
-  font-weight: 500;
+  font-size: var(--fs-sm);
+  font-weight: 550;
+  color: var(--text-soft);
 }
 /* Hints inside a label read as normal text, not as part of its name. */
 label .muted,
@@ -117,6 +127,9 @@ textarea {
   background: var(--field);
   color: var(--text);
   font: inherit;
+  /* The label around a field is set smaller; the value is not. */
+  font-size: var(--fs-md);
+  font-weight: 400;
   transition:
     border-color var(--t-fast) var(--ease),
     box-shadow var(--t-fast) var(--ease);
@@ -129,14 +142,13 @@ textarea:hover {
 input:focus-visible,
 select:focus-visible,
 textarea:focus-visible {
-  outline-offset: 0;
-  border-color: var(--focus);
-  box-shadow: 0 0 0 3px var(--accent-soft);
+  outline-offset: 1px;
+  border-color: var(--text);
 }
 input::placeholder,
 textarea::placeholder {
   color: var(--muted);
-  opacity: 0.7;
+  opacity: 0.8;
 }
 input:disabled,
 select:disabled,

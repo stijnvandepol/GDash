@@ -42,28 +42,18 @@
     padding: var(--s-3) var(--s-2) var(--s-3) var(--s-4);
     background: var(--raised);
     color: var(--text);
-    border: 1px solid var(--border);
-    border-left-width: 4px;
-    border-radius: var(--r-md);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--r-lg);
     box-shadow: var(--shadow-md);
     animation: rise var(--t-base) var(--ease);
   }
-  .toast.success {
-    border-left-color: var(--success);
-  }
-  .toast.success :global(.icon) {
+    .toast.success :global(.icon) {
     color: var(--success);
   }
-  .toast.info {
-    border-left-color: var(--accent);
-  }
   .toast.info :global(.icon) {
-    color: var(--accent);
+    color: var(--spark);
   }
-  .toast.error {
-    border-left-color: var(--danger);
-  }
-  .toast.error :global(.icon) {
+    .toast.error :global(.icon) {
     color: var(--danger);
   }
   .message {

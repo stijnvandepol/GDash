@@ -1,6 +1,6 @@
 // Entry point for the web interface at "/".
-import '@fontsource-variable/atkinson-hyperlegible-next';
-import '@fontsource-variable/fraunces';
+import '@fontsource-variable/geist';
+import '@fontsource-variable/geist-mono';
 import { mount } from 'svelte';
 import Admin from './admin/Admin.svelte';
 

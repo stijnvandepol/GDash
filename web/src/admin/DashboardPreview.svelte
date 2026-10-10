@@ -105,7 +105,7 @@
     gap: 12px;
   }
   dialog::backdrop {
-    background: rgb(0 0 0 / 0.6);
+    background: var(--scrim);
   }
   .head {
     display: flex;
@@ -130,8 +130,8 @@
   .frame {
     margin: 0 auto;
     overflow: hidden;
-    border-radius: 8px;
-    background: #000;
+    border-radius: var(--r-md);
+    background: var(--device-screen);
   }
   iframe {
     display: block;

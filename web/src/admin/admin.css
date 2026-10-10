@@ -1,4 +1,4 @@
-/* Web interface styles. System fonts only, nothing loaded from outside. */
+/* Web interface styles. The fonts ship with GDash; nothing is loaded from outside. */
 @import './styles/tokens.css';
 @import './styles/base.css';
 @import './styles/controls.css';

@@ -13,17 +13,21 @@ the format follows [Keep a Changelog](https://keepachangelog.com).
   GDash renames an existing `daycast.db`, so the configuration stays,
   and dashboard files exported by Daycast still import. Log in again, and
   pair screens that show the page in a browser again; cast screens carry on.
-- A look of its own, on the TV and in the web interface: warm paper and
-  charcoal instead of grey and blue, one deep teal for actions, Atkinson
-  Hyperlegible (made for readability) for text and figures and Fraunces
-  for headings and the date. Both fonts ship with GDash. The six TV themes
-  keep their names; Glass is now slate green instead of purple, and every
-  text colour in every theme reaches 4.5:1.
-- Settings is grouped into data sources, screens, automations and account;
-  each display shows its dashboard and text size as labelled fields; the
-  dashboard editor is wider, draws its grid and outlines the selected
-  widget; templates and your own dashboards are shown as thumbnails in
-  their theme's colours. Removing something asks in GDash's own dialog
+- A look of its own, on the TV and in the web interface, like a well-made
+  appliance: graphite on light grey, one signal orange that means "on",
+  and a logo of a screen with its power light lit. Geist for text and
+  figures (no slashed zero on the clock) and Geist Mono for times, codes
+  and addresses; both ship with GDash. Minimal dark and Minimal light on
+  the TV follow the same colours; the six themes keep their names, Glass
+  is slate green, and every text colour in every theme reaches 4.5:1.
+- The web interface is laid out like a control panel instead of a stack
+  of cards: each page has a large title and its own action, sections are
+  ruled with their title in a margin column, a display is drawn as a TV
+  showing its dashboard, with a light that is on while the dashboard is
+  on screen, and the activity log is a table. Settings is grouped into
+  data sources, screens, automations and account; the dashboard editor
+  is wider, draws its grid and outlines the selected widget; templates
+  and your own dashboards are shown in their theme's colours. Removing something asks in GDash's own dialog
   instead of the browser's, and the main actions confirm with a short
   message.
 - New passwords follow NIST SP 800-63B: at least 12 characters, not the

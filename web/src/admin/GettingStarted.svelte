@@ -44,10 +44,10 @@
 </script>
 
 {#if !done}
-  <section class="card getting-started" aria-labelledby="getting-started-title">
+  <section class="card wide object getting-started" aria-labelledby="getting-started-title">
     <div class="card-head">
       <h2 id="getting-started-title">Getting started</h2>
-      <span class="badge info">{finished} of {steps.length} done</span>
+      <span class="progress mono">{finished} of {steps.length} done</span>
     </div>
     <ol>
       <li class:done={hasLocation}>
@@ -75,42 +75,57 @@
 {/if}
 
 <style>
+  /* A strip above the page until the four steps are done; each step has a
+     light that comes on when it is. */
   .getting-started {
-    background: var(--accent-soft);
-    border-color: transparent;
+    margin-bottom: var(--s-6);
+    padding: var(--s-5);
+    border-top: 1px solid var(--border);
+  }
+  .progress {
+    color: var(--muted);
+    font-size: var(--fs-sm);
   }
   ol {
     list-style: none;
     margin: 0;
     padding: 0;
     display: grid;
-    gap: var(--s-3);
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+    gap: var(--s-4) var(--s-5);
+    counter-reset: step;
   }
   li {
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-content: start;
     gap: var(--s-1) var(--s-3);
+  }
+  li > :global(button) {
+    grid-column: 2;
+    margin-left: calc(-1 * var(--s-2));
   }
   .marker {
     display: grid;
     place-items: center;
     flex: none;
-    width: 24px;
-    height: 24px;
+    width: 22px;
+    height: 22px;
+    border: 1.5px solid var(--border-strong);
     border-radius: 50%;
-    background: var(--surface);
-    color: var(--accent);
+    color: var(--muted);
+    font-family: var(--mono);
     font-size: var(--fs-xs);
-    font-weight: 700;
+    font-weight: 600;
   }
   .step {
-    flex: 1 1 14em;
-    min-width: 0;
+    font-size: var(--fs-sm);
+    padding-top: 1px;
   }
   li.done .marker {
-    background: var(--success);
-    color: var(--surface);
+    border-color: var(--spark);
+    background: var(--spark);
+    color: var(--device-screen);
   }
   li.done .step {
     color: var(--muted);

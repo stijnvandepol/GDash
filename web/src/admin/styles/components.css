@@ -1,38 +1,69 @@
-/* Page layout, cards, lists and badges. */
+/* Page layout, sections, lists and status lights. */
 
 .content {
   flex: 1;
   width: 100%;
   max-width: var(--page-w);
   margin: 0 auto;
-  padding: var(--s-5) var(--s-4) var(--s-6);
+  padding: var(--s-6) var(--gutter) var(--s-7);
   display: grid;
-  gap: var(--s-5);
   align-content: start;
+  /* Sections switch to a margin column when the page, not the window, is
+     wide enough. */
+  container: page / inline-size;
 }
-/* Grid items do not shrink below their content by default; one wide card
-   would then make every card wider than a phone screen. */
+/* Grid items do not shrink below their content by default; one wide
+   section would then make every section wider than a phone screen. */
 .content > * {
   min-width: 0;
 }
 /* The dashboard editor shows the TV; it gets the room a wide screen has. */
 .content:has(.editor) {
-  --page-w: 1320px;
+  --page-w: 1400px;
+}
+.card.editor {
+  border-top: 0;
+  padding-top: 0;
 }
 
-/* A card: an optional header (title left, actions right), then content. */
+/* The head of a page: a large title, one line about what is on it, and
+   the page's own action at the right. */
+.page-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--s-3) var(--s-5);
+  padding-bottom: var(--s-6);
+}
+.page-title {
+  font-size: var(--fs-title);
+  font-weight: 700;
+  letter-spacing: -0.045em;
+  line-height: 1;
+}
+.page-lede {
+  margin-top: var(--s-3);
+  color: var(--muted);
+  max-width: 60ch;
+}
+
+/*
+ * A section of a page. Not a box: a ruled panel, like the sections of an
+ * appliance's control panel. A rule on top, the title in a margin column on
+ * a wide page and the content next to it. The class keeps its old name,
+ * card, as every section and test refers to it. A .wide section (lists,
+ * galleries, the editor) has no margin column.
+ */
 .card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--r-lg);
-  box-shadow: var(--shadow-sm);
-  padding: var(--s-5);
   display: grid;
   /* The column may shrink below its content's natural width, so a wide
      control, such as a file field with a long browser text, stays inside
-     the card instead of widening it past a phone screen. */
+     the section instead of widening it past a phone screen. */
   grid-template-columns: minmax(0, 1fr);
   gap: var(--s-4);
+  padding: var(--s-5) 0 var(--s-7);
+  border-top: 1px solid var(--rule);
 }
 .card-head {
   display: flex;
@@ -41,15 +72,53 @@
   gap: var(--s-3);
   flex-wrap: wrap;
 }
-.card > h1,
-.card > h2 {
-  padding-bottom: var(--s-1);
+/* A form in a section: its fields one under the other, evenly spaced. */
+.card form:not(.inline) {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--s-4);
 }
-/* Explanations keep a readable line length on a wide screen. */
+/* A field does not need the whole column: a name or a password is short,
+   and a field as wide as the page reads as a banner. */
+.card:not(.wide) label,
+.card:not(.wide) > select {
+  max-width: 40rem;
+}
+/* Explanations keep a readable line length. */
 .card > p {
-  max-width: 72ch;
+  max-width: 68ch;
+}
+.card > h2 {
+  font-size: var(--fs-lg);
 }
 
+@container page (min-width: 780px) {
+  .card:not(.wide) {
+    grid-template-columns: var(--margin-col) minmax(0, 1fr);
+    column-gap: var(--s-7);
+    row-gap: 0;
+  }
+  .card:not(.wide) > * {
+    grid-column: 2;
+  }
+  .card:not(.wide) > * + * {
+    margin-top: var(--s-4);
+  }
+  /* The title stays in view next to a long section, such as the activity
+     log. It spans every row the content takes. */
+  .card:not(.wide) > :is(h2, .card-head):first-child {
+    grid-column: 1;
+    grid-row: 1 / span 40;
+    align-self: start;
+    position: sticky;
+    top: calc(var(--topbar-h) + var(--s-5));
+  }
+  .card:not(.wide) > :is(h2, .card-head):first-child + * {
+    margin-top: 0;
+  }
+}
+
+/* Rows of things: hairlines between them, no boxes. */
 .list {
   list-style: none;
   margin: 0;
@@ -72,12 +141,12 @@
   align-items: center;
   min-height: 32px;
   padding: 0 var(--s-2);
-  border-radius: var(--r-md);
-  font-weight: 500;
-  text-decoration: none;
+  font-weight: 550;
+  text-decoration-color: transparent;
+  text-underline-offset: 4px;
 }
 .list li > a:hover {
-  background: var(--accent-soft);
+  text-decoration-color: currentColor;
 }
 .grow {
   flex: 1;
@@ -105,21 +174,27 @@
   width: auto;
 }
 
-/* A short status label. Tone is a second class: ok, warn, bad or info;
-   without one it is neutral. The dot keeps the tone readable without colour. */
+/* A thing you own and handle as a whole: a template, a dashboard. Only
+   these get a surface; sections do not. */
+.object {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+}
+
+/* A status light: a coloured dot and a word, like the lights on a device.
+   Tone is a second class: ok, warn, bad or info; without one it is
+   neutral. The word carries the meaning, so colour is never the only cue. */
 .badge {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 7px;
   max-width: 100%;
   width: fit-content;
-  padding: 2px 10px;
-  border-radius: var(--r-md);
-  background: var(--neutral-soft);
   color: var(--text-soft);
-  font-size: var(--fs-xs);
-  font-weight: 600;
-  line-height: 1.5;
+  font-size: var(--fs-sm);
+  font-weight: 550;
+  line-height: 1.4;
 }
 .badge::before {
   content: '';
@@ -127,23 +202,26 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: currentColor;
+  background: var(--border-strong);
 }
-.badge.ok {
-  background: var(--success-soft);
-  color: var(--success);
+.badge.ok::before {
+  background: var(--success);
+  box-shadow: 0 0 0 3px var(--success-soft);
+}
+.badge.warn::before {
+  background: var(--warning);
 }
 .badge.warn {
-  background: var(--warning-soft);
   color: var(--warning);
 }
+.badge.bad::before {
+  background: var(--danger);
+}
 .badge.bad {
-  background: var(--danger-soft);
   color: var(--danger);
 }
-.badge.info {
-  background: var(--accent-soft);
-  color: var(--accent);
+.badge.info::before {
+  background: var(--spark);
 }
 
 /* Waiting for the first data. */
@@ -155,21 +233,25 @@
 }
 .loading::before {
   content: '';
-  width: 18px;
-  height: 18px;
-  border: 2px solid var(--border-strong);
-  border-top-color: var(--primary);
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--border);
+  border-top-color: var(--spark);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
 
 @media (max-width: 640px) {
+  :root {
+    --gutter: 16px;
+  }
   .content {
-    padding: var(--s-4) var(--s-3) var(--s-5);
-    gap: var(--s-4);
+    padding-block: var(--s-5) var(--s-6);
+  }
+  .page-head {
+    padding-bottom: var(--s-5);
   }
   .card {
-    padding: var(--s-4);
-    border-radius: var(--r-md);
+    padding-bottom: var(--s-6);
   }
 }

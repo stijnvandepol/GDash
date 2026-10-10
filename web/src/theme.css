@@ -2,7 +2,7 @@
  * Built-in themes. Widgets only use these semantic tokens, so a theme
  * restyles everything without touching widget code. internal/display lists
  * the same theme names. Fonts ship with GDash (display.ts and its siblings
- * import Atkinson Hyperlegible Next); nothing is loaded from outside.
+ * import Geist); nothing is loaded from outside.
  *
  * No backdrop-filter or blur anywhere: Cast receivers are low-power, and
  * Google's guidance is to avoid effects that recomposite large areas.
@@ -12,25 +12,15 @@
  * backdrop, the worst case for light text.
  */
 
-/*
- * Fraunces, a soft serif, only for the date and the headings. Its latin
- * subset is enough for the weekday and month names GDash writes in English
- * and Dutch; the full package would also ship latin-ext and vietnamese.
- */
-@font-face {
-  font-family: 'Fraunces Variable';
-  font-style: normal;
-  font-display: swap;
-  font-weight: 100 900;
-  src: url('../node_modules/@fontsource-variable/fraunces/files/fraunces-latin-wght-normal.woff2') format('woff2-variations');
-  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2212;
-}
-
 :root {
-  /* Atkinson Hyperlegible Next was drawn for readability: open letter
-     shapes and a large x-height, which is what counts across a room. */
-  --font-ui: 'Atkinson Hyperlegible Next Variable', system-ui, Roboto, 'Segoe UI', 'Noto Sans', sans-serif;
-  --font-display: 'Fraunces Variable', Georgia, 'Times New Roman', serif;
+  /* Geist: a plain, open grotesque with a large x-height and figures
+     without a slashed zero, so times and temperatures read calmly across a
+     room. The same face as the web interface, so the TV and the settings
+     look like one product. Large figures and the date use it tighter. */
+  --font-ui: 'Geist Variable', system-ui, Roboto, 'Segoe UI', 'Noto Sans', sans-serif;
+  --font-display: var(--font-ui);
+  /* The power light in the logo, the same in every theme. */
+  --signal: #ff6a33;
   /* Weight of the large figures: thin strokes break up from a distance. */
   --weight-figure: 500;
   --radius-widget: 28px;

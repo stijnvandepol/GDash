@@ -11,26 +11,27 @@
   position: sticky;
   top: 0;
   z-index: 20;
-  background: var(--surface);
+  background: var(--bg);
   border-bottom: 1px solid var(--border);
 }
 .topbar-inner {
   max-width: var(--page-w);
   height: var(--topbar-h);
   margin: 0 auto;
-  padding: 0 var(--s-4);
+  padding: 0 var(--gutter);
   display: flex;
-  align-items: center;
-  gap: var(--s-5);
+  align-items: stretch;
+  gap: var(--s-6);
 }
+/* The name is set in lower case as a word mark; it is still read "GDash". */
 .brand {
   display: flex;
   align-items: center;
-  gap: 10px;
-  font-family: var(--font-display);
+  gap: 9px;
   font-weight: 700;
-  font-size: var(--fs-xl);
-  letter-spacing: -0.01em;
+  font-size: 1.3125rem;
+  letter-spacing: -0.05em;
+  text-transform: lowercase;
 }
 .spacer {
   flex: 1;
@@ -38,23 +39,41 @@
 
 .tabs {
   display: flex;
-  gap: var(--s-1);
+  gap: var(--s-2);
 }
+/* A tab is a word with a bar under it; the current one has its bar lit. */
 button.tab {
-  min-height: 36px;
+  position: relative;
+  min-height: 100%;
   padding: 0 var(--s-3);
+  border-radius: 0;
   background: none;
   color: var(--muted);
-  font-weight: 500;
+  font-weight: 550;
+}
+button.tab::after {
+  content: '';
+  position: absolute;
+  inset: auto var(--s-3) -1px;
+  height: 2px;
+  background: transparent;
+  transition: background var(--t-fast) var(--ease);
 }
 button.tab:hover:not(:disabled) {
-  background: var(--neutral-soft);
+  background: none;
   color: var(--text);
 }
+button.tab:hover:not(:disabled)::after {
+  background: var(--border-strong);
+}
 button.tab[aria-current='page'] {
-  background: var(--accent-soft);
-  color: var(--accent);
-  font-weight: 600;
+  color: var(--text);
+}
+button.tab[aria-current='page']::after {
+  background: var(--focus);
+}
+button.tab:active:not(:disabled) {
+  transform: none;
 }
 .tab-icon {
   flex: none;
@@ -63,14 +82,16 @@ button.tab[aria-current='page'] {
 /* The user menu. */
 .user {
   position: relative;
+  display: flex;
+  align-items: center;
 }
 button.user-button {
   min-height: 40px;
   padding: 0 var(--s-2) 0 var(--s-1);
   background: none;
   color: var(--text);
-  font-weight: 500;
-  border-radius: var(--r-pill);
+  font-weight: 550;
+  border-radius: var(--r-md);
 }
 button.user-button:hover:not(:disabled) {
   background: var(--neutral-soft);
@@ -79,13 +100,14 @@ button.user-button:hover:not(:disabled) {
   display: grid;
   place-items: center;
   flex: none;
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  background: var(--accent-soft);
-  color: var(--accent);
+  width: 28px;
+  height: 28px;
+  border-radius: var(--r-md);
+  background: var(--primary);
+  color: var(--on-primary);
+  font-family: var(--mono);
   font-size: var(--fs-sm);
-  font-weight: 700;
+  font-weight: 600;
   text-transform: uppercase;
 }
 .user-name {
@@ -104,8 +126,16 @@ button.user-button:hover:not(:disabled) {
   gap: var(--s-1);
   background: var(--raised);
   border: 1px solid var(--border);
-  border-radius: var(--r-md);
+  border-radius: var(--r-lg);
   box-shadow: var(--shadow-md);
+  transform-origin: top right;
+  animation: menu-in var(--t-base) var(--ease);
+}
+@keyframes menu-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
 }
 .menu-label {
   padding: var(--s-2) var(--s-3);
@@ -130,51 +160,56 @@ button.menu-item:hover:not(:disabled) {
   background: var(--neutral-soft);
 }
 
-/* Sign-in and setup: one centred card with the brand above it. */
+/* Sign-in and setup: the word mark large on one side, the form on the
+   other, like the front of a box. Stacked on a phone. */
 .auth {
   flex: 1;
   display: grid;
   place-items: center;
-  padding: var(--s-5) var(--s-4);
+  padding: var(--s-7) var(--s-5);
 }
 .auth-card {
   width: 100%;
-  max-width: 420px;
+  max-width: 920px;
   display: grid;
-  gap: var(--s-5);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 400px);
+  align-items: center;
+  gap: var(--s-7) var(--s-8);
 }
 .auth-brand {
   display: grid;
-  justify-items: center;
-  gap: var(--s-2);
-  text-align: center;
+  justify-items: start;
+  gap: var(--s-4);
 }
 .auth-brand .name {
-  font-family: var(--font-display);
-  font-size: var(--fs-2xl);
+  font-size: clamp(3rem, 2rem + 4vw, 5rem);
   font-weight: 700;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.06em;
+  line-height: 0.9;
+  text-transform: lowercase;
 }
 .auth-brand p {
   color: var(--muted);
+  font-size: var(--fs-lg);
+  max-width: 24ch;
 }
-.auth-form {
-  display: grid;
+.auth-form.card {
   gap: var(--s-4);
+  padding: var(--s-5) 0 0;
+  border-top: 2px solid var(--rule);
 }
 .auth-form > button {
   justify-self: stretch;
+  min-height: 44px;
 }
 .auth-form h1 {
-  font-size: var(--fs-lg);
+  font-size: var(--fs-xl);
 }
 .help {
   display: grid;
   gap: var(--s-2);
-  padding: var(--s-3);
-  border: 1px solid var(--border);
-  border-radius: var(--r-md);
-  background: var(--bg);
+  padding: var(--s-3) 0;
+  border-block: 1px solid var(--border);
   font-size: var(--fs-sm);
 }
 .help summary {
@@ -188,21 +223,39 @@ button.menu-item:hover:not(:disabled) {
   gap: var(--s-1);
 }
 
+/* Name, version and licence, set like the plate on the back of a device. */
 .footer {
-  max-width: var(--page-w);
-  width: 100%;
+  width: min(100% - 2 * var(--gutter), var(--page-w) - 2 * var(--gutter));
   margin: 0 auto;
-  padding: 0 var(--s-4) var(--s-6);
-  text-align: center;
+  padding: var(--s-4) 0 var(--s-6);
+  border-top: 1px solid var(--border);
+  font-family: var(--mono);
+  font-size: var(--fs-xs);
+  letter-spacing: -0.01em;
 }
 .footer a {
   white-space: nowrap;
+  color: var(--muted);
+}
+.auth ~ .footer {
+  border-top: 0;
+  text-align: center;
+}
+
+@media (max-width: 720px) {
+  .auth {
+    place-items: start stretch;
+    padding: var(--s-6) var(--s-4);
+  }
+  .auth-card {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--s-6);
+  }
 }
 
 /* Phones: logo and user at the top, tabs in a bar at the bottom. */
 @media (max-width: 640px) {
   .topbar-inner {
-    padding: 0 var(--s-3);
     gap: var(--s-3);
   }
   .tabs {
@@ -213,7 +266,7 @@ button.menu-item:hover:not(:disabled) {
     grid-template-columns: repeat(3, 1fr);
     gap: 0;
     padding-bottom: env(safe-area-inset-bottom);
-    background: var(--surface);
+    background: var(--bg);
     border-top: 1px solid var(--border);
   }
   button.tab {
@@ -222,12 +275,10 @@ button.menu-item:hover:not(:disabled) {
     gap: 2px;
     min-height: var(--tabbar-h);
     padding: var(--s-2) 0;
-    border-radius: 0;
     font-size: var(--fs-xs);
   }
-  button.tab[aria-current='page'] {
-    background: none;
-    box-shadow: inset 0 2px 0 var(--accent);
+  button.tab::after {
+    inset: -1px 25% auto;
   }
   .with-tabs {
     padding-bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom));

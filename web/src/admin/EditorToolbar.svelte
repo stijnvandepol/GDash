@@ -45,39 +45,62 @@
       <option value={t}>{THEME_NAMES[t] ?? t}</option>
     {/each}
   </select>
-  <button class="chip" onclick={onpreview}>Preview</button>
+  <button class="secondary" onclick={onpreview}>Preview</button>
   <button onclick={onsave} disabled={saving}>{saving ? 'Saving…' : 'Save'}</button>
 </div>
 
 <div class="palette">
-  <span class="muted small">Add:</span>
+  <span class="palette-label">Add a widget</span>
   {#each Object.keys(catalogue.types) as type (type)}
-    <button class="chip" onclick={() => onadd(type)}>{WIDGET_LABELS[type] ?? type}</button>
+    <button class="chip" onclick={() => onadd(type)}><span class="plus" aria-hidden="true">+</span>{WIDGET_LABELS[type] ?? type}</button>
   {/each}
 </div>
 
 <style>
   .editor-head {
     display: flex;
-    gap: 10px;
+    gap: var(--s-2) var(--s-3);
     align-items: center;
     flex-wrap: wrap;
   }
   .name {
     flex: 1;
     min-width: 160px;
-    font-weight: 600;
+    font-size: var(--fs-lg);
+    font-weight: 650;
+    letter-spacing: -0.02em;
   }
   .palette {
     display: flex;
-    gap: 8px;
+    gap: 6px;
     align-items: center;
     flex-wrap: wrap;
+    padding: var(--s-3) 0;
+    border-block: 1px solid var(--border);
   }
+  .palette-label {
+    margin-right: var(--s-2);
+    color: var(--muted);
+    font-size: var(--fs-sm);
+    font-weight: 550;
+  }
+  /* A widget to add: a small key, like the buttons on a remote. */
   .chip {
-    padding: 6px 12px;
-    background: var(--bg);
+    min-height: 32px;
+    gap: 6px;
+    padding: 0 var(--s-3) 0 var(--s-2);
+    background: var(--surface);
     color: var(--text);
     border: 1px solid var(--border);
+    border-radius: var(--r-md);
+    font-size: var(--fs-sm);
+  }
+  .chip:hover:not(:disabled) {
+    background: var(--surface);
+    border-color: var(--text);
+  }
+  .plus {
+    color: var(--muted);
+    font-family: var(--mono);
   }
 </style>

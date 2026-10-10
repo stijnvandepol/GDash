@@ -1,7 +1,7 @@
 // Entry point for the dashboard preview (/preview/<dashboard-id>): the same
 // screen as a TV, fed by polling the preview endpoint instead of a display
 // stream. The editor frames this page and sends it the unsaved layout.
-import '@fontsource-variable/atkinson-hyperlegible-next';
+import '@fontsource-variable/geist';
 import { mount } from 'svelte';
 import App from './App.svelte';
 import { t } from './i18n.svelte';
