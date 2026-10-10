@@ -86,6 +86,7 @@
   .label {
     display: none;
     font-size: 0.34em;
+    line-height: 1.2;
     color: var(--text-muted);
   }
   .time {
@@ -99,10 +100,13 @@
      times out of the top of the tile. */
   .length,
   .change {
+    flex-shrink: 0;
     max-width: 100%;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    /* Set, not the face's own: some faces have a tall line gap. */
+    line-height: 1.2;
   }
   .length {
     margin-top: 16px;
