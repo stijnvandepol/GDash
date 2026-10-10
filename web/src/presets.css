@@ -1,0 +1,182 @@
+/*
+ * Style presets: themes with a character of their own, each with its own
+ * typeface, tile shape and, for some, a texture. They follow the same rules
+ * as themes.css: only custom properties on .screen, no blur, textures drawn
+ * once with gradients (no images), and every text colour at 4.5:1 or more.
+ *
+ * Several are inspired by a familiar look, a phone system or a film genre;
+ * they borrow no names, logos or typefaces from it.
+ */
+
+/* Frost: frosted white tiles on a soft pastel wallpaper, round and airy,
+   like a phone's widgets. */
+.screen[data-theme='frost'] {
+  --surface-0: #e8edf6;
+  --surface-1: rgba(255, 255, 255, 0.74);
+  --widget-border: rgba(255, 255, 255, 0.95);
+  --text-primary: #1d1d1f;
+  --text-muted: #545861;
+  --accent: #0a62c4;
+  --warning: #8f5300;
+  --backdrop: radial-gradient(ellipse at 18% 0%, #f7d6e4 0%, transparent 55%),
+    radial-gradient(ellipse at 92% 100%, #c9dcfa 0%, transparent 60%),
+    linear-gradient(160deg, #eef1f8 0%, #e3e9f4 100%);
+  --measure-backdrop: #c9dcfa;
+  --font-ui: var(--face-inter);
+  --radius-scale: 1.15;
+}
+
+/* Walnut: dark wood with a straight grain, brass for what stands out. */
+.screen[data-theme='walnut'] {
+  --surface-0: #2e1c11;
+  --surface-1: rgba(20, 11, 5, 0.58);
+  --widget-border: rgba(232, 184, 99, 0.28);
+  --text-primary: #f7ecdc;
+  --text-muted: #d6c0a0;
+  --accent: #e8b863;
+  --warning: #ffcf70;
+  --backdrop: repeating-linear-gradient(178deg, rgba(255, 220, 170, 0.035) 0 2px, transparent 2px 11px),
+    repeating-linear-gradient(181deg, rgba(0, 0, 0, 0.16) 0 1px, transparent 1px 29px),
+    linear-gradient(90deg, #3a2416 0%, #4b2e1b 22%, #3b2416 45%, #503120 70%, #3a2315 100%);
+  --measure-backdrop: #503120;
+  --font-ui: var(--face-lora);
+  --radius-scale: 0.6;
+}
+
+/* Swiss: square tiles with heavy black rules on white, one red. */
+.screen[data-theme='swiss'] {
+  --surface-0: #efefea;
+  --surface-1: #ffffff;
+  --widget-border: #111111;
+  --widget-border-width: 3px;
+  --text-primary: #111111;
+  --text-muted: #4a4a4a;
+  --accent: #d0261a;
+  --warning: #8a5300;
+  --backdrop: none;
+  --font-ui: var(--face-space-grotesk);
+  --radius-scale: 0;
+  --weight-figure: 600;
+}
+
+/* Tonal: soft tonal greens and very round tiles, like a phone that takes
+   its colours from the wallpaper. */
+.screen[data-theme='tonal'] {
+  --surface-0: #eef3e6;
+  --surface-1: #dde8d0;
+  --widget-border: transparent;
+  --text-primary: #1a1c18;
+  --text-muted: #424a3c;
+  --accent: #2f5f19;
+  --warning: #6e5000;
+  --backdrop: none;
+  --font-ui: var(--face-outfit);
+  --radius-scale: 1.35;
+}
+
+/* Gilded: black and gold with a classic serif, for an evening room. */
+.screen[data-theme='gilded'] {
+  --surface-0: #0a0907;
+  --surface-1: #14120e;
+  --widget-border: rgba(217, 181, 111, 0.45);
+  --text-primary: #f4ecdc;
+  --text-muted: #c4b08a;
+  --accent: #d9b56f;
+  --warning: #f2c45a;
+  --backdrop: radial-gradient(ellipse at 50% -10%, rgba(217, 181, 111, 0.14) 0%, transparent 60%);
+  --font-ui: var(--face-cormorant);
+  --radius-scale: 0.2;
+  --weight-figure: 600;
+}
+
+/* Riviera: cream and terracotta with a faint awning stripe, set in Bodoni,
+   the Italian printer's face. */
+.screen[data-theme='riviera'] {
+  --surface-0: #efe4cf;
+  --surface-1: #fbf6ec;
+  --widget-border: #e2d2b6;
+  --text-primary: #2a1f17;
+  --text-muted: #67554a;
+  --accent: #a3391a;
+  --warning: #864700;
+  --backdrop: repeating-linear-gradient(90deg, rgba(163, 57, 26, 0.07) 0 56px, transparent 56px 112px);
+  --font-ui: var(--face-bodoni);
+  --radius-scale: 0.35;
+}
+
+/* Galaxy: a field of stars, letters in the yellow of an opening crawl. */
+.screen[data-theme='galaxy'] {
+  --surface-0: #000000;
+  --surface-1: rgba(6, 8, 16, 0.82);
+  --widget-border: rgba(255, 232, 31, 0.3);
+  --text-primary: #ffe81f;
+  --text-muted: #b7c0d1;
+  --accent: #6fd3ff;
+  --warning: #ff9d3a;
+  --backdrop: radial-gradient(1.4px 1.4px at 23px 41px, #ffffff 50%, transparent 100%) 0 0 / 197px 211px,
+    radial-gradient(1px 1px at 131px 87px, rgba(255, 255, 255, 0.8) 50%, transparent 100%) 0 0 / 197px 211px,
+    radial-gradient(1.2px 1.2px at 71px 163px, rgba(220, 230, 255, 0.85) 50%, transparent 100%) 0 0 / 197px 211px,
+    radial-gradient(1px 1px at 233px 301px, rgba(255, 255, 255, 0.6) 50%, transparent 100%) 0 0 / 331px 347px,
+    radial-gradient(ellipse at 80% 10%, rgba(80, 90, 160, 0.18) 0%, transparent 55%);
+  --measure-backdrop: #ffffff;
+  --font-ui: var(--face-news-cycle);
+  --radius-scale: 0.3;
+  --weight-figure: 700;
+}
+
+/* Terminal: green phosphor on black, scan lines, a mono face. */
+.screen[data-theme='terminal'] {
+  --surface-0: #010603;
+  --surface-1: #03120a;
+  --widget-border: rgba(72, 255, 130, 0.4);
+  --text-primary: #48ff82;
+  --text-muted: #34c768;
+  --accent: #b8ffcf;
+  --warning: #ffcc33;
+  --dot-tint: var(--text-muted);
+  --backdrop: repeating-linear-gradient(0deg, rgba(72, 255, 130, 0.03) 0 1px, transparent 1px 4px);
+  --tile-image: repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.22) 0 1px, transparent 1px 3px);
+  --text-glow: 0 0 0.35em rgba(72, 255, 130, 0.45);
+  --font-ui: var(--face-jetbrains-mono);
+  /* A mono face is wide; a little tighter keeps words in their tiles. */
+  --tracking: -0.04em;
+  --radius-scale: 0;
+}
+
+/* Parchment: aged paper and ink, a face cut for books three centuries old,
+   for a wizard's or a hobbit's kitchen. */
+.screen[data-theme='parchment'] {
+  --surface-0: #d8c398;
+  --surface-1: rgba(250, 240, 214, 0.62);
+  --widget-border: #8b6b3d;
+  --text-primary: #2b1b0c;
+  --text-muted: #574024;
+  --accent: #7d1d1d;
+  --warning: #864500;
+  --backdrop: radial-gradient(ellipse at 15% 20%, rgba(255, 248, 225, 0.55) 0%, transparent 50%),
+    radial-gradient(ellipse at 85% 80%, rgba(120, 80, 30, 0.24) 0%, transparent 55%),
+    radial-gradient(circle at 60% 45%, rgba(255, 245, 215, 0.3) 0%, transparent 40%);
+  --measure-backdrop: #b49465;
+  --font-ui: var(--face-im-fell);
+  --radius-scale: 0.15;
+  --weight-figure: 400;
+}
+
+/* Neon: a synthwave night, magenta and cyan over deep violet. */
+.screen[data-theme='neon'] {
+  --surface-0: #0b0420;
+  --surface-1: rgba(18, 6, 42, 0.8);
+  --widget-border: rgba(5, 217, 232, 0.55);
+  --text-primary: #fdf2ff;
+  --text-muted: #cdb6e8;
+  --accent: #ff4d94;
+  --warning: #ffd23f;
+  --backdrop: repeating-linear-gradient(90deg, rgba(5, 217, 232, 0.07) 0 1px, transparent 1px 96px),
+    linear-gradient(180deg, transparent 64%, rgba(255, 77, 148, 0.16) 64.3%, transparent 65%),
+    linear-gradient(180deg, #0b0420 0%, #22093f 70%, #3b0a4a 100%);
+  --measure-backdrop: #3b0a4a;
+  --text-glow: 0 0 0.4em rgba(5, 217, 232, 0.35);
+  --font-ui: var(--face-outfit);
+  --radius-scale: 0.6;
+  --weight-figure: 600;
+}

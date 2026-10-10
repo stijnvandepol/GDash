@@ -34,9 +34,11 @@ type Widget struct {
 
 // Dashboard is a layout on a fixed 16:9 grid.
 type Dashboard struct {
-	ID      string   `json:"id"`
-	Name    string   `json:"name"`
-	Theme   string   `json:"theme"`
+	ID    string `json:"id"`
+	Name  string `json:"name"`
+	Theme string `json:"theme"`
+	// Font is one of Fonts, or empty for the theme's own typeface.
+	Font    string   `json:"font"`
 	Columns int      `json:"columns"`
 	Rows    int      `json:"rows"`
 	Widgets []Widget `json:"widgets"`

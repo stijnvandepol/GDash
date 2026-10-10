@@ -16,7 +16,7 @@ const MaxDashboards = 50
 
 // Dashboards returns all dashboards ordered by name.
 func (s *Store) Dashboards(ctx context.Context) ([]display.Dashboard, error) {
-	rows, err := s.db.QueryContext(ctx, "SELECT id, name, theme, widgets FROM dashboards ORDER BY name LIMIT ?", MaxDashboards)
+	rows, err := s.db.QueryContext(ctx, "SELECT id, name, theme, font, widgets FROM dashboards ORDER BY name LIMIT ?", MaxDashboards)
 	if err != nil {
 		return nil, fmt.Errorf("list dashboards: %w", err)
 	}
@@ -34,7 +34,7 @@ func (s *Store) Dashboards(ctx context.Context) ([]display.Dashboard, error) {
 
 // Dashboard returns one dashboard, or ErrNotFound.
 func (s *Store) Dashboard(ctx context.Context, id string) (display.Dashboard, error) {
-	d, err := scanDashboard(s.db.QueryRowContext(ctx, "SELECT id, name, theme, widgets FROM dashboards WHERE id = ?", id))
+	d, err := scanDashboard(s.db.QueryRowContext(ctx, "SELECT id, name, theme, font, widgets FROM dashboards WHERE id = ?", id))
 	if errors.Is(err, sql.ErrNoRows) {
 		return display.Dashboard{}, ErrNotFound
 	}
@@ -60,8 +60,8 @@ func (s *Store) CreateDashboard(ctx context.Context, d display.Dashboard, now ti
 	if count >= MaxDashboards {
 		return fmt.Errorf("%w: limit of %d dashboards reached", ErrConflict, MaxDashboards)
 	}
-	_, err = tx.ExecContext(ctx, "INSERT INTO dashboards (id, name, theme, widgets, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
-		d.ID, d.Name, d.Theme, string(widgets), formatTime(now), formatTime(now))
+	_, err = tx.ExecContext(ctx, "INSERT INTO dashboards (id, name, theme, font, widgets, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+		d.ID, d.Name, d.Theme, d.Font, string(widgets), formatTime(now), formatTime(now))
 	if err != nil {
 		if isUniqueViolation(err) {
 			return fmt.Errorf("%w: dashboard %q", ErrConflict, d.ID)
@@ -71,14 +71,14 @@ func (s *Store) CreateDashboard(ctx context.Context, d display.Dashboard, now ti
 	return tx.Commit()
 }
 
-// UpdateDashboard replaces the name, theme and widgets of a dashboard.
+// UpdateDashboard replaces the name, theme, font and widgets of a dashboard.
 func (s *Store) UpdateDashboard(ctx context.Context, d display.Dashboard, now time.Time) error {
 	widgets, err := json.Marshal(d.Widgets)
 	if err != nil {
 		return fmt.Errorf("encode widgets: %w", err)
 	}
-	res, err := s.db.ExecContext(ctx, "UPDATE dashboards SET name = ?, theme = ?, widgets = ?, updated_at = ? WHERE id = ?",
-		d.Name, d.Theme, string(widgets), formatTime(now), d.ID)
+	res, err := s.db.ExecContext(ctx, "UPDATE dashboards SET name = ?, theme = ?, font = ?, widgets = ?, updated_at = ? WHERE id = ?",
+		d.Name, d.Theme, d.Font, string(widgets), formatTime(now), d.ID)
 	if err != nil {
 		return fmt.Errorf("update dashboard: %w", err)
 	}
@@ -157,7 +157,7 @@ func (s *Store) DisplayViews(ctx context.Context) (map[string]display.View, erro
 func scanDashboard(row scanner) (display.Dashboard, error) {
 	var d display.Dashboard
 	var widgets string
-	if err := row.Scan(&d.ID, &d.Name, &d.Theme, &widgets); err != nil {
+	if err := row.Scan(&d.ID, &d.Name, &d.Theme, &d.Font, &widgets); err != nil {
 		return display.Dashboard{}, err
 	}
 	if err := json.Unmarshal([]byte(widgets), &d.Widgets); err != nil {

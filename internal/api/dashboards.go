@@ -12,12 +12,13 @@ import (
 type dashboardBody struct {
 	Name    string           `json:"name"`
 	Theme   string           `json:"theme"`
+	Font    string           `json:"font"`
 	Widgets []display.Widget `json:"widgets"`
 }
 
 // getWidgetTypes handles GET /api/widget-types: the widget catalogue with
-// minimum sizes and the settings each type takes, the grid size and the
-// themes.
+// minimum sizes and the settings each type takes, the grid size, the
+// themes and the fonts.
 func (s *Server) getWidgetTypes(w http.ResponseWriter, _ *http.Request) {
 	type widgetType struct {
 		MinW     int                        `json:"minW"`
@@ -33,7 +34,7 @@ func (s *Server) getWidgetTypes(w http.ResponseWriter, _ *http.Request) {
 		types[name] = widgetType{MinW: t.MinW, MinH: t.MinH, Settings: settings}
 	}
 	writeJSON(w, http.StatusOK, map[string]any{
-		"columns": display.GridColumns, "rows": display.GridRows, "types": types, "themes": display.Themes,
+		"columns": display.GridColumns, "rows": display.GridRows, "types": types, "themes": display.Themes, "fonts": display.Fonts,
 	})
 }
 
@@ -123,7 +124,7 @@ func (s *Server) deleteDashboard(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) validDashboard(w http.ResponseWriter, id string, body dashboardBody) (display.Dashboard, bool) {
-	d := display.Normalize(display.Dashboard{ID: id, Name: body.Name, Theme: body.Theme, Widgets: body.Widgets})
+	d := display.Normalize(display.Dashboard{ID: id, Name: body.Name, Theme: body.Theme, Font: body.Font, Widgets: body.Widgets})
 	if d.Widgets == nil {
 		d.Widgets = []display.Widget{}
 	}

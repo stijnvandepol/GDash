@@ -25,6 +25,8 @@ export interface Dashboard {
   id: string;
   name: string;
   theme: string;
+  /** A typeface instead of the theme's own; empty or absent for the theme's. */
+  font?: string;
   columns: number;
   rows: number;
   widgets: Widget[];

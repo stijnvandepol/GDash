@@ -138,7 +138,7 @@
       {#each dashboards as d (d.id)}
         <li>
           {#if catalogue}
-            <DashboardThumb widgets={d.widgets} theme={d.theme ?? 'minimal-dark'} columns={catalogue.columns} rows={catalogue.rows} />
+            <DashboardThumb widgets={d.widgets} theme={d.theme ?? 'minimal-dark'} font={d.font} columns={catalogue.columns} rows={catalogue.rows} />
           {/if}
           <div class="about">
             <h2>{d.name}</h2>

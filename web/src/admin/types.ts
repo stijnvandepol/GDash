@@ -58,6 +58,8 @@ export interface Dashboard {
   id: string;
   name: string;
   theme?: string;
+  /** A typeface instead of the theme's own; empty for the theme's. */
+  font?: string;
   widgets: Widget[];
 }
 
@@ -74,6 +76,7 @@ export interface WidgetCatalogue {
   columns: number;
   rows: number;
   themes: string[];
+  fonts: string[];
   types: Record<string, WidgetType>;
 }
 

@@ -9,12 +9,15 @@
   let {
     widgets,
     theme,
+    font = '',
     columns,
     rows,
     labels = true,
   }: {
     widgets: Widget[];
     theme: string;
+    /** The dashboard's own typeface, or empty for the theme's. */
+    font?: string;
     columns: number;
     rows: number;
     /** False for thumbnails too small to read a label in. */
@@ -27,6 +30,7 @@
 <div
   class="thumbnail screen"
   data-theme={theme}
+  data-font={font || undefined}
   role="img"
   aria-label={boxes.length > 0 ? `Layout with ${boxes.map((b) => b.label).join(', ')}` : 'Empty layout'}
 >
@@ -41,8 +45,8 @@
   .thumbnail {
     position: relative;
     aspect-ratio: 16 / 9;
-    background-color: var(--surface-0);
-    background-image: var(--backdrop);
+    background: var(--backdrop), var(--surface-0);
+    font-family: var(--font-ui);
     border: 1px solid var(--border);
     border-radius: 6px;
     overflow: hidden;
@@ -58,10 +62,10 @@
     place-items: center;
     width: 100%;
     height: 100%;
-    background: var(--surface-1);
+    background: var(--tile-image), var(--surface-1);
     color: var(--text-muted);
-    border: var(--widget-border-width, 1px) solid var(--widget-border);
-    border-radius: 4px;
+    border: min(var(--widget-border-width, 1px), 2px) solid var(--widget-border);
+    border-radius: calc(4px * var(--radius-scale, 1));
     font-size: max(9px, 3.4cqw);
     overflow: hidden;
     text-overflow: ellipsis;

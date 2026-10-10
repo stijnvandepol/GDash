@@ -60,8 +60,9 @@ Under **Dashboards** you edit layouts on the same 16:9 grid as the TV.
 an empty grid: Kitchen (clock, weather, forecast, calendar and news), Hallway
 (a big clock, the weather, the next appointments and a note), Bedroom / night
 (a calm clock and the weather for today and tomorrow in the Night theme),
-Small screen (three large widgets for a Nest Hub or tablet) and Family (a large
-calendar, photos, a countdown to the next New Year and a note). Each card shows
+Small screen (three large widgets for a Nest Hub or tablet), Family (a large
+calendar, photos, a countdown to the next New Year and a note), Living room (in
+the Frost style), Study (in Swiss) and Movie night (in Galaxy). Each card shows
 the layout; the button adds it as a new dashboard and opens it in the editor,
 where you can change anything. The calendar and news widgets fill up once you
 add calendars and feeds under Settings, Data sources, and the photos once you add photos.
@@ -69,10 +70,19 @@ add calendars and feeds under Settings, Data sources, and the photos once you ad
 - **Add** a widget with the buttons above the canvas, drag it to move it and
   drag its corner to resize it. Click a widget to change its settings, such
   as the number of headlines or the text of a note.
-- **Themes:** Minimal dark (the default, best for OLED screens), Minimal
-  light and Warm light for bright rooms, Glass, High contrast for reading
-  from across the room or with poor eyesight, and Night, dim amber for a
-  bedroom.
+- **Style:** the Style button opens a gallery of sixteen themes, each shown
+  as a small screen. Minimal dark (the default, best for OLED screens),
+  Minimal light and Warm light for bright rooms, Glass, High contrast for
+  reading from across the room or with poor eyesight, and Night, dim amber
+  for a bedroom. Ten more have a character of their own: Frost (frosted
+  tiles on a pastel wallpaper, like a phone's widgets), Walnut (dark wood and
+  brass), Swiss (square tiles and heavy rules), Tonal (soft tonal colours and
+  very round tiles), Gilded (black and gold), Riviera (cream and terracotta
+  in an Italian serif), Galaxy (a field of stars and yellow letters),
+  Terminal (green phosphor), Parchment (aged paper and ink) and Neon (a
+  synthwave night). Each theme has its own typeface; under **Typeface** you
+  can pick another of the ten for this dashboard. All of them ship with
+  GDash and work offline.
 - **Preview** shows the dashboard the way a TV draws it, with your real
   weather, news and calendar, without a display or a paired screen. It
   includes changes you have not saved yet; nothing is stored and no screen

@@ -15,6 +15,11 @@ describe('dashboard files', () => {
     expect(back).toEqual({ name: 'Evening', theme: 'night', widgets: [{ id: 'clock', type: 'clock', x: 0, y: 0, w: 6, h: 4 }] });
   });
 
+  it('keeps a font of its own, and leaves it out when the theme decides', () => {
+    expect(fromFile(toFile({ ...evening, font: 'bodoni' })).font).toBe('bodoni');
+    expect(toFile({ ...evening, font: '' })).not.toContain('font');
+  });
+
   it('reads files exported under its former names', () => {
     for (const format of ['daycast-dashboard', 'nookboard-dashboard']) {
       const old = toFile(evening).replace('gdash-dashboard', format);

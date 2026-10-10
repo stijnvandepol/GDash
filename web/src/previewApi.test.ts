@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { isPreviewMessage, previewOutcome, previewRequest, type PreviewDraft } from './previewApi';
 
-const draft: PreviewDraft = { name: 'Hall', theme: 'glass', widgets: [{ id: 'clock', type: 'clock', x: 0, y: 0, w: 8, h: 4 }] };
+const draft: PreviewDraft = { name: 'Hall', theme: 'glass', font: '', widgets: [{ id: 'clock', type: 'clock', x: 0, y: 0, w: 8, h: 4 }] };
 
 const snapshot = {
   type: 'snapshot',

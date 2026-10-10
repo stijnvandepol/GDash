@@ -4,11 +4,41 @@
  * in a theme's colours without taking the TV page's other styles; the TV
  * page (theme.css) adds fonts, spacing and the page itself.
  *
+ * Besides colours a theme sets its typeface, the shape of its tiles
+ * (--radius-scale, 0 for square corners), a texture on each tile
+ * (--tile-image) and a glow on text (--text-glow). The ten style presets
+ * are in presets.css.
+ *
  * Every text colour reaches 4.5:1 (WCAG AA) on its tile, muted text and the
- * warning colour included. Glass is measured on the lightest spot of its
- * backdrop, the worst case for light text. internal/display lists the same
- * theme names.
+ * warning colour included; themes.test.ts measures it. A theme whose tiles
+ * are translucent names the backdrop colour that is worst for its text in
+ * --measure-backdrop. internal/display lists the same theme names.
  */
+@import './fonts.css';
+@import './presets.css';
+
+/* What every theme starts from. */
+.screen {
+  --face-geist: 'Geist Variable', system-ui, Roboto, 'Segoe UI', sans-serif;
+  --face-inter: 'Inter Variable', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --face-outfit: 'Outfit Variable', system-ui, Roboto, sans-serif;
+  --face-space-grotesk: 'Space Grotesk Variable', system-ui, sans-serif;
+  --face-lora: 'Lora Variable', Georgia, serif;
+  --face-cormorant: 'Cormorant Garamond Variable', Garamond, Georgia, serif;
+  --face-bodoni: 'Bodoni Moda Variable', Didot, Georgia, serif;
+  --face-news-cycle: 'News Cycle', 'Arial Narrow', sans-serif;
+  --face-jetbrains-mono: 'JetBrains Mono Variable', ui-monospace, monospace;
+  --face-im-fell: 'IM Fell English', Georgia, serif;
+  --font-ui: var(--face-geist);
+  --font-display: var(--font-ui);
+  --radius-scale: 1;
+  --tile-image: none;
+  --text-glow: none;
+  /* Lining figures: old-style ones, the default of some serifs, sink below
+     the line and are harder to read from across a room. */
+  --numerals: 'lnum' 1;
+  --tracking: normal;
+}
 
 /* Minimal Dark: the default, and the safest choice for OLED screens.
    Graphite, like the web interface in the evening, with the signal orange
@@ -50,6 +80,7 @@
   --text-muted: #bccbc1;
   --accent: #e5bf7a;
   --warning: #f5c76b;
+  --measure-backdrop: #2a3e37;
   --backdrop: radial-gradient(ellipse at 15% 10%, #2a3e37 0%, transparent 62%),
     linear-gradient(160deg, #1b2a26 0%, #141c1a 55%, #121315 100%);
 }
@@ -99,5 +130,37 @@
   --backdrop: none;
 }
 
-/* Author rules such as "li { display: flex }" would otherwise show
-   elements that fitItems hid. */
+/*
+ * A dashboard's own choice of typeface, over its theme's. One attribute more
+ * than a theme rule, so it wins wherever it stands.
+ */
+.screen[data-theme][data-font='geist'] {
+  --font-ui: var(--face-geist);
+}
+.screen[data-theme][data-font='inter'] {
+  --font-ui: var(--face-inter);
+}
+.screen[data-theme][data-font='outfit'] {
+  --font-ui: var(--face-outfit);
+}
+.screen[data-theme][data-font='space-grotesk'] {
+  --font-ui: var(--face-space-grotesk);
+}
+.screen[data-theme][data-font='lora'] {
+  --font-ui: var(--face-lora);
+}
+.screen[data-theme][data-font='cormorant'] {
+  --font-ui: var(--face-cormorant);
+}
+.screen[data-theme][data-font='bodoni'] {
+  --font-ui: var(--face-bodoni);
+}
+.screen[data-theme][data-font='news-cycle'] {
+  --font-ui: var(--face-news-cycle);
+}
+.screen[data-theme][data-font='jetbrains-mono'] {
+  --font-ui: var(--face-jetbrains-mono);
+}
+.screen[data-theme][data-font='im-fell'] {
+  --font-ui: var(--face-im-fell);
+}

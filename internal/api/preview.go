@@ -38,7 +38,7 @@ func (s *Server) getDashboardPreview(w http.ResponseWriter, r *http.Request) {
 }
 
 // postDashboardPreview handles POST /api/dashboards/{dashboard}/preview
-// ?textScale= {name, theme, widgets}: the snapshot for a layout that is not
+// ?textScale= {name, theme, font, widgets}: the snapshot for a layout that is not
 // saved yet. The layout is validated like a save and never stored; the
 // dashboard it belongs to must exist.
 func (s *Server) postDashboardPreview(w http.ResponseWriter, r *http.Request) {

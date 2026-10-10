@@ -99,9 +99,6 @@ const MaxEntitiesPerWidget = 8
 // from the photo folder rather than fetching it.
 const PhotosSource = "photos.default"
 
-// Themes are the built-in themes; web/src/theme.css defines their tokens.
-var Themes = []string{"minimal-dark", "minimal-light", "glass", "warm-light", "high-contrast", "night"}
-
 var validDashboardID = regexp.MustCompile(`^[a-z0-9][a-z0-9-]{0,31}$`)
 
 var validWidgetID = regexp.MustCompile(`^[a-z0-9][a-z0-9-]{0,31}$`)
@@ -141,6 +138,9 @@ func ValidateDashboard(d Dashboard) error {
 	}
 	if !slices.Contains(Themes, d.Theme) {
 		errs.Add("theme", "choose one of: "+strings.Join(Themes, ", "))
+	}
+	if d.Font != "" && !slices.Contains(Fonts, d.Font) {
+		errs.Add("font", "choose one of: "+strings.Join(Fonts, ", ")+", or none for the theme's own")
 	}
 	if len(d.Widgets) > maxWidgets {
 		errs.Add("widgets", fmt.Sprintf("use at most %d widgets", maxWidgets))

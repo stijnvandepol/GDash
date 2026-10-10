@@ -84,7 +84,7 @@
 
 <svelte:window bind:innerWidth bind:innerHeight />
 
-<main class="screen" data-theme={dashboard?.theme ?? 'minimal-dark'}>
+<main class="screen" data-theme={dashboard?.theme ?? 'minimal-dark'} data-font={dashboard?.font || undefined}>
   {#if asleep}
     <!-- Outside active hours: nothing lit, so the TV can idle and OLED pixels rest. -->
   {:else if display.problem}
@@ -114,7 +114,7 @@
       style:transform="translate(-50%, -50%) scale({stage.scale}) translate({shift[0]}px, {shift[1]}px)"
       style:--space-gap="{SPACE_GAP / stage.textScale}px"
       style:--space-widget="{SPACE_WIDGET / stage.textScale}px"
-      style:--radius-widget="{RADIUS_WIDGET / stage.textScale}px"
+      style:--radius-widget="calc({RADIUS_WIDGET / stage.textScale}px * var(--radius-scale, 1))"
       style:grid-template-columns="repeat({dashboard.columns}, 1fr)"
       style:grid-template-rows="repeat({dashboard.rows}, 1fr)"
     >
@@ -171,6 +171,10 @@
     overflow: hidden;
     background: var(--backdrop), var(--surface-0);
     color: var(--text-primary);
+    font-family: var(--font-ui);
+    font-feature-settings: var(--numerals);
+    letter-spacing: var(--tracking);
+    text-shadow: var(--text-glow);
   }
   .stage {
     position: absolute;
@@ -183,7 +187,7 @@
     box-sizing: border-box;
   }
   .widget {
-    background: var(--surface-1);
+    background: var(--tile-image), var(--surface-1);
     border: var(--widget-border-width) solid var(--widget-border);
     border-radius: var(--radius-widget);
     padding: var(--space-widget);

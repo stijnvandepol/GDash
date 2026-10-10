@@ -26,6 +26,7 @@
   let widgets = $state<Record<string, Widget>>({});
   let name = $state('');
   let theme = $state('minimal-dark');
+  let font = $state('');
 
   let selected = $state<string | null>(null);
   let message = $state('');
@@ -43,6 +44,7 @@
   onMount(() => {
     name = dashboard.name;
     theme = dashboard.theme ?? 'minimal-dark';
+    font = dashboard.font ?? '';
     for (const w of dashboard.widgets) widgets[w.id] = { ...w, settings: { ...(w.settings ?? {}) } };
 
     // Plain text only: widget labels never become HTML.
@@ -154,7 +156,7 @@
   let previewDraft = $state<PreviewDraft | null>(null);
 
   function openPreview() {
-    previewDraft = dirty ? { name: name.trim(), theme, widgets: currentLayout() } : null;
+    previewDraft = dirty ? { name: name.trim(), theme, font, widgets: currentLayout() } : null;
     previewing = true;
   }
 
@@ -164,7 +166,7 @@
     message = '';
     errors = [];
     try {
-      await api.saveDashboard({ id: dashboard.id, name: name.trim(), theme, widgets: currentLayout() });
+      await api.saveDashboard({ id: dashboard.id, name: name.trim(), theme, font, widgets: currentLayout() });
       dirty = false;
       message = 'Saved. Screens showing this dashboard update now.';
     } catch (err) {
@@ -198,6 +200,7 @@
   <EditorToolbar
     bind:name
     bind:theme
+    bind:font
     {catalogue}
     {saving}
     onchange={() => (dirty = true)}

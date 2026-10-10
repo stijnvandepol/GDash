@@ -46,15 +46,15 @@ come from another site (cross-site request forgery protection).
 | `POST /api/displays` `{id, name, castDeviceId, activeFrom?, activeUntil?, schedule?}` | admin | `201` display | `401`, `409 conflict`, `422` |
 | `PATCH /api/displays/{id}` `{name?, castDeviceId?, dashboardId?, activeFrom?, activeUntil?, schedule?, rotation?, rotateSeconds?, textScale?}` | admin | `200` display | `401`, `404 not_found`, `422` (also for an unknown dashboard) |
 | `DELETE /api/displays/{id}` | admin | `204` | `401`, `404 not_found` |
-| `GET /api/widget-types` | admin | `200 {columns, rows, themes, types: {name: {minW, minH, settings: {key: {kind, min?, max?, required}}}}}` | `401` |
+| `GET /api/widget-types` | admin | `200 {columns, rows, themes, fonts, types: {name: {minW, minH, settings: {key: {kind, min?, max?, required}}}}}` | `401` |
 | `GET /api/dashboard-templates` | admin | `200 {"templates": [{id, name, description, theme, widgets}]}`; create a dashboard from one with `POST /api/dashboards` and its `theme` and `widgets` | `401` |
 | `GET /api/dashboards` | admin | `200 {"dashboards": [dashboard]}` | `401` |
-| `POST /api/dashboards` `{id, name, theme?, widgets}` | admin | `201` dashboard | `401`, `409 conflict`, `422` |
+| `POST /api/dashboards` `{id, name, theme?, font?, widgets}` | admin | `201` dashboard | `401`, `409 conflict`, `422` |
 | `GET /api/dashboards/{id}` | admin | `200` dashboard | `401`, `404` |
-| `PUT /api/dashboards/{id}` `{name, theme?, widgets}` | admin | `200` dashboard; screens update at once | `401`, `404`, `422` |
+| `PUT /api/dashboards/{id}` `{name, theme?, font?, widgets}` | admin | `200` dashboard; screens update at once | `401`, `404`, `422` |
 | `DELETE /api/dashboards/{id}` | admin | `204`; its displays fall back to the default | `401`, `404`, `409` for `default` |
 | `GET /api/dashboards/{id}/preview?textScale=` | admin | `200` snapshot of the stored dashboard with the data a screen gets now; no display needed | `401`, `404`, `422` for a `textScale` other than 100, 125, 150 or 200 |
-| `POST /api/dashboards/{id}/preview?textScale=` `{name, theme?, widgets}` | admin | `200` snapshot of that unsaved layout; nothing is stored and no screen changes | `401`, `404` (the dashboard must exist), `422` |
+| `POST /api/dashboards/{id}/preview?textScale=` `{name, theme?, font?, widgets}` | admin | `200` snapshot of that unsaved layout; nothing is stored and no screen changes | `401`, `404` (the dashboard must exist), `422` |
 | `GET /api/settings` | admin | `200 {"settings": settings, "status": {key: {updatedAt?, failing}}}` | `401` |
 | `PUT /api/settings/location` `{name, latitude, longitude}` | admin | `200` location | `401`, `422` |
 | `PUT /api/settings/language` `{language}` | admin | `200`; screens switch at once | `401`, `422` for a language other than `en` or `nl` |
@@ -214,8 +214,11 @@ still applies at 00:30 on Saturday. Times follow the same rules as
 active hours, but both are required. Deleting a dashboard removes the slots that use it. Field errors are named
 `schedule[i]`, and `schedule` for a slot with an unknown dashboard.
 
-**dashboard:** `{"id": "default", "name": "Default", "columns": 24, "rows": 14, "theme": "minimal-dark", "widgets": [widget]}`.
-`theme` is one of `minimal-dark` (default), `minimal-light`, `glass`, `warm-light`, `high-contrast` and `night`; an unknown theme is a `422`. The grid size and
+**dashboard:** `{"id": "default", "name": "Default", "columns": 24, "rows": 14, "theme": "minimal-dark", "font": "", "widgets": [widget]}`.
+`theme` is one of `minimal-dark` (default), `minimal-light`, `glass`, `warm-light`, `high-contrast`, `night`, `frost`, `walnut`,
+`swiss`, `tonal`, `gilded`, `riviera`, `galaxy`, `terminal`, `parchment` and `neon`; `font` is empty for the theme's own typeface or one of
+`geist`, `inter`, `outfit`, `space-grotesk`, `lora`, `cormorant`, `bodoni`, `news-cycle`, `jetbrains-mono` and `im-fell`. An unknown theme
+or font is a `422`. The grid size and
 every widget's `source` are set by the server; values sent by a client are ignored.
 
 **widget:** `{"id": "news", "type": "news", "x": 10, "y": 9, "w": 14, "h": 5, "source": "news.default", "settings": {"maxItems": 3}}`.

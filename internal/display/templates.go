@@ -71,6 +71,37 @@ func Templates(now time.Time) []Template {
 				{ID: "note", Type: "text", X: 17, Y: 8, W: 7, H: 6, Settings: map[string]any{"text": "Dinner at 18:00\nSports bags by the door"}},
 			},
 		},
+		{
+			ID: "living-room", Name: "Living room", Theme: "frost",
+			Description: "Frosted tiles on a pastel wallpaper: the time, the weather and the daylight, the calendar and photos.",
+			Widgets: []Widget{
+				{ID: "clock", Type: "clock", X: 0, Y: 0, W: 9, H: 6},
+				{ID: "weather", Type: "weather", X: 9, Y: 0, W: 6, H: 6},
+				{ID: "sun", Type: "sun", X: 15, Y: 0, W: 9, H: 6},
+				{ID: "calendar", Type: "calendar", X: 0, Y: 6, W: 12, H: 8, Settings: map[string]any{"maxItems": 5}},
+				{ID: "photos", Type: "photos", X: 12, Y: 6, W: 12, H: 8, Settings: map[string]any{"seconds": 20}},
+			},
+		},
+		{
+			ID: "study", Name: "Study", Theme: "swiss",
+			Description: "Square tiles and heavy rules: the clock and the day's appointments, the news and a note.",
+			Widgets: []Widget{
+				{ID: "clock", Type: "clock", X: 0, Y: 0, W: 8, H: 5},
+				{ID: "calendar", Type: "calendar", X: 8, Y: 0, W: 16, H: 5, Settings: map[string]any{"maxItems": 3}},
+				{ID: "news", Type: "news", X: 0, Y: 5, W: 14, H: 9, Settings: map[string]any{"maxItems": 6}},
+				{ID: "note", Type: "text", X: 14, Y: 5, W: 10, H: 9, Settings: map[string]any{"text": "Focus until 12:00\nCall back at 15:30"}},
+			},
+		},
+		{
+			ID: "movie-night", Name: "Movie night", Theme: "galaxy",
+			Description: "A field of stars: the time and the weather, the coming days and a countdown to the next New Year.",
+			Widgets: []Widget{
+				{ID: "clock", Type: "clock", X: 0, Y: 0, W: 14, H: 7},
+				{ID: "weather", Type: "weather", X: 14, Y: 0, W: 10, H: 7},
+				{ID: "forecast", Type: "forecast", X: 0, Y: 7, W: 14, H: 7, Settings: map[string]any{"days": 4}},
+				{ID: "countdown", Type: "countdown", X: 14, Y: 7, W: 10, H: 7, Settings: map[string]any{"label": "New Year", "date": newYear}},
+			},
+		},
 	}
 	for i, t := range templates {
 		// Normalize fills in each widget's data source, as for any dashboard.

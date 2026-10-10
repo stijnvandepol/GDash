@@ -1,12 +1,15 @@
 <script lang="ts">
   import type { WidgetCatalogue } from './api';
   import { WIDGET_LABELS } from './widgetSettings';
+  import { fontName, themeName } from './styles';
+  import StylePicker from './StylePicker.svelte';
 
-  // The top of the dashboard editor: back, name, theme, preview and save,
+  // The top of the dashboard editor: back, name, style, preview and save,
   // and a button per widget type to add one.
   let {
     name = $bindable(),
     theme = $bindable(),
+    font = $bindable(),
     catalogue,
     saving,
     onchange,
@@ -17,9 +20,10 @@
   }: {
     name: string;
     theme: string;
+    font: string;
     catalogue: WidgetCatalogue;
     saving: boolean;
-    /** Called when the name or theme changes, so the editor knows it is dirty. */
+    /** Called when the name or style changes, so the editor knows it is dirty. */
     onchange: () => void;
     onclose: () => void;
     onpreview: () => void;
@@ -27,27 +31,30 @@
     onadd: (type: string) => void;
   } = $props();
 
-  const THEME_NAMES: Record<string, string> = {
-    'minimal-dark': 'Minimal dark',
-    'minimal-light': 'Minimal light',
-    glass: 'Glass',
-    'warm-light': 'Warm light',
-    'high-contrast': 'High contrast',
-    night: 'Night',
-  };
+  let picking = $state(false);
 </script>
 
 <div class="editor-head">
   <button class="link" onclick={onclose}>← Dashboards</button>
   <input class="name" bind:value={name} oninput={onchange} aria-label="Dashboard name" />
-  <select bind:value={theme} onchange={onchange} aria-label="Theme">
-    {#each catalogue.themes as t (t)}
-      <option value={t}>{THEME_NAMES[t] ?? t}</option>
-    {/each}
-  </select>
+  <button class="secondary style" onclick={() => (picking = true)}>
+    <span class="style-label">Style</span>
+    {themeName(theme)}<span class="muted">· {fontName(theme, font)}</span>
+  </button>
   <button class="secondary" onclick={onpreview}>Preview</button>
   <button onclick={onsave} disabled={saving}>{saving ? 'Saving…' : 'Save'}</button>
 </div>
+
+{#if picking}
+  <StylePicker
+    bind:theme
+    bind:font
+    themes={catalogue.themes}
+    fonts={catalogue.fonts ?? []}
+    {onchange}
+    onclose={() => (picking = false)}
+  />
+{/if}
 
 <div class="palette">
   <span class="palette-label">Add a widget</span>
@@ -69,6 +76,13 @@
     font-size: var(--fs-lg);
     font-weight: 650;
     letter-spacing: -0.02em;
+  }
+  .style {
+    gap: 6px;
+  }
+  .style-label {
+    color: var(--muted);
+    font-weight: 450;
   }
   .palette {
     display: flex;

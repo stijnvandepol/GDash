@@ -95,6 +95,15 @@
     font-variant-numeric: tabular-nums;
     color: var(--text-primary);
   }
+  /* One line each, whatever the typeface: a wrapped line would push the
+     times out of the top of the tile. */
+  .length,
+  .change {
+    max-width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
   .length {
     margin-top: 16px;
     font-size: 44px;

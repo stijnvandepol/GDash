@@ -34,9 +34,16 @@ func TestDashboardCRUD(t *testing.T) {
 	if status, body := env.do(t, "PUT", "/api/dashboards/morning", `{"name":"Mornings","theme":"comic","widgets":[]}`); status != http.StatusUnprocessableEntity || !strings.Contains(body, `"field":"theme"`) {
 		t.Fatalf("unknown theme = %d %s", status, body)
 	}
-	status, body = env.do(t, "PUT", "/api/dashboards/morning", `{"name":"Mornings","theme":"glass","widgets":[]}`)
-	if status != http.StatusOK || !strings.Contains(body, `"widgets":[]`) || !strings.Contains(body, `"theme":"glass"`) {
+	if status, body := env.do(t, "PUT", "/api/dashboards/morning", `{"name":"Mornings","theme":"glass","font":"papyrus","widgets":[]}`); status != http.StatusUnprocessableEntity || !strings.Contains(body, `"field":"font"`) {
+		t.Fatalf("unknown font = %d %s", status, body)
+	}
+	status, body = env.do(t, "PUT", "/api/dashboards/morning", `{"name":"Mornings","theme":"glass","font":"bodoni","widgets":[]}`)
+	if status != http.StatusOK || !strings.Contains(body, `"widgets":[]`) || !strings.Contains(body, `"theme":"glass"`) || !strings.Contains(body, `"font":"bodoni"`) {
 		t.Fatalf("update = %d %s", status, body)
+	}
+	// The font is stored, not only echoed.
+	if _, body := env.do(t, "GET", "/api/dashboards/morning", ""); !strings.Contains(body, `"font":"bodoni"`) {
+		t.Fatalf("stored dashboard = %s", body)
 	}
 
 	_, body = env.do(t, "GET", "/api/dashboards", "")

@@ -42,6 +42,8 @@ func TestValidateDashboard(t *testing.T) {
 		{"bad id", func(d *Dashboard) { d.ID = "Kitchen!" }, "id:"},
 		{"blank name", func(d *Dashboard) { d.Name = "  " }, "name:"},
 		{"unknown theme", func(d *Dashboard) { d.Theme = "comic-sans" }, "theme: choose one of"},
+		{"a font of its own", func(d *Dashboard) { d.Font = "bodoni" }, ""},
+		{"unknown font", func(d *Dashboard) { d.Font = "comic-sans" }, "font: choose one of"},
 		{"unknown type", func(d *Dashboard) { d.Widgets[0].Type = "iframe" }, `widgets[0]: unknown widget type "iframe"`},
 		{"outside grid", func(d *Dashboard) { d.Widgets[1].X = 12 }, "widgets[1]: must fit the 24x14 grid"},
 		{"negative position", func(d *Dashboard) { d.Widgets[0].Y = -1 }, "widgets[0]: must fit"},

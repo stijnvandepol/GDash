@@ -155,7 +155,7 @@ export const api = {
   dashboards: () => request<{ dashboards: Dashboard[] }>('GET', '/api/dashboards').then((r) => r.dashboards),
   createDashboard: (d: Dashboard) => request<Dashboard>('POST', '/api/dashboards', d),
   saveDashboard: (d: Dashboard) =>
-    request<Dashboard>('PUT', `/api/dashboards/${encodeURIComponent(d.id)}`, { name: d.name, theme: d.theme, widgets: d.widgets }),
+    request<Dashboard>('PUT', `/api/dashboards/${encodeURIComponent(d.id)}`, { name: d.name, theme: d.theme, font: d.font ?? '', widgets: d.widgets }),
   deleteDashboard: (id: string) => request<void>('DELETE', `/api/dashboards/${encodeURIComponent(id)}`),
   castDevices: () => request<{ devices: CastDevice[] }>('GET', '/api/cast-devices').then((r) => r.devices),
 };

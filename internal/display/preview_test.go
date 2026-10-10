@@ -56,9 +56,12 @@ func TestPreviewVersionFollowsContent(t *testing.T) {
 	}
 	otherTheme := dashboard
 	otherTheme.Theme = "night"
+	otherFont := dashboard
+	otherFont.Font = "lora"
 	for name, got := range map[string]int64{
 		"other data":      version(now, dashboard, entries(`[2]`), 100),
 		"other theme":     version(now, otherTheme, entries(`[1]`), 100),
+		"other font":      version(now, otherFont, entries(`[1]`), 100),
 		"other text size": version(now, dashboard, entries(`[1]`), 125),
 	} {
 		if got == base {
