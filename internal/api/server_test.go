@@ -151,6 +151,7 @@ func newTestEnv(t *testing.T, discover func(context.Context) ([]cast.Device, err
 		Version:              "v1.2.3",
 		CastStatus:           sources.CastStatus,
 		Photos:               album,
+		Backup:               fakeBackup{},
 		PhotosChanged:        func() { changes.Add(1) },
 		PingInterval:         50 * time.Millisecond,
 		Now:                  now,
@@ -449,4 +450,12 @@ func TestCastDevicesErrorHasStableShape(t *testing.T) {
 	if strings.Contains(body, "/proc") {
 		t.Fatalf("internal error details leaked: %s", body)
 	}
+}
+
+// fakeBackup stands in for the real archive, which internal/backup tests.
+type fakeBackup struct{}
+
+func (fakeBackup) WriteZip(_ context.Context, w io.Writer) error {
+	_, err := io.WriteString(w, "PK fake zip")
+	return err
 }

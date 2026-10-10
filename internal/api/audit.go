@@ -17,6 +17,8 @@ const (
 	auditLogout                 = "logout"
 	auditPasswordChanged        = "password_changed"
 	auditPasswordWrong          = "password_change_failed"
+	auditBackupDownloaded       = "backup_downloaded"
+	auditBackupRefused          = "backup_failed"
 	auditScreenPaired           = "screen_paired"
 	auditScreensUnpaired        = "screens_unpaired"
 	auditDisplayCreated         = "display_created"

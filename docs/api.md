@@ -35,6 +35,7 @@ come from another site (cross-site request forgery protection).
 | `DELETE /api/sessions/current` | admin | `204` | `401` |
 | `GET /api/me` | admin | `200` user | `401` |
 | `PUT /api/me/password` `{currentPassword, newPassword}` | admin | `204`; every other session of the account ends | `401`, `422` (wrong current or too short new password), `429 rate_limited` |
+| `POST /api/backup` `{password}` | admin | `200 application/zip` attachment with `gdash.db`, `secret.key` and `photos/`; recorded in the audit log | `401`, `422` (wrong password), `429 rate_limited` |
 | `GET /api/system` | admin | `200 {"version"}` | `401` |
 | `GET /api/audit-events?limit=100` | admin | `200 {"events": [{at, actor, action, detail, ip}]}`, newest first, at most 200 | `400`, `401` |
 | `GET /api/api-tokens` | admin | `200 {"tokens": [{id, name, createdAt, lastUsedAt}]}`, oldest first, never the secrets | `401` |

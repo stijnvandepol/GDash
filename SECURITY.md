@@ -52,6 +52,10 @@ fully trust, such as a guest's phone.
   Google's Cast framework on the receiver page.
 - **Audit log:** logins, failed logins, pairings and changes are recorded
   for 90 days and shown under Settings.
+- **Backups:** the downloadable backup holds the encryption key, so it asks
+  for the password again (rate limited like a login) and every download, or
+  refusal, is in the audit log. The daily copies in the data directory have
+  mode 0600.
 - **Container and service:** the Docker image is a distroless static image
   (no shell, no package manager) that runs as the fixed user `65532`, never
   as root. Its data directory is mode 0700, and the example `compose.yaml`

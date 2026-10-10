@@ -213,6 +213,7 @@ func serve(ctx context.Context, logger *slog.Logger) error {
 		Version:       currentVersion(),
 		CastStatus:    castManager.Statuses,
 		Photos:        album,
+		Backup:        backup.Archive{DataDir: cfg.dataDir, DatabaseName: databaseName, Write: db.WriteCopy},
 		PhotosChanged: func() { publisher.Refresh(ctx) },
 		Now:           time.Now,
 		Logger:        logger,

@@ -84,6 +84,8 @@ type Server struct {
 	// CastStatus returns what each display's cast keeper last found.
 	CastStatus func() map[string]casting.Status
 	Photos     *photos.Store
+	// Backup writes the zip that POST /api/backup downloads.
+	Backup BackupWriter
 	// PhotosChanged is called after a photo is added or removed, so photo
 	// widgets update.
 	PhotosChanged func()
@@ -115,6 +117,7 @@ func (s *Server) Handler() http.Handler {
 	mux.Handle("DELETE /api/sessions/current", s.requireUser(s.deleteSession))
 	mux.Handle("GET /api/me", s.requireUser(s.getMe))
 	mux.Handle("PUT /api/me/password", s.requireUser(s.putPassword))
+	mux.Handle("POST /api/backup", s.requireUser(s.postBackup))
 	mux.Handle("GET /api/system", s.requireUser(s.getSystem))
 	mux.Handle("GET /api/audit-events", s.requireUser(s.getAuditEvents))
 	mux.Handle("POST /api/announcements", s.requireUserOrToken(s.postAnnouncement))
