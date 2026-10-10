@@ -47,7 +47,7 @@
   <div class="set" aria-hidden="true">
     <div class="bezel">
       {#if grid && shown}
-        <DashboardThumb widgets={shown.widgets} theme={shown.theme ?? 'minimal-dark'} columns={grid.columns} rows={grid.rows} labels={false} />
+        <DashboardThumb widgets={shown.widgets} theme={shown.theme ?? 'minimal-dark'} font={shown.font} columns={grid.columns} rows={grid.rows} labels={false} />
       {:else}
         <div class="blank"></div>
       {/if}

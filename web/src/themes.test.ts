@@ -71,6 +71,13 @@ describe('themes', () => {
     for (const font of fonts) expect(css, `no face for ${font}`).toContain(`--face-${font}:`);
   });
 
+  it('each use the typeface the editor names as their own', () => {
+    for (const [name, props] of all) {
+      const face = props['font-ui']?.match(/--face-([a-z-]+)/)?.[1] ?? 'geist';
+      expect(face, name).toBe(THEMES[name]?.font);
+    }
+  });
+
   for (const [name, props] of all) {
     it(`${name} keeps every text colour at 4.5:1 on its tiles`, () => {
       const base = parse(props['measure-backdrop'] ?? props['surface-0']);

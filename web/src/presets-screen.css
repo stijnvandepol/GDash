@@ -62,6 +62,8 @@
   --font-ui: var(--face-im-fell);
   --radius-scale: 0.15;
   --weight-figure: 400;
+  /* The face has no bold; a faked one smudges, so bold is left out. */
+  --synthesis: style;
 }
 
 /* Neon: a synthwave night, magenta and cyan over deep violet. */

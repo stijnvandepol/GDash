@@ -40,6 +40,19 @@
      the line and are harder to read from across a room. */
   --numerals: 'lnum' 1;
   --tracking: normal;
+  --synthesis: weight style;
+}
+
+/*
+ * Tracking, glow and faked bold on every element rather than once on the
+ * screen: letter-spacing and text-shadow inherit as absolute lengths, so an
+ * em set on the screen would be the same few pixels on a headline and on a
+ * clock. No specificity, so a widget's own letter-spacing still wins.
+ */
+:where(.screen, .screen *) {
+  letter-spacing: var(--tracking);
+  text-shadow: var(--text-glow);
+  font-synthesis: var(--synthesis);
 }
 
 /* Minimal Dark: the default, and the safest choice for OLED screens.

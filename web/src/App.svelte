@@ -173,8 +173,6 @@
     color: var(--text-primary);
     font-family: var(--font-ui);
     font-feature-settings: var(--numerals);
-    letter-spacing: var(--tracking);
-    text-shadow: var(--text-glow);
   }
   .stage {
     position: absolute;

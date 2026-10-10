@@ -219,7 +219,8 @@ active hours, but both are required. Deleting a dashboard removes the slots that
 `swiss`, `tonal`, `gilded`, `riviera`, `galaxy`, `terminal`, `parchment`, `neon`, `frost-night`, `candy`, `upside-down`, `noir` and
 `mars`; `font` is empty for the theme's own typeface or one of `geist`, `inter`, `outfit`, `space-grotesk`, `lora`, `cormorant`, `bodoni`,
 `news-cycle`, `jetbrains-mono`, `im-fell` and `courier-prime`. An unknown theme
-or font is a `422`. The grid size and
+or font is a `422`. A `PUT` replaces the whole dashboard: leaving `theme` or `font` out sets the default theme or the
+theme's own typeface. The grid size and
 every widget's `source` are set by the server; values sent by a client are ignored.
 
 **widget:** `{"id": "news", "type": "news", "x": 10, "y": 9, "w": 14, "h": 5, "source": "news.default", "settings": {"maxItems": 3}}`.

@@ -80,13 +80,13 @@
     <div class="fonts screen" data-theme={theme}>
       <label class="face" class:chosen={font === ''}>
         <input class="sr-only" type="radio" name="font" value="" checked={font === ''} onchange={() => pickFont('')} />
-        <span class="specimen" style:font-family="var(--face-{THEMES[theme]?.font ?? 'geist'})">Aa 21:45</span>
+        <span class="specimen" aria-hidden="true" style:font-family="var(--face-{THEMES[theme]?.font ?? 'geist'})">Aa 21:45</span>
         <span class="small">The theme’s own, {ownFont}</span>
       </label>
       {#each fonts as id (id)}
         <label class="face" class:chosen={font === id}>
           <input class="sr-only" type="radio" name="font" value={id} checked={font === id} onchange={() => pickFont(id)} />
-          <span class="specimen" style:font-family="var(--face-{id})">Aa 21:45</span>
+          <span class="specimen" aria-hidden="true" style:font-family="var(--face-{id})">Aa 21:45</span>
           <span class="small">{FONTS[id as FontId] ?? id}</span>
         </label>
       {/each}

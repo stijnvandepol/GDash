@@ -37,7 +37,7 @@
 <div class="editor-head">
   <button class="link" onclick={onclose}>← Dashboards</button>
   <input class="name" bind:value={name} oninput={onchange} aria-label="Dashboard name" />
-  <button class="secondary style" onclick={() => (picking = true)}>
+  <button class="secondary style" aria-haspopup="dialog" onclick={() => (picking = true)}>
     <span class="style-label">Style</span>
     {themeName(theme)}<span class="muted">· {fontName(theme, font)}</span>
   </button>
