@@ -205,26 +205,9 @@ func (s *Service) Authenticate(ctx context.Context, session string) (User, error
 // same rate limit as logins. It returns ErrWrongPassword, ErrRateLimited, or
 // a *validation.Error for the new password (field "newPassword").
 func (s *Service) ChangePassword(ctx context.Context, session, current, next, clientIP string) error {
-	user, err := s.Authenticate(ctx, session)
+	user, err := s.Confirm(ctx, session, current, clientIP)
 	if err != nil {
 		return err
-	}
-	keys, account := attemptKeys(user.Username, clientIP)
-	if !s.attempt(keys, account) {
-		return ErrRateLimited
-	}
-	stored, err := s.store.UserByName(ctx, user.Username)
-	if err != nil {
-		return err
-	}
-	ok := false
-	if len(current) <= maxPasswordBytes {
-		if ok, err = verifyPassword(stored.PasswordHash, current); err != nil {
-			return fmt.Errorf("verify password of user %d: %w", stored.ID, err)
-		}
-	}
-	if !ok {
-		return ErrWrongPassword
 	}
 	var errs validation.Collector
 	if msg := passwordProblem(next, user.Username); msg != "" {
@@ -235,12 +218,7 @@ func (s *Service) ChangePassword(ctx context.Context, session, current, next, cl
 	if err != nil {
 		return err
 	}
-	// Only the account's own counts: the address may have failed logins
-	// for other usernames that must keep counting.
-	s.limiter.Reset(keys[1])
-	s.limiter.Release(keys[0])
-	s.accountLimiter.Reset(account)
-	return s.store.ChangePassword(ctx, stored.ID, hash, token.Hash(session))
+	return s.store.ChangePassword(ctx, user.ID, hash, token.Hash(session))
 }
 
 // ResetPassword gives an account a new random password and ends all its
