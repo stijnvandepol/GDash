@@ -8,6 +8,7 @@
   import ScheduleEditor from './ScheduleEditor.svelte';
   import AddDisplay from './AddDisplay.svelte';
   import DisplayItem from './DisplayItem.svelte';
+  import EmptyDisplays from './EmptyDisplays.svelte';
 
   let { onSessionEnded }: { onSessionEnded: () => void } = $props();
 
@@ -183,7 +184,7 @@
     <h1 class="page-title">Displays</h1>
     <p class="page-lede">
       {#if displays.length === 0}
-        A display is a TV or a browser that shows one of your dashboards. Add your first one below.
+        A display is a TV or a browser that shows one of your dashboards.
       {:else}
         {displays.length === 1 ? 'One TV or browser' : `${displays.length} TVs and browsers`}, each showing a dashboard.
       {/if}
@@ -197,7 +198,7 @@
 <section class="card wide" aria-label="Your displays">
   {#if loadError}<p class="error">{loadError}</p>{/if}
   {#if displays.length === 0 && !loadError}
-    <p class="muted">No displays yet.</p>
+    <EmptyDisplays />
   {:else}
     <ul class="list">
       {#each displays as d (d.id)}

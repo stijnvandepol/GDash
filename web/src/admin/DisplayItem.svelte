@@ -143,7 +143,7 @@
     padding: 6px 6px 14px;
     border-radius: var(--r-lg);
     background: var(--device);
-    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.06);
+    box-shadow: inset 0 0 0 1px var(--device-edge);
   }
   .bezel :global(.thumbnail) {
     border: 0;
