@@ -56,6 +56,13 @@ downloaded again, its checksum verified, and it started from an empty data
 directory. The draft is waiting to be published. It still carries the old
 name Daycast, so it is better replaced by a new draft with the next tag.
 
+**0.6.0** was tagged on 11 October 2026, the first release as GDash: the
+workflow made the draft release with the four archives, checksums and SBOM,
+and the image (as ghcr.io/stijnvandepol/daycast until the repository is
+renamed). Its notes are the changelog's 0.6.0 section. The Windows archive
+was downloaded again, its checksum verified, and it reported v0.6.0, asked
+for setup on an empty data directory and served the web interface.
+
 ## Checked by CI on every push
 
 gofmt, go vet, staticcheck, the Go tests with the race detector (fuzz seeds included), govulncheck, svelte-check with zero warnings, the web unit tests (Vitest), npm audit, an up-to-date THIRD_PARTY_LICENSES, a gitleaks scan of the whole history, 24 Playwright browser tests (setup, settings, backup, dashboards, styles, pairing, schedule) with axe accessibility checks in light and dark mode and a check that every button keeps 4.5:1 while hovered, and a Docker build for amd64 and arm64. The first run passed on 8 October 2026; all of it passed on 9 October 2026 after the security and design rounds.
