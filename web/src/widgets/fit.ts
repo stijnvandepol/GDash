@@ -41,6 +41,27 @@ export function fitItems(node: HTMLElement) {
 
 const SHRINK_STEP_PX = 2;
 
+let measure: CanvasRenderingContext2D | null | undefined;
+
+/**
+ * How far a face's letters reach beyond its line boxes, in pixels: some
+ * faces (News Cycle, Bodoni) are taller than a line height of 1.25, and a
+ * browser counts that as overflow although every line is whole. Text that
+ * really overflows does so by more than this.
+ */
+export function glyphOverhang(node: HTMLElement): number {
+  measure ??= document.createElement('canvas').getContext('2d');
+  if (!measure) return 0;
+  const style = getComputedStyle(node);
+  const lineHeight = parseFloat(style.lineHeight);
+  if (Number.isNaN(lineHeight)) return 0;
+  measure.font = `${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
+  const m = measure.measureText('Hg');
+  // Older receivers have no font box; then nothing is forgiven.
+  if (m.fontBoundingBoxAscent === undefined) return 0;
+  return Math.max(0, m.fontBoundingBoxAscent + m.fontBoundingBoxDescent - lineHeight);
+}
+
 /**
  * Lowers the font size of a text block until it fits its box, down to
  * minPx, so a long note in a small tile stays whole. Below minPx the text
@@ -50,7 +71,7 @@ export function shrinkToFit(node: HTMLElement, minPx: number) {
   const fit = () => {
     node.style.fontSize = '';
     let size = parseFloat(getComputedStyle(node).fontSize);
-    while (node.scrollHeight > node.clientHeight + 1 && size > minPx) {
+    while (node.scrollHeight > node.clientHeight + glyphOverhang(node) + 1 && size > minPx) {
       size = Math.max(minPx, size - SHRINK_STEP_PX);
       node.style.fontSize = `${size}px`;
     }
