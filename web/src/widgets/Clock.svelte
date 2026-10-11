@@ -32,7 +32,7 @@
     font-family: var(--font-display);
     font-size: 48px;
     font-size: min(48px, 10cqw, 18cqh);
-    font-weight: 400;
+    font-weight: var(--weight-text, 400);
     color: var(--text-muted);
   }
 </style>

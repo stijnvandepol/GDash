@@ -41,6 +41,9 @@
   --numerals: 'lnum' 1;
   --tracking: normal;
   --synthesis: weight style;
+  /* Body text weight: a face with hairlines reads better a step heavier
+     on a small screen across a room. */
+  --weight-text: 400;
 }
 
 /*

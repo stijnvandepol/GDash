@@ -123,7 +123,7 @@
   .unit {
     margin-left: 0.15em;
     font-size: 0.8em;
-    font-weight: 400;
+    font-weight: var(--weight-text, 400);
     color: var(--text-muted);
   }
   .dim {

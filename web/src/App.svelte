@@ -173,6 +173,7 @@
     color: var(--text-primary);
     font-family: var(--font-ui);
     font-feature-settings: var(--numerals);
+    font-weight: var(--weight-text);
   }
   .stage {
     position: absolute;
