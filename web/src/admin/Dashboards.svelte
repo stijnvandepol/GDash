@@ -10,6 +10,7 @@
   import { fromTemplate } from './templates';
   import DashboardEditor from './DashboardEditor.svelte';
   import TemplateGallery from './TemplateGallery.svelte';
+  import { FONTS, themeName, type FontId } from './styles';
 
   let { onSessionEnded }: { onSessionEnded: () => void } = $props();
 
@@ -26,6 +27,14 @@
   onMount(() => void load());
 
   const handle = (err: unknown) => errorMessage(err, onSessionEnded);
+
+  /** "6 widgets · Walnut in Bodoni", and what the default dashboard is for. */
+  function describe(d: Dashboard): string {
+    const widgets = d.widgets.length === 1 ? '1 widget' : `${d.widgets.length} widgets`;
+    const font = d.font ? ` in ${FONTS[d.font as FontId] ?? d.font}` : '';
+    const role = d.id === 'default' ? ' · shown on displays without a choice' : '';
+    return `${widgets} · ${themeName(d.theme ?? 'minimal-dark')}${font}${role}`;
+  }
 
   async function load() {
     try {
@@ -142,7 +151,7 @@
           {/if}
           <div class="about">
             <h2>{d.name}</h2>
-            <span class="muted small">{d.widgets.length === 1 ? '1 widget' : `${d.widgets.length} widgets`}{d.id === 'default' ? ' · shown on displays without a choice' : ''}</span>
+            <span class="muted small">{describe(d)}</span>
           </div>
           <div class="actions">
             <button class="secondary" onclick={() => (editing = d)}>Edit</button>
