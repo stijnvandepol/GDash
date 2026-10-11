@@ -5,6 +5,8 @@ the format follows [Keep a Changelog](https://keepachangelog.com).
 
 ## Unreleased
 
+## 0.6.0 – 2026-10-11
+
 ### Changed
 
 - The project is renamed from Daycast to GDash: the program is
