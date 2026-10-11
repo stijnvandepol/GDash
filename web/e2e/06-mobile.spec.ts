@@ -41,7 +41,7 @@ test.describe('mobile width', () => {
 
   test('the dashboard editor fits', async ({ adminPage: page }) => {
     await openTab(page, 'Dashboards');
-    await page.getByRole('button', { name: 'Edit' }).first().click();
+    await page.getByRole('button', { name: 'Edit', exact: true }).first().click();
     await expect(page.getByLabel('Dashboard name')).toBeVisible();
     await expectNoHorizontalScroll(page);
   });
