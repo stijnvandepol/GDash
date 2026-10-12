@@ -211,6 +211,22 @@ func TestLanguage(t *testing.T) {
 	}
 }
 
+func TestUpdateCheckIsOnUntilTurnedOff(t *testing.T) {
+	ctx := context.Background()
+	s := newService(t)
+	if got, err := s.Get(ctx); err != nil || !got.UpdateCheck {
+		t.Fatalf("fresh install: updateCheck = %v, %v; want on", got.UpdateCheck, err)
+	}
+	for _, on := range []bool{false, true, false} {
+		if err := s.SetUpdateCheck(ctx, on); err != nil {
+			t.Fatal(err)
+		}
+		if got, err := s.UpdateCheck(ctx); err != nil || got != on {
+			t.Fatalf("UpdateCheck = %v, %v; want %v", got, err, on)
+		}
+	}
+}
+
 func TestSeedWritesNothingWhenAnyPartIsInvalid(t *testing.T) {
 	ctx := context.Background()
 	s := newService(t)

@@ -25,6 +25,7 @@ import (
 	"github.com/stijnvandepol/gdash/internal/photos"
 	"github.com/stijnvandepol/gdash/internal/settings"
 	"github.com/stijnvandepol/gdash/internal/store"
+	"github.com/stijnvandepol/gdash/internal/update"
 	"github.com/stijnvandepol/gdash/internal/validation"
 )
 
@@ -84,6 +85,8 @@ type Server struct {
 	Data func() map[string]datahub.Entry
 	// Version is the running release, shown in the web interface.
 	Version string
+	// Updates knows whether a newer release is out.
+	Updates *update.Checker
 	// CastStatus returns what each display's cast keeper last found.
 	CastStatus func() map[string]casting.Status
 	// TakeOverCast asks a display's cast keeper to show the dashboard on
@@ -156,6 +159,7 @@ func (s *Server) Handler() http.Handler {
 	mux.Handle("PUT /api/settings/location", s.requireUser(s.putLocation))
 	mux.Handle("DELETE /api/settings/location", s.requireUser(s.deleteLocation))
 	mux.Handle("PUT /api/settings/language", s.requireUser(s.putLanguage))
+	mux.Handle("PUT /api/settings/update-check", s.requireUser(s.putUpdateCheck))
 	mux.Handle("POST /api/news-feeds", s.requireUser(s.postNewsFeed))
 	mux.Handle("DELETE /api/news-feeds/{id}", s.requireUser(s.deleteNewsFeed))
 	mux.Handle("POST /api/calendars", s.requireUser(s.postCalendar))

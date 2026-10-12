@@ -1,7 +1,7 @@
 <script lang="ts">
   import './admin.css';
   import { onMount } from 'svelte';
-  import { api, ApiError, type User } from './api';
+  import { api, ApiError, type SystemInfo, type User } from './api';
   import Setup from './Setup.svelte';
   import Login from './Login.svelte';
   import Displays from './Displays.svelte';
@@ -11,6 +11,7 @@
   import Icon, { type IconName } from './Icon.svelte';
   import Logo from './Logo.svelte';
   import Toasts from './Toasts.svelte';
+  import UpdateNotice from './UpdateNotice.svelte';
   import ConfirmDialog from './ConfirmDialog.svelte';
   import { toast } from './toast.svelte';
 
@@ -25,17 +26,19 @@
 
   let screen = $state<Screen>({ name: 'loading' });
   let tab = $state<Tab>('displays');
-  let version = $state('');
+  let system = $state<SystemInfo | null>(null);
   let menuOpen = $state(false);
   let menuElement = $state<HTMLElement>();
 
-  // The version is only for logged-in admins; the footer shows it once known.
+  // The version and a newer release are only for logged-in admins; the
+  // footer shows the version once known. A failure leaves both out: they
+  // are information, not a reason to stop.
   $effect(() => {
     if (screen.name !== 'app') return;
     api
       .system()
-      .then((s) => (version = s.version))
-      .catch(() => (version = ''));
+      .then((s) => (system = s))
+      .catch(() => (system = null));
   });
 
   onMount(async () => {
@@ -133,6 +136,7 @@
       {:else if screen.name === 'error'}
         <p class="error">GDash cannot be reached: {screen.message}</p>
       {:else}
+        {#if system?.update}<UpdateNotice release={system.update} />{/if}
         <GettingStarted onopen={(next) => (tab = next)} />
         {#if tab === 'displays'}
           <Displays onSessionEnded={sessionEnded} />
@@ -146,7 +150,7 @@
   {/if}
 
   <footer class="footer muted small">
-    GDash{version ? ` ${version}` : ''} is free software under the
+    GDash{system ? ` ${system.version}` : ''} is free software under the
     <a href="https://www.gnu.org/licenses/agpl-3.0.html" rel="noopener">AGPL-3.0</a>.
     <a href="https://github.com/stijnvandepol/gdash" rel="noopener">Source code</a>
   </footer>

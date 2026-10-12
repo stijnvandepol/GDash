@@ -31,11 +31,13 @@ import (
 	"github.com/stijnvandepol/gdash/internal/backup"
 	"github.com/stijnvandepol/gdash/internal/cast"
 	"github.com/stijnvandepol/gdash/internal/display"
+	"github.com/stijnvandepol/gdash/internal/outbound"
 	"github.com/stijnvandepol/gdash/internal/pairing"
 	"github.com/stijnvandepol/gdash/internal/photos"
 	"github.com/stijnvandepol/gdash/internal/secret"
 	"github.com/stijnvandepol/gdash/internal/settings"
 	"github.com/stijnvandepol/gdash/internal/store"
+	"github.com/stijnvandepol/gdash/internal/update"
 	"github.com/stijnvandepol/gdash/internal/weather"
 	"github.com/stijnvandepol/gdash/web"
 )
@@ -68,6 +70,8 @@ const (
 	// short headlines keep a snapshot far below the 64 KB Cast limit.
 	newsItems       = 10
 	upstreamTimeout = 15 * time.Second
+	// The update check is one small request a day; it may fail quietly.
+	updateTimeout = 10 * time.Second
 	// photoListValidity only has to outlast the minute between publishes;
 	// the list is read again every time.
 	photoListValidity = time.Hour
@@ -181,6 +185,12 @@ func serve(ctx context.Context, logger *slog.Logger) error {
 	if err != nil {
 		return err
 	}
+	updates := &update.Checker{
+		URL: update.DefaultURL, HTTP: outbound.NewClient(updateTimeout), UserAgent: userAgent(),
+		Current: currentVersion(), Enabled: settingsService.UpdateCheck, Off: cfg.updateCheckOff,
+		Now: time.Now, Logger: logger,
+	}
+	go updates.Run(ctx)
 	handler := (&api.Server{
 		Snapshots:      snapshots,
 		Auth:           authService,
@@ -220,6 +230,7 @@ func serve(ctx context.Context, logger *slog.Logger) error {
 		SourceStatus:  sources.hub.Entries,
 		Data:          publisher.Data,
 		Version:       currentVersion(),
+		Updates:       updates,
 		CastStatus:    castManager.Statuses,
 		TakeOverCast:  castManager.TakeOver,
 		Photos:        album,

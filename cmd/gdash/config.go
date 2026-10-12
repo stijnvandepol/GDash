@@ -36,6 +36,9 @@ type config struct {
 	seed settings.Seed
 	// trustedProxies are reverse proxies whose forwarding headers count.
 	trustedProxies []netip.Prefix
+	// updateCheckOff is set by GDASH_UPDATE_CHECK=off: GDash never asks
+	// for the latest release, whatever the setting in the web interface.
+	updateCheckOff bool
 }
 
 // defaultNewsFeed is the general news feed of the NOS, the Dutch public
@@ -44,7 +47,8 @@ type config struct {
 const defaultNewsFeed = "https://feeds.nos.nl/nosnieuwsalgemeen"
 
 // loadConfig reads the configuration from environment variables. Only the
-// address, data directory and Cast app ID are read on every start.
+// address, data directory, trusted proxies, update check and Cast app ID are
+// read on every start.
 func loadConfig(getenv func(string) string) (config, error) {
 	cfg := config{
 		addr:    valueOr(getenv("GDASH_ADDR"), defaultAddr),
@@ -57,6 +61,14 @@ func loadConfig(getenv func(string) string) (config, error) {
 
 	if cfg.trustedProxies, err = parsePrefixes(getenv("GDASH_TRUSTED_PROXIES")); err != nil {
 		return config{}, fmt.Errorf("GDASH_TRUSTED_PROXIES: %w", err)
+	}
+
+	switch getenv("GDASH_UPDATE_CHECK") {
+	case "", "on":
+	case "off":
+		cfg.updateCheckOff = true
+	default:
+		return config{}, fmt.Errorf("GDASH_UPDATE_CHECK %q is neither on nor off", getenv("GDASH_UPDATE_CHECK"))
 	}
 
 	cfg.castAppID = getenv("GDASH_CAST_APP_ID")

@@ -33,6 +33,7 @@ const ACTIONS: Record<string, string> = {
   location_changed: 'Set the location to',
   location_cleared: 'Removed the location',
   language_changed: 'Set the language on the TVs to',
+  update_check_changed: 'Turned the check for new versions',
   news_feed_added: 'Added news feed',
   news_feed_removed: 'Removed news feed',
   calendar_added: 'Added calendar',

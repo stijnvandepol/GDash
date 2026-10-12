@@ -36,6 +36,11 @@ const (
 const (
 	keyLocation = "location"
 	keyLanguage = "language"
+	// keyUpdateCheck holds "off" when the admin turned the daily check for
+	// a new release off; it is on until then.
+	keyUpdateCheck = "update_check"
+	updateCheckOff = "off"
+	updateCheckOn  = "on"
 	// DefaultLanguage is the display language until one is chosen.
 	DefaultLanguage = "en"
 	// keySeeded marks that the environment was read once; after that the
@@ -71,6 +76,9 @@ type Settings struct {
 	HomeAssistant *HomeAssistant `json:"homeAssistant"`
 	// Homey is nil until a connection is set up.
 	Homey *Homey `json:"homey"`
+	// UpdateCheck is whether GDash asks GitHub once a day for the latest
+	// release, to show a notice when a newer one is out.
+	UpdateCheck bool `json:"updateCheck"`
 }
 
 // Languages are the display languages; web/src/i18n.svelte.ts has their
@@ -107,7 +115,11 @@ func (s *Service) Get(ctx context.Context) (Settings, error) {
 	if err != nil {
 		return Settings{}, err
 	}
-	out := Settings{Location: loc, NewsFeeds: []NewsFeed{}, Calendars: []Calendar{}, Language: language}
+	updateCheck, err := s.UpdateCheck(ctx)
+	if err != nil {
+		return Settings{}, err
+	}
+	out := Settings{Location: loc, NewsFeeds: []NewsFeed{}, Calendars: []Calendar{}, Language: language, UpdateCheck: updateCheck}
 	feeds, err := s.Store.Sources(ctx, store.SourceNews)
 	if err != nil {
 		return Settings{}, err
@@ -214,6 +226,25 @@ func (s *Service) SetLanguage(ctx context.Context, language string) error {
 		return errs.Err()
 	}
 	return s.Store.SetSetting(ctx, keyLanguage, language)
+}
+
+// UpdateCheck reports whether the daily check for a new release is on. It
+// is on until the admin turns it off.
+func (s *Service) UpdateCheck(ctx context.Context) (bool, error) {
+	value, _, err := s.Store.Setting(ctx, keyUpdateCheck)
+	if err != nil {
+		return false, err
+	}
+	return value != updateCheckOff, nil
+}
+
+// SetUpdateCheck turns the daily check for a new release on or off.
+func (s *Service) SetUpdateCheck(ctx context.Context, on bool) error {
+	value := updateCheckOff
+	if on {
+		value = updateCheckOn
+	}
+	return s.Store.SetSetting(ctx, keyUpdateCheck, value)
 }
 
 // ClearLocation removes the weather location; weather widgets then show

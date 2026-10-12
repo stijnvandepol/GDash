@@ -41,7 +41,7 @@ come from another site (cross-site request forgery protection).
 | `PUT /api/me/two-step` `{code}` | admin | `200 {"recoveryCodes": [10 codes]}`, shown this once; two-step login is on and every other session of the account ends | `401`, `409 no_two_step_setup`, `two_step_setup_replaced` (another setup replaced the secret meanwhile: start again) or `two_step_on`, `422` (wrong code), `429 rate_limited` (wrong codes wait as for the login; at the stop the setup has to start again) |
 | `DELETE /api/me/two-step` `{password, code}` | admin | `204`; `code` may be a recovery code | `401`, `409 two_step_off`, `422` (wrong password or code), `429 rate_limited` or `two_step_locked` (as for the login) |
 | `POST /api/backup` `{password}` | admin | `200 application/zip` attachment with `gdash.db`, `secret.key` and `photos/`; recorded in the audit log | `401`, `422` (wrong password), `429 rate_limited` |
-| `GET /api/system` | admin | `200 {"version"}` | `401` |
+| `GET /api/system` | admin | `200 {"version", "updateCheckLocked", "update"?: {"version", "url"}}`; `update` is a newer release the daily check found, `url` its release notes; `updateCheckLocked` is true when `GDASH_UPDATE_CHECK=off` turns the check off | `401` |
 | `GET /api/audit-events?limit=100` | admin | `200 {"events": [{at, actor, action, detail, ip}]}`, newest first, at most 200 | `400`, `401` |
 | `GET /api/api-tokens` | admin | `200 {"tokens": [{id, name, createdAt, lastUsedAt}]}`, oldest first, never the secrets | `401` |
 | `POST /api/api-tokens` `{name}` | admin | `201` token with its secret in `token`, shown this once | `401`, `409` at 10 tokens, `422` |
@@ -64,6 +64,7 @@ come from another site (cross-site request forgery protection).
 | `GET /api/settings` | admin | `200 {"settings": settings, "status": {key: {updatedAt?, failing}}}` | `401` |
 | `PUT /api/settings/location` `{name, latitude, longitude}` | admin | `200` location | `401`, `422` |
 | `PUT /api/settings/language` `{language}` | admin | `200`; screens switch at once | `401`, `422` for a language other than `en`, `nl`, `de` or `fr` |
+| `PUT /api/settings/update-check` `{enabled}` | admin | `200 {enabled}`; turns the daily check for a new release on or off | `400` for anything but a boolean, `401`, `422` without `enabled` |
 | `DELETE /api/settings/location` | admin | `204`; weather widgets show that no location is set | `401` |
 | `GET /api/places?name=Oss` | admin | `200 {"places": [place]}` | `401`, `422`, `502 upstream_unavailable` |
 | `POST /api/news-feeds` `{name, url}` | admin | `201` news feed | `401`, `409` at 5 feeds, `422` |
@@ -447,7 +448,9 @@ calendar; the server does not check that the calendar exists when a dashboard is
 deleted later says on the screen that it cannot find it. A `stop` is one code of 1 to 16 letters and digits.
 Text settings are shown as plain text on the screen, never as HTML.
 
-**settings:** `{"language": "nl", "location": {"name": "Oss", "latitude": 51.77, "longitude": 5.52} | null, "newsFeeds": [{"id": 1, "name": "NOS", "url": "https://…"}], "calendars": [{"id": 2, "name": "Family", "host": "calendar.google.com", "color": "blue", "unreadable": false}]}`.
+**settings:** `{"language": "nl", "location": {"name": "Oss", "latitude": 51.77, "longitude": 5.52} | null, "newsFeeds": [{"id": 1, "name": "NOS", "url": "https://…"}], "calendars": [{"id": 2, "name": "Family", "host": "calendar.google.com", "color": "blue", "unreadable": false}], "updateCheck": true}`.
+`updateCheck` is whether GDash asks `api.github.com` once a day for the latest release; it is on until turned off. See
+[SECURITY.md](../SECURITY.md).
 A calendar's `color` is one of `blue`, `green`, `orange`, `purple`, `red`, `teal`, `pink` and `yellow`; until one is
 chosen it follows the calendar's place in the list. Its events carry the colour to the TV.
 Names are 1 to 60 characters; addresses use http or https, and calendars also webcal.

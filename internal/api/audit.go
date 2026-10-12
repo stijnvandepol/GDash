@@ -31,6 +31,7 @@ const (
 	auditLocationChanged        = "location_changed"
 	auditLocationCleared        = "location_cleared"
 	auditLanguageChanged        = "language_changed"
+	auditUpdateCheckChanged     = "update_check_changed"
 	auditNewsFeedAdded          = "news_feed_added"
 	auditNewsFeedRemoved        = "news_feed_removed"
 	auditCalendarAdded          = "calendar_added"

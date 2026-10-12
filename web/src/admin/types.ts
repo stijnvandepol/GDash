@@ -154,6 +154,8 @@ export interface Settings {
   homeAssistant: HomeAssistant | null;
   /** Null until Homey is connected; the API key never leaves the server. */
   homey: Homey | null;
+  /** Whether GDash asks GitHub once a day for the latest release. */
+  updateCheck: boolean;
 }
 
 export interface Homey {
@@ -179,6 +181,22 @@ export interface HomeyCapability {
 export interface HomeyUser {
   id: string;
   name: string;
+}
+
+/** The running server, for admins. */
+export interface SystemInfo {
+  version: string;
+  /** True when GDASH_UPDATE_CHECK=off turns the update check off, whatever the setting says. */
+  updateCheckLocked: boolean;
+  /** A newer release, when the daily check found one. */
+  update?: Release;
+}
+
+export interface Release {
+  /** Without a leading v, such as 0.8.0. */
+  version: string;
+  /** The release notes. */
+  url: string;
 }
 
 export interface HomeAssistant {

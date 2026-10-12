@@ -33,6 +33,7 @@ import (
 	"github.com/stijnvandepol/gdash/internal/secret"
 	"github.com/stijnvandepol/gdash/internal/settings"
 	"github.com/stijnvandepol/gdash/internal/store"
+	"github.com/stijnvandepol/gdash/internal/update"
 	"github.com/stijnvandepol/gdash/internal/weather"
 )
 
@@ -114,6 +115,9 @@ type testEnv struct {
 	announced *atomic.Int32
 	// logs is everything the server logged.
 	logs *syncBuffer
+	// updates answers from a fake GitHub that names v1.3.0 the latest
+	// release; nothing checks until a test calls Check.
+	updates *update.Checker
 }
 
 func newTestEnv(t *testing.T, discover func(context.Context) ([]cast.Device, error)) *testEnv {
@@ -143,6 +147,15 @@ func newTestEnv(t *testing.T, discover func(context.Context) ([]cast.Device, err
 	if err != nil {
 		t.Fatal(err)
 	}
+	settingsService := &settings.Service{Store: st, Box: box, Now: now, Logger: logger}
+	releases := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = io.WriteString(w, `{"tag_name":"v1.3.0","draft":false,"prerelease":false}`)
+	}))
+	t.Cleanup(releases.Close)
+	updates := &update.Checker{
+		URL: releases.URL, HTTP: releases.Client(), UserAgent: "GDash/v1.2.3", Current: "v1.2.3",
+		Enabled: settingsService.UpdateCheck, Now: now, Logger: logger,
+	}
 	s := &Server{
 		Snapshots: fixedSubscriber(`{"type":"snapshot","version":1}`),
 		Auth:      authService,
@@ -159,7 +172,7 @@ func newTestEnv(t *testing.T, discover func(context.Context) ([]cast.Device, err
 		Discover:             discover,
 		DisplaysChanged:      func() { changes.Add(1) },
 		DashboardsChanged:    func() { changes.Add(1) },
-		Settings:             &settings.Service{Store: st, Box: box, Now: now, Logger: logger},
+		Settings:             settingsService,
 		Places:               sources,
 		Stops:                stops,
 		CustomFetcher:        &custom.Fetcher{HTTP: outbound.NewClient(5 * time.Second)},
@@ -171,6 +184,7 @@ func newTestEnv(t *testing.T, discover func(context.Context) ([]cast.Device, err
 		SourceStatus:         sources.Entries,
 		Data:                 sources.Entries,
 		Version:              "v1.2.3",
+		Updates:              updates,
 		CastStatus:           sources.CastStatus,
 		TakeOverCast:         sources.TakeOverCast,
 		Photos:               album,
@@ -189,6 +203,7 @@ func newTestEnv(t *testing.T, discover func(context.Context) ([]cast.Device, err
 	return &testEnv{
 		srv: srv, client: &http.Client{Jar: jar}, changes: changes, settingsChanges: settingsChanges,
 		pairing: pairingService, store: st, sources: sources, stops: stops, board: board, announced: announced, logs: logs,
+		updates: updates,
 	}
 }
 

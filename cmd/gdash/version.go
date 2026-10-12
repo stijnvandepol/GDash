@@ -6,6 +6,12 @@ import "runtime/debug"
 // -ldflags "-X main.version=v1.2.3".
 var version = ""
 
+// userAgent names GDash and its version in requests to public services, as
+// their terms ask; it says nothing about the installation.
+func userAgent() string {
+	return "GDash/" + currentVersion() + " (self-hosted TV dashboard; +https://github.com/stijnvandepol/gdash)"
+}
+
 // shortRevision is long enough to find a commit, short enough to read.
 const shortRevision = 12
 

@@ -77,6 +77,17 @@ fully trust, such as a guest's phone.
   serve instance metadata. Departures are fetched from OVapi over plain HTTP, because its
   HTTPS certificate belongs to another domain; the request carries no secret
   and the answer is public timetable data.
+- **Update check, the only call home:** once a day GDash asks GitHub
+  (`api.github.com/repos/stijnvandepol/gdash/releases/latest`) which
+  release is the newest, to show a notice in the web interface. The request
+  carries no cookie, token, address of yours or anything about the
+  installation; only the running version, in the `User-Agent`. GitHub sees
+  your public IP address, as with any request. Drafts and pre-releases are
+  ignored, and a failure or rate limit only goes to the debug log. Every
+  other outgoing request is for a data source (the news feed GDash starts
+  with included) or a search in the web interface. Turn the check off
+  under Settings, Account, Updates, or for good with `GDASH_UPDATE_CHECK=off`.
+  A development build never checks.
 - **Custom APIs:** an admin can point GDash at any http or https address,
   on the internet or the LAN (a device or Home Assistant at home), so an
   admin session can make the server send requests into the home network;

@@ -12,6 +12,7 @@ cloud account and no extra hardware at the TV.
 | GDash | the network, UDP 5353 multicast | Find Cast devices (mDNS) |
 | TVs and browsers | GDash, TCP 8420 | Load the dashboard and receive updates |
 | GDash | the internet, HTTPS | Weather, air quality, electricity prices (EnergyZero), fuel prices (`api.anwb.nl`), news, calendars and place search |
+| GDash | `api.github.com`, HTTPS | Once a day, whether a new release is out (can be turned off, see [Updating](#updating)) |
 
 GDash and the TVs must be in the same network segment (VLAN). A guest
 network that isolates devices, or a switch that drops multicast, hides the
@@ -179,9 +180,97 @@ gh attestation verify oci://ghcr.io/stijnvandepol/gdash:<version> --repo stijnva
 
 ## Updating
 
-With Docker: `docker compose pull && docker compose up -d`. With the binary:
-replace it and restart the service. A new version that changes the database
-first writes a copy of it, `gdash.db.bak-v<N>`, next to the original.
+When a new release is out, the web interface says so at the top of every
+page: "GDash 0.8.0 is available", with a link to what is new and to this
+section. GDash asks GitHub for the latest release once a day; turn that off
+under **Settings, Account, Updates**, or with `GDASH_UPDATE_CHECK=off`. See
+[SECURITY.md](../SECURITY.md) for what the request contains.
+
+Your displays, dashboards, settings and photos are in the data directory or
+volume, which an update leaves alone. Before a new version changes the
+database, it writes a copy, `gdash.db.bak-v<N>`, next to the original; the
+daily copies in `backups/` are there too (see [Backups](#backups)). A
+download of **Settings, Account, Backup** before a big update does no harm.
+
+### Synology (Container Manager)
+
+These steps are for DSM 7.2. Container Manager does not offer updates for
+images from `ghcr.io` by itself, so you fetch the new image by hand:
+
+1. Open **Container Manager, Project**, select the GDash project and choose
+   **Action, Stop**.
+2. Choose **Action, Clean**. This removes the container, not the project, its
+   settings or the `gdash-data` volume.
+3. Open **Image**, select `ghcr.io/stijnvandepol/gdash` and choose **Delete**.
+4. Back in **Project**, select GDash and choose **Action, Build**. Container
+   Manager pulls the newest `latest` image and starts GDash with it.
+
+If **Image** shows **Update available** next to the GDash image, you can use
+that instead: click it, then **Update**, and Container Manager restarts the
+container on the new image. When the container does not come back on the new
+version, stop it and choose **Action, Reset**.
+
+The version at the bottom of the web interface shows which release runs.
+
+### Docker Compose
+
+In the folder with `compose.yaml`:
+
+```bash
+docker compose pull && docker compose up -d
+```
+
+`docker image prune` afterwards removes the old image. To go back to a
+release, put its version in the image, such as
+`ghcr.io/stijnvandepol/gdash:0.7.0`, and run the same command; if the newer
+release had already changed the database, also restore its
+`gdash.db.bak-v<N>` copy as described under [Backups](#backups).
+
+**Automatic updates (optional):** [Watchtower](https://github.com/nicholas-fedor/watchtower)
+can pull new images and restart GDash by itself. Add it next to GDash in the
+same `compose.yaml`, and the label to GDash so it updates only GDash:
+
+```yaml
+services:
+  gdash:
+    # ... as above, plus:
+    labels:
+      com.centurylinklabs.watchtower.enable: "true"
+
+  watchtower:
+    image: nickfedor/watchtower
+    command: --label-enable --cleanup --schedule "0 0 4 * * *"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    restart: unless-stopped
+```
+
+Weigh this before you use it. Watchtower needs the Docker socket, which is
+root access to the whole machine, so you trust its image as much as your
+server. The original project (`containrrr/watchtower`) was archived in
+December 2025; the link above is a fork that continues it, which you should
+check for yourself. And an update then happens at 04:00 without you reading
+what changed; the copies GDash makes before a database change are your way
+back.
+
+### Binary (Linux or Windows)
+
+1. Download the archive of the new release and check it (see
+   [Checking a download](#checking-a-download)).
+2. Stop GDash: `sudo systemctl stop gdash`, or end `gdash.exe` on Windows.
+3. Replace the program: `sudo install -m 755 gdash /usr/local/bin/gdash`, or
+   copy the new `gdash.exe` over the old one.
+4. Start GDash again: `sudo systemctl start gdash`, or start `gdash.exe`.
+
+The data directory (`/var/lib/gdash`, or the `data` folder next to
+`gdash.exe`) stays as it is. Keep `gdash.service` from the new archive in
+step with yours when the release notes say it changed.
+
+### Home Assistant app
+
+Home Assistant shows an update for GDash under **Settings, Apps** (older:
+**Add-ons**) once the app repository has it. Open GDash there and choose
+**Update**. The app's data folder is kept.
 
 ## Backups
 

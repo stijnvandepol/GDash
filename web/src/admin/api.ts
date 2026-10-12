@@ -51,6 +51,7 @@ import type {
   Settings,
   Slot,
   SourceStatus,
+  SystemInfo,
   TwoStepEnrolment,
   TwoStepStatus,
   User,
@@ -115,7 +116,7 @@ export const api = {
   disableTwoStep: (password: string, code: string) => request<void>('DELETE', '/api/me/two-step', { password, code }),
   logout: () => request<void>('DELETE', '/api/sessions/current'),
   me: () => request<User>('GET', '/api/me'),
-  system: () => request<{ version: string }>('GET', '/api/system'),
+  system: () => request<SystemInfo>('GET', '/api/system'),
   photos: () => request<{ photos: Photo[] }>('GET', '/api/photos').then((r) => r.photos),
   uploadPhoto: (file: File) => {
     const form = new FormData();
@@ -154,6 +155,7 @@ export const api = {
   setLocation: (loc: Location) => request<Location>('PUT', '/api/settings/location', loc),
   clearLocation: () => request<void>('DELETE', '/api/settings/location'),
   setLanguage: (language: string) => request<{ language: string }>('PUT', '/api/settings/language', { language }),
+  setUpdateCheck: (enabled: boolean) => request<{ enabled: boolean }>('PUT', '/api/settings/update-check', { enabled }),
   places: (name: string) =>
     request<{ places: Place[] }>('GET', `/api/places?name=${encodeURIComponent(name)}`).then((r) => r.places),
   addNewsFeed: (name: string, url: string) => request<NewsFeed>('POST', '/api/news-feeds', { name, url }),

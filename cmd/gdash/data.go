@@ -97,7 +97,7 @@ func startData(ctx context.Context, cfg config, db *store.Store, svc *settings.S
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("load the Dutch time zone: %w", err)
 	}
-	userAgent := "GDash/" + currentVersion() + " (self-hosted TV dashboard; +https://github.com/stijnvandepol/gdash)"
+	userAgent := userAgent()
 	transit := &departures.Client{
 		BaseURL:   departures.DefaultBaseURL,
 		HTTP:      outbound.NewClient(upstreamTimeout),

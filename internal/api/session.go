@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/stijnvandepol/gdash/internal/auth"
+	"github.com/stijnvandepol/gdash/internal/update"
 	"github.com/stijnvandepol/gdash/internal/validation"
 )
 
@@ -188,10 +189,18 @@ func (s *Server) putPassword(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// getSystem handles GET /api/system: {"version"}. Only for admins, so the
-// version is no help to someone scanning the network for old releases.
+// getSystem handles GET /api/system: {version, updateCheckLocked, update?}.
+// update is a newer release, when the daily check found one. Only for
+// admins, so the version is no help to someone scanning the network for old
+// releases.
 func (s *Server) getSystem(w http.ResponseWriter, _ *http.Request) {
-	writeJSON(w, http.StatusOK, map[string]string{"version": s.Version})
+	writeJSON(w, http.StatusOK, struct {
+		Version string `json:"version"`
+		// UpdateCheckLocked is set when GDASH_UPDATE_CHECK=off turns the
+		// check off, whatever the setting says.
+		UpdateCheckLocked bool            `json:"updateCheckLocked"`
+		Update            *update.Release `json:"update,omitempty"`
+	}{Version: s.Version, UpdateCheckLocked: s.Updates.Off, Update: s.Updates.Available()})
 }
 
 // writeAuthError translates auth errors to responses. It returns true when

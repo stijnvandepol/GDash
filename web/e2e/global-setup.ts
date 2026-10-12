@@ -38,6 +38,9 @@ function serverEnvironment(dataDir: string): NodeJS.ProcessEnv {
     GDASH_ADDR: `127.0.0.1:${port()}`,
     GDASH_DATA_DIR: dataDir,
     GDASH_NEWS_FEED: OFFLINE_FEED,
+    // The suite never asks GitHub for the latest release; tests that show
+    // the update notice answer /api/system themselves.
+    GDASH_UPDATE_CHECK: 'off',
   };
 }
 

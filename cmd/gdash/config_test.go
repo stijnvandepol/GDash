@@ -58,6 +58,15 @@ func TestLoadConfigCastAppID(t *testing.T) {
 	}
 }
 
+func TestLoadConfigUpdateCheck(t *testing.T) {
+	for value, off := range map[string]bool{"": false, "on": false, "off": true} {
+		cfg, err := loadConfig(env(map[string]string{"GDASH_UPDATE_CHECK": value}))
+		if err != nil || cfg.updateCheckOff != off {
+			t.Errorf("GDASH_UPDATE_CHECK=%q: updateCheckOff = %v, %v; want %v", value, cfg.updateCheckOff, err, off)
+		}
+	}
+}
+
 func TestWithDefaultPort(t *testing.T) {
 	if got := withDefaultPort("192.168.1.40"); got != "192.168.1.40:8009" {
 		t.Errorf("withDefaultPort(ip) = %q", got)
@@ -91,6 +100,7 @@ func TestLoadConfigErrors(t *testing.T) {
 		{"calendar not a URL", map[string]string{"GDASH_LATITUDE": "51", "GDASH_LONGITUDE": "5", "GDASH_CALENDAR_URLS": "ftp://x/y.ics"}, "GDASH_CALENDAR_URLS"},
 		{"bad trusted proxy", map[string]string{"GDASH_TRUSTED_PROXIES": "10.0.0.1, proxy.local"}, "GDASH_TRUSTED_PROXIES"},
 		{"malformed app id", map[string]string{"GDASH_LATITUDE": "51", "GDASH_LONGITUDE": "5", "GDASH_CAST_APP_ID": "dashcast"}, "8-character"},
+		{"update check neither on nor off", map[string]string{"GDASH_UPDATE_CHECK": "false"}, "GDASH_UPDATE_CHECK"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

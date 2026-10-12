@@ -95,6 +95,32 @@ func (s *Server) putLanguage(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, body)
 }
 
+// putUpdateCheck handles PUT /api/settings/update-check {enabled}: turns the
+// daily check for a new release on or off. 200 with {enabled}.
+func (s *Server) putUpdateCheck(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		Enabled *bool `json:"enabled"`
+	}
+	if !decodeJSON(w, r, &body) {
+		return
+	}
+	if body.Enabled == nil {
+		writeValidationError(w, []validation.FieldError{{Field: "enabled", Message: "use true or false"}})
+		return
+	}
+	if err := s.Settings.SetUpdateCheck(r.Context(), *body.Enabled); err != nil {
+		s.internalError(w, "set update check", err)
+		return
+	}
+	detail := "off"
+	if *body.Enabled {
+		detail = "on"
+	}
+	s.auditUser(r, auditUpdateCheckChanged, detail)
+	s.Updates.Changed()
+	writeJSON(w, http.StatusOK, map[string]bool{"enabled": *body.Enabled})
+}
+
 // deleteLocation handles DELETE /api/settings/location: 204.
 func (s *Server) deleteLocation(w http.ResponseWriter, r *http.Request) {
 	if err := s.Settings.ClearLocation(r.Context()); err != nil {

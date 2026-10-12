@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -135,8 +136,45 @@ func TestSystemShowsVersionToAdminsOnly(t *testing.T) {
 		t.Fatalf("without login = %d, want 401", status)
 	}
 	env.setUp(t)
-	if status, body := env.do(t, "GET", "/api/system", ""); status != http.StatusOK || body != `{"version":"v1.2.3"}`+"\n" {
+	if status, body := env.do(t, "GET", "/api/system", ""); status != http.StatusOK || body != `{"version":"v1.2.3","updateCheckLocked":false}`+"\n" {
 		t.Fatalf("system = %d %q", status, body)
+	}
+}
+
+func TestSystemOffersANewerRelease(t *testing.T) {
+	env := newTestEnv(t, nil)
+	env.setUp(t)
+	if err := env.updates.Check(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	want := `"update":{"version":"1.3.0","url":"https://github.com/stijnvandepol/gdash/releases/tag/v1.3.0"}`
+	if _, body := env.do(t, "GET", "/api/system", ""); !strings.Contains(body, want) {
+		t.Fatalf("system = %s, want %s", body, want)
+	}
+
+	// Turned off under Settings, the notice goes and stays gone.
+	if status, body := env.do(t, "PUT", "/api/settings/update-check", `{"enabled":false}`); status != http.StatusOK || body != `{"enabled":false}`+"\n" {
+		t.Fatalf("turn off = %d %s", status, body)
+	}
+	if err := env.updates.Check(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	if _, body := env.do(t, "GET", "/api/system", ""); strings.Contains(body, `"update"`) {
+		t.Fatalf("system with the check off = %s", body)
+	}
+	if _, body := env.do(t, "GET", "/api/settings", ""); !strings.Contains(body, `"updateCheck":false`) {
+		t.Fatalf("settings = %s, want the check off", body)
+	}
+	if status, _ := env.do(t, "PUT", "/api/settings/update-check", `{}`); status != http.StatusUnprocessableEntity {
+		t.Fatalf("without enabled = %d, want 422", status)
+	}
+	if status, _ := env.do(t, "PUT", "/api/settings/update-check", `{"enabled":"yes"}`); status != http.StatusBadRequest {
+		t.Fatalf("enabled as text = %d, want 400", status)
+	}
+
+	env.updates.Off = true
+	if _, body := env.do(t, "GET", "/api/system", ""); !strings.Contains(body, `"updateCheckLocked":true`) {
+		t.Fatalf("system with GDASH_UPDATE_CHECK=off = %s", body)
 	}
 }
 

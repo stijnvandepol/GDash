@@ -177,6 +177,7 @@ environment variables:
 | `TZ` | system | Time zone for "today", for example `Europe/Amsterdam` |
 | `GDASH_CAST_APP_ID` | none | App ID of your own registered Cast receiver ([docs/receiver.md](docs/receiver.md)); without it GDash uses the public DashCast receiver |
 | `GDASH_TRUSTED_PROXIES` | none | Addresses or CIDR ranges of reverse proxies whose `X-Forwarded-For` and `X-Forwarded-Proto` GDash trusts |
+| `GDASH_UPDATE_CHECK` | `on` | `off` stops the daily check for a new release, whatever Settings says; apart from the data sources it is the only request GDash makes ([SECURITY.md](SECURITY.md)) |
 
 The network needs: TCP 8009 from GDash to the TVs, mDNS (UDP 5353) to find
 them, TCP 8420 from the TVs to GDash, and HTTPS from GDash to the internet for
@@ -195,9 +196,16 @@ gdash version
 
 ## Updating and backups
 
-Replace the program or pull the new image and start it again. Before a
-database upgrade GDash writes a copy of the database next to it, and it makes a
-daily copy in `backups/` that keeps the last seven.
+The web interface tells you when a new release is out. With Docker,
+`docker compose pull && docker compose up -d`; on a Synology, stop the project
+in Container Manager, clean it, delete the old image and build the project
+again; a binary is replaced and restarted; the Home Assistant app has an
+**Update** button. Your data stays where it is, and before a database upgrade
+GDash writes a copy of the database next to it. Every step, also for
+automatic updates, is in [docs/install.md](docs/install.md#updating).
+
+GDash also makes a daily copy of the database in `backups/` and keeps the last
+seven.
 
 For a backup to keep elsewhere, use **Settings → Account → Backup**: one zip
 with the database, the encryption key and the photos. It holds the key to
@@ -209,7 +217,7 @@ unzipping it into an empty data directory. See
 
 | Document | For |
 |---|---|
-| [docs/install.md](docs/install.md) | Installing with Docker, as a Linux service, on Windows or as a Home Assistant app; network, permissions, backups |
+| [docs/install.md](docs/install.md) | Installing with Docker, as a Linux service, on Windows or as a Home Assistant app; network, permissions, updating, backups |
 | [docs/guide.md](docs/guide.md) | Using GDash: displays, dashboards, styles, widgets, schedules, announcements |
 | [docs/api.md](docs/api.md) | The HTTP API, for automations and other clients |
 | [docs/receiver.md](docs/receiver.md) | Registering your own Cast receiver |

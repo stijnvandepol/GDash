@@ -68,6 +68,16 @@ the format follows [Keep a Changelog](https://keepachangelog.com).
 - Adding a display asks what it **shows**, offering the newest dashboard
   instead of always the default one. `POST /api/displays` takes `dashboardId`,
   and `GET /api/dashboards` gives each dashboard's `createdAt`.
+- **Update notice:** once a day GDash asks GitHub for the latest release and,
+  when it is newer, says "GDash 0.8.0 is available" at the top of the web
+  interface, with links to what is new and to the update steps. The request
+  sends only the version, in the User-Agent; drafts and pre-releases are
+  ignored. Turn it off under Settings, Account, Updates, or with
+  `GDASH_UPDATE_CHECK=off`. It is the only request GDash makes apart from its
+  data sources ([SECURITY.md](SECURITY.md)).
+- [docs/install.md](docs/install.md#updating) has the update steps for
+  Synology Container Manager, Docker Compose (with optional automatic updates),
+  the binaries and the Home Assistant app.
 
 ### Fixed
 
