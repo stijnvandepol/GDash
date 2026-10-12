@@ -67,8 +67,8 @@ behind the design (Dutch) is in
 
 ## Run it
 
-To install a release with Docker, as a Linux service or on Windows, see
-[docs/install.md](docs/install.md); how to use it is in
+To install a release with Docker, as a Linux service, on Windows or as a
+Home Assistant app, see [docs/install.md](docs/install.md); how to use it is in
 [docs/guide.md](docs/guide.md). To build from source you need Go 1.26
 and Node.js 24:
 
@@ -88,6 +88,14 @@ With Docker: run `docker compose up -d` and read the token with
 
 Back up the whole data directory: `secret.key` next to the database is
 needed to read the stored calendar addresses.
+
+**Home Assistant app:** on Home Assistant OS or Supervised, GDash runs as an app
+(experimental). Add the repository
+`https://github.com/stijnvandepol/gdash-homeassistant` under Settings, Apps,
+store, Repositories (it works once that public repository exists, see
+[docs/publishing.md](docs/publishing.md)), then install **GDash**. The files are
+in [homeassistant/](homeassistant) and the guide for Home Assistant users in
+[homeassistant/gdash/DOCS.md](homeassistant/gdash/DOCS.md).
 
 ## Configuration
 

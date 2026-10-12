@@ -131,6 +131,33 @@ To start GDash with Windows, create a task in Task Scheduler: trigger
 "At startup", action "Start a program" with `gdash.exe`, "Start in" set to
 its folder, and "Run whether user is logged on or not".
 
+## Home Assistant app
+
+On Home Assistant OS or Home Assistant Supervised, GDash can run as an app
+(formerly called add-on) next to Home Assistant. It uses host networking, like
+the Docker setup above, so it finds the TVs by itself, and its web interface
+is at `http://<home-assistant-address>:8420/`. It does not appear in Home
+Assistant's sidebar: the web interface and the TV pages use addresses from
+the root of the server, which the path of Home Assistant's "ingress" would
+break. Home Assistant Container and Core have no apps; use Docker Compose
+there.
+
+Home Assistant needs an app repository with `repository.yaml` at the root of a
+git repository. The files are in [`homeassistant/`](../homeassistant), and the
+repository you add in Home Assistant is a separate public one that holds a
+copy of that folder, because this repository is private for now:
+
+```text
+https://github.com/stijnvandepol/gdash-homeassistant
+```
+
+In Home Assistant, open **Settings, Apps** (older: **Add-ons**), the store,
+the menu at the top right, **Repositories**, add that address, then install and
+start **GDash**. The first start, pairing TVs, the Home Assistant connection
+and announcements are described in
+[DOCS.md of the app](../homeassistant/gdash/DOCS.md). The app is experimental:
+it has not been run on a real Home Assistant yet.
+
 ## Checking a download
 
 `SHA256SUMS` in every release lists the checksum of each archive. The release

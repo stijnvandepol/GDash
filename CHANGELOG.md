@@ -16,6 +16,11 @@ the format follows [Keep a Changelog](https://keepachangelog.com).
   within a minute, keeping the typeface; without a location nothing
   changes. The preview shows what a screen shows now, and dashboard files
   keep the choice.
+- A Home Assistant app (experimental) in `homeassistant/`: GDash on the host
+  network, with its data in the app's data folder, run as an unprivileged
+  user. See [docs/install.md](docs/install.md#home-assistant-app).
+- `CONTRIBUTING.md`, issue and pull request templates, a code of conduct and
+  a checklist for making the repository public ([docs/publishing.md](docs/publishing.md)).
 
 ## 0.6.0 – 2026-10-11
 
