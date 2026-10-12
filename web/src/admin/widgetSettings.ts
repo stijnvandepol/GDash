@@ -7,6 +7,8 @@ export const WIDGET_LABELS: Record<string, string> = {
   forecast: 'Forecast',
   sun: 'Sun',
   airquality: 'Air quality',
+  waste: 'Waste collection',
+  energyprice: 'Energy price',
   calendar: 'Calendar',
   news: 'News',
   text: 'Note',
@@ -22,6 +24,7 @@ export const SETTING_LABELS: Record<string, string> = {
   label: 'Label',
   date: 'Date',
   seconds: 'Seconds per photo',
+  calendar: 'Calendar',
 };
 
 const COUNTDOWN_DAYS = 30;

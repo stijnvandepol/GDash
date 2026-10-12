@@ -12,7 +12,7 @@ import (
 
 // wasteWidget returns a waste collection widget below the default layout.
 func wasteWidget(id string, calendar any) Widget {
-	w := Widget{ID: id, Type: "waste", X: 0, Y: 5, W: 5, H: 4}
+	w := Widget{ID: id, Type: "waste", X: 0, Y: 5, W: 6, H: 4}
 	if calendar != nil {
 		w.Settings = map[string]any{"calendar": calendar}
 	}
@@ -33,8 +33,8 @@ func TestValidateWasteAndEnergyPriceWidgets(t *testing.T) {
 		{"waste calendar fraction", wasteWidget("waste", 1.5), "widgets[2]: calendar must be the number of a calendar"},
 		{"waste calendar as text", wasteWidget("waste", "3"), "widgets[2]: calendar must be the number of a calendar"},
 		{"waste calendar too large", wasteWidget("waste", float64(1<<60)), "widgets[2]: calendar must be the number of a calendar"},
-		{"waste too small", Widget{ID: "waste", Type: "waste", X: 0, Y: 5, W: 4, H: 4, Settings: map[string]any{"calendar": float64(1)}}, "a waste widget needs at least 5x4 cells"},
-		{"waste with another setting", Widget{ID: "waste", Type: "waste", X: 0, Y: 5, W: 5, H: 4, Settings: map[string]any{"calendar": float64(1), "maxItems": float64(3)}}, `unknown setting "maxItems"`},
+		{"waste too small", Widget{ID: "waste", Type: "waste", X: 0, Y: 5, W: 5, H: 4, Settings: map[string]any{"calendar": float64(1)}}, "a waste widget needs at least 6x4 cells"},
+		{"waste with another setting", Widget{ID: "waste", Type: "waste", X: 0, Y: 5, W: 6, H: 4, Settings: map[string]any{"calendar": float64(1), "maxItems": float64(3)}}, `unknown setting "maxItems"`},
 		{"energy price", Widget{ID: "price", Type: "energyprice", X: 0, Y: 5, W: 6, H: 4}, ""},
 		{"energy price too small", Widget{ID: "price", Type: "energyprice", X: 0, Y: 5, W: 5, H: 4}, "a energyprice widget needs at least 6x4 cells"},
 		{"energy price takes no settings", Widget{ID: "price", Type: "energyprice", X: 0, Y: 5, W: 6, H: 4, Settings: map[string]any{"calendar": float64(1)}}, `unknown setting "calendar"`},

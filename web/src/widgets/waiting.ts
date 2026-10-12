@@ -2,7 +2,7 @@ import { t, type TextKey } from '../i18n.svelte';
 import type { Entry } from '../protocol';
 
 /** The data sources a widget can wait for. */
-export type Source = 'weather' | 'forecast' | 'sun' | 'airquality' | 'news' | 'calendar' | 'homeassistant';
+export type Source = 'weather' | 'forecast' | 'sun' | 'airquality' | 'waste' | 'energyprice' | 'news' | 'calendar' | 'homeassistant';
 
 const TEXTS: Record<Source, { notSetUp: TextKey; failed: TextKey; loading: TextKey }> = {
   weather: { notSetUp: 'weatherNotSetUp', failed: 'weatherFailed', loading: 'weatherLoading' },
@@ -12,6 +12,10 @@ const TEXTS: Record<Source, { notSetUp: TextKey; failed: TextKey; loading: TextK
   sun: { notSetUp: 'weatherNotSetUp', failed: 'sunFailed', loading: 'sunLoading' },
   // The air quality is fetched for the weather location.
   airquality: { notSetUp: 'weatherNotSetUp', failed: 'airQualityFailed', loading: 'airQualityLoading' },
+  // Waste pickups come from a calendar under Settings.
+  waste: { notSetUp: 'calendarNotSetUp', failed: 'wasteFailed', loading: 'wasteLoading' },
+  // The price needs no setup: until the server has fetched it, it is loading.
+  energyprice: { notSetUp: 'energyPriceLoading', failed: 'energyPriceFailed', loading: 'energyPriceLoading' },
   news: { notSetUp: 'newsNotSetUp', failed: 'newsFailed', loading: 'newsLoading' },
   calendar: { notSetUp: 'calendarNotSetUp', failed: 'calendarFailed', loading: 'calendarLoading' },
   homeassistant: { notSetUp: 'haNotSetUp', failed: 'haFailed', loading: 'haLoading' },

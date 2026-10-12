@@ -90,7 +90,7 @@ export interface WidgetType {
 
 /** A setting a widget type takes; internal/display validates the same. */
 export interface SettingRule {
-  kind: 'integer' | 'text' | 'date' | 'entities';
+  kind: 'integer' | 'text' | 'date' | 'calendar' | 'entities';
   /** Bounds of an integer, of a text's length in characters, or of how many entities. */
   min?: number;
   max?: number;

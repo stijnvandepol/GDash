@@ -2,6 +2,7 @@
   import type { WidgetType } from './api';
   import { SETTING_LABELS } from './widgetSettings';
   import EntityPicker from './EntityPicker.svelte';
+  import CalendarPicker from './CalendarPicker.svelte';
 
   // Texts up to this length get a single-line field, longer ones a text area.
   const SINGLE_LINE_MAX = 60;
@@ -44,6 +45,8 @@
   {@const rule = type.settings[key]!}
   {#if rule.kind === 'entities'}
     <EntityPicker selected={list(key)} max={rule.max ?? 1} onchange={(ids) => set(key, ids)} />
+  {:else if rule.kind === 'calendar'}
+    <CalendarPicker selected={typeof settings[key] === 'number' ? settings[key] : undefined} onchange={(id) => set(key, id)} />
   {:else}
   <label class="inline-label">
     {SETTING_LABELS[key] ?? key}

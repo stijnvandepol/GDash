@@ -70,7 +70,7 @@ var WidgetTypes = map[string]WidgetType{
 	"forecast":    {Source: WeatherSource, MinW: 6, MinH: 4, Settings: map[string]Setting{"days": {Kind: SettingInteger, Min: 1, Max: 7}}},
 	"sun":         {Source: WeatherSource, MinW: 5, MinH: 4},
 	"airquality":  {Source: AirQualitySource, MinW: 5, MinH: 4},
-	"waste":       {Source: WasteSource, MinW: 5, MinH: 4, Settings: wasteSettings},
+	"waste":       {Source: WasteSource, MinW: 6, MinH: 4, Settings: wasteSettings},
 	"energyprice": {Source: EnergyPriceSource, MinW: 6, MinH: 4},
 	"news":        {Source: "news.default", MinW: 6, MinH: 4, Settings: maxItems},
 	"calendar":    {Source: "calendar.default", MinW: 6, MinH: 4, Settings: maxItems},
