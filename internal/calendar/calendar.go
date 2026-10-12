@@ -193,10 +193,18 @@ func propValue(props ical.Props, name string) string {
 	return ""
 }
 
+// textEscapes undoes the escaping of RFC 5545 section 3.3.11, where a feed
+// writes a comma as backslash comma: without it a title such as "Plastic,
+// blik en drinkpakken" shows its backslash on the TV. A line break becomes
+// a space, as a title is one line.
+var textEscapes = strings.NewReplacer(`\\`, `\`, `\,`, `,`, `\;`, `;`, `\n`, " ", `\N`, " ")
+
+func unescapeText(s string) string { return textEscapes.Replace(s) }
+
 // newEvent shows times in loc, so every event of a calendar is written the
 // same way whether the feed used UTC or a named zone.
 func newEvent(e ical.Event, occ occurrence, calendar string, loc *time.Location) Event {
-	title := strings.Join(strings.Fields(propValue(e.Props, ical.PropSummary)), " ")
+	title := strings.Join(strings.Fields(unescapeText(propValue(e.Props, ical.PropSummary))), " ")
 	if title == "" {
 		title = "(no title)"
 	}

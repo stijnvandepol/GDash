@@ -93,6 +93,19 @@ func TestParseCutsEndlessEventsAtYear9999(t *testing.T) {
 	}
 }
 
+func TestParseUnescapesTitles(t *testing.T) {
+	// Afvalkalender and mijnafvalwijzer feeds escape every comma.
+	ics := "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:x\r\nBEGIN:VEVENT\r\nUID:a\r\nDTSTAMP:20261001T120000Z\r\nDTSTART:20261009T080000Z\r\n" +
+		`SUMMARY:Plastic\, blik en drinkpakken \\ PMD\; vrijdag\nochtend` + "\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n"
+	events, err := Parse(strings.NewReader(ics), window(t), "Work")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want := `Plastic, blik en drinkpakken \ PMD; vrijdag ochtend`; len(events) != 1 || events[0].Title != want {
+		t.Fatalf("events = %+v, want the title %q", events, want)
+	}
+}
+
 func TestParseUsesFallbackNameAndRejectsGarbage(t *testing.T) {
 	ics := "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:x\r\nBEGIN:VEVENT\r\nUID:a\r\nDTSTAMP:20261001T120000Z\r\nDTSTART:20261009T080000Z\r\nSUMMARY:   Many    spaces  \r\nEND:VEVENT\r\nEND:VCALENDAR\r\n"
 	events, err := Parse(strings.NewReader(ics), window(t), "Work")
