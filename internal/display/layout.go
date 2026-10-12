@@ -11,7 +11,6 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"github.com/stijnvandepol/gdash/internal/homeassistant"
 	"github.com/stijnvandepol/gdash/internal/validation"
 )
 
@@ -247,39 +246,6 @@ func valueProblem(key string, value any, rule Setting) string {
 		return stopProblem(key, value)
 	}
 	return ""
-}
-
-// entityIDs reads an entities setting: a list of distinct entity IDs, at
-// most limit long. ok is false for anything else.
-func entityIDs(value any, limit int) ([]string, bool) {
-	list, ok := value.([]any)
-	if !ok || len(list) > limit {
-		return nil, false
-	}
-	ids := make([]string, 0, len(list))
-	for _, v := range list {
-		id, isText := v.(string)
-		if !isText || !homeassistant.ValidEntityID(id) || slices.Contains(ids, id) {
-			return nil, false
-		}
-		ids = append(ids, id)
-	}
-	return ids, true
-}
-
-// EntityIDs returns every Home Assistant entity the dashboards show, sorted
-// and without repeats, so the server fetches each one once.
-func EntityIDs(dashboards []Dashboard) []string {
-	var all []string
-	for _, d := range dashboards {
-		for _, w := range d.Widgets {
-			if ids, ok := entityIDs(w.Settings["entities"], MaxEntitiesPerWidget); ok && w.Type == "homeassistant" {
-				all = append(all, ids...)
-			}
-		}
-	}
-	slices.Sort(all)
-	return slices.Compact(all)
 }
 
 // hasControl reports control characters other than a line break, which a
