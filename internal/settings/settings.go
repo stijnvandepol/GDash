@@ -1,5 +1,6 @@
 // Package settings manages what GDash fetches: the weather location, news
-// feeds, calendars, the Home Assistant connection and custom API sources.
+// feeds, calendars, the Home Assistant and Homey connections and custom API
+// sources.
 // They are edited in the web interface and stored in
 // SQLite; environment variables only fill them on the very first start.
 package settings
@@ -17,6 +18,7 @@ import (
 
 	"github.com/stijnvandepol/gdash/internal/calendar"
 	"github.com/stijnvandepol/gdash/internal/homeassistant"
+	"github.com/stijnvandepol/gdash/internal/homey"
 	"github.com/stijnvandepol/gdash/internal/news"
 	"github.com/stijnvandepol/gdash/internal/secret"
 	"github.com/stijnvandepol/gdash/internal/store"
@@ -67,6 +69,8 @@ type Settings struct {
 	Language string `json:"language"`
 	// HomeAssistant is nil until a connection is set up.
 	HomeAssistant *HomeAssistant `json:"homeAssistant"`
+	// Homey is nil until a connection is set up.
+	Homey *Homey `json:"homey"`
 }
 
 // Languages are the display languages; web/src/i18n.svelte.ts has their
@@ -81,6 +85,8 @@ type Sources struct {
 	Calendars []calendar.Source
 	// HomeAssistant is nil when no readable connection is set up.
 	HomeAssistant *homeassistant.Connection
+	// Homey is nil when no readable connection is set up.
+	Homey *homey.Connection
 }
 
 // Service reads and changes the settings.
@@ -120,6 +126,9 @@ func (s *Service) Get(ctx context.Context) (Settings, error) {
 		})
 	}
 	if out.HomeAssistant, err = s.homeAssistantView(ctx); err != nil {
+		return Settings{}, err
+	}
+	if out.Homey, err = s.homeyView(ctx); err != nil {
 		return Settings{}, err
 	}
 	return out, nil
@@ -164,6 +173,12 @@ func (s *Service) Sources(ctx context.Context) (Sources, error) {
 		s.Logger.Error("home assistant connection cannot be decrypted; connect again", "error", err)
 	} else if ok {
 		out.HomeAssistant = &conn
+	}
+	homeyConn, ok, err := s.HomeyConnection(ctx)
+	if err != nil {
+		s.Logger.Error("homey connection cannot be decrypted; connect again", "error", err)
+	} else if ok {
+		out.Homey = &homeyConn
 	}
 	return out, nil
 }

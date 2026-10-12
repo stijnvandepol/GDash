@@ -24,11 +24,15 @@ func dataFor(dashboards []Dashboard, data map[string]datahub.Entry, now time.Tim
 	if entry, ok := customEntry(dashboards, data, now); ok {
 		used[CustomSource] = entry
 	}
+	if entry, ok := presenceEntry(dashboards, data); ok {
+		used[HomeyPresenceSource] = entry
+	}
 	return used
 }
 
 // onlyKeys narrows an entry that holds an object to the keys in ids: the
-// Home Assistant entities, the transit stops, or the calendars of waste
+// Home Assistant entities, the Homey capabilities, the transit stops, or
+// the calendars of waste
 // collection widgets. The server fetches those of every dashboard in one
 // entry each, but a
 // display may only receive what its own widgets show: a hall screen with a
@@ -65,6 +69,9 @@ func narrowShared(used map[string]datahub.Entry, dashboards []Dashboard) {
 	if entry, ok := used[HomeAssistantSource]; ok {
 		used[HomeAssistantSource] = onlyKeys(entry, EntityIDs(dashboards))
 	}
+	if entry, ok := used[HomeySource]; ok {
+		used[HomeySource] = onlyKeys(entry, HomeyCapabilityKeys(dashboards))
+	}
 	if entry, ok := used[WasteSource]; ok {
 		used[WasteSource] = onlyCalendars(entry, WasteCalendarIDs(dashboards))
 	}
@@ -79,6 +86,12 @@ func narrowShared(used map[string]datahub.Entry, dashboards []Dashboard) {
 // entityIDs reads an entities setting: a list of distinct entity IDs, at
 // most limit long. ok is false for anything else.
 func entityIDs(value any, limit int) ([]string, bool) {
+	return idList(value, limit, homeassistant.ValidEntityID)
+}
+
+// idList reads a setting that lists distinct IDs that valid accepts, at
+// most limit. ok is false for anything else.
+func idList(value any, limit int, valid func(string) bool) ([]string, bool) {
 	list, ok := value.([]any)
 	if !ok || len(list) > limit {
 		return nil, false
@@ -86,7 +99,7 @@ func entityIDs(value any, limit int) ([]string, bool) {
 	ids := make([]string, 0, len(list))
 	for _, v := range list {
 		id, isText := v.(string)
-		if !isText || !homeassistant.ValidEntityID(id) || slices.Contains(ids, id) {
+		if !isText || !valid(id) || slices.Contains(ids, id) {
 			return nil, false
 		}
 		ids = append(ids, id)

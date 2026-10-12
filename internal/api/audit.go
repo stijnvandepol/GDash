@@ -39,6 +39,8 @@ const (
 	auditPhotoRemoved           = "photo_removed"
 	auditHomeAssistantConnected = "homeassistant_connected"
 	auditHomeAssistantRemoved   = "homeassistant_removed"
+	auditHomeyConnected         = "homey_connected"
+	auditHomeyRemoved           = "homey_removed"
 	auditAPITokenCreated        = "api_token_created"
 	auditAPITokenRevoked        = "api_token_revoked"
 	auditLoginCodeFailed        = "login_code_failed"

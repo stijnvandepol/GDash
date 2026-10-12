@@ -190,6 +190,7 @@ func TestAPITokenOpensNoOtherRoute(t *testing.T) {
 		{"POST", "/api/api-tokens", `{"name":"mine"}`},
 		{"GET", "/api/audit-events", ""},
 		{"PUT", "/api/homeassistant", `{"url":"http://x","token":"y"}`},
+		{"PUT", "/api/homey", `{"url":"http://x","key":"y"}`},
 	} {
 		if status, _ := env.bearer(t, req.method, req.path, req.body, secret, nil); status != http.StatusUnauthorized {
 			t.Errorf("%s %s with a token = %d, want 401", req.method, req.path, status)

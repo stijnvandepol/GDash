@@ -18,7 +18,7 @@ import (
 // polls can tell that nothing changed and leave what it shows alone.
 func PreviewSnapshot(now time.Time, d Dashboard, data map[string]datahub.Entry, language string, textScale int) (Snapshot, error) {
 	s := Snapshot{
-		Type: "snapshot", Active: true, Dashboard: withNightTheme(d, IsNight(now, data)),
+		Type: "snapshot", Active: true, Dashboard: screenDashboard(withNightTheme(d, IsNight(now, data))),
 		Data: dataFor([]Dashboard{d}, data, now), Language: language, TextScale: textScale,
 	}
 	// The hash leaves the server time out: it differs on every call.

@@ -193,7 +193,7 @@ func (b *Broadcaster) Publish(now time.Time, views map[string]View, data map[str
 		}
 		msg, err := json.Marshal(Snapshot{
 			Type: "snapshot", Version: b.version, ServerTime: now, Active: active,
-			Dashboard: dashboard, Data: used, Language: language, Pages: pages, PageSeconds: seconds,
+			Dashboard: screenDashboard(dashboard), Data: used, Language: language, Pages: screenDashboards(pages), PageSeconds: seconds,
 			TextScale: view.TextScale, Announcement: shown,
 		})
 		if err != nil {

@@ -71,6 +71,7 @@ type Server struct {
 	AnnouncementsChanged func(expiresAt time.Time)
 	Places               PlaceSearcher
 	HomeAssistant        HomeAssistantReader
+	Homey                HomeyReader
 	Stops                StopSearcher
 	CustomFetcher        CustomFetcher
 	// SettingsChanged is called after a data source setting changes, so
@@ -161,6 +162,10 @@ func (s *Server) Handler() http.Handler {
 	mux.Handle("PUT /api/homeassistant", s.requireUser(s.putHomeAssistant))
 	mux.Handle("DELETE /api/homeassistant", s.requireUser(s.deleteHomeAssistant))
 	mux.Handle("GET /api/homeassistant/entities", s.requireUser(s.getHomeAssistantEntities))
+	mux.Handle("PUT /api/homey", s.requireUser(s.putHomey))
+	mux.Handle("DELETE /api/homey", s.requireUser(s.deleteHomey))
+	mux.Handle("GET /api/homey/capabilities", s.requireUser(s.getHomeyCapabilities))
+	mux.Handle("GET /api/homey/users", s.requireUser(s.getHomeyUsers))
 	mux.Handle("GET /api/departures/stops", s.requireUser(s.getDepartureStops))
 	s.handleCustomSources(mux)
 

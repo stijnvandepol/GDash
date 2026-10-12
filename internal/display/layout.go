@@ -92,9 +92,11 @@ var WidgetTypes = map[string]WidgetType{
 	"homeassistant": {Source: HomeAssistantSource, MinW: 4, MinH: 3, Settings: map[string]Setting{
 		"entities": {Kind: SettingEntities, Min: 1, Max: MaxEntitiesPerWidget, Required: true},
 	}},
-	"departures": departuresWidget,
-	"fuel":       fuelWidget,
-	CustomWidget: customWidget,
+	"departures":        departuresWidget,
+	"fuel":              fuelWidget,
+	"homey":             homeyWidget,
+	HomeyPresenceWidget: homeyPresenceWidget,
+	CustomWidget:        customWidget,
 }
 
 // AirQualitySource is the data key of the air quality and pollen at the
@@ -220,7 +222,7 @@ func settingsProblem(w Widget, kind WidgetType) string {
 			continue
 		}
 		// These kinds have a message that says how to choose one.
-		if rule.Kind == SettingEntities || rule.Kind == SettingStop {
+		if rule.Kind == SettingEntities || rule.Kind == SettingStop || rule.Kind == SettingHomeyCapabilities || rule.Kind == SettingHomeyUsers {
 			return valueProblem(key, nil, rule)
 		}
 		return fmt.Sprintf("a %s widget needs a %s", w.Type, key)
@@ -254,6 +256,8 @@ func valueProblem(key string, value any, rule Setting) string {
 		if ids, ok := entityIDs(value, rule.Max); !ok || len(ids) < rule.Min {
 			return fmt.Sprintf("choose %d to %d Home Assistant entities", rule.Min, rule.Max)
 		}
+	case SettingHomeyCapabilities, SettingHomeyUsers:
+		return homeySettingProblem(key, value, rule)
 	case SettingStop:
 		return stopProblem(key, value)
 	case SettingPlace:

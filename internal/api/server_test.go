@@ -26,6 +26,7 @@ import (
 	"github.com/stijnvandepol/gdash/internal/custom"
 	"github.com/stijnvandepol/gdash/internal/datahub"
 	"github.com/stijnvandepol/gdash/internal/homeassistant"
+	"github.com/stijnvandepol/gdash/internal/homey"
 	"github.com/stijnvandepol/gdash/internal/outbound"
 	"github.com/stijnvandepol/gdash/internal/pairing"
 	"github.com/stijnvandepol/gdash/internal/photos"
@@ -149,6 +150,7 @@ func newTestEnv(t *testing.T, discover func(context.Context) ([]cast.Device, err
 		Stops:                stops,
 		CustomFetcher:        &custom.Fetcher{HTTP: outbound.NewClient(5 * time.Second)},
 		HomeAssistant:        &homeassistant.Client{HTTP: &http.Client{Timeout: 5 * time.Second}},
+		Homey:                &homey.Client{HTTP: &http.Client{Timeout: 5 * time.Second}},
 		SettingsChanged:      func() { settingsChanges.Add(1) },
 		Announcements:        board,
 		AnnouncementsChanged: func(time.Time) { announced.Add(1) },

@@ -190,6 +190,7 @@ func serve(ctx context.Context, logger *slog.Logger) error {
 		Settings:       settingsService,
 		Places:         weather.Geocoder{BaseURL: weather.DefaultGeocodingURL, HTTP: &http.Client{Timeout: upstreamTimeout}},
 		HomeAssistant:  sources.home,
+		Homey:          sources.homey,
 		Stops:          sources.stops,
 		CustomFetcher:  sources.custom,
 		TrustedProxies: cfg.trustedProxies,
@@ -201,7 +202,7 @@ func serve(ctx context.Context, logger *slog.Logger) error {
 		},
 		DashboardsChanged: func() {
 			// A dashboard can start or stop showing a Home Assistant entity,
-			// a transit stop or a custom source.
+			// a Homey value or user, a transit stop or a custom source.
 			if err := sources.sync(ctx); err != nil {
 				logger.Error("could not follow the dashboard change; restart GDash", "error", err)
 			}
