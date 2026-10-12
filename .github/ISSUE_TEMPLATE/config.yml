@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Report a security problem
+    url: https://github.com/stijnvandepol/gdash/blob/main/SECURITY.md
+    about: Do not open a public issue for a vulnerability. SECURITY.md explains how to report it privately.
+  - name: Install and troubleshooting guide
+    url: https://github.com/stijnvandepol/gdash/blob/main/docs/install.md#troubleshooting
+    about: Answers for TVs that are not found, a dark screen and a lost password.

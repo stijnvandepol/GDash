@@ -1,0 +1,50 @@
+name: Feature request
+description: An idea for something GDash could do
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        GDash aims to stay small and safe to run on a home network, so not every
+        idea fits. Describing the problem first makes it easier to find the
+        right solution. If you want to build it yourself, please wait for an
+        answer here before you start, see
+        [CONTRIBUTING.md](https://github.com/stijnvandepol/gdash/blob/main/CONTRIBUTING.md).
+  - type: textarea
+    id: problem
+    attributes:
+      label: What do you want to do, and what stops you?
+      description: Describe the situation, not the solution. For example "I want to see when the bin is collected" rather than "add a waste widget".
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: What would you like GDash to do
+      description: A sketch of how it could work. Where does the data come from, and what shows on the TV?
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: What do you do now
+      description: A workaround, or another way you thought of.
+  - type: dropdown
+    id: scope
+    attributes:
+      label: Where does it belong
+      options:
+        - A new widget or data source
+        - The dashboard editor or styles
+        - Displays, Cast or pairing
+        - The web interface
+        - The API or automations (Home Assistant and others)
+        - Installing or running GDash
+        - Something else
+    validations:
+      required: true
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before sending
+      options:
+        - label: I looked through the existing issues and the docs.
+          required: true

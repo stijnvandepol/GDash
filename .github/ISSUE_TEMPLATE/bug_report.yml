@@ -1,0 +1,89 @@
+name: Bug report
+description: Something in GDash does not work the way it should
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting it. The more of the questions below you can answer,
+        the faster it can be found. A security problem is not a bug report: see
+        [SECURITY.md](https://github.com/stijnvandepol/gdash/blob/main/SECURITY.md).
+  - type: input
+    id: version
+    attributes:
+      label: GDash version
+      description: Shown in the footer of the web interface, or run `gdash version` (in Docker, `docker compose exec gdash /gdash version`).
+      placeholder: v0.6.0
+    validations:
+      required: true
+  - type: dropdown
+    id: install
+    attributes:
+      label: How GDash runs
+      options:
+        - Docker Compose
+        - Docker (other)
+        - Linux binary with systemd
+        - Windows
+        - Home Assistant app
+        - Built from source
+    validations:
+      required: true
+  - type: input
+    id: hardware
+    attributes:
+      label: The machine GDash runs on
+      description: For example Raspberry Pi 4, Synology DS220+, a mini PC.
+    validations:
+      required: true
+  - type: input
+    id: tv
+    attributes:
+      label: TV or screen model
+      description: For example Chromecast with Google TV (HD), Nest Hub (2nd gen), Sony Bravia with built-in Chromecast, an iPad in kiosk mode.
+    validations:
+      required: true
+  - type: dropdown
+    id: connection
+    attributes:
+      label: How the screen is connected
+      options:
+        - Cast, started by GDash (a Cast device picked under Displays)
+        - A browser that opens /d/<display> and was paired with a code
+        - A Raspberry Pi or kiosk with a browser
+        - Not about a screen (web interface, API, server)
+    validations:
+      required: true
+  - type: textarea
+    id: network
+    attributes:
+      label: Network
+      description: Is GDash in the same network (VLAN) as the TV? Do you use host networking, a VPN such as Tailscale, a reverse proxy or a mesh Wi-Fi system?
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: And what you expected instead. A screenshot of the TV or the web interface helps.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Does it happen every time, or only sometimes, for example after about 19 minutes or when the TV was off?
+  - type: textarea
+    id: logs
+    attributes:
+      label: Log
+      description: |
+        The relevant lines of the server log (`docker compose logs gdash`, `journalctl -u gdash`, or the app log in Home Assistant). **Remove the setup token, calendar addresses, API tokens and your public IP address first.**
+      render: text
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before sending
+      options:
+        - label: I looked for the same problem in the existing issues and in the troubleshooting section of docs/install.md.
+          required: true
+        - label: I removed secrets and personal data from what I pasted.
+          required: true
