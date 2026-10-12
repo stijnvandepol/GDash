@@ -163,6 +163,31 @@ func (s *Store) ChangePassword(ctx context.Context, userID int64, passwordHash, 
 		return err
 	}
 	defer tx.Rollback()
+	if err := setPassword(ctx, tx, userID, passwordHash, keepTokenHash); err != nil {
+		return err
+	}
+	return tx.Commit()
+}
+
+// ResetPassword stores a new password hash, ends every session of the user
+// and turns two-step login off, in one transaction, for an admin who lost
+// the password or the phone. It reports whether two-step login was on.
+func (s *Store) ResetPassword(ctx context.Context, userID int64, passwordHash string) (twoStepWasOn bool, err error) {
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return false, err
+	}
+	defer tx.Rollback()
+	if err := setPassword(ctx, tx, userID, passwordHash, ""); err != nil {
+		return false, err
+	}
+	if twoStepWasOn, err = deleteTwoStep(ctx, tx, userID); err != nil {
+		return false, err
+	}
+	return twoStepWasOn, tx.Commit()
+}
+
+func setPassword(ctx context.Context, tx *sql.Tx, userID int64, passwordHash, keepTokenHash string) error {
 	res, err := tx.ExecContext(ctx, "UPDATE users SET password_hash = ? WHERE id = ?", passwordHash, userID)
 	if err != nil {
 		return fmt.Errorf("change password: %w", err)
@@ -173,5 +198,5 @@ func (s *Store) ChangePassword(ctx context.Context, userID int64, passwordHash, 
 	if _, err := tx.ExecContext(ctx, "DELETE FROM sessions WHERE user_id = ? AND token_hash != ?", userID, keepTokenHash); err != nil {
 		return fmt.Errorf("end other sessions: %w", err)
 	}
-	return tx.Commit()
+	return nil
 }
