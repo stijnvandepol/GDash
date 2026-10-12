@@ -198,14 +198,16 @@ func TestLanguage(t *testing.T) {
 	if got, err := s.Language(ctx); err != nil || got != DefaultLanguage {
 		t.Fatalf("default language = %q, %v", got, err)
 	}
-	if err := s.SetLanguage(ctx, "fr"); fieldNames(err) != "language" {
+	if err := s.SetLanguage(ctx, "es"); fieldNames(err) != "language" {
 		t.Fatalf("unknown language: fields = %q", fieldNames(err))
 	}
-	if err := s.SetLanguage(ctx, "nl"); err != nil {
-		t.Fatal(err)
-	}
-	if got, _ := s.Get(ctx); got.Language != "nl" {
-		t.Fatalf("Get language = %q, want nl", got.Language)
+	for _, language := range []string{"nl", "de", "fr", "en"} {
+		if err := s.SetLanguage(ctx, language); err != nil {
+			t.Fatalf("set %s: %v", language, err)
+		}
+		if got, _ := s.Get(ctx); got.Language != language {
+			t.Fatalf("Get language = %q, want %s", got.Language, language)
+		}
 	}
 }
 

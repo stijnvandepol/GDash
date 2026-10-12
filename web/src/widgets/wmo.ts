@@ -1,5 +1,7 @@
 // WMO weather interpretation codes as used by Open-Meteo
 // (https://open-meteo.com/en/docs, section "WMO Weather interpretation codes").
+import type { Language } from '../i18n.svelte';
+
 const english: Record<number, string> = {
   0: 'Clear sky',
   1: 'Mainly clear',
@@ -63,9 +65,75 @@ const dutch: Record<number, string> = {
   99: 'Zwaar onweer met hagel',
 };
 
+// The same codes in the words of German weather reports.
+const german: Record<number, string> = {
+  0: 'Wolkenlos',
+  1: 'Überwiegend klar',
+  2: 'Teils bewölkt',
+  3: 'Bedeckt',
+  45: 'Nebel',
+  48: 'Reifnebel',
+  51: 'Leichter Nieselregen',
+  53: 'Nieselregen',
+  55: 'Starker Nieselregen',
+  56: 'Leichter gefrierender Nieselregen',
+  57: 'Gefrierender Nieselregen',
+  61: 'Leichter Regen',
+  63: 'Regen',
+  65: 'Starker Regen',
+  66: 'Leichter Eisregen',
+  67: 'Eisregen',
+  71: 'Leichter Schneefall',
+  73: 'Schneefall',
+  75: 'Starker Schneefall',
+  77: 'Schneegriesel',
+  80: 'Leichte Schauer',
+  81: 'Schauer',
+  82: 'Heftige Schauer',
+  85: 'Schneeschauer',
+  86: 'Starke Schneeschauer',
+  95: 'Gewitter',
+  96: 'Gewitter mit Hagel',
+  99: 'Schweres Gewitter mit Hagel',
+};
+
+// The same codes in the words of Météo-France.
+const french: Record<number, string> = {
+  0: 'Ciel dégagé',
+  1: 'Plutôt dégagé',
+  2: 'Partiellement nuageux',
+  3: 'Couvert',
+  45: 'Brouillard',
+  48: 'Brouillard givrant',
+  51: 'Bruine légère',
+  53: 'Bruine',
+  55: 'Bruine dense',
+  56: 'Bruine verglaçante légère',
+  57: 'Bruine verglaçante',
+  61: 'Pluie légère',
+  63: 'Pluie',
+  65: 'Forte pluie',
+  66: 'Pluie verglaçante légère',
+  67: 'Pluie verglaçante',
+  71: 'Neige légère',
+  73: 'Neige',
+  75: 'Forte neige',
+  77: 'Grains de neige',
+  80: 'Averses légères',
+  81: 'Averses',
+  82: 'Fortes averses',
+  85: 'Averses de neige',
+  86: 'Fortes averses de neige',
+  95: 'Orage',
+  96: 'Orage avec grêle',
+  99: 'Violent orage avec grêle',
+};
+
+const DESCRIPTIONS: Record<Language, Record<number, string>> = { en: english, nl: dutch, de: german, fr: french };
+
 /** The words for a WMO weather code, or undefined for an unknown code. */
-export function describeWeather(code: number, language: 'en' | 'nl'): string | undefined {
-  return (language === 'nl' ? dutch : english)[code];
+export function describeWeather(code: number, language: Language): string | undefined {
+  return DESCRIPTIONS[language][code];
 }
 
 /** The icon groups WeatherIcon draws. */

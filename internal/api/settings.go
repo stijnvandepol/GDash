@@ -77,7 +77,8 @@ func (s *Server) putLocation(w http.ResponseWriter, r *http.Request) {
 }
 
 // putLanguage handles PUT /api/settings/language {language}: the language
-// of the texts and dates on the TVs, "en" or "nl". 422 for another one.
+// of the texts and dates on the TVs, "en", "nl", "de" or "fr".
+// 422 for another one.
 func (s *Server) putLanguage(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		Language string `json:"language"`

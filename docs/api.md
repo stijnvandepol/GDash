@@ -57,7 +57,7 @@ come from another site (cross-site request forgery protection).
 | `POST /api/dashboards/{id}/preview?textScale=` `{name, theme?, font?, widgets}` | admin | `200` snapshot of that unsaved layout; nothing is stored and no screen changes | `401`, `404` (the dashboard must exist), `422` |
 | `GET /api/settings` | admin | `200 {"settings": settings, "status": {key: {updatedAt?, failing}}}` | `401` |
 | `PUT /api/settings/location` `{name, latitude, longitude}` | admin | `200` location | `401`, `422` |
-| `PUT /api/settings/language` `{language}` | admin | `200`; screens switch at once | `401`, `422` for a language other than `en` or `nl` |
+| `PUT /api/settings/language` `{language}` | admin | `200`; screens switch at once | `401`, `422` for a language other than `en`, `nl`, `de` or `fr` |
 | `DELETE /api/settings/location` | admin | `204`; weather widgets show that no location is set | `401` |
 | `GET /api/places?name=Oss` | admin | `200 {"places": [place]}` | `401`, `422`, `502 upstream_unavailable` |
 | `POST /api/news-feeds` `{name, url}` | admin | `201` news feed | `401`, `409` at 5 feeds, `422` |

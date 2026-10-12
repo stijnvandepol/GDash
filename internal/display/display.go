@@ -82,8 +82,8 @@ type Snapshot struct {
 	Active    bool                     `json:"active"`
 	Dashboard Dashboard                `json:"dashboard"`
 	Data      map[string]datahub.Entry `json:"data"`
-	// Language is what the screen shows its texts and dates in: "en" or
-	// "nl".
+	// Language is what the screen shows its texts and dates in: "en",
+	// "nl", "de" or "fr".
 	Language string `json:"language"`
 	// Pages, when set, are shown in turn, each for PageSeconds; Dashboard
 	// is then the first of them. The screen turns the pages by its clock.

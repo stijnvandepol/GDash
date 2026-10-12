@@ -47,7 +47,7 @@ export interface Snapshot {
   active?: boolean;
   dashboard: Dashboard;
   data: Record<string, Entry>;
-  /** The household's display language, "en" or "nl". */
+  /** The household's display language, "en", "nl", "de" or "fr". */
   language?: string;
   /** Dashboards shown in turn, each for pageSeconds; see pages.ts. */
   pages?: Dashboard[];

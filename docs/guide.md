@@ -19,7 +19,7 @@ disappears when the basics are done.
    GDash stores the address encrypted and never shows it again. Each
    calendar gets its own colour on the TV, so you can see whose appointment
    it is; choose another one next to the calendar.
-3. **Settings, Screens, Language on the TVs:** English or Nederlands.
+3. **Settings, Screens, Language on the TVs:** English, Nederlands, Deutsch or Français.
 4. **Displays, Add a display:** pick your TV from the list of Cast devices
    GDash found and give the display a name, such as Kitchen; without one it
    takes the TV's name.

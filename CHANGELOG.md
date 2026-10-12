@@ -5,6 +5,12 @@ the format follows [Keep a Changelog](https://keepachangelog.com).
 
 ## Unreleased
 
+### Added
+
+- German and French on the TV, next to English and Dutch: every text,
+  the weather words and the dates, chosen under Settings, Screens,
+  Language on the TVs.
+
 ## 0.6.0 – 2026-10-11
 
 ### Changed

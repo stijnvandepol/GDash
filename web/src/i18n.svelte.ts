@@ -2,10 +2,15 @@
 // (internal/settings.Languages). The web interface for admins stays English,
 // so "Settings" is left untranslated where a text points there.
 import { display } from './state.svelte';
+import { de } from './i18n/de';
+import { fr } from './i18n/fr';
 
-export type Language = 'en' | 'nl';
+export type Language = 'en' | 'nl' | 'de' | 'fr';
 
-const LOCALES: Record<Language, string> = { en: 'en-GB', nl: 'nl-NL' };
+/** The display languages, English first: it is the fallback and the model for the others. */
+export const LANGUAGES: readonly Language[] = ['en', 'nl', 'de', 'fr'];
+
+const LOCALES: Record<Language, string> = { en: 'en-GB', nl: 'nl-NL', de: 'de-DE', fr: 'fr-FR' };
 
 const en = {
   today: 'Today',
@@ -92,7 +97,8 @@ const en = {
 
 export type TextKey = keyof typeof en;
 
-const TEXTS: Record<Language, Record<TextKey, string>> = {
+/** Every text in every language; a missing key in one of them fails the type check. */
+export const TEXTS: Record<Language, Record<TextKey, string>> = {
   en,
   nl: {
     today: 'Vandaag',
@@ -176,6 +182,8 @@ const TEXTS: Record<Language, Record<TextKey, string>> = {
     haHome: 'Thuis',
     haAway: 'Weg',
   },
+  de,
+  fr,
 };
 
 /**
@@ -184,13 +192,13 @@ const TEXTS: Record<Language, Record<TextKey, string>> = {
  */
 function deviceLanguage(): Language {
   const tag = typeof navigator === 'undefined' ? '' : navigator.language.toLowerCase();
-  return tag.startsWith('nl') ? 'nl' : 'en';
+  return LANGUAGES.find((language) => tag === language || tag.startsWith(`${language}-`)) ?? 'en';
 }
 
 /** The language of the screen: the household's choice, else the device's. */
 export function currentLanguage(): Language {
   const chosen = display.snapshot?.language;
-  return chosen === 'en' || chosen === 'nl' ? chosen : deviceLanguage();
+  return LANGUAGES.find((language) => language === chosen) ?? deviceLanguage();
 }
 
 /** The text for key in the current language, with {name} placeholders filled in. */

@@ -70,7 +70,7 @@ type Settings struct {
 
 // Languages are the display languages; web/src/i18n.svelte.ts has their
 // texts.
-var Languages = []string{"en", "nl"}
+var Languages = []string{"en", "nl", "de", "fr"}
 
 // Sources is what the data hub needs to fetch, with calendar addresses
 // decrypted. It never leaves the server.

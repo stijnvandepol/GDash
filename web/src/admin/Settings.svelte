@@ -161,6 +161,8 @@
       >
         <option value="en">English</option>
         <option value="nl">Nederlands</option>
+        <option value="de">Deutsch</option>
+        <option value="fr">Français</option>
       </select>
       {#if languageError}<p class="error">{languageError}</p>{/if}
     </section>

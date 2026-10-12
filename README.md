@@ -18,7 +18,7 @@ Google TV you already own. No extra hardware, no subscription, no cloud.
   a forecast for up to seven days, sunrise and sunset, the air quality and
   the pollen count (Europe). The last good value is kept when the
   internet drops, and stale data is marked.
-- **Dutch or English on the TV**: days, dates, weather and other texts on the
+- **English, Dutch, German or French on the TV**: days, dates, weather and other texts on the
   screens follow the household's choice; the web interface is in English.
 - **Home Assistant**: show sensors and switches, such as the temperature
   inside or whether a door is open, with a long-lived access token. Read

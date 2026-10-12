@@ -123,7 +123,7 @@ export interface Settings {
   newsFeeds: NewsFeed[];
   calendars: Calendar[];
   /** What the TVs show their texts and dates in. */
-  language: 'en' | 'nl';
+  language: 'en' | 'nl' | 'de' | 'fr';
   /** Null until Home Assistant is connected; the token never leaves the server. */
   homeAssistant: HomeAssistant | null;
 }
