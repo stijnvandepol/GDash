@@ -74,6 +74,7 @@ come from another site (cross-site request forgery protection).
 | `DELETE /api/homeassistant` | admin | `204`; Home Assistant widgets show that it is not connected | `401` |
 | `GET /api/homeassistant/entities` | admin | `200 {"entities": [entity]}`, sorted by ID | `401`, `409 not_connected`, `502 upstream_unavailable` |
 | `GET /api/departures/stops?q=utrecht+cs` | admin | `200 {"stops": [stop]}`, at most 20, best matches first | `401`, `422` naming `q` (2 to 100 characters), `502 upstream_unavailable` |
+| `GET /api/custom-sources` and the other custom API routes | admin | see [Custom APIs](#custom-apis) | |
 | `GET /api/photos` | admin | `200 {"photos": [{name, size, addedAt}]}`, oldest first | `401` |
 | `POST /api/photos` multipart, field `photo` | admin | `201` photo | `401`, `409` at 50 photos, `422` for another kind of file or one over 8 MB |
 | `DELETE /api/photos/{name}` | admin | `204` | `401`, `404` |
@@ -210,10 +211,97 @@ Changes apply at once: a changed source is fetched again, a removed one
 disappears from the displays. `status` has an entry per configured source by
 data key (`weather.current`, `airquality.current`, `news.default`,
 `calendar.default`, `homeassistant.default`, `departures.default`). The waste, energy price and fuel sources
-(`waste.default`, `energyprice.nl`, `fuel.default`) exist only while a dashboard has a widget for them.
+(`waste.default`, `energyprice.nl`, `fuel.default`) and custom sources (`custom.source.<id>`) exist only while a
+dashboard has a widget for them.
 
 Place search sends the typed name to Open-Meteo's geocoding service, which
 uses GeoNames data; the coordinates can also be entered by hand.
+
+## Custom APIs
+
+A custom source is any JSON HTTP API set up under Settings. Its secret values never leave the server: they are sealed
+with `secret.key` like calendar addresses, never returned, logged or put in an error or the audit log.
+
+**custom source:** `{"id": 1, "name": "Weather in Oss", "url": "https://api.open-meteo.com/v1/forecast?…", "method": "GET", "body": "", "auth": {"kind": "header", "name": "X-API-Key", "secretSet": true}, "headers": [{"name": "X-Tenant", "value": "", "secret": true}], "intervalSeconds": 900, "sample": {…} | null, "unreadable": false, "createdAt": "…", "updatedAt": "…"}`.
+A request body has the same fields, with `auth.secret` instead of `auth.secretSet` and `sample` as any JSON value:
+
+| Field | Rule |
+|---|---|
+| `name` | 1 to 60 characters, no leading or trailing spaces |
+| `url` | `http` or `https`, at most 2048 characters, without a user name, password or `#` |
+| `method` | `GET`, or `POST` with an optional `body` of valid JSON up to 8 KB (sent as `application/json`) |
+| `auth.kind` | `none`, `bearer` (`Authorization: Bearer <secret>`), `header` (`<name>: <secret>`), `query` (`?<name>=<secret>`, added when fetching, never stored in `url`; the parameter may not be in `url` already) or `basic` (`name` is the user name) |
+| `auth.secret` | up to 2048 characters on one line; a bearer token has no spaces. Empty keeps the stored secret, if the kind is the same |
+| `headers` | up to 10 `{name, value, secret}`; not `Host`, `Authorization`, `Content-Type`, `Content-Length` or another header that the request sets itself, no name twice. An empty `value` of a `secret` header keeps the stored one with that name |
+| `intervalSeconds` | 30 to 86400 |
+| `sample` | an answer to design against, up to 48 KB of JSON, or `null` |
+
+`unreadable` is true when the secrets cannot be decrypted (the database was moved without its key); such a source is
+not fetched until its secrets are entered again. At most 20 sources exist.
+
+| Method and path | Needs | Success | Errors |
+|---|---|---|---|
+| `GET /api/custom-sources` | admin | `200 {"sources": [custom source]}` | `401` |
+| `POST /api/custom-sources` | admin | `201` custom source | `401`, `409` at 20 sources, `422` naming each field, such as `auth.secret` or `headers[1].name` |
+| `PUT /api/custom-sources/{id}` | admin | `200` custom source | `401`, `404`, `422` |
+| `DELETE /api/custom-sources/{id}` | admin | `204`; its widgets say it is not available | `401`, `404` |
+| `POST /api/custom-sources/{id}/tests` | admin | `200 {"data", "truncated", "bytes"}`: one fresh answer, cut down for the editor (25 items per list, 200 characters per text, 12 levels, 2000 values) | `401`, `404`, `502 fetch_failed` with what went wrong, such as the status the API answered |
+| `POST /api/custom-rule-checks` `{when, data, value?, row?}` | admin | `200 {"result"}`, or `{"error"}` when the condition does not apply to `data` | `401`, `422` naming `when` |
+
+**Fetching.** Only sources that a stored dashboard's Custom widget names are fetched, each on its own interval, through
+the same client as feeds and calendars: LAN and localhost addresses work, link-local and cloud metadata addresses are
+refused when connecting. A request has 15 seconds; `Accept: application/json` and a `User-Agent` that names GDash are
+sent. A redirect is followed only to the same host (at most 3, never from https to http), because a key in a custom
+header would otherwise go along. The answer must be a 2xx with at most 1 MB of JSON (`application/json`, `*+json`,
+`text/json`, `text/plain` or no type). The last good answer is kept on failure and on disk, like other sources; the
+status is under `custom.source.<id>` in `GET /api/settings`. The raw answer stays on the server.
+
+**Data on a screen (`custom.default`).** No source fetches this key: for each screen the server builds, per Custom
+widget of that screen's own dashboards, keyed `<dashboardId>/<widgetId>`, only what the widget shows:
+`{"kitchen/prices": {"state": "ok", "stale": false, "failing": false, "mode": "list", "title": "Prices", "rows": [{"cells": ["Bread", 2.5], "tone": "warn"}], "tone": "", "message": "Something is dear", "hidden": false}}`.
+`state` is `ok`, `loading`, `failing` (no answer yet) or `missing` (the source does not exist or no saved dashboard
+uses it yet). Value mode has `value`, `label`, `unit` and `decimals`; key-values mode `pairs: [{label, value}]`.
+Values are numbers, `true`, `false`, `null` or one line of at most 100 characters; a list or object becomes text. A
+list sends at most 15 rows. The screen shows everything as text, never as HTML.
+
+**Paths.** `name` or `.name` (letters, digits and `_`), `["any key"]` or `['any key']` with `\"`, `\'`, `\\` and `\n`
+as escapes, `[2]` or `[-1]` (from the end) for an element, `[*]` for every element (the path then gives a list), and
+`$` for the whole answer. At most 200 characters and 32 steps. A missing key or element gives nothing (`null` in a
+rule). `internal/custom/path.go` and `web/src/admin/jsonPath.ts` implement the same syntax.
+
+**Expressions.** A rule's `when`, at most 500 characters and 20 levels of nesting:
+
+```
+or      = and { ("or" | "||") and }
+and     = not { ("and" | "&&") not }
+not     = ("not" | "!") not | compare
+compare = sum [ ("==" | "!=" | "<" | "<=" | ">" | ">=") sum ]
+sum     = product { ("+" | "-") product }
+product = unary { ("*" | "/") unary }
+unary   = "-" unary | primary
+primary = number | string | true | false | null | path | name "(" [ or { "," or } ] ")" | "(" or ")"
+```
+
+Strings are in double or single quotes. A path starting with `value` is the widget's value (value mode) and one
+starting with `row` is the current item (list mode); `$.value` reaches a key called `value` in the answer. `==` and
+`!=` compare numbers, texts, booleans and `null` (different kinds are unequal; a list or object equals nothing). The
+ordering operators take two numbers or two texts, `+` also joins two texts (up to 4096 bytes), `and`, `or` and `not`
+take booleans and stop early. Functions: `len(text | list | object)`, `contains(text, text)` or `contains(list,
+value)`, `lower(text)`, `upper(text)`, `round(number)` and `round(number, 0..6)`, `number(number | text)`,
+`minutesSince(time)` (ISO 8601 with or without a time and zone, UTC when absent, or a Unix time in seconds or
+milliseconds; negative for the future). Anything else, such as comparing `null` with a number, dividing by zero or a
+result that is not a finite number, is an evaluation error: the rule does not match. A rule matches only when its
+condition gives `true`.
+
+**Rules.** `{"when": "value > 25", "tone": "ok" | "warn" | "bad" | "", "message": "…", "hide": true, "announce": true}`,
+up to 6 per widget. A rule that reads `row` is evaluated for every item of the list (it holds when any item matches)
+and colours or hides that item; others are evaluated once and colour the value, every row and every pair. The most
+serious tone wins; the first matching rule with a message sets `message`; `hide` hides the data, not the title and
+message. A rule needs at least a tone, a message or `hide`; `announce` needs a `message`, which is posted as an
+announcement to every display, with the widget's title, when the rule starts to hold, at most once every 10 minutes per
+rule. The first evaluation after a start, or after the rule is edited, only records its state. Rules are checked after
+every data change and every minute; each announcement is in the audit log as `custom_rule_announced`, by the actor
+`rule`, with the dashboard and widget and the message.
 
 ## Objects
 
@@ -283,12 +371,17 @@ allows, overlaps another, lacks a required setting, or has a setting its type do
 | `homeassistant` | 4x3 | `homeassistant.default` | `entities`: 1 to 8 entity IDs such as `sensor.living_room_temperature` (required) |
 | `departures` | 6x4 | `departures.default` | `stop`: a stop area code such as `utrcsw`, from the stop search (required), `stopName`: 1 to 100 characters, shown as the title, `maxItems`: 1 to 20 |
 | `fuel` | 6x4 | `fuel.default` | `place`: a place with `name`, `latitude` and `longitude`, default the weather location, `radius`: 1 to 25 km, default 5, `fuel`: `EURO95` (default), `EURO98`, `DIESEL`, `AUTOGAS` or `CNG`, `maxItems`: 1 to 10, default 5 |
+| `custom` | 4x3 | `custom.default` | `source`: the `id` of a custom source (required), `mode`: `value`, `list` or `keyValues` (required), `title`: up to 60 characters; value mode: `path` (required), `label` (up to 40), `unit` (up to 12), `decimals` 0 to 6; list mode: `path` of the list and `fields`, 1 to 3 paths read from each item (both required); key-values mode: `pairs`, 1 to 8 `{label, path}` (required); `rules`: up to 6, see [Custom APIs](#custom-apis) |
 
-A setting's `kind` is `integer`, `text`, `date`, `calendar`, `entities`, `stop`, `place` or `choice`; `min` and `max`
-bound an integer, a text's length in characters, or the number of entities. A `choice` is one of the strings in the
-setting's `options`. A `place` is exactly `{"name": "Oss", "latitude": 51.765, "longitude": 5.518}`: a name of 1 to 100
-characters, a latitude from -90 to 90 and a longitude from -180 to 180 as numbers, and no other field; it is what
-`GET /api/places` returns for a result, without `region`. A `calendar` setting is a whole number from 1 up, the `id` of a
+A setting's `kind` is `integer`, `text`, `date`, `calendar`, `entities`, `stop`, `place` or `choice`, or for the
+Custom widget `customSource`, `path`, `paths`, `pairs` and `rules`; `min` and `max` bound an integer, a text's length
+in characters, or the number of entities or items. A `choice` is one of the strings in the setting's `options`. A
+`place` is exactly `{"name": "Oss", "latitude": 51.765, "longitude": 5.518}`: a name of 1 to 100 characters, a latitude
+from -90 to 90 and a longitude from -180 to 180 as numbers, and no other field; it is what `GET /api/places` returns
+for a result, without `region`. A Custom widget's settings are checked together, and an error names the setting, such
+as `widgets[2]` with `rules[0].when: … at character 7`. Its `source`, like a `calendar`, is not checked against the
+sources when a dashboard is saved or imported: a widget whose source is deleted, or that came from another GDash, says
+on the screen that its API is not available. A `calendar` setting is a whole number from 1 up, the `id` of a
 calendar; the server does not check that the calendar exists when a dashboard is saved, so a widget whose calendar is
 deleted later says on the screen that it cannot find it. A `stop` is one code of 1 to 16 letters and digits.
 Text settings are shown as plain text on the screen, never as HTML.
@@ -362,7 +455,8 @@ display's active hours; `data` is then empty. `announcement` is only present whi
 A preview snapshot has the same shape: `active` is true, the household's `language` and the chosen `textScale`
 (default 100) are set, there are no `pages`, and `data` holds the sources of that one dashboard. Its `version` is a
 hash of the content, so a poller sees whether anything changed. Data a draft needs that no saved dashboard uses yet
-(a new Home Assistant entity or transit stop) is absent until the dashboard is saved. The web interface polls the preview every few
+(a new Home Assistant entity, transit stop or custom source) is absent until the dashboard is saved; a Custom widget
+then has `state` `missing`. The web interface polls the preview every few
 seconds rather than opening a stream: a preview shows one dashboard that may be a draft, which the per-display
 event stream cannot do, and polling needs no connection kept open per editor.
 The page `GET /preview/{id}` (optionally `?textScale=150`) shows that preview full screen, drawn by the same code

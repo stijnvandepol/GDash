@@ -53,6 +53,20 @@ the format follows [Keep a Changelog](https://keepachangelog.com).
   [docs/guide.md](docs/guide.md#fuel-prices).
 - `place` and `choice` kinds for widget settings, with a place picker in the
   dashboard editor.
+- **Custom APIs** and a **Custom API** widget: show data from any JSON API
+  without code. Add the API under Settings, Data sources, Custom APIs, with
+  GET or POST, a bearer token, an API key in a header or the address, or a
+  user name and password, extra headers and a refresh from 30 seconds to a
+  day; secrets are stored encrypted and never shown again. Test it, or
+  paste a sample answer, and click values in the answer to pick what the
+  widget shows: one value with a label and unit, a list with up to three
+  values per row, or up to eight labelled values. Rules such as
+  `value > 25` colour the value or a row, show a message, hide the data or
+  announce the message on every display when they start to hold (at most
+  every ten minutes). Rules are a small expression language, not scripts, so
+  no code from the web interface ever runs on the server or the TVs. Only
+  APIs that a dashboard shows are fetched, and each screen only gets the
+  values its own widgets show. See [docs/guide.md](docs/guide.md#custom-apis).
 
 ### Fixed
 

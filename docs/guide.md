@@ -118,6 +118,7 @@ add calendars and feeds under Settings, Data sources, and the photos once you ad
 | Home Assistant | Up to eight sensors or switches from Home Assistant |
 | Departures | The next buses, trams, metros and ferries at one stop in the Netherlands |
 | Fuel prices | The cheapest petrol stations near a place, for one kind of fuel (Netherlands) |
+| Custom API | A value, a list or labelled values from any JSON API you add, with rules; see [Custom APIs](#custom-apis) |
 
 **Photos** are added under Settings, Screens, Photos: JPEG, PNG or WebP, up to 8 MB
 each and 50 in total. They stay on your server and only go to paired
@@ -132,7 +133,8 @@ in the list at the display.
 **Import a dashboard** adds such a file as a new dashboard, also in another
 GDash. The file holds the layout, the theme (with its night theme and
 typeface, if any) and the widget settings, such
-as the text of a note; it holds no data and no calendar addresses.
+as the text of a note; it holds no data, no calendar addresses and no custom
+API or its key (see [Custom APIs](#custom-apis)).
 
 ## Waste collection
 
@@ -278,6 +280,152 @@ Good to know:
   sends the weather location, as that is rounded already.
 - The place search is the one the weather location uses (Open-Meteo, with
   data from GeoNames).
+
+## Custom APIs
+
+The Custom widget shows data from any API that answers with JSON: a public
+service, a paid one with an API key, or a device on your own network. You
+set it up in the web interface; no code and no restart.
+
+### Add the API
+
+Under **Settings, Data sources, Custom APIs**, choose **Add a custom API**:
+
+- **Name** and **Address**, with `http://` or `https://`. The address is
+  shown in the web interface, so put an API key under Authentication, not in
+  the address.
+- **Method**: GET, or POST with an optional JSON body.
+- **Authentication**: none, a bearer token, an API key in a header (such as
+  `X-API-Key`), an API key in the address (such as `appid`), or a user name
+  and password. **Extra headers** can be marked secret.
+- **Refresh**: from every 30 seconds to once a day. Mind the quota of a
+  free plan: once a minute is 1440 requests a day.
+- **Sample answer** (optional): paste an answer from the API's
+  documentation to design a widget before calling the API.
+
+Tokens, keys, passwords and secret header values are stored encrypted and
+never shown again: the form says "Stored" and keeps them when you leave the
+field empty. **Test** fetches the API once and shows the answer as a tree;
+click a value to see its path. GDash only fetches an API while a dashboard
+shows it.
+
+### Example: the temperature from Open-Meteo, no key
+
+1. Add a custom API named `Weather in Oss` with the address
+   `https://api.open-meteo.com/v1/forecast?latitude=51.77&longitude=5.52&current=temperature_2m,wind_speed_10m`,
+   no authentication, refreshed every 15 minutes. **Test** shows
+   `{"current": {"time": "2026-10-12T10:00", "temperature_2m": 14.2, "wind_speed_10m": 11.3, …}, …}`.
+2. Add a **Custom API** widget to a dashboard and select it. Choose the API
+   and **Show: One value**, then **Fetch the API now**.
+3. Click the value field, then `temperature_2m` in the tree: the field says
+   `current.temperature_2m`. Set the label `Outside`, the unit `°C` and 1
+   decimal.
+4. Add a rule: when `value < 0`, colour **Bad**, message `Frost: mind the
+   roads`. Add another: when `minutesSince(current.time) > 60`, message
+   `The weather is more than an hour old`. (Open-Meteo gives times in UTC
+   unless you ask for a time zone; a time without a zone counts as UTC.)
+5. Save. The TV shows `14.2 °C`, in the warning colour with the message on
+   frosty mornings.
+
+### Example: OpenWeatherMap, with an API key
+
+1. Make a free key at [openweathermap.org](https://openweathermap.org/api).
+2. Add a custom API with the address
+   `https://api.openweathermap.org/data/2.5/weather?q=Oss,NL&units=metric`,
+   **Authentication: API key in the address**, parameter name `appid` and
+   your key. GDash adds `appid=<key>` to the address when it fetches; the
+   key never appears in the address that is stored or shown.
+3. In a Custom widget choose **Show: Labelled values** and add lines:
+   `Temperature` with `main.temp`, `Feels like` with `main.feels_like`,
+   `Humidity` with `main.humidity` and `Sky` with
+   `weather[0].description`.
+
+### Lists
+
+**Show: A list** shows one row per item of a list in the answer, with up to
+three values per row. Click **Use this list** in the tree, or type the list's
+path, such as `data.items`. Then click a value inside the list: a field gets
+the part below the item, such as `name`. A rule that reads `row`, such as
+`row.price > 2` or `row.stock == 0`, is checked for every item and colours or
+hides that row. For example, the latest Home Assistant releases from GitHub's
+open API: address `https://api.github.com/repos/home-assistant/core/releases?per_page=5`,
+list `$` (the answer itself is the list), fields `tag_name` and
+`published_at`, and a rule `minutesSince(row.published_at) < 1440` with
+colour Good.
+
+### Paths
+
+A path picks a value out of the answer:
+
+| Path | Means |
+|---|---|
+| `current.temperature_2m` | the key `temperature_2m` inside `current` |
+| `items[0].name` | the name of the first item; `items[-1]` is the last |
+| `items[*].name` | the names of all items, shown joined with commas |
+| `["wind speed"]` | a key with a space, a dot or a dash, in quotes |
+| `$` | the whole answer; `$[0]` is the first item of an answer that is a list |
+
+A path that finds nothing shows a dash.
+
+### Rules
+
+A rule is a condition and what to do while it holds: give the value or row
+a colour (good, warning or bad, in the theme's colours), show a message in
+the widget, hide the data, or **announce** the message on every display. A
+widget has up to six rules. The most serious colour of all matching rules
+wins; the first matching rule with a message decides the message.
+
+Conditions use:
+
+- numbers (`25`, `0.5`), text in quotes (`"open"`), `true`, `false`, `null`;
+- paths into the answer, plus `value` (the value shown, in value mode) and
+  `row` (one item, in list mode);
+- `==`, `!=`, `<`, `<=`, `>`, `>=`, `and`, `or`, `not`, `+`, `-`, `*`, `/` and
+  parentheses;
+- `len(x)`, `contains(text or list, x)`, `lower(text)`, `upper(text)`,
+  `round(n)` or `round(n, decimals)`, `number(text)` for an API that sends
+  numbers as text, and `minutesSince(time)` for an ISO 8601 time or a Unix
+  time.
+
+For example `value > 25 and value < 30`, `contains(lower(status), "error")`
+or `number(row.delay) >= 5`. A condition that does not apply to the data,
+such as `value > 3` while the value is missing, simply does not match.
+**Check** in the editor evaluates a condition against the sample or the
+fetched answer.
+
+An announcing rule posts its message over every display when it *starts* to
+hold, not as long as it holds, and at most once every ten minutes, so a
+value that goes back and forth cannot flood the screens. Each announcement
+is in the activity log. After GDash starts, a rule that already holds does
+not announce until it has stopped holding and starts again.
+
+### Why expressions, not scripts
+
+GDash could have let you write JavaScript. It does not, on purpose. GDash
+runs on your home network, often reachable from every device on it; a script
+that the server or the TVs run is code from the web interface executed on
+your server, and one stolen admin session or one bug would turn into
+running anything on that machine. A rule in GDash is parsed into a fixed set
+of comparisons and calculations: it cannot loop, store anything, open a
+file or a connection, or read anything but the API's answer, and it always
+finishes quickly. The TVs only get the finished values, as text.
+
+### Good to know
+
+- An API on your network works, such as `http://192.168.1.20/status`, like
+  Home Assistant does. Link-local and cloud metadata addresses
+  (`169.254.x.x`) are refused.
+- An answer may be at most 1 MB and must be JSON; GDash keeps the last good
+  answer when a refresh fails, and the widget's title turns to the warning
+  colour while it is out of date.
+- A redirect is only followed to the same host, so a key in a header never
+  travels to another server.
+- An **exported dashboard** keeps the Custom widgets' settings, which name
+  their API by its number. The API itself, and its key, are not in the file.
+  After importing it into another GDash, add the API there and choose it in
+  each Custom widget; until then the widget says its API is not available.
+  If that GDash has a different API with the same number, the widget shows
+  that one: check the widgets after an import.
 
 ## Announcements from Home Assistant or any automation
 

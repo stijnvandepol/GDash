@@ -59,11 +59,28 @@ fully trust, such as a guest's phone.
   upload is accepted by its content (JPEG, PNG or WebP), not by its name.
   Location, camera, date and other metadata (EXIF, XMP, IPTC, text chunks)
   are removed before a photo is stored; only a JPEG's orientation stays.
-- **Outgoing requests:** feeds, calendars and Home Assistant are fetched with a
-  client that refuses link-local addresses, where cloud hosts serve instance
-  metadata. Departures are fetched from OVapi over plain HTTP, because its
+- **Outgoing requests:** feeds, calendars, Home Assistant and custom APIs are
+  fetched with a client that refuses link-local addresses, where cloud hosts
+  serve instance metadata. Departures are fetched from OVapi over plain HTTP, because its
   HTTPS certificate belongs to another domain; the request carries no secret
   and the answer is public timetable data.
+- **Custom APIs:** an admin can point GDash at any http or https address,
+  on the internet or the LAN (a device or Home Assistant at home), so an
+  admin session can make the server send requests into the home network;
+  only link-local and cloud metadata addresses are refused. A source is
+  only fetched while a dashboard shows it, at most every 30 seconds, with
+  15 seconds per request and an answer of at most 1 MB of JSON. Redirects
+  are only followed to the same host, never from https to http. Tokens,
+  API keys, passwords and secret headers are encrypted with the key file,
+  never returned by the API, logged or put in errors or the audit log
+  (which names a source by name and host); an API key for the address is
+  added when fetching and never stored in it. Screens never get an API's
+  answer, only the values their own widgets show, as text. Rules are not
+  scripts: they are parsed into a fixed set of comparisons, calculations
+  and seven functions, without loops, assignment or access to anything but
+  the answer, bounded in length and nesting, and fuzz tested, so neither
+  the server nor a TV ever runs code from the web interface. An announcing
+  rule posts at most once every 10 minutes and is in the audit log.
 - **Web interface:** a strict Content-Security-Policy without inline scripts,
   cross-site request forgery protection, and no third-party scripts except
   Google's Cast framework on the receiver page.
