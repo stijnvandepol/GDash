@@ -28,12 +28,13 @@
 
   const handle = (err: unknown) => errorMessage(err, onSessionEnded);
 
-  /** "6 widgets · Walnut in Bodoni", and what the default dashboard is for. */
+  /** "6 widgets · Walnut in Bodoni, Night after sunset", and what the default dashboard is for. */
   function describe(d: Dashboard): string {
     const widgets = d.widgets.length === 1 ? '1 widget' : `${d.widgets.length} widgets`;
     const font = d.font ? ` in ${FONTS[d.font as FontId] ?? d.font}` : '';
     const role = d.id === 'default' ? ' · shown on displays without a choice' : '';
-    return `${widgets} · ${themeName(d.theme ?? 'minimal-dark')}${font}${role}`;
+    const night = d.nightTheme ? `, ${themeName(d.nightTheme)} after sunset` : '';
+    return `${widgets} · ${themeName(d.theme ?? 'minimal-dark')}${font}${night}${role}`;
   }
 
   async function load() {

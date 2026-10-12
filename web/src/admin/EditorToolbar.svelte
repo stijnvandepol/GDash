@@ -10,6 +10,7 @@
     name = $bindable(),
     theme = $bindable(),
     font = $bindable(),
+    nightTheme = $bindable(),
     catalogue,
     saving,
     onchange,
@@ -21,6 +22,7 @@
     name: string;
     theme: string;
     font: string;
+    nightTheme: string;
     catalogue: WidgetCatalogue;
     saving: boolean;
     /** Called when the name or style changes, so the editor knows it is dirty. */
@@ -39,7 +41,7 @@
   <input class="name" bind:value={name} oninput={onchange} aria-label="Dashboard name" />
   <button class="secondary style" aria-haspopup="dialog" onclick={() => (picking = true)}>
     <span class="style-label">Style</span>
-    {themeName(theme)}<span class="muted">· {fontName(theme, font)}</span>
+    {themeName(theme)}<span class="muted">· {fontName(theme, font)}</span>{#if nightTheme}<span class="muted">· {themeName(nightTheme)} after sunset</span>{/if}
   </button>
   <button class="secondary" onclick={onpreview}>Preview</button>
   <button onclick={onsave} disabled={saving}>{saving ? 'Saving…' : 'Save'}</button>
@@ -49,6 +51,7 @@
   <StylePicker
     bind:theme
     bind:font
+    bind:nightTheme
     themes={catalogue.themes}
     fonts={catalogue.fonts ?? []}
     {onchange}

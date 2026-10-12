@@ -1,13 +1,15 @@
 <script lang="ts">
   import StyleSample from './StyleSample.svelte';
-  import { FONTS, GROUPS, THEMES, type FontId } from './styles';
+  import { FONTS, GROUPS, THEMES, nightChoices, themeName, type FontId } from './styles';
 
   // The dashboard's style: a theme from a gallery of samples, and a typeface
-  // that is the theme's own or one of the others. Choices apply at once;
-  // the editor saves them with the layout.
+  // that is the theme's own or one of the others, and the theme to switch to
+  // after sunset. Choices apply at once; the editor saves them with the
+  // layout.
   let {
     theme = $bindable(),
     font = $bindable(),
+    nightTheme = $bindable(),
     themes,
     fonts,
     onchange,
@@ -15,6 +17,8 @@
   }: {
     theme: string;
     font: string;
+    /** The theme after sunset; empty keeps the theme. */
+    nightTheme: string;
     /** The themes and fonts the server accepts, in its order. */
     themes: string[];
     fonts: string[];
@@ -40,11 +44,18 @@
     onchange();
   }
 
+  function pickNightTheme(event: Event) {
+    nightTheme = (event.currentTarget as HTMLSelectElement).value;
+    onchange();
+  }
+
   // The server's themes in its order, sorted into the picker's sections; a
   // theme this editor has no notes for goes with the essentials.
   const sections = $derived(
     GROUPS.map((g) => ({ ...g, themes: themes.filter((id) => (THEMES[id]?.group ?? 'essentials') === g.id) })),
   );
+
+  const nightOptions = $derived(nightChoices(theme, themes, nightTheme));
 
   const ownFont = $derived(FONTS[(THEMES[theme]?.font ?? 'geist') as FontId]);
 </script>
@@ -92,6 +103,22 @@
       {/each}
     </div>
   </fieldset>
+
+  <fieldset class="night">
+    <legend>After sunset</legend>
+    <div class="night-pick">
+      <label for="night-theme">Style between sunset and sunrise</label>
+      <select id="night-theme" value={nightTheme} aria-describedby="night-hint" onchange={pickNightTheme}>
+        <option value="">Keep this style</option>
+        {#each nightOptions as id (id)}
+          <option value={id}>{themeName(id)}</option>
+        {/each}
+      </select>
+    </div>
+    <p id="night-hint" class="muted small">
+      Follows sunset and sunrise at the weather location, with the same typeface. Without a location in Settings the style never changes.
+    </p>
+  </fieldset>
 </dialog>
 
 <style>
@@ -136,7 +163,8 @@
     font-weight: 600;
   }
   .section-head,
-  .fonts {
+  .fonts,
+  .night-pick {
     clear: both;
   }
   .section-head {
@@ -219,6 +247,22 @@
     padding: var(--s-3);
     border: 1px solid var(--border);
     color: var(--text);
+  }
+  .night-pick {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--s-2) var(--s-3);
+  }
+  .night-pick label {
+    font-weight: 450;
+  }
+  .night-pick select {
+    width: auto;
+    min-width: 200px;
+  }
+  .night p {
+    margin-top: var(--s-2);
   }
   .specimen {
     font-size: 1.5rem;

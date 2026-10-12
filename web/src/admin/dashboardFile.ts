@@ -15,16 +15,21 @@ export interface ImportedDashboard {
   name: string;
   theme?: string;
   font?: string;
+  nightTheme?: string;
   widgets: Widget[];
 }
 
 /**
- * The file for an exported dashboard: its name, theme, font and widgets. The
+ * The file for an exported dashboard: its name, theme, font, night theme and widgets. The
  * widgets' data sources are left out; the server sets them from the type.
  */
 export function toFile(d: Dashboard): string {
   const widgets = d.widgets.map(({ id, type, x, y, w, h, settings }) => ({ id, type, x, y, w, h, settings }));
-  return JSON.stringify({ format: FORMAT, version: VERSION, name: d.name, theme: d.theme, font: d.font || undefined, widgets }, null, 2);
+  return JSON.stringify(
+    { format: FORMAT, version: VERSION, name: d.name, theme: d.theme, font: d.font || undefined, nightTheme: d.nightTheme || undefined, widgets },
+    null,
+    2,
+  );
 }
 
 /**
@@ -50,6 +55,7 @@ export function fromFile(text: string): ImportedDashboard {
     name: d.name,
     theme: typeof d.theme === 'string' ? d.theme : undefined,
     font: typeof d.font === 'string' ? d.font : undefined,
+    nightTheme: typeof d.nightTheme === 'string' ? d.nightTheme : undefined,
     widgets: d.widgets as Widget[],
   };
 }

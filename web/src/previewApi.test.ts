@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { isPreviewMessage, previewOutcome, previewRequest, type PreviewDraft } from './previewApi';
 
-const draft: PreviewDraft = { name: 'Hall', theme: 'glass', font: '', widgets: [{ id: 'clock', type: 'clock', x: 0, y: 0, w: 8, h: 4 }] };
+const draft: PreviewDraft = { name: 'Hall', theme: 'glass', font: '', nightTheme: '', widgets: [{ id: 'clock', type: 'clock', x: 0, y: 0, w: 8, h: 4 }] };
 
 const snapshot = {
   type: 'snapshot',
@@ -24,6 +24,7 @@ describe('isPreviewMessage', () => {
     expect(isPreviewMessage({ type: 'gdash.preview', textScale: '150', draft: null })).toBe(false);
     expect(isPreviewMessage({ type: 'gdash.preview', textScale: 100 })).toBe(false);
     expect(isPreviewMessage({ type: 'gdash.preview', textScale: 100, draft: { name: 'x' } })).toBe(false);
+    expect(isPreviewMessage({ type: 'gdash.preview', textScale: 100, draft: { ...draft, nightTheme: undefined } })).toBe(false);
   });
 });
 
@@ -40,6 +41,7 @@ describe('previewRequest', () => {
     expect(url).toBe('/api/dashboards/hall/preview?textScale=100');
     expect(init.method).toBe('POST');
     expect(JSON.parse(String(init.body))).toEqual(draft);
+    expect(JSON.parse(String(previewRequest('hall', 100, { ...draft, nightTheme: 'night' }).init.body))).toMatchObject({ nightTheme: 'night' });
   });
 
   it('keeps an odd id inside its path segment', () => {

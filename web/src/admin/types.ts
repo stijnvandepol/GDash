@@ -60,6 +60,8 @@ export interface Dashboard {
   theme?: string;
   /** A typeface instead of the theme's own; empty for the theme's. */
   font?: string;
+  /** The theme to switch to between sunset and sunrise at the weather location; empty keeps the theme. */
+  nightTheme?: string;
   widgets: Widget[];
 }
 

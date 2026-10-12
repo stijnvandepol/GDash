@@ -71,6 +71,23 @@ export const FONTS: Record<FontId, string> = {
   'courier-prime': 'Courier Prime',
 };
 
+/**
+ * The dark counterpart worth offering first for "After sunset": the same
+ * look in the dark, or the closest dim theme.
+ */
+const NIGHT_PAIRS: Record<string, string> = { frost: 'frost-night', 'minimal-light': 'minimal-dark', 'warm-light': 'night' };
+
+/**
+ * The themes to offer after sunset for a dashboard in theme, in the server's
+ * order with the counterpart of theme first. The theme itself is left out
+ * (that is what "Keep this style" does) unless it is the one chosen.
+ */
+export function nightChoices(theme: string, themes: string[], chosen: string): string[] {
+  const first = NIGHT_PAIRS[theme];
+  const rest = themes.filter((id) => id !== first && (id !== theme || id === chosen));
+  return first && themes.includes(first) ? [first, ...rest] : rest;
+}
+
 export function themeName(id: string): string {
   return THEMES[id]?.name ?? id;
 }

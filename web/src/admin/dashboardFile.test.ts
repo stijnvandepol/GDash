@@ -20,6 +20,13 @@ describe('dashboard files', () => {
     expect(toFile({ ...evening, font: '' })).not.toContain('font');
   });
 
+  it('keeps a night theme, and leaves it out when there is none', () => {
+    const file = toFile({ ...evening, nightTheme: 'frost-night' });
+    expect(fromFile(file).nightTheme).toBe('frost-night');
+    expect(toFile({ ...evening, nightTheme: '' })).not.toContain('nightTheme');
+    expect(fromFile(toFile(evening)).nightTheme).toBeUndefined();
+  });
+
   it('reads files exported under its former names', () => {
     for (const format of ['daycast-dashboard', 'nookboard-dashboard']) {
       const old = toFile(evening).replace('gdash-dashboard', format);

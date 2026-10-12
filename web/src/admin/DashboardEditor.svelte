@@ -27,6 +27,7 @@
   let name = $state('');
   let theme = $state('minimal-dark');
   let font = $state('');
+  let nightTheme = $state('');
 
   let selected = $state<string | null>(null);
   let message = $state('');
@@ -45,6 +46,7 @@
     name = dashboard.name;
     theme = dashboard.theme ?? 'minimal-dark';
     font = dashboard.font ?? '';
+    nightTheme = dashboard.nightTheme ?? '';
     for (const w of dashboard.widgets) widgets[w.id] = { ...w, settings: { ...(w.settings ?? {}) } };
 
     // Plain text only: widget labels never become HTML.
@@ -156,7 +158,7 @@
   let previewDraft = $state<PreviewDraft | null>(null);
 
   function openPreview() {
-    previewDraft = dirty ? { name: name.trim(), theme, font, widgets: currentLayout() } : null;
+    previewDraft = dirty ? { name: name.trim(), theme, font, nightTheme, widgets: currentLayout() } : null;
     previewing = true;
   }
 
@@ -166,7 +168,7 @@
     message = '';
     errors = [];
     try {
-      await api.saveDashboard({ id: dashboard.id, name: name.trim(), theme, font, widgets: currentLayout() });
+      await api.saveDashboard({ id: dashboard.id, name: name.trim(), theme, font, nightTheme, widgets: currentLayout() });
       dirty = false;
       message = 'Saved. Screens showing this dashboard update now.';
     } catch (err) {
@@ -201,6 +203,7 @@
     bind:name
     bind:theme
     bind:font
+    bind:nightTheme
     {catalogue}
     {saving}
     onchange={() => (dirty = true)}

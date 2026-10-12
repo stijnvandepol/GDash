@@ -21,17 +21,19 @@ test('a style and a typeface are picked in the editor, saved, and shown on the T
   await expect(picker.getByRole('radio', { name: /Walnut/ })).toBeChecked();
   await picker.getByText('Bodoni', { exact: true }).click();
   await expect(picker.getByRole('radio', { name: /Bodoni/ })).toBeChecked();
+  await picker.getByLabel('Style between sunset and sunrise').selectOption({ label: 'Night' });
   await picker.getByRole('button', { name: 'Done' }).click();
   await expect(picker).toBeHidden();
   // The button names what was picked.
   await expect(page.getByRole('button', { name: /^Style/ })).toContainText('Walnut');
   await expect(page.getByRole('button', { name: /^Style/ })).toContainText('Bodoni');
+  await expect(page.getByRole('button', { name: /^Style/ })).toContainText('Night after sunset');
 
   await page.getByRole('button', { name: 'Save' }).click();
   await expect(page.getByText('Saved. Screens showing this dashboard update now.')).toBeVisible();
 
-  const stored = (await (await page.request.get('/api/dashboards/e2e-styled')).json()) as { theme: string; font: string };
-  expect(stored).toMatchObject({ theme: 'walnut', font: 'bodoni' });
+  const stored = (await (await page.request.get('/api/dashboards/e2e-styled')).json()) as { theme: string; font: string; nightTheme: string };
+  expect(stored).toMatchObject({ theme: 'walnut', font: 'bodoni', nightTheme: 'night' });
 
   // The TV page carries both, so its tiles take the theme and the typeface.
   await page.goto('/preview/e2e-styled');

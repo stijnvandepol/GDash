@@ -9,6 +9,8 @@ export interface PreviewDraft {
   name: string;
   theme: string;
   font: string;
+  /** The theme after sunset; empty keeps the theme. */
+  nightTheme: string;
   widgets: Widget[];
 }
 
@@ -28,7 +30,7 @@ function isRecord(v: unknown): v is Record<string, unknown> {
 }
 
 function isDraft(v: unknown): v is PreviewDraft {
-  return isRecord(v) && typeof v.name === 'string' && typeof v.theme === 'string' && typeof v.font === 'string' && Array.isArray(v.widgets);
+  return isRecord(v) && typeof v.name === 'string' && typeof v.theme === 'string' && typeof v.font === 'string' && typeof v.nightTheme === 'string' && Array.isArray(v.widgets);
 }
 
 /** Checks a message before the page acts on it; the server validates the layout itself. */
