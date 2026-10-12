@@ -11,8 +11,10 @@ import (
 	"github.com/stijnvandepol/gdash/internal/calendar"
 	"github.com/stijnvandepol/gdash/internal/datahub"
 	"github.com/stijnvandepol/gdash/internal/display"
+	"github.com/stijnvandepol/gdash/internal/fuel"
 	"github.com/stijnvandepol/gdash/internal/settings"
 	"github.com/stijnvandepol/gdash/internal/waste"
+	"github.com/stijnvandepol/gdash/internal/weather"
 )
 
 const (
@@ -30,6 +32,13 @@ const (
 	energyPriceInterval = time.Hour
 	// dutchTimeZone is where the price market's days start and end.
 	dutchTimeZone = "Europe/Amsterdam"
+	// Station prices change a few times a day, and the ANWB's own apps
+	// show them as they are; a quarter of an hour is plenty and polite.
+	fuelInterval = 15 * time.Minute
+	// A refresh makes one request per distinct place and radius.
+	fuelTimeout = 2 * time.Minute
+	// maxFuelQueries bounds those requests for a screen full of widgets.
+	maxFuelQueries = 10
 )
 
 // dashboardSources returns the sources that exist because a dashboard has
@@ -48,7 +57,37 @@ func (d *dataSources) dashboardSources(cfg settings.Sources, dashboards []displa
 			Fetch:    func(ctx context.Context) (any, error) { return d.energy.Prices(ctx) },
 		})
 	}
+	if source, ok := d.fuelSource(cfg.Location, display.FuelQueries(dashboards)); ok {
+		sources = append(sources, source)
+	}
 	return sources
+}
+
+// fuelSource fetches the cheapest stations for the places that Fuel widgets
+// show. A widget without a place follows the weather location; without one
+// it has nothing to fetch, and its screen says to set one up.
+func (d *dataSources) fuelSource(location *weather.Location, queries []fuel.Query) (datahub.Source, bool) {
+	var resolved []fuel.Query
+	for _, q := range queries {
+		if q.Here {
+			if location == nil {
+				continue
+			}
+			q.Area.Latitude, q.Area.Longitude = location.Latitude, location.Longitude
+		}
+		resolved = append(resolved, q)
+	}
+	if len(resolved) == 0 {
+		return datahub.Source{}, false
+	}
+	resolved = resolved[:min(len(resolved), maxFuelQueries)]
+	return datahub.Source{
+		Key:      display.FuelSource,
+		Interval: fuelInterval,
+		Timeout:  fuelTimeout,
+		Version:  d.fingerprint(resolved),
+		Fetch:    func(ctx context.Context) (any, error) { return d.fuel.Nearby(ctx, resolved) },
+	}, true
 }
 
 // wasteSource fetches the pickups of the calendars that waste widgets name.

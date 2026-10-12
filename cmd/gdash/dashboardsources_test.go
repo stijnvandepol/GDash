@@ -12,8 +12,10 @@ import (
 	"github.com/stijnvandepol/gdash/internal/calendar"
 	"github.com/stijnvandepol/gdash/internal/datahub"
 	"github.com/stijnvandepol/gdash/internal/display"
+	"github.com/stijnvandepol/gdash/internal/fuel"
 	"github.com/stijnvandepol/gdash/internal/secret"
 	"github.com/stijnvandepol/gdash/internal/settings"
+	"github.com/stijnvandepol/gdash/internal/weather"
 )
 
 func widgetSources(t *testing.T, cfg settings.Sources, widgets ...display.Widget) map[string]datahub.Source {
@@ -60,6 +62,72 @@ func TestEnergyPriceIsFetchedOnlyWhenShown(t *testing.T) {
 	got := widgetSources(t, settings.Sources{}, display.Widget{Type: "energyprice"})[display.EnergyPriceSource]
 	if got.Interval != time.Hour || got.Fetch == nil {
 		t.Fatalf("source = %+v, want one that refreshes hourly", got)
+	}
+}
+
+func fuelOn(settings map[string]any) display.Widget {
+	return display.Widget{ID: "fuel", Type: "fuel", Settings: settings}
+}
+
+func TestFuelIsFetchedOnlyForPlacesThatWidgetsShow(t *testing.T) {
+	oss := map[string]any{"name": "Oss", "latitude": 51.77, "longitude": 5.52}
+	here := settings.Sources{Location: &weather.Location{Latitude: 51.77, Longitude: 5.52}}
+
+	if got := widgetSources(t, here); got[display.FuelSource].Key != "" {
+		t.Fatalf("sources without Fuel widgets = %v, want no fuel source", got)
+	}
+	if got := widgetSources(t, settings.Sources{}, fuelOn(nil)); got[display.FuelSource].Key != "" {
+		t.Fatal("a Fuel widget without a place and without a weather location got a source; it has nothing to fetch")
+	}
+	own := widgetSources(t, settings.Sources{}, fuelOn(map[string]any{"place": oss}))[display.FuelSource]
+	if own.Key == "" || own.Interval != 15*time.Minute {
+		t.Fatalf("source for a chosen place = %+v, want one that refreshes every 15 minutes", own)
+	}
+	followed := widgetSources(t, here, fuelOn(nil))[display.FuelSource]
+	moved := widgetSources(t, settings.Sources{Location: &weather.Location{Latitude: 52.37, Longitude: 4.9}}, fuelOn(nil))[display.FuelSource]
+	if followed.Key == "" || followed.Version == moved.Version {
+		t.Fatalf("versions = %q and %q; want a source that restarts when the weather location moves", followed.Version, moved.Version)
+	}
+}
+
+func TestFuelRequestsAreCapped(t *testing.T) {
+	var widgets []display.Widget
+	for i := range maxFuelQueries + 5 {
+		place := map[string]any{"name": "Town", "latitude": 50.0 + float64(i)/10, "longitude": 5.0}
+		widgets = append(widgets, display.Widget{ID: "fuel", Type: "fuel", Settings: map[string]any{"place": place}})
+	}
+	capped := widgetSources(t, settings.Sources{}, widgets[:maxFuelQueries]...)[display.FuelSource]
+	over := widgetSources(t, settings.Sources{}, widgets...)[display.FuelSource]
+	if capped.Version == "" || capped.Version != over.Version {
+		t.Fatal("places beyond the cap changed the source; the requests would grow without bound")
+	}
+}
+
+func TestFuelSourceFetchesTheWeatherLocationForWidgetsWithoutAPlace(t *testing.T) {
+	body, err := os.ReadFile("../../internal/fuel/testdata/oss.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { _, _ = w.Write(body) }))
+	t.Cleanup(srv.Close)
+	box, err := secret.NewBox(make([]byte, 32))
+	if err != nil {
+		t.Fatal(err)
+	}
+	d := &dataSources{settings: &settings.Service{Box: box}, fuel: &fuel.Client{BaseURL: srv.URL, HTTP: srv.Client()}}
+	cfg := settings.Sources{Location: &weather.Location{Latitude: 51.76, Longitude: 5.52}}
+	source, ok := d.fuelSource(cfg.Location, display.FuelQueries([]display.Dashboard{{Widgets: []display.Widget{fuelOn(map[string]any{"radius": float64(3)})}}}))
+	if !ok {
+		t.Fatal("no source")
+	}
+
+	value, err := source.Fetch(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	lists, ok := value.(map[string][]fuel.Station)
+	if !ok || len(lists["here,3,EURO95"]) != 10 || lists["here,3,EURO95"][0].Price != 2.364 {
+		t.Fatalf("value = %+v, want the ten cheapest stations around the weather location under the key of a widget without a place", value)
 	}
 }
 

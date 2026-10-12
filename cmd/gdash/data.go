@@ -17,6 +17,7 @@ import (
 	"github.com/stijnvandepol/gdash/internal/departures"
 	"github.com/stijnvandepol/gdash/internal/display"
 	"github.com/stijnvandepol/gdash/internal/energyprice"
+	"github.com/stijnvandepol/gdash/internal/fuel"
 	"github.com/stijnvandepol/gdash/internal/homeassistant"
 	"github.com/stijnvandepol/gdash/internal/news"
 	"github.com/stijnvandepol/gdash/internal/outbound"
@@ -37,6 +38,7 @@ type dataSources struct {
 	home       *homeassistant.Client
 	energy     energyprice.Client
 	departures *departures.Client
+	fuel       *fuel.Client
 	// stops searches the stop areas for the widget editor.
 	stops *departures.Directory
 	// dashboards lists every dashboard, for the Home Assistant entities
@@ -75,10 +77,11 @@ func startData(ctx context.Context, cfg config, db *store.Store, svc *settings.S
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("load the Dutch time zone: %w", err)
 	}
+	userAgent := "GDash/" + currentVersion() + " (self-hosted TV dashboard; +https://github.com/stijnvandepol/gdash)"
 	transit := &departures.Client{
 		BaseURL:   departures.DefaultBaseURL,
 		HTTP:      outbound.NewClient(upstreamTimeout),
-		UserAgent: "GDash/" + currentVersion() + " (self-hosted TV dashboard; +https://github.com/stijnvandepol/gdash)",
+		UserAgent: userAgent,
 		Now:       time.Now,
 	}
 	sources := &dataSources{
@@ -91,6 +94,7 @@ func startData(ctx context.Context, cfg config, db *store.Store, svc *settings.S
 		calendar:   &calendar.Client{HTTP: outbound.NewClient(upstreamTimeout), Location: time.Local, Now: time.Now},
 		home:       &homeassistant.Client{HTTP: outbound.NewClient(upstreamTimeout)},
 		departures: transit,
+		fuel:       &fuel.Client{BaseURL: fuel.DefaultBaseURL, HTTP: outbound.NewClient(upstreamTimeout), UserAgent: userAgent},
 		stops:      &departures.Directory{Source: transit, Now: time.Now, Logger: logger},
 		dashboards: db.Dashboards,
 		logger:     logger,
