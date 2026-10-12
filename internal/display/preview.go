@@ -10,15 +10,15 @@ import (
 )
 
 // PreviewSnapshot is what a screen would be sent for dashboard d right now,
-// for the preview in the editor. It never goes through the Broadcaster: no
-// display, schedule or active hours apply, and the dashboard may be a draft
-// that is not stored.
+// for the preview in the editor, in its night theme after sunset. It never
+// goes through the Broadcaster: no display, schedule or active hours apply,
+// and the dashboard may be a draft that is not stored.
 //
 // Version is a hash of the content instead of a counter, so a page that
 // polls can tell that nothing changed and leave what it shows alone.
 func PreviewSnapshot(now time.Time, d Dashboard, data map[string]datahub.Entry, language string, textScale int) (Snapshot, error) {
 	s := Snapshot{
-		Type: "snapshot", Active: true, Dashboard: d,
+		Type: "snapshot", Active: true, Dashboard: withNightTheme(d, IsNight(now, data)),
 		Data: dataFor([]Dashboard{d}, data), Language: language, TextScale: textScale,
 	}
 	// The hash leaves the server time out: it differs on every call.

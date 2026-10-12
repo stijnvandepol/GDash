@@ -53,6 +53,10 @@ type Report struct {
 	// ObservedAt is the local time of the observation as Open-Meteo reports
 	// it, for example "2026-10-08T13:30".
 	ObservedAt string `json:"observedAt"`
+	// UTCOffsetSeconds is how far the location's local time is ahead of
+	// UTC. It turns the server's clock into the local time that Sun is
+	// in. Nil in a report cached by an older version.
+	UTCOffsetSeconds *int `json:"utcOffsetSeconds,omitempty"`
 	// Days is the forecast from today on, at most forecastDays long.
 	Days []Day `json:"days"`
 	// Sun holds sunrise and sunset from yesterday on, so the sun widget can
@@ -101,7 +105,8 @@ type Client struct {
 }
 
 type forecastResponse struct {
-	Current struct {
+	UTCOffsetSeconds *int `json:"utc_offset_seconds"`
+	Current          struct {
 		Time          string   `json:"time"`
 		Temperature2m *float64 `json:"temperature_2m"`
 		WeatherCode   *int     `json:"weather_code"`
@@ -156,15 +161,16 @@ func (c Client) Current(ctx context.Context, loc Location) (Report, error) {
 		return Report{}, errIncomplete
 	}
 	return Report{
-		TemperatureC: *cur.Temperature2m,
-		WeatherCode:  *cur.WeatherCode,
-		IsDay:        cur.IsDay == 1,
-		WindKmh:      cur.WindSpeed10m,
-		TodayMaxC:    days[0].MaxC,
-		TodayMinC:    days[0].MinC,
-		ObservedAt:   cur.Time,
-		Days:         days,
-		Sun:          body.sun(),
+		TemperatureC:     *cur.Temperature2m,
+		WeatherCode:      *cur.WeatherCode,
+		IsDay:            cur.IsDay == 1,
+		WindKmh:          cur.WindSpeed10m,
+		TodayMaxC:        days[0].MaxC,
+		TodayMinC:        days[0].MinC,
+		ObservedAt:       cur.Time,
+		Days:             days,
+		Sun:              body.sun(),
+		UTCOffsetSeconds: body.UTCOffsetSeconds,
 	}, nil
 }
 

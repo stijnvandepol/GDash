@@ -110,6 +110,9 @@ func TestCurrentKeepsYesterdayOutOfTheForecastButInTheSun(t *testing.T) {
 	if got.Sun[1].Sunrise != "2026-10-09T07:50" || got.Sun[1].Sunset != "2026-10-09T18:56" {
 		t.Fatalf("today's sun = %+v", got.Sun[1])
 	}
+	if got.UTCOffsetSeconds == nil || *got.UTCOffsetSeconds != 7200 {
+		t.Fatalf("UTCOffsetSeconds = %v, want 7200", got.UTCOffsetSeconds)
+	}
 	query := req.URL.Query()
 	if query.Get("past_days") != "1" || !strings.Contains(query.Get("daily"), "sunrise,sunset") {
 		t.Fatalf("query = %v, want past_days=1 and sunrise,sunset", query)

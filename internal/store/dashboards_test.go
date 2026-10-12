@@ -35,6 +35,7 @@ func TestDashboardLifecycle(t *testing.T) {
 
 	changed := morning()
 	changed.Name = "Mornings"
+	changed.NightTheme = "minimal-dark"
 	changed.Widgets = changed.Widgets[:1]
 	if err := s.UpdateDashboard(ctx, changed, created); err != nil {
 		t.Fatal(err)
@@ -42,6 +43,9 @@ func TestDashboardLifecycle(t *testing.T) {
 	list, err := s.Dashboards(ctx)
 	if err != nil || len(list) != 1 || list[0].Name != "Mornings" || len(list[0].Widgets) != 1 {
 		t.Fatalf("Dashboards = %+v, %v", list, err)
+	}
+	if got.NightTheme != "" || list[0].NightTheme != "minimal-dark" {
+		t.Fatalf("night theme %q when created and %q after the update, want none and minimal-dark", got.NightTheme, list[0].NightTheme)
 	}
 	if err := s.CreateDashboard(ctx, morning(), created); !errors.Is(err, ErrConflict) {
 		t.Fatalf("duplicate create: err = %v, want ErrConflict", err)

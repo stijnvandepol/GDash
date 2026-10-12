@@ -131,7 +131,7 @@ func (d *dataSources) build(cfg settings.Sources, entities []string) []datahub.S
 	var sources []datahub.Source
 	if loc := cfg.Location; loc != nil {
 		sources = append(sources, datahub.Source{
-			Key:      "weather.current",
+			Key:      display.WeatherSource,
 			Interval: weatherInterval,
 			Version:  d.fingerprint(*loc),
 			Fetch:    func(ctx context.Context) (any, error) { return d.weather.Current(ctx, *loc) },

@@ -170,3 +170,44 @@ func TestPreviewRejectsAnInvalidLayout(t *testing.T) {
 		t.Errorf("unknown field = %d, want 400", status)
 	}
 }
+
+func TestPreviewShowsTheNightThemeAfterSunset(t *testing.T) {
+	env := previewEnv(t)
+	// The test clock says 17:00 UTC on 8 October, 19:00 where the weather is.
+	sun := func(sunset string) map[string]datahub.Entry {
+		report := `{"isDay":true,"utcOffsetSeconds":7200,"sun":[{"date":"2026-10-08","sunrise":"2026-10-08T07:48","sunset":"2026-10-08T` + sunset + `"}]}`
+		return map[string]datahub.Entry{"weather.current": {Value: json.RawMessage(report)}}
+	}
+	draft := `{"name":"Hall","theme":"frost","font":"lora","nightTheme":"frost-night","widgets":[{"id":"clock","type":"clock","x":0,"y":0,"w":8,"h":4}]}`
+	preview := func(method, body string) display.Dashboard {
+		status, got := env.do(t, method, "/api/dashboards/hall/preview", body)
+		if status != http.StatusOK {
+			t.Fatalf("%s preview = %d %s", method, status, got)
+		}
+		return decodeSnapshot(t, got).Dashboard
+	}
+	if status, body := env.do(t, "PUT", "/api/dashboards/hall", draft); status != http.StatusOK {
+		t.Fatalf("save = %d %s", status, body)
+	}
+
+	env.sources.set(nil, nil, sun("18:30"))
+	for method, body := range map[string]string{"GET": "", "POST": draft} {
+		if d := preview(method, body); d.Theme != "frost-night" || d.Font != "lora" {
+			t.Errorf("%s after sunset: theme %q font %q, want frost-night and lora", method, d.Theme, d.Font)
+		}
+	}
+	env.sources.set(nil, nil, sun("20:00"))
+	if d := preview("GET", ""); d.Theme != "frost" {
+		t.Errorf("before sunset the preview shows %q, want frost", d.Theme)
+	}
+	// Without a weather location it never switches.
+	env.sources.set(nil, nil, nil)
+	if d := preview("GET", ""); d.Theme != "frost" {
+		t.Errorf("without a location the preview shows %q, want frost", d.Theme)
+	}
+
+	bad := `{"name":"Hall","nightTheme":"sunset","widgets":[]}`
+	if status, body := env.do(t, "POST", "/api/dashboards/hall/preview", bad); status != http.StatusUnprocessableEntity || !strings.Contains(body, `"field":"nightTheme"`) {
+		t.Errorf("unknown night theme = %d %s, want 422 on nightTheme", status, body)
+	}
+}

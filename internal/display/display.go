@@ -38,10 +38,14 @@ type Dashboard struct {
 	Name  string `json:"name"`
 	Theme string `json:"theme"`
 	// Font is one of Fonts, or empty for the theme's own typeface.
-	Font    string   `json:"font"`
-	Columns int      `json:"columns"`
-	Rows    int      `json:"rows"`
-	Widgets []Widget `json:"widgets"`
+	Font string `json:"font"`
+	// NightTheme is the theme to show between sunset and sunrise at the
+	// weather location, or empty to keep Theme. A snapshot already carries
+	// the theme that applies, in Theme.
+	NightTheme string   `json:"nightTheme"`
+	Columns    int      `json:"columns"`
+	Rows       int      `json:"rows"`
+	Widgets    []Widget `json:"widgets"`
 }
 
 // DefaultDashboard is the only dashboard in the prototype. The editor in
@@ -56,14 +60,14 @@ func DefaultDashboard(withCalendar bool) Dashboard {
 		Rows:    GridRows,
 		Widgets: []Widget{
 			{ID: "clock", Type: "clock", X: 0, Y: 0, W: 14, H: 6},
-			{ID: "weather", Type: "weather", X: 14, Y: 0, W: 10, H: 14, Source: "weather.current"},
+			{ID: "weather", Type: "weather", X: 14, Y: 0, W: 10, H: 14, Source: WeatherSource},
 			{ID: "news", Type: "news", X: 0, Y: 6, W: 14, H: 8, Source: "news.default", Settings: map[string]any{"maxItems": 5}},
 		},
 	}
 	if withCalendar {
 		d.Widgets = []Widget{
 			{ID: "clock", Type: "clock", X: 0, Y: 0, W: 10, H: 5},
-			{ID: "weather", Type: "weather", X: 0, Y: 5, W: 10, H: 9, Source: "weather.current"},
+			{ID: "weather", Type: "weather", X: 0, Y: 5, W: 10, H: 9, Source: WeatherSource},
 			{ID: "calendar", Type: "calendar", X: 10, Y: 0, W: 14, H: 9, Source: "calendar.default", Settings: map[string]any{"maxItems": 5}},
 			{ID: "news", Type: "news", X: 10, Y: 9, W: 14, H: 5, Source: "news.default", Settings: map[string]any{"maxItems": 3}},
 		}
@@ -172,10 +176,11 @@ func (b *Broadcaster) Publish(now time.Time, views map[string]View, data map[str
 	defer b.mu.Unlock()
 	b.version++
 	latest := make(map[string][]byte, len(views))
+	night := IsNight(now, data)
 	for displayID, view := range views {
 		active := view.Hours.Contains(now)
-		dashboard := view.DashboardAt(now)
-		pages := view.PagesAt(now)
+		dashboard := withNightTheme(view.DashboardAt(now), night)
+		pages := withNightThemes(view.PagesAt(now), night)
 		seconds := 0
 		if pages != nil {
 			seconds = view.PageSeconds

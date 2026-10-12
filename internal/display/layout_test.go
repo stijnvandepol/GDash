@@ -43,6 +43,8 @@ func TestValidateDashboard(t *testing.T) {
 		{"blank name", func(d *Dashboard) { d.Name = "  " }, "name:"},
 		{"unknown theme", func(d *Dashboard) { d.Theme = "comic-sans" }, "theme: choose one of"},
 		{"a font of its own", func(d *Dashboard) { d.Font = "bodoni" }, ""},
+		{"a night theme", func(d *Dashboard) { d.NightTheme = "frost-night" }, ""},
+		{"unknown night theme", func(d *Dashboard) { d.NightTheme = "comic-sans" }, "nightTheme: choose one of"},
 		{"unknown font", func(d *Dashboard) { d.Font = "comic-sans" }, "font: choose one of"},
 		{"unknown type", func(d *Dashboard) { d.Widgets[0].Type = "iframe" }, `widgets[0]: unknown widget type "iframe"`},
 		{"outside grid", func(d *Dashboard) { d.Widgets[1].X = 12 }, "widgets[1]: must fit the 24x14 grid"},

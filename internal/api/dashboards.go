@@ -10,10 +10,11 @@ import (
 )
 
 type dashboardBody struct {
-	Name    string           `json:"name"`
-	Theme   string           `json:"theme"`
-	Font    string           `json:"font"`
-	Widgets []display.Widget `json:"widgets"`
+	Name       string           `json:"name"`
+	Theme      string           `json:"theme"`
+	Font       string           `json:"font"`
+	NightTheme string           `json:"nightTheme"`
+	Widgets    []display.Widget `json:"widgets"`
 }
 
 // getWidgetTypes handles GET /api/widget-types: the widget catalogue with
@@ -124,7 +125,7 @@ func (s *Server) deleteDashboard(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) validDashboard(w http.ResponseWriter, id string, body dashboardBody) (display.Dashboard, bool) {
-	d := display.Normalize(display.Dashboard{ID: id, Name: body.Name, Theme: body.Theme, Font: body.Font, Widgets: body.Widgets})
+	d := display.Normalize(display.Dashboard{ID: id, Name: body.Name, Theme: body.Theme, Font: body.Font, NightTheme: body.NightTheme, Widgets: body.Widgets})
 	if d.Widgets == nil {
 		d.Widgets = []display.Widget{}
 	}

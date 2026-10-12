@@ -66,9 +66,9 @@ var maxItems = map[string]Setting{"maxItems": {Kind: SettingInteger, Min: 1, Max
 // from its type, so a dashboard cannot point a widget at arbitrary data.
 var WidgetTypes = map[string]WidgetType{
 	"clock":      {MinW: 4, MinH: 3},
-	"weather":    {Source: "weather.current", MinW: 4, MinH: 4},
-	"forecast":   {Source: "weather.current", MinW: 6, MinH: 4, Settings: map[string]Setting{"days": {Kind: SettingInteger, Min: 1, Max: 7}}},
-	"sun":        {Source: "weather.current", MinW: 5, MinH: 4},
+	"weather":    {Source: WeatherSource, MinW: 4, MinH: 4},
+	"forecast":   {Source: WeatherSource, MinW: 6, MinH: 4, Settings: map[string]Setting{"days": {Kind: SettingInteger, Min: 1, Max: 7}}},
+	"sun":        {Source: WeatherSource, MinW: 5, MinH: 4},
 	"airquality": {Source: AirQualitySource, MinW: 5, MinH: 4},
 	"news":       {Source: "news.default", MinW: 6, MinH: 4, Settings: maxItems},
 	"calendar":   {Source: "calendar.default", MinW: 6, MinH: 4, Settings: maxItems},
@@ -138,6 +138,9 @@ func ValidateDashboard(d Dashboard) error {
 	}
 	if !slices.Contains(Themes, d.Theme) {
 		errs.Add("theme", "choose one of: "+strings.Join(Themes, ", "))
+	}
+	if d.NightTheme != "" && !slices.Contains(Themes, d.NightTheme) {
+		errs.Add("nightTheme", "choose one of: "+strings.Join(Themes, ", ")+", or none to keep the theme")
 	}
 	if d.Font != "" && !slices.Contains(Fonts, d.Font) {
 		errs.Add("font", "choose one of: "+strings.Join(Fonts, ", ")+", or none for the theme's own")
