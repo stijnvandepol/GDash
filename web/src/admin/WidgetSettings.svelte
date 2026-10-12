@@ -1,9 +1,10 @@
 <script lang="ts">
-  import type { DepartureStop, WidgetType } from './api';
-  import { SETTING_LABELS } from './widgetSettings';
+  import type { DepartureStop, Place, WidgetType } from './api';
+  import { FUEL_LABELS, SETTING_LABELS, placeSetting } from './widgetSettings';
   import EntityPicker from './EntityPicker.svelte';
   import CalendarPicker from './CalendarPicker.svelte';
   import StopPicker from './StopPicker.svelte';
+  import PlacePicker from './PlacePicker.svelte';
 
   // Texts up to this length get a single-line field, longer ones a text area.
   const SINGLE_LINE_MAX = 60;
@@ -20,14 +21,26 @@
   } = $props();
 
   // The stop search stores the name beside the code, so it has no field.
+  // A place comes first: the radius and the fuel are about it.
   const keys = $derived(
     Object.keys(type.settings)
       .filter((key) => !(key === 'stopName' && 'stop' in type.settings))
-      .sort(),
+      .sort()
+      .sort((a, b) => Number(b === 'place') - Number(a === 'place')),
   );
 
   function pickStop(stop: DepartureStop) {
     onchange({ ...settings, stop: stop.code, stopName: stop.name });
+  }
+
+  function pickPlace(key: string, place: Place) {
+    onchange({ ...settings, [key]: placeSetting(place) });
+  }
+
+  function placeName(key: string): string {
+    const v = settings[key];
+    const name = typeof v === 'object' && v !== null ? (v as Record<string, unknown>).name : undefined;
+    return typeof name === 'string' ? name : '';
   }
 
   function set(key: string, value: unknown) {
@@ -59,6 +72,8 @@
     <CalendarPicker selected={typeof settings[key] === 'number' ? settings[key] : undefined} onchange={(id) => set(key, id)} />
   {:else if rule.kind === 'stop'}
     <StopPicker code={text(key)} name={text('stopName')} onpick={pickStop} />
+  {:else if rule.kind === 'place'}
+    <PlacePicker name={placeName(key)} onpick={(place) => pickPlace(key, place)} onclear={() => set(key, undefined)} />
   {:else}
   <label class="inline-label">
     {SETTING_LABELS[key] ?? key}
@@ -73,6 +88,12 @@
           set(key, raw === '' ? '' : Number(raw));
         }}
       />
+    {:else if rule.kind === 'choice'}
+      <select value={text(key)} onchange={(e) => set(key, (e.target as HTMLSelectElement).value)}>
+        {#each rule.options ?? [] as option (option)}
+          <option value={option}>{FUEL_LABELS[option] ?? option}</option>
+        {/each}
+      </select>
     {:else if rule.kind === 'date'}
       <input type="date" value={text(key)} onchange={(e) => set(key, (e.target as HTMLInputElement).value)} />
     {:else if (rule.max ?? 0) > SINGLE_LINE_MAX}

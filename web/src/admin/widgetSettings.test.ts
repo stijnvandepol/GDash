@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { defaultSettings, isoDate } from './widgetSettings';
+import { defaultSettings, isoDate, placeSetting } from './widgetSettings';
 import type { WidgetType } from './api';
 
 const today = new Date(2026, 9, 9);
@@ -36,9 +36,34 @@ describe('defaultSettings', () => {
     expect(defaultSettings(departures, today)).toEqual({ maxItems: 5 });
   });
 
+  it('starts a fuel widget on Euro 95 within 5 km and leaves the place to follow the weather location', () => {
+    const fuel: WidgetType = {
+      minW: 6,
+      minH: 4,
+      settings: {
+        place: { kind: 'place', required: false },
+        radius: { kind: 'integer', min: 1, max: 25, required: false },
+        fuel: { kind: 'choice', options: ['EURO95', 'DIESEL'], required: false },
+        maxItems: { kind: 'integer', min: 1, max: 10, required: false },
+      },
+    };
+    expect(defaultSettings(fuel, today)).toEqual({ radius: 5, fuel: 'EURO95', maxItems: 5 });
+  });
+
   it('skips settings it has no default for', () => {
     const odd: WidgetType = { minW: 1, minH: 1, settings: { colour: { kind: 'text', required: false } } };
     expect(defaultSettings(odd, today)).toEqual({});
+  });
+});
+
+describe('placeSetting', () => {
+  it('keeps the name and the place to about 100 m, which is how the server keys a request', () => {
+    const oss = { name: 'Oss', region: 'North Brabant, Netherlands', latitude: 51.7654321, longitude: 5.5178765 };
+    expect(placeSetting(oss)).toEqual({ name: 'Oss', latitude: 51.765, longitude: 5.518 });
+  });
+
+  it('cuts a name at the 100 characters the server accepts', () => {
+    expect(placeSetting({ name: 'x'.repeat(130), region: '', latitude: 0, longitude: 0 }).name).toHaveLength(100);
   });
 });
 

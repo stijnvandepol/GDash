@@ -90,11 +90,13 @@ export interface WidgetType {
 
 /** A setting a widget type takes; internal/display validates the same. */
 export interface SettingRule {
-  kind: 'integer' | 'text' | 'date' | 'calendar' | 'entities' | 'stop';
+  kind: 'integer' | 'text' | 'date' | 'calendar' | 'entities' | 'stop' | 'place' | 'choice';
   /** Bounds of an integer, of a text's length in characters, or of how many entities. */
   min?: number;
   max?: number;
   required: boolean;
+  /** The values a choice takes. */
+  options?: string[];
 }
 
 export interface Location {
