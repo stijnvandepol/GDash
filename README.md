@@ -59,6 +59,7 @@ survive the internet dropping out. GDash is made for exactly that.
 | News | Headlines from up to five RSS or Atom feeds | Any feed (default: NOS) |
 | Photos | A slideshow of photos you upload | Stored on your server |
 | Note and countdown | A short text, or the days until a date | — |
+| Custom API | A value, a list or labelled values from any JSON API, with rules | Any API you add: open, or with a key, token or password |
 
 The last good value of every source is kept when the internet drops, and a
 screen marks data that has gone stale.
@@ -88,6 +89,11 @@ screen marks data that has gone stale.
   outside which the TV may sleep.
 - **Announcements**: a Home Assistant automation posts "The washing machine is
   done" with an API token, and the TVs show it over the dashboard.
+- **Custom APIs** without code: add any JSON API, test it or paste a sample
+  answer, click the values to show, and add rules such as `value > 25` that
+  colour the value, show a message or announce it on every display. Rules
+  are a small expression language, not scripts, so nothing from the web
+  interface ever runs as code on the server or the TVs.
 - **Two-step login** with an authenticator app, a **backup** download, and an
   **activity log** of logins, pairings and changes.
 
@@ -240,7 +246,8 @@ GDash (Dutch) is in
 ## Security, license and credits
 
 **Security.** Passwords follow NIST SP 800-63B and are hashed with argon2id,
-two-step login is optional, secrets are encrypted at rest, every screen is
+two-step login is optional, secrets (including custom API keys) are encrypted
+at rest and never shown again, every screen is
 paired and only receives its own data, and the web interface has a strict
 Content Security Policy. Report a vulnerability as described in
 [SECURITY.md](SECURITY.md).
