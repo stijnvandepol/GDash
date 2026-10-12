@@ -6,6 +6,22 @@ import (
 	"github.com/stijnvandepol/gdash/internal/datahub"
 )
 
+// dataFor returns the entries that the widgets of the dashboards show.
+func dataFor(dashboards []Dashboard, data map[string]datahub.Entry) map[string]datahub.Entry {
+	used := map[string]datahub.Entry{}
+	for _, d := range dashboards {
+		for _, w := range d.Widgets {
+			if entry, ok := data[w.Source]; ok && w.Source != "" {
+				used[w.Source] = entry
+			}
+		}
+	}
+	if entry, ok := used[HomeAssistantSource]; ok {
+		used[HomeAssistantSource] = onlyEntities(entry, EntityIDs(dashboards))
+	}
+	return used
+}
+
 // onlyEntities narrows the Home Assistant entry to the entities in ids.
 // The server fetches the entities of every dashboard in one entry, but a
 // display may only receive what its own widgets show: a hall screen with a
