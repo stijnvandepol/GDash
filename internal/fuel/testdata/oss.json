@@ -1,0 +1,747 @@
+{
+ "value": [
+  {
+   "id": "appitup_4266",
+   "title": "Esso Schuurmans",
+   "coordinates": {
+    "latitude": 51.731377,
+    "longitude": 5.464084
+   },
+   "address": {
+    "streetAddress": "Papendijk 25a",
+    "postalCode": "5386EB",
+    "city": "Geffen",
+    "country": "Nederland"
+   },
+   "type": "FUEL_STATION",
+   "prices": [
+    {
+     "fuelName": "Euro 95 (E10)",
+     "fuelType": "EURO95",
+     "value": 2.489,
+     "currency": "EUR"
+    },
+    {
+     "fuelName": "Diesel (B7)",
+     "fuelType": "DIESEL",
+     "value": 2.499,
+     "currency": "EUR"
+    },
+    {
+     "fuelName": "LPG",
+     "fuelType": "AUTOGAS",
+     "value": 0.929,
+     "currency": "EUR"
+    },
+    {
+     "fuelName": "Super Plus 98 (E5)",
+     "fuelType": "EURO98",
+     "value": 2.759,
+     "currency": "EUR"
+    },
+    {
+     "fuelName": "Premium diesel",
+     "fuelType": "DIESEL_SPECIAL",
+     "value": 0,
+     "currency": "EUR"
+    }
+   ]
+  },
+  {
+   "id": "appitup_4360",
+   "title": "BP Geffense Barriere (A59 nz)",
+   "coordinates": {
+    "latitude": 51.73475,
+    "longitude": 5.49454
+   },
+   "address": {
+    "streetAddress": "Rijksweg A59 Noordzijde",
+    "postalCode": "5386LE",
+    "city": "Geffen",
+    "country": "Nederland"
+   },
+   "type": "FUEL_STATION",
+   "prices": [
+    {
+     "fuelName": "Euro 95 (E10)",
+     "fuelType": "EURO95",
+     "value": 2.729,
+     "currency": "EUR"
+    },
+    {
+     "fuelName": "Diesel (B7)",
+     "fuelType": "DIESEL",
+     "value": 2.779,
+     "currency": "EUR"
+    },
+    {
+     "fuelName": "LPG",
+     "fuelType": "AUTOGAS",
+     "value": 1.069,
+     "currency": "EUR"
+    },
+    {
+     "fuelName": "Super Plus 98 (E5)",
+     "fuelType": "EURO98",
+     "value": 2.969,
+     "currency": "EUR"
+    },
+    {
+     "fuelName": "Premium diesel",
+     "fuelType": "DIESEL_SPECIAL",
+     "value": 2.839,
+     "currency": "EUR"
+    }
+   ]
+  },
+  {
+   "id": "appitup_4396",
+   "title": "BP Ussen",
+   "coordinates": {
+    "latitude": 51.76653,
+    "longitude": 5.50873
+   },
+   "address": {
+    "streetAddress": "Leygraaf 9",
+    "postalCode": "5345SM",
+    "city": "Oss",
+    "country": "Nederland"
+   },
+   "type": "FUEL_STATION",
+   "prices": [
+    {
+     "fuelName": "Euro 95 (E10)",
+     "fuelType": "EURO95",
+     "value": 2.469,
+     "currency": "EUR"
+    },
+    {
+     "fuelName": "Diesel (B7)",
+     "fuelType": "DIESEL",
+     "value": 2.499,
+     "currency": "EUR"
+    },
+    {
+     "fuelName": "Super Plus 98 (E5)",
+     "fuelType": "EURO98",
+     "value": 2.859,
+     "currency": "EUR"
+    },
+    {
+     "fuelName": "Premium diesel",
+     "fuelType": "DIESEL_SPECIAL",
+     "value": 2.749,
+     "currency": "EUR"
+    }
+   ]
+  },
+  {
+   "id": "appitup_4403",
+   "title": "Total de Ruwaard",
+   "coordinates": {
+    "latitude": 51.75703,
+    "longitude": 5.51164
+   },
+   "address": {
+    "streetAddress": "Euterpelaan 35",
+    "postalCode": "5344CA",
+    "city": "Oss",
+    "country": "Nederland"
+   },
+   "type": "FUEL_STATION",
+   "prices": [
+    {
+     "fuelName": "Euro 95 (E10)",
+     "fuelType": "EURO95",
+     "value": 2.459,
+     "currency": "EUR"
+    },
+    {
+     "fuelName": "Diesel (B7)",
+     "fuelType": "DIESEL",
+     "value": 2.499,
+     "currency": "EUR"
+    },
+    {
+     "fuelName": "LPG",
+     "fuelType": "AUTOGAS",
+     "value": 0.889,
+     "currency": "EUR"
+    },
+    {
+     "fuelName": "Super Plus 98 (E5)",
+     "fuelType": "EURO98",
+     "value": 2.679,
+     "currency": "EUR"
+    },
+    {
+     "fuelName": "Premium diesel",
+     "fuelType": "DIESEL_SPECIAL",
+     "value": 2.589,
+     "currency": "EUR"
+    }
+   ]
+  },
+  {
+   "id": "appitup_4409",
+   "title": "Shell de Ruwaard",
+   "coordinates": {
+    "latitude": 51.75156,
+    "longitude": 5.51422
+   },
+   "address": {
+    "streetAddress": "Joost vd Vondellaan 1",
+    "postalCode": "5344VG",
+    "city": "Oss",
+    "country": "Nederland"
+   },
+   "type": "FUEL_STATION",
+   "prices": [
+    {
+     "fuelName": "Euro 95 (E10)",
+     "fuelType": "EURO95",
+     "value": 2.489,
+     "currency": "EUR"
+    },
+    {
+     "fuelName": "Diesel (B7)",
+     "fuelType": "DIESEL",
+     "value": 2.519,
+     "currency": "EUR"
+    },
+    {
+     "fuelName": "Super Plus 98 (E5)",
+     "fuelType": "EURO98",
+     "value": 2.899,
+     "currency": "EUR"
+    }
+   ]
+  },
+  {
+   "id": "appitup_4417",
+   "title": "Shell van de Goor",
+   "coordinates": {
+    "latitude": 51.77147,
+    "longitude": 5.51743
+   },
+   "address": {
+    "streetAddress": "Hertogensingel 89",
+    "postalCode": "5341AC",
+    "city": "Oss",
+    "country": "Nederland"
+   },
+   "type": "FUEL_STATION",
+   "prices": [
+    {
+     "fuelName": "Euro 95 (E10)",
+     "fuelType": "EURO95",
+     "value": 2.489,
+     "currency": "EUR"
+    },
+    {
+     "fuelName": "Diesel (B7)",
+     "fuelType": "DIESEL",
+     "value": 2.519,
+     "currency": "EUR"
+    },
+    {
+     "fuelName": "Super Plus 98 (E5)",
+     "fuelType": "EURO98",
+     "value": 2.899,
+     "currency": "EUR"
+    },
+    {
+     "fuelName": "Premium diesel",
+     "fuelType": "DIESEL_SPECIAL",
+     "value": 2.779,
+     "currency": "EUR"
+    }
+   ]
+  },
+  {
+   "id": "appitup_4420",
+   "title": "TinQ",
+   "coordinates": {
+    "latitude": 51.73313,
+    "longitude": 5.51831
+   },
+   "address": {
+    "streetAddress": "'t Dorp 146",
+    "postalCode": "5384ME",
+    "city": "Heesch",
+    "country": "Nederland"
+   },
+   "type": "FUEL_STATION",
+   "prices": [
+    {
+     "fuelName": "Euro 95 (E10)",
+     "fuelType": "EURO95",
+     "value": 2.399,
+     "currency": "EUR"
+    },
+    {
+     "fuelName": "Diesel (B7)",
+     "fuelType": "DIESEL",
+     "value": 2.409,
+     "currency": "EUR"
+    },
+    {
+     "fuelName": "Super Plus 98 (E5)",
+     "fuelType": "EURO98",
+     "value": 2.679,
+     "currency": "EUR"
+    }
+   ]
+  },
+  {
+   "id": "appitup_4434",
+   "title": "Tango Dr Saal v Zwanenbergsingel",
+   "coordinates": {
+    "latitude": 51.754676,
+    "longitude": 5.525235
+   },
+   "address": {
+    "streetAddress": "Dr Saal v Zwanenbergsingel 51",
+    "postalCode": "5345CA",
+    "city": "Oss",
+    "country": "Nederland"
+   },
+   "type": "FUEL_STATION",
+   "prices": [
+    {
+     "fuelName": "Euro 95 (E10)",
+     "fuelType": "EURO95",
+     "value": 2.429,
+     "currency": "EUR"
+    },
+    {
+     "fuelName": "Diesel (B7)",
+     "fuelType": "DIESEL",
+     "value": 2.449,
+     "currency": "EUR"
+    }
+   ]
+  },
+  {
+   "id": "appitup_4449",
+   "title": "Shell Hanex",
+   "coordinates": {
+    "latitude": 51.75254,
+    "longitude": 5.53305
+   },
+   "address": {
+    "streetAddress": "Nieuwe Hescheweg 55",
+    "postalCode": "5342EC",
+    "city": "Oss",
+    "country": "Nederland"
+   },
+   "type": "FUEL_STATION",
+   "prices": [
+    {
+     "fuelName": "Euro 95 (E10)",
+     "fuelType": "EURO95",
+     "value": 2.489,
+     "currency": "EUR"
+    },
+    {
+     "fuelName": "Diesel (B7)",
+     "fuelType": "DIESEL",
+     "value": 2.519,
+     "currency": "EUR"
+    },
+    {
+     "fuelName": "Super Plus 98 (E5)",
+     "fuelType": "EURO98",
+     "value": 2.899,
+     "currency": "EUR"
+    },
+    {
+     "fuelName": "Premium diesel",
+     "fuelType": "DIESEL_SPECIAL",
+     "value": 2.779,
+     "currency": "EUR"
+    }
+   ]
+  },
+  {
+   "id": "appitup_4454",
+   "title": "Argos",
+   "coordinates": {
+    "latitude": 51.73569,
+    "longitude": 5.53595
+   },
+   "address": {
+    "streetAddress": "Nistelrodeseweg 3",
+    "postalCode": "5384BA",
+    "city": "Heesch",
+    "country": "Nederland"
+   },
+   "type": "FUEL_STATION",
+   "prices": [
+    {
+     "fuelName": "Euro 95 (E10)",
+     "fuelType": "EURO95",
+     "value": 2.369,
+     "currency": "EUR"
+    },
+    {
+     "fuelName": "Diesel (B7)",
+     "fuelType": "DIESEL",
+     "value": 2.409,
+     "currency": "EUR"
+    },
+    {
+     "fuelName": "Super Plus 98 (E5)",
+     "fuelType": "EURO98",
+     "value": 2.669,
+     "currency": "EUR"
+    }
+   ]
+  },
+  {
+   "id": "appitup_4474",
+   "title": "TinQ",
+   "coordinates": {
+    "latitude": 51.76444,
+    "longitude": 5.545967
+   },
+   "address": {
+    "streetAddress": "Kantsingel 8",
+    "postalCode": "5349AJ",
+    "city": "Oss",
+    "country": "Nederland"
+   },
+   "type": "FUEL_STATION",
+   "prices": [
+    {
+     "fuelName": "Euro 95 (E10)",
+     "fuelType": "EURO95",
+     "value": 2.409,
+     "currency": "EUR"
+    },
+    {
+     "fuelName": "Diesel (B7)",
+     "fuelType": "DIESEL",
+     "value": 2.429,
+     "currency": "EUR"
+    },
+    {
+     "fuelName": "Super Plus 98 (E5)",
+     "fuelType": "EURO98",
+     "value": 2.719,
+     "currency": "EUR"
+    }
+   ]
+  },
+  {
+   "id": "appitup_4486",
+   "title": "Tango Singel 1940-1945",
+   "coordinates": {
+    "latitude": 51.7738,
+    "longitude": 5.55137
+   },
+   "address": {
+    "streetAddress": "Singel 1940-1945 320",
+    "postalCode": "5348PV",
+    "city": "Oss",
+    "country": "Nederland"
+   },
+   "type": "FUEL_STATION",
+   "prices": [
+    {
+     "fuelName": "Euro 95 (E10)",
+     "fuelType": "EURO95",
+     "value": 2.429,
+     "currency": "EUR"
+    },
+    {
+     "fuelName": "Diesel (B7)",
+     "fuelType": "DIESEL",
+     "value": 2.449,
+     "currency": "EUR"
+    },
+    {
+     "fuelName": "Super Plus 98 (E5)",
+     "fuelType": "EURO98",
+     "value": 2.709,
+     "currency": "EUR"
+    }
+   ]
+  },
+  {
+   "id": "appitup_4507",
+   "title": "Total Danenhoef",
+   "coordinates": {
+    "latitude": 51.75059,
+    "longitude": 5.56054
+   },
+   "address": {
+    "streetAddress": "Graafsebaan 5",
+    "postalCode": "5342LJ",
+    "city": "Oss",
+    "country": "Nederland"
+   },
+   "type": "FUEL_STATION",
+   "prices": [
+    {
+     "fuelName": "Euro 95 (E10)",
+     "fuelType": "EURO95",
+     "value": 2.389,
+     "currency": "EUR"
+    },
+    {
+     "fuelName": "Diesel (B7)",
+     "fuelType": "DIESEL",
+     "value": 2.449,
+     "currency": "EUR"
+    },
+    {
+     "fuelName": "LPG",
+     "fuelType": "AUTOGAS",
+     "value": 0.889,
+     "currency": "EUR"
+    },
+    {
+     "fuelName": "Super Plus 98 (E5)",
+     "fuelType": "EURO98",
+     "value": 2.609,
+     "currency": "EUR"
+    },
+    {
+     "fuelName": "Premium diesel",
+     "fuelType": "DIESEL_SPECIAL",
+     "value": 2.539,
+     "currency": "EUR"
+    }
+   ]
+  },
+  {
+   "id": "appitup_4527",
+   "title": "Shell Hanex",
+   "coordinates": {
+    "latitude": 51.774924,
+    "longitude": 5.568696
+   },
+   "address": {
+    "streetAddress": "Burg v Erpstraat 23",
+    "postalCode": "5351AR",
+    "city": "Berghem",
+    "country": "Nederland"
+   },
+   "type": "FUEL_STATION",
+   "prices": [
+    {
+     "fuelName": "Euro 95 (E10)",
+     "fuelType": "EURO95",
+     "value": 2.489,
+     "currency": "EUR"
+    },
+    {
+     "fuelName": "Diesel (B7)",
+     "fuelType": "DIESEL",
+     "value": 2.519,
+     "currency": "EUR"
+    },
+    {
+     "fuelName": "LPG",
+     "fuelType": "AUTOGAS",
+     "value": 0.919,
+     "currency": "EUR"
+    },
+    {
+     "fuelName": "Super Plus 98 (E5)",
+     "fuelType": "EURO98",
+     "value": 2.899,
+     "currency": "EUR"
+    },
+    {
+     "fuelName": "Premium diesel",
+     "fuelType": "DIESEL_SPECIAL",
+     "value": 2.779,
+     "currency": "EUR"
+    }
+   ]
+  },
+  {
+   "id": "appitup_6770",
+   "title": "de Kock",
+   "coordinates": {
+    "latitude": 51.747045,
+    "longitude": 5.532179
+   },
+   "address": {
+    "streetAddress": "Hescheweg 223",
+    "postalCode": "5343AA",
+    "city": "Oss",
+    "country": "Nederland"
+   },
+   "type": "FUEL_STATION",
+   "prices": [
+    {
+     "fuelName": "Euro 95 (E10)",
+     "fuelType": "EURO95",
+     "value": 2.404,
+     "currency": "EUR"
+    },
+    {
+     "fuelName": "Diesel (B7)",
+     "fuelType": "DIESEL",
+     "value": 2.449,
+     "currency": "EUR"
+    },
+    {
+     "fuelName": "LPG",
+     "fuelType": "AUTOGAS",
+     "value": 0.969,
+     "currency": "EUR"
+    },
+    {
+     "fuelName": "Super Plus 98 (E5)",
+     "fuelType": "EURO98",
+     "value": 2.704,
+     "currency": "EUR"
+    }
+   ]
+  },
+  {
+   "id": "appitup_6937",
+   "title": "Shell Hanenberg (A59 zz)",
+   "coordinates": {
+    "latitude": 51.728567,
+    "longitude": 5.475252
+   },
+   "address": {
+    "streetAddress": "Rijksweg A59 Zuidzijde",
+    "postalCode": "5384VZ",
+    "city": "Heesch",
+    "country": "Nederland"
+   },
+   "type": "FUEL_STATION",
+   "prices": [
+    {
+     "fuelName": "Euro 95 (E10)",
+     "fuelType": "EURO95",
+     "value": 2.729,
+     "currency": "EUR"
+    },
+    {
+     "fuelName": "Diesel (B7)",
+     "fuelType": "DIESEL",
+     "value": 2.769,
+     "currency": "EUR"
+    },
+    {
+     "fuelName": "LPG",
+     "fuelType": "AUTOGAS",
+     "value": 1.109,
+     "currency": "EUR"
+    },
+    {
+     "fuelName": "Super Plus 98 (E5)",
+     "fuelType": "EURO98",
+     "value": 2.999,
+     "currency": "EUR"
+    },
+    {
+     "fuelName": "Premium diesel",
+     "fuelType": "DIESEL_SPECIAL",
+     "value": 2.899,
+     "currency": "EUR"
+    }
+   ]
+  },
+  {
+   "id": "appitup_7126",
+   "title": "Argos",
+   "coordinates": {
+    "latitude": 51.736908,
+    "longitude": 5.473247
+   },
+   "address": {
+    "streetAddress": "Bedrijvenweg 5",
+    "postalCode": "5386KA",
+    "city": "Geffen",
+    "country": "Nederland"
+   },
+   "type": "FUEL_STATION",
+   "prices": [
+    {
+     "fuelName": "Euro 95 (E10)",
+     "fuelType": "EURO95",
+     "value": 2.399,
+     "currency": "EUR"
+    },
+    {
+     "fuelName": "Diesel (B7)",
+     "fuelType": "DIESEL",
+     "value": 2.359,
+     "currency": "EUR"
+    }
+   ]
+  },
+  {
+   "id": "appitup_10603",
+   "title": "de Kock (Self service)",
+   "coordinates": {
+    "latitude": 51.74674,
+    "longitude": 5.531851
+   },
+   "address": {
+    "streetAddress": "Hescheweg 223",
+    "postalCode": "5343AA",
+    "city": "Oss",
+    "country": "Nederland"
+   },
+   "type": "FUEL_STATION",
+   "prices": [
+    {
+     "fuelName": "Euro 95 (E10)",
+     "fuelType": "EURO95",
+     "value": 2.364,
+     "currency": "EUR"
+    },
+    {
+     "fuelName": "Diesel (B7)",
+     "fuelType": "DIESEL",
+     "value": 2.409,
+     "currency": "EUR"
+    },
+    {
+     "fuelName": "LPG",
+     "fuelType": "AUTOGAS",
+     "value": 0,
+     "currency": "EUR"
+    },
+    {
+     "fuelName": "Super Plus 98 (E5)",
+     "fuelType": "EURO98",
+     "value": 2.684,
+     "currency": "EUR"
+    }
+   ]
+  },
+  {
+   "id": "appitup_28703",
+   "title": "CNG Express",
+   "coordinates": {
+    "latitude": 51.773895,
+    "longitude": 5.551548
+   },
+   "address": {
+    "streetAddress": "Singel 1940-1945 320",
+    "postalCode": "5348PV",
+    "city": "Oss",
+    "country": "Nederland"
+   },
+   "type": "FUEL_STATION",
+   "prices": [
+    {
+     "fuelName": "CNG",
+     "fuelType": "CNG",
+     "value": 1.699,
+     "currency": "EUR"
+    }
+   ]
+  }
+ ]
+}
