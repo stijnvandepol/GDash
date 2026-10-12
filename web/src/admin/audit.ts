@@ -48,6 +48,7 @@ const ACTIONS: Record<string, string> = {
   two_step_enabled: 'Turned on two-step login,',
   two_step_disabled: 'Turned off two-step login',
   two_step_change_failed: 'Failed to change two-step login',
+  two_step_locked: 'Stopped accepting codes from the app:',
   two_step_reset: 'Turned off two-step login from the command line for',
   custom_source_added: 'Added custom API',
   custom_source_changed: 'Changed custom API',
@@ -59,8 +60,9 @@ const ACTIONS: Record<string, string> = {
 const WITHOUT_DETAIL = new Set(['photo_added', 'photo_removed']);
 
 // Successful actions that still deserve a look: a recovery code is only
-// used when the phone is gone, or by someone who found the codes.
-const NOTABLE = new Set(['recovery_code_used']);
+// used when the phone is gone, or by someone who found the codes, and the
+// stop after many wrong codes means someone may know the password.
+const NOTABLE = new Set(['recovery_code_used', 'two_step_locked']);
 
 /** "Changed dashboard morning", or the raw action for one this version does not know. */
 export function describeAction(event: AuditEvent): string {

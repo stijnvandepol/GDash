@@ -117,8 +117,9 @@ func (s *Service) StartTwoStep(ctx context.Context, session, password, clientIP 
 // is a current code of the secret StartTwoStep made, and ends the user's
 // other sessions, which only had the password. It returns the recovery
 // codes, which exist nowhere else afterwards. Wrong codes count towards the
-// login limits. It returns ErrNoSetup, ErrSetupReplaced, ErrTwoStepOn,
-// ErrWrongCode, ErrRateLimited or ErrNoSession.
+// login limits and those of codelimit.go; at the stop, the setup has to
+// start over. It returns ErrNoSetup, ErrSetupReplaced, ErrTwoStepOn,
+// ErrWrongCode, ErrRateLimited (or a *CodeWait) or ErrNoSession.
 func (s *Service) EnableTwoStep(ctx context.Context, session, code, clientIP string) ([]string, error) {
 	user, err := s.Authenticate(ctx, session)
 	if err != nil {
@@ -131,11 +132,17 @@ func (s *Service) EnableTwoStep(ctx context.Context, session, code, clientIP str
 	if err != nil {
 		return nil, err
 	}
-	if setup.Enabled {
-		return nil, ErrTwoStepOn
+	if err := waitsForCode(setup); err != nil {
+		return nil, err
 	}
 	var step int64
 	err = s.limited(user.Username, clientIP, inSession, func() error {
+		// Counted against the setup that waits now, which may be newer.
+		counted, err := s.countCode(ctx, user.ID, waitsForCode)
+		if err != nil {
+			return err
+		}
+		setup = counted
 		secret, err := s.box.Open(setup.SecretSealed)
 		if err != nil {
 			return fmt.Errorf("open two-step secret of user %d: %w", user.ID, err)
@@ -146,7 +153,12 @@ func (s *Service) EnableTwoStep(ctx context.Context, session, code, clientIP str
 		}
 		return nil
 	})
-	if err != nil {
+	switch {
+	case errors.Is(err, store.ErrNotFound), errors.Is(err, ErrTwoStepLocked):
+		// Gone in between, or too many wrong codes: a new setup, which
+		// asks for the password again, starts over.
+		return nil, ErrNoSetup
+	case err != nil:
 		return nil, err
 	}
 	codes, hashes, err := newRecoveryCodes()
@@ -170,8 +182,9 @@ func (s *Service) EnableTwoStep(ctx context.Context, session, code, clientIP str
 
 // DisableTwoStep turns two-step login off for the user of session. It
 // needs the password and a code, so neither a session left open nor a
-// password alone is enough. It returns ErrWrongPassword, ErrWrongCode,
-// ErrTwoStepOff, ErrRateLimited or ErrNoSession.
+// password alone is enough. Codes count towards the same limits as at
+// login. It returns ErrWrongPassword, the errors of verifyCode, or
+// ErrNoSession.
 func (s *Service) DisableTwoStep(ctx context.Context, session, password, code, clientIP string) (CodeUse, error) {
 	user, err := s.Confirm(ctx, session, password, clientIP)
 	if err != nil {
@@ -189,95 +202,6 @@ func (s *Service) DisableTwoStep(ctx context.Context, session, password, code, c
 		return CodeUse{}, err
 	}
 	return use, nil
-}
-
-func (s *Service) twoStepOn(ctx context.Context, userID int64) (bool, error) {
-	t, err := s.store.TwoStep(ctx, userID)
-	if errors.Is(err, store.ErrNotFound) {
-		return false, nil
-	}
-	return t.Enabled, err
-}
-
-// verifyCode checks a code of an account with two-step login on: a code
-// from the app, of a time step not used before, or one of the recovery
-// codes, which is then used up. It returns ErrWrongCode or ErrTwoStepOff.
-func (s *Service) verifyCode(ctx context.Context, userID int64, code string) (CodeUse, error) {
-	t, err := s.store.TwoStep(ctx, userID)
-	if errors.Is(err, store.ErrNotFound) || err == nil && !t.Enabled {
-		return CodeUse{}, ErrTwoStepOff
-	}
-	if err != nil {
-		return CodeUse{}, err
-	}
-	code = normalizeCode(code)
-	if len(code) == recoveryCodeLength {
-		left, ok, err := s.store.UseRecoveryCode(ctx, userID, token.Hash(code))
-		if err != nil {
-			return CodeUse{}, err
-		}
-		if !ok {
-			return CodeUse{}, ErrWrongCode
-		}
-		return CodeUse{Recovery: true, RecoveryLeft: left}, nil
-	}
-	secret, err := s.box.Open(t.SecretSealed)
-	if err != nil {
-		return CodeUse{}, fmt.Errorf("open two-step secret of user %d: %w", userID, err)
-	}
-	step, ok := totp.Match([]byte(secret), code, s.now(), t.LastStep)
-	if !ok {
-		return CodeUse{}, ErrWrongCode
-	}
-	// A parallel request with the same code may have used the step since
-	// it was read; only one of them wins.
-	used, err := s.store.UseTwoStepStep(ctx, userID, step)
-	if err != nil {
-		return CodeUse{}, err
-	}
-	if !used {
-		return CodeUse{}, ErrWrongCode
-	}
-	return CodeUse{}, nil
-}
-
-// codeCheck says what a right code clears, as the password checks do.
-type codeCheck bool
-
-const (
-	// finishesLogin clears the address's failures too, as Login does.
-	finishesLogin codeCheck = true
-	// inSession clears only the account's own failures, as Confirm does:
-	// the address may have failed for other usernames, and those keep
-	// counting.
-	inSession codeCheck = false
-)
-
-// limited runs check as an attempt of username from clientIP, counted like
-// a password attempt: it stays a failure unless check succeeds.
-func (s *Service) limited(username, clientIP string, kind codeCheck, check func() error) error {
-	keys, account := attemptKeys(username, clientIP)
-	if !s.attempt(keys, account) {
-		return ErrRateLimited
-	}
-	if err := check(); err != nil {
-		return err
-	}
-	if kind == finishesLogin {
-		s.limiter.Reset(keys...)
-	} else {
-		s.limiter.Reset(keys[1])
-		s.limiter.Release(keys[0])
-	}
-	s.accountLimiter.Reset(account)
-	return nil
-}
-
-// normalizeCode accepts a code as people type or paste it: with spaces or
-// dashes, in either case.
-func normalizeCode(code string) string {
-	code = strings.NewReplacer(" ", "", "-", "").Replace(code)
-	return strings.ToLower(code)
 }
 
 // newRecoveryCodes returns recovery codes as shown ("abcd-efgh-ijkl-mnop")

@@ -46,6 +46,7 @@ const (
 	auditTwoStepEnabled         = "two_step_enabled"
 	auditTwoStepDisabled        = "two_step_disabled"
 	auditTwoStepChangeFailed    = "two_step_change_failed"
+	auditTwoStepLocked          = "two_step_locked"
 	auditCustomSourceAdded      = "custom_source_added"
 	auditCustomSourceChanged    = "custom_source_changed"
 	auditCustomSourceRemoved    = "custom_source_removed"

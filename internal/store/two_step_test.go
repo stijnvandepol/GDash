@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 )
 
 func twoStepUser(t *testing.T) (*Store, User) {
@@ -180,5 +181,84 @@ func TestResetPasswordTurnsTwoStepOff(t *testing.T) {
 	}
 	if _, err := s.ResetPassword(ctx, 999, "hash"); !errors.Is(err, ErrNotFound) {
 		t.Fatalf("reset of an unknown user: err = %v", err)
+	}
+}
+
+// countWrong counts n wrong codes for the two-step login of u at now.
+func countWrong(t *testing.T, s *Store, u User, secretSealed string, n int, now time.Time) {
+	t.Helper()
+	for range n {
+		got, err := s.TwoStep(context.Background(), u.ID)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if ok, err := s.CountCodeAttempt(context.Background(), u.ID, secretSealed, got.FailedCodes, now); err != nil || !ok {
+			t.Fatalf("CountCodeAttempt = %v, %v", ok, err)
+		}
+	}
+}
+
+func TestWrongCodesAreCountedAndKept(t *testing.T) {
+	ctx := context.Background()
+	s, path := openTestStore(t)
+	u, err := s.CreateFirstUser(ctx, "stijn", "hash", created)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := s.StartTwoStep(ctx, u.ID, "sealed", created); err != nil {
+		t.Fatal(err)
+	}
+	if err := s.EnableTwoStep(ctx, u.ID, "sealed", 100, []string{"h1"}, ""); err != nil {
+		t.Fatal(err)
+	}
+	failedAt := created.Add(time.Minute)
+	countWrong(t, s, u, "sealed", 3, failedAt)
+	// A count read before another attempt, or for another secret, misses.
+	for _, c := range []struct {
+		secret string
+		failed int
+	}{{"sealed", 2}, {"other", 3}} {
+		if ok, err := s.CountCodeAttempt(ctx, u.ID, c.secret, c.failed, failedAt); err != nil || ok {
+			t.Fatalf("CountCodeAttempt(%s, %d) = %v, %v; want a miss", c.secret, c.failed, ok, err)
+		}
+	}
+
+	// The count survives a restart.
+	s.Close()
+	if s, err = Open(ctx, path); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { s.Close() })
+	got, err := s.TwoStep(ctx, u.ID)
+	if err != nil || got.FailedCodes != 3 || !got.LastFailedAt.Equal(failedAt) {
+		t.Fatalf("TwoStep after a restart = %+v, %v; want 3 wrong codes, the last at %v", got, err, failedAt)
+	}
+
+	// A right code, a recovery code and a new setup each end the run.
+	if ok, err := s.UseTwoStepStep(ctx, u.ID, 101); err != nil || !ok {
+		t.Fatalf("UseTwoStepStep = %v, %v", ok, err)
+	}
+	if got, _ := s.TwoStep(ctx, u.ID); got.FailedCodes != 0 || !got.LastFailedAt.IsZero() {
+		t.Fatalf("after a right code: %+v", got)
+	}
+	countWrong(t, s, u, "sealed", 2, failedAt)
+	if _, ok, err := s.UseRecoveryCode(ctx, u.ID, "h1"); err != nil || !ok {
+		t.Fatalf("UseRecoveryCode = %v, %v", ok, err)
+	}
+	if got, _ := s.TwoStep(ctx, u.ID); got.FailedCodes != 0 {
+		t.Fatalf("after a recovery code: %+v", got)
+	}
+	if _, err := s.DeleteTwoStep(ctx, u.ID); err != nil {
+		t.Fatal(err)
+	}
+	if err := s.StartTwoStep(ctx, u.ID, "first", created); err != nil {
+		t.Fatal(err)
+	}
+	countWrong(t, s, u, "first", 2, failedAt)
+	if err := s.StartTwoStep(ctx, u.ID, "second", created); err != nil {
+		t.Fatal(err)
+	}
+	if got, _ := s.TwoStep(ctx, u.ID); got.FailedCodes != 0 {
+		t.Fatalf("after a new setup: %+v", got)
 	}
 }

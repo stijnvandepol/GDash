@@ -44,6 +44,15 @@ describe('describeAction', () => {
     expect(describeAction({ ...base, action: 'two_step_change_failed', detail: 'wrong code' })).toBe(
       'Failed to change two-step login: wrong code',
     );
+    expect(
+      describeAction({
+        ...base,
+        action: 'two_step_locked',
+        detail: 'too many wrong codes in a row; a recovery code or gdash reset-password lifts it',
+      }),
+    ).toBe(
+      'Stopped accepting codes from the app: too many wrong codes in a row; a recovery code or gdash reset-password lifts it',
+    );
     expect(describeAction({ ...base, actor: 'command line', action: 'two_step_reset', detail: 'stijn' })).toBe(
       'Turned off two-step login from the command line for stijn',
     );
@@ -67,6 +76,7 @@ describe('isWarning', () => {
     expect(isWarning({ ...base, action: 'login_code_failed' })).toBe(true);
     expect(isWarning({ ...base, action: 'two_step_change_failed' })).toBe(true);
     expect(isWarning({ ...base, action: 'recovery_code_used' })).toBe(true);
+    expect(isWarning({ ...base, action: 'two_step_locked' })).toBe(true);
     expect(isWarning({ ...base, action: 'two_step_enabled' })).toBe(false);
   });
 });

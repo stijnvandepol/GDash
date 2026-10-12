@@ -5,6 +5,7 @@ import (
 	"encoding/base32"
 	"encoding/json"
 	"net/http"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -191,6 +192,66 @@ func TestWrongTwoStepCodesAreRateLimited(t *testing.T) {
 	}
 	if status, body := env.codeStep(t, pending, totp.Code(secret, step+1)); status != http.StatusTooManyRequests {
 		t.Fatalf("right code after 5 wrong ones = %d %s, want 429", status, body)
+	}
+}
+
+// countWrongCodes counts n wrong codes for the admin at, as if they came
+// then.
+func (e *testEnv) countWrongCodes(t *testing.T, n int, at time.Time) {
+	t.Helper()
+	ctx := context.Background()
+	for range n {
+		got, err := e.store.TwoStep(ctx, 1)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if ok, err := e.store.CountCodeAttempt(ctx, 1, got.SecretSealed, got.FailedCodes, at); err != nil || !ok {
+			t.Fatalf("CountCodeAttempt = %v, %v", ok, err)
+		}
+	}
+}
+
+func TestWrongCodesWaitThroughTheAPI(t *testing.T) {
+	env := newTestEnv(t, nil)
+	env.setUp(t)
+	env.enableTwoStep(t)
+	pending := env.passwordStep(t)
+	env.countWrongCodes(t, 6, time.Now())
+	req, err := http.NewRequest("POST", env.srv.URL+"/api/sessions/two-step", strings.NewReader(`{"pending":"`+pending+`","code":"123456"}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+	resp, err := env.client.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	resp.Body.Close()
+	retry, _ := strconv.Atoi(resp.Header.Get("Retry-After"))
+	if resp.StatusCode != http.StatusTooManyRequests || retry < 60 || retry > 120 {
+		t.Fatalf("code after 6 wrong ones = %d, Retry-After %q; want 429 and about 2 minutes", resp.StatusCode, resp.Header.Get("Retry-After"))
+	}
+}
+
+func TestTwoStepStopsThroughTheAPI(t *testing.T) {
+	env := newTestEnv(t, nil)
+	env.setUp(t)
+	secret, step, codes := env.enableTwoStep(t)
+	pending := env.passwordStep(t)
+	// 49 wrong codes long enough ago that the next one need not wait.
+	env.countWrongCodes(t, 49, time.Now().Add(-2*time.Hour))
+	if status, body := env.codeStep(t, pending, "000000"); status != http.StatusTooManyRequests || !strings.Contains(body, "two_step_locked") {
+		t.Fatalf("50th wrong code = %d %s, want 429 two_step_locked", status, body)
+	}
+	if status, body := env.codeStep(t, pending, totp.Code(secret, step+1)); status != http.StatusTooManyRequests || !strings.Contains(body, "two_step_locked") {
+		t.Fatalf("right code at the stop = %d %s, want 429 two_step_locked", status, body)
+	}
+	if status, body := env.codeStep(t, pending, codes[0]); status != http.StatusCreated {
+		t.Fatalf("recovery code at the stop = %d %s", status, body)
+	}
+	actions := strings.Join(env.auditActions(t), "\n")
+	if !strings.Contains(actions, "two_step_locked:"+twoStepLockedDetail) || strings.Count(actions, "two_step_locked:") != 1 {
+		t.Errorf("audit log lacks one stop:\n%s", actions)
 	}
 }
 
