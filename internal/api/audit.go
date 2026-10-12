@@ -46,6 +46,9 @@ const (
 	auditTwoStepEnabled         = "two_step_enabled"
 	auditTwoStepDisabled        = "two_step_disabled"
 	auditTwoStepChangeFailed    = "two_step_change_failed"
+	auditCustomSourceAdded      = "custom_source_added"
+	auditCustomSourceChanged    = "custom_source_changed"
+	auditCustomSourceRemoved    = "custom_source_removed"
 	defaultAuditPage            = 100
 	maxAuditDetailCharacters    = 200
 )

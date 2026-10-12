@@ -23,8 +23,10 @@ import (
 	"github.com/stijnvandepol/gdash/internal/auth"
 	"github.com/stijnvandepol/gdash/internal/cast"
 	"github.com/stijnvandepol/gdash/internal/casting"
+	"github.com/stijnvandepol/gdash/internal/custom"
 	"github.com/stijnvandepol/gdash/internal/datahub"
 	"github.com/stijnvandepol/gdash/internal/homeassistant"
+	"github.com/stijnvandepol/gdash/internal/outbound"
 	"github.com/stijnvandepol/gdash/internal/pairing"
 	"github.com/stijnvandepol/gdash/internal/photos"
 	"github.com/stijnvandepol/gdash/internal/secret"
@@ -145,6 +147,7 @@ func newTestEnv(t *testing.T, discover func(context.Context) ([]cast.Device, err
 		Settings:             &settings.Service{Store: st, Box: box, Now: now, Logger: logger},
 		Places:               sources,
 		Stops:                stops,
+		CustomFetcher:        &custom.Fetcher{HTTP: outbound.NewClient(5 * time.Second)},
 		HomeAssistant:        &homeassistant.Client{HTTP: &http.Client{Timeout: 5 * time.Second}},
 		SettingsChanged:      func() { settingsChanges.Add(1) },
 		Announcements:        board,

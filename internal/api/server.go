@@ -72,6 +72,7 @@ type Server struct {
 	Places               PlaceSearcher
 	HomeAssistant        HomeAssistantReader
 	Stops                StopSearcher
+	CustomFetcher        CustomFetcher
 	// SettingsChanged is called after a data source setting changes, so
 	// the data hub fetches what is configured now.
 	SettingsChanged func()
@@ -161,6 +162,7 @@ func (s *Server) Handler() http.Handler {
 	mux.Handle("DELETE /api/homeassistant", s.requireUser(s.deleteHomeAssistant))
 	mux.Handle("GET /api/homeassistant/entities", s.requireUser(s.getHomeAssistantEntities))
 	mux.Handle("GET /api/departures/stops", s.requireUser(s.getDepartureStops))
+	s.handleCustomSources(mux)
 
 	mux.Handle("GET /api/photos", s.requireUser(s.listPhotos))
 	mux.Handle("POST /api/photos", s.requireUser(s.postPhoto))
