@@ -106,16 +106,16 @@ func newTestEnv(t *testing.T, discover func(context.Context) ([]cast.Device, err
 		t.Fatal(err)
 	}
 	t.Cleanup(func() { st.Close() })
-	authService, err := auth.NewService(st, testSetupToken)
+	box, err := secret.LoadOrCreateKey(filepath.Join(t.TempDir(), "secret.key"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	authService, err := auth.NewService(st, box, testSetupToken)
 	if err != nil {
 		t.Fatal(err)
 	}
 	changes, settingsChanges, announced := &atomic.Int32{}, &atomic.Int32{}, &atomic.Int32{}
 	pairingService := pairing.New(st)
-	box, err := secret.LoadOrCreateKey(filepath.Join(t.TempDir(), "secret.key"))
-	if err != nil {
-		t.Fatal(err)
-	}
 	logs := &syncBuffer{}
 	logger := slog.New(slog.NewTextHandler(logs, nil))
 	now := func() time.Time { return time.Date(2026, 10, 8, 17, 0, 0, 0, time.UTC) }

@@ -11,16 +11,21 @@ import (
 	"time"
 
 	"github.com/stijnvandepol/gdash/internal/auth"
+	"github.com/stijnvandepol/gdash/internal/secret"
 	"github.com/stijnvandepol/gdash/internal/store"
 )
 
-// auditPasswordReset is the audit action of a reset from the command line;
-// web/src/admin/audit.ts describes it.
-const auditPasswordReset = "password_reset"
+// Audit actions of a reset from the command line; web/src/admin/audit.ts
+// describes them.
+const (
+	auditPasswordReset = "password_reset"
+	auditTwoStepReset  = "two_step_reset"
+)
 
-// resetPassword gives username a new random password and prints it to out,
-// for an admin who lost theirs. It needs the data directory, so only someone
-// who can already run commands on the server can use it.
+// resetPassword gives username a new random password, turns two-step login
+// off and prints the password to out, for an admin who lost the password,
+// or the phone and the recovery codes. It needs the data directory, so only
+// someone who can already run commands on the server can use it.
 func resetPassword(ctx context.Context, getenv func(string) string, username string, out io.Writer) error {
 	dataDir := valueOr(getenv("GDASH_DATA_DIR"), "data")
 	path := filepath.Join(dataDir, databaseName)
@@ -32,23 +37,40 @@ func resetPassword(ctx context.Context, getenv func(string) string, username str
 		return err
 	}
 	defer db.Close()
-	// The setup token is not used: an account exists, or there is nothing
-	// to reset.
-	authService, err := auth.NewService(db, "")
+	box, err := secret.LoadOrCreateKey(filepath.Join(dataDir, secretKeyName))
 	if err != nil {
 		return err
 	}
-	password, err := authService.ResetPassword(ctx, username)
+	// The setup token is not used: an account exists, or there is nothing
+	// to reset.
+	authService, err := auth.NewService(db, box, "")
+	if err != nil {
+		return err
+	}
+	password, twoStepWasOn, err := authService.ResetPassword(ctx, username)
 	if errors.Is(err, store.ErrNotFound) {
 		return fmt.Errorf("there is no user %q", username)
 	}
 	if err != nil {
 		return err
 	}
-	event := store.AuditEvent{At: time.Now().UTC(), Actor: "command line", Action: auditPasswordReset, Detail: username}
-	if err := db.AddAuditEvent(ctx, event); err != nil {
-		return fmt.Errorf("the password was reset, but the activity log could not record it: %w", err)
+	events := []store.AuditEvent{{At: time.Now().UTC(), Actor: "command line", Action: auditPasswordReset, Detail: username}}
+	if twoStepWasOn {
+		events = append(events, store.AuditEvent{At: time.Now().UTC(), Actor: "command line", Action: auditTwoStepReset, Detail: username})
 	}
-	_, err = fmt.Fprintf(out, "New password for %s: %s\nEvery browser was logged out. Log in and choose a password of your own under Settings, Account.\n", username, password)
+	for _, event := range events {
+		if err := db.AddAuditEvent(ctx, event); err != nil {
+			return fmt.Errorf("the password was reset, but the activity log could not record it: %w", err)
+		}
+	}
+	if _, err := fmt.Fprintf(out, "New password for %s: %s\nEvery browser was logged out.", username, password); err != nil {
+		return err
+	}
+	if twoStepWasOn {
+		if _, err := fmt.Fprint(out, " Two-step login is off; turn it on again under Settings, Account."); err != nil {
+			return err
+		}
+	}
+	_, err = fmt.Fprint(out, " Log in and choose a password of your own under Settings, Account.\n")
 	return err
 }

@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/stijnvandepol/gdash/internal/ratelimit"
+	"github.com/stijnvandepol/gdash/internal/secret"
 	"github.com/stijnvandepol/gdash/internal/store"
 	"github.com/stijnvandepol/gdash/internal/validation"
 )
@@ -29,7 +30,11 @@ func newTestService(t *testing.T) (*Service, *testClock) {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() { st.Close() })
-	s, err := NewService(st, testToken)
+	box, err := secret.LoadOrCreateKey(filepath.Join(t.TempDir(), "secret.key"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	s, err := NewService(st, box, testToken)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -306,9 +311,9 @@ func TestResetPasswordEndsEverySession(t *testing.T) {
 	s, _ := newTestService(t)
 	session := setUp(t, s)
 
-	password, err := s.ResetPassword(ctx, "STIJN")
-	if err != nil {
-		t.Fatal(err)
+	password, twoStepWasOn, err := s.ResetPassword(ctx, "STIJN")
+	if err != nil || twoStepWasOn {
+		t.Fatalf("ResetPassword: two-step was on %v, err %v", twoStepWasOn, err)
 	}
 	if msg := passwordProblem(password, "stijn"); msg != "" {
 		t.Fatalf("the new password breaks the policy: %s", msg)
@@ -322,7 +327,7 @@ func TestResetPasswordEndsEverySession(t *testing.T) {
 	if _, _, err := s.Login(ctx, Credentials{"stijn", password}, "192.168.1.20"); err != nil {
 		t.Fatalf("new password: %v", err)
 	}
-	if _, err := s.ResetPassword(ctx, "nobody"); !errors.Is(err, store.ErrNotFound) {
+	if _, _, err := s.ResetPassword(ctx, "nobody"); !errors.Is(err, store.ErrNotFound) {
 		t.Fatalf("reset of an unknown user: err = %v, want ErrNotFound", err)
 	}
 }

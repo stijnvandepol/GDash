@@ -107,12 +107,12 @@ func main() {
 // newAuthService prepares login. On a fresh install it prints a one-time
 // setup token to the log: whoever can read the log (the person who started
 // GDash) can create the first account, nobody else on the network.
-func newAuthService(ctx context.Context, db *store.Store, logger *slog.Logger) (*auth.Service, error) {
+func newAuthService(ctx context.Context, db *store.Store, box *secret.Box, logger *slog.Logger) (*auth.Service, error) {
 	token, err := auth.NewSetupToken()
 	if err != nil {
 		return nil, err
 	}
-	service, err := auth.NewService(db, token)
+	service, err := auth.NewService(db, box, token)
 	if err != nil {
 		return nil, err
 	}
@@ -149,11 +149,15 @@ func serve(ctx context.Context, logger *slog.Logger) error {
 		Dir: filepath.Join(cfg.dataDir, "backups"), Keep: backupsKept,
 		Write: db.WriteCopy, Now: time.Now, Logger: logger,
 	}).Run(ctx)
-	authService, err := newAuthService(ctx, db, logger)
+	box, err := secret.LoadOrCreateKey(filepath.Join(cfg.dataDir, secretKeyName))
 	if err != nil {
 		return err
 	}
-	settingsService, err := newSettingsService(ctx, cfg, db, logger)
+	authService, err := newAuthService(ctx, db, box, logger)
+	if err != nil {
+		return err
+	}
+	settingsService, err := newSettingsService(ctx, cfg, db, box, logger)
 	if err != nil {
 		return err
 	}
@@ -228,14 +232,14 @@ func serve(ctx context.Context, logger *slog.Logger) error {
 	return listen(ctx, cfg.addr, handler, logger)
 }
 
-// newSettingsService opens the secret key and, on the first start, fills
-// the settings from the environment. A fresh install also gets the default
+// secretKeyName is the key file in the data directory that seals calendar
+// addresses, the Home Assistant token and two-step login secrets.
+const secretKeyName = "secret.key"
+
+// newSettingsService prepares the settings and, on the first start, fills
+// them from the environment. A fresh install also gets the default
 // dashboard, with a calendar when one was configured.
-func newSettingsService(ctx context.Context, cfg config, db *store.Store, logger *slog.Logger) (*settings.Service, error) {
-	box, err := secret.LoadOrCreateKey(filepath.Join(cfg.dataDir, "secret.key"))
-	if err != nil {
-		return nil, err
-	}
+func newSettingsService(ctx context.Context, cfg config, db *store.Store, box *secret.Box, logger *slog.Logger) (*settings.Service, error) {
 	svc := &settings.Service{Store: db, Box: box, Now: time.Now, Logger: logger}
 	seeded, err := svc.SeedOnce(ctx, cfg.seed)
 	if err != nil {
