@@ -14,7 +14,8 @@ func TestCustomSourceRoundTrip(t *testing.T) {
 	src := CustomSource{
 		Name: "Prices", URL: "https://api.example.com/prices?currency=EUR", Method: "POST", Body: `{"q":1}`,
 		Auth: "header", AuthName: "X-API-Key", Headers: `[{"name":"Accept-Language","value":"nl"}]`,
-		SecretsSealed: "sealed", IntervalSeconds: 300, Sample: `{"price":1}`, CreatedAt: created, UpdatedAt: created,
+		SecretsSealed: "sealed", IntervalSeconds: 300, Sample: `{"price":1}`, NamedValues: `{"values":[]}`,
+		CreatedAt: created, UpdatedAt: created,
 	}
 	id, err := s.AddCustomSource(ctx, src, 20)
 	if err != nil || id == 0 {
@@ -26,8 +27,19 @@ func TestCustomSourceRoundTrip(t *testing.T) {
 		t.Fatalf("CustomSource = %+v, %v; want %+v", got, err, src)
 	}
 
+	// An update keeps the named values; they change on their own.
 	src.Name, src.Auth, src.SecretsSealed, src.UpdatedAt = "Renamed", "none", "", created.Add(time.Hour)
-	if err := s.UpdateCustomSource(ctx, src); err != nil {
+	if err := s.UpdateCustomSource(ctx, CustomSource{
+		ID: src.ID, Name: src.Name, URL: src.URL, Method: src.Method, Body: src.Body, Auth: src.Auth, AuthName: src.AuthName,
+		Headers: src.Headers, IntervalSeconds: src.IntervalSeconds, Sample: src.Sample, UpdatedAt: src.UpdatedAt,
+	}); err != nil {
+		t.Fatal(err)
+	}
+	if got, err := s.CustomSource(ctx, id); err != nil || got != src {
+		t.Fatalf("after update = %+v, %v; want %+v", got, err, src)
+	}
+	src.NamedValues, src.UpdatedAt = `{"values":[{"name":"Price","path":"price"}]}`, created.Add(2*time.Hour)
+	if err := s.SetCustomSourceValues(ctx, id, src.NamedValues, src.UpdatedAt); err != nil {
 		t.Fatal(err)
 	}
 	list, err := s.CustomSources(ctx)
@@ -46,6 +58,9 @@ func TestCustomSourceRoundTrip(t *testing.T) {
 	}
 	if err := s.UpdateCustomSource(ctx, src); !errors.Is(err, ErrNotFound) {
 		t.Fatalf("update of a deleted source: err = %v, want ErrNotFound", err)
+	}
+	if err := s.SetCustomSourceValues(ctx, id, "", created); !errors.Is(err, ErrNotFound) {
+		t.Fatalf("named values of a deleted source: err = %v, want ErrNotFound", err)
 	}
 }
 

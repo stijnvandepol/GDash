@@ -263,8 +263,9 @@ uses GeoNames data; the coordinates can also be entered by hand.
 A custom source is any JSON HTTP API set up under Settings. Its secret values never leave the server: they are sealed
 with `secret.key` like calendar addresses, never returned, logged or put in an error or the audit log.
 
-**custom source:** `{"id": 1, "name": "Weather in Oss", "url": "https://api.open-meteo.com/v1/forecast?…", "method": "GET", "body": "", "auth": {"kind": "header", "name": "X-API-Key", "secretSet": true}, "headers": [{"name": "X-Tenant", "value": "", "secret": true}], "intervalSeconds": 900, "sample": {…} | null, "unreadable": false, "createdAt": "…", "updatedAt": "…"}`.
-A request body has the same fields, with `auth.secret` instead of `auth.secretSet` and `sample` as any JSON value:
+**custom source:** `{"id": 1, "name": "Weather in Oss", "url": "https://api.open-meteo.com/v1/forecast?…", "method": "GET", "body": "", "auth": {"kind": "header", "name": "X-API-Key", "secretSet": true}, "headers": [{"name": "X-Tenant", "value": "", "secret": true}], "intervalSeconds": 900, "sample": {…} | null, "values": [named value], "lists": [named list], "unreadable": false, "createdAt": "…", "updatedAt": "…"}`.
+A request body has the same fields, with `auth.secret` instead of `auth.secretSet` and `sample` as any JSON value,
+and without `values` and `lists`, which change on their own (below) and are kept by a `PUT` of the source:
 
 | Field | Rule |
 |---|---|
@@ -280,11 +281,21 @@ A request body has the same fields, with `auth.secret` instead of `auth.secretSe
 `unreadable` is true when the secrets cannot be decrypted (the database was moved without its key); such a source is
 not fetched until its secrets are entered again. At most 20 sources exist.
 
+**Named values.** The values and lists of a source that an admin named under Settings, so the dashboard editor offers
+them by name instead of by path. A Custom widget still stores the paths it shows (and a value's unit and decimals), so
+renaming or removing a named value never changes a dashboard. **named value:** `{"name": "Outside", "path":
+"current.temperature_2m", "unit": "°C", "decimals": 1}`, with `unit` (up to 12 characters) and `decimals` (0 to 6)
+optional. **named list:** `{"name": "Releases", "path": "$", "columns": [{"name": "Version", "path": "tag_name"}]}`,
+with 1 to 3 columns whose paths start at an item (`$` is the item itself). Names are 1 to 40 characters on one line,
+unique per source ignoring case (values and lists together), and a column's name is unique within its list. Paths
+follow the syntax below. At most 40 values and 10 lists per source.
+
 | Method and path | Needs | Success | Errors |
 |---|---|---|---|
 | `GET /api/custom-sources` | admin | `200 {"sources": [custom source]}` | `401` |
 | `POST /api/custom-sources` | admin | `201` custom source | `401`, `409` at 20 sources, `422` naming each field, such as `auth.secret` or `headers[1].name` |
 | `PUT /api/custom-sources/{id}` | admin | `200` custom source | `401`, `404`, `422` |
+| `PUT /api/custom-sources/{id}/values` `{values, lists}` | admin | `200` custom source | `401`, `404`, `422` naming each field, such as `values[1].path` or `lists[0].columns[2].name` |
 | `DELETE /api/custom-sources/{id}` | admin | `204`; its widgets say it is not available | `401`, `404` |
 | `POST /api/custom-sources/{id}/tests` | admin | `200 {"data", "truncated", "bytes"}`: one fresh answer, cut down for the editor (25 items per list, 200 characters per text, 12 levels, 2000 values) | `401`, `404`, `502 fetch_failed` with what went wrong, such as the status the API answered |
 | `POST /api/custom-rule-checks` `{when, data, value?, row?}` | admin | `200 {"result"}`, or `{"error"}` when the condition does not apply to `data` | `401`, `422` naming `when` |

@@ -11,7 +11,46 @@ import (
 	"github.com/stijnvandepol/gdash/internal/custom"
 	"github.com/stijnvandepol/gdash/internal/secret"
 	"github.com/stijnvandepol/gdash/internal/store"
+	"github.com/stijnvandepol/gdash/internal/validation"
 )
+
+func TestCustomSourceNamedValues(t *testing.T) {
+	ctx := context.Background()
+	svc := newService(t)
+	view, err := svc.AddCustomSource(ctx, customInput(nil))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if view.Values == nil || view.Lists == nil || len(view.Values) != 0 {
+		t.Fatalf("a new source has values %#v and lists %#v, want empty lists", view.Values, view.Lists)
+	}
+	in := custom.Values{
+		Values: []custom.NamedValue{{Name: "Outside", Path: "current.temp", Unit: "°C"}},
+		Lists:  []custom.NamedList{{Name: "Days", Path: "daily", Columns: []custom.Column{{Name: "Day", Path: "date"}}}},
+	}
+	named, err := svc.SetCustomSourceValues(ctx, view.ID, in)
+	if err != nil || len(named.Values) != 1 || named.Values[0].Unit != "°C" || named.Lists[0].Columns[0].Path != "date" {
+		t.Fatalf("SetCustomSourceValues = %+v, %v", named, err)
+	}
+
+	// Editing the source keeps them.
+	edited, err := svc.UpdateCustomSource(ctx, view.ID, customInput(func(in *custom.Input) { in.Name = "Renamed" }))
+	if err != nil || len(edited.Values) != 1 || len(edited.Lists) != 1 {
+		t.Fatalf("after an edit = %+v, %v", edited, err)
+	}
+	list, _ := svc.CustomSources(ctx)
+	if len(list[0].Values) != 1 || list[0].Values[0].Name != "Outside" {
+		t.Fatalf("list = %+v", list)
+	}
+
+	in.Values = append(in.Values, custom.NamedValue{Name: "outside", Path: "x"})
+	if _, err := svc.SetCustomSourceValues(ctx, view.ID, in); len(validation.Fields(err)) != 1 {
+		t.Fatalf("a name used twice: %v", err)
+	}
+	if _, err := svc.SetCustomSourceValues(ctx, view.ID+1, custom.Values{}); !errors.Is(err, store.ErrNotFound) {
+		t.Fatalf("values of an unknown source: %v", err)
+	}
+}
 
 const apiKey = "s3cr3t-key-123"
 

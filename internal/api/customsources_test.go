@@ -37,6 +37,7 @@ func TestCustomSourcesNeedLogin(t *testing.T) {
 	for _, route := range [][2]string{
 		{"GET", "/api/custom-sources"}, {"POST", "/api/custom-sources"}, {"PUT", "/api/custom-sources/1"},
 		{"DELETE", "/api/custom-sources/1"}, {"POST", "/api/custom-sources/1/tests"}, {"POST", "/api/custom-rule-checks"},
+		{"PUT", "/api/custom-sources/1/values"},
 	} {
 		if status, _ := env.do(t, route[0], route[1], `{}`); status != http.StatusUnauthorized {
 			t.Errorf("%s %s without login = %d, want 401", route[0], route[1], status)
@@ -122,6 +123,34 @@ func TestCustomSourceValidation(t *testing.T) {
 	}
 	if status, _ := env.do(t, "POST", "/api/custom-sources", `{"name": "x", "extra": 1}`); status != http.StatusBadRequest {
 		t.Errorf("unknown field = %d, want 400", status)
+	}
+}
+
+func TestCustomSourceValues(t *testing.T) {
+	env := newTestEnv(t, nil)
+	env.setUp(t)
+	if status, body := env.do(t, "POST", "/api/custom-sources", customBody("https://api.example.com", customKey)); status != http.StatusCreated || !strings.Contains(body, `"values":[],"lists":[]`) {
+		t.Fatalf("create = %d %s", status, body)
+	}
+	values := `{"values": [{"name": "Inside", "path": "temp", "unit": "°C", "decimals": 1}],
+		"lists": [{"name": "Rooms", "path": "list", "columns": [{"name": "Number", "path": "n"}]}]}`
+	status, body := env.do(t, "PUT", "/api/custom-sources/1/values", values)
+	if status != http.StatusOK || !strings.Contains(body, `"values":[{"name":"Inside","path":"temp","unit":"°C","decimals":1}]`) || strings.Contains(body, customKey) {
+		t.Fatalf("set values = %d %s", status, body)
+	}
+	if _, listed := env.do(t, "GET", "/api/custom-sources", ""); !strings.Contains(listed, `"columns":[{"name":"Number","path":"n"}]`) {
+		t.Errorf("list = %s, want the named list", listed)
+	}
+	if n := env.settingsChanges.Load(); n != 1 {
+		t.Errorf("SettingsChanged called %d times, want 1 (create): names do not change fetching", n)
+	}
+
+	status, body = env.do(t, "PUT", "/api/custom-sources/1/values", `{"values": [{"name": "", "path": "a..b"}], "lists": []}`)
+	if status != http.StatusUnprocessableEntity || !strings.Contains(body, `"field":"values[0].name"`) || !strings.Contains(body, `"field":"values[0].path"`) {
+		t.Fatalf("invalid values = %d %s", status, body)
+	}
+	if status, _ := env.do(t, "PUT", "/api/custom-sources/9/values", `{"values": []}`); status != http.StatusNotFound {
+		t.Errorf("values of an unknown source = %d, want 404", status)
 	}
 }
 

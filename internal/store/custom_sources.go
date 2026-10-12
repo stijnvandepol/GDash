@@ -12,8 +12,9 @@ import (
 // internal/custom enforces its own, lower limit.
 const maxCustomSources = 50
 
-// CustomSource is a JSON HTTP API as stored. Headers is JSON; the secret
-// values are sealed together in SecretsSealed by internal/custom.
+// CustomSource is a JSON HTTP API as stored. Headers and NamedValues are
+// JSON; the secret values are sealed together in SecretsSealed by
+// internal/settings.
 type CustomSource struct {
 	ID              int64
 	Name            string
@@ -26,11 +27,13 @@ type CustomSource struct {
 	SecretsSealed   string
 	IntervalSeconds int
 	Sample          string
-	CreatedAt       time.Time
-	UpdatedAt       time.Time
+	// NamedValues is empty for a source without named values.
+	NamedValues string
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
 }
 
-const customSourceColumns = "id, name, url, method, body, auth, auth_name, headers, secrets_sealed, interval_seconds, sample, created_at, updated_at"
+const customSourceColumns = "id, name, url, method, body, auth, auth_name, headers, secrets_sealed, interval_seconds, sample, named_values, created_at, updated_at"
 
 // CustomSources returns every custom source in the order they were added.
 func (s *Store) CustomSources(ctx context.Context) ([]CustomSource, error) {
@@ -75,10 +78,10 @@ func (s *Store) AddCustomSource(ctx context.Context, src CustomSource, limit int
 		return 0, fmt.Errorf("%w: limit of %d custom sources reached", ErrConflict, limit)
 	}
 	res, err := tx.ExecContext(ctx,
-		`INSERT INTO custom_sources (name, url, method, body, auth, auth_name, headers, secrets_sealed, interval_seconds, sample, created_at, updated_at)
-		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		`INSERT INTO custom_sources (name, url, method, body, auth, auth_name, headers, secrets_sealed, interval_seconds, sample, named_values, created_at, updated_at)
+		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		src.Name, src.URL, src.Method, src.Body, src.Auth, src.AuthName, src.Headers, src.SecretsSealed,
-		src.IntervalSeconds, src.Sample, formatTime(src.CreatedAt), formatTime(src.UpdatedAt))
+		src.IntervalSeconds, src.Sample, src.NamedValues, formatTime(src.CreatedAt), formatTime(src.UpdatedAt))
 	if err != nil {
 		return 0, fmt.Errorf("add custom source: %w", err)
 	}
@@ -89,8 +92,9 @@ func (s *Store) AddCustomSource(ctx context.Context, src CustomSource, limit int
 	return id, tx.Commit()
 }
 
-// UpdateCustomSource replaces everything of a source except its ID and
-// creation time, or returns ErrNotFound.
+// UpdateCustomSource replaces everything of a source except its ID,
+// creation time and named values, or returns ErrNotFound. The named values
+// change on their own, with SetCustomSourceValues.
 func (s *Store) UpdateCustomSource(ctx context.Context, src CustomSource) error {
 	res, err := s.db.ExecContext(ctx,
 		`UPDATE custom_sources SET name = ?, url = ?, method = ?, body = ?, auth = ?, auth_name = ?, headers = ?,
@@ -99,6 +103,17 @@ func (s *Store) UpdateCustomSource(ctx context.Context, src CustomSource) error 
 		src.IntervalSeconds, src.Sample, formatTime(src.UpdatedAt), src.ID)
 	if err != nil {
 		return fmt.Errorf("update custom source: %w", err)
+	}
+	return requireOneRow(res)
+}
+
+// SetCustomSourceValues replaces the named values of a source, or returns
+// ErrNotFound.
+func (s *Store) SetCustomSourceValues(ctx context.Context, id int64, namedValues string, updatedAt time.Time) error {
+	res, err := s.db.ExecContext(ctx, "UPDATE custom_sources SET named_values = ?, updated_at = ? WHERE id = ?",
+		namedValues, formatTime(updatedAt), id)
+	if err != nil {
+		return fmt.Errorf("set named values of custom source: %w", err)
 	}
 	return requireOneRow(res)
 }
@@ -116,7 +131,7 @@ func scanCustomSource(row interface{ Scan(...any) error }) (CustomSource, error)
 	var src CustomSource
 	var created, updated string
 	err := row.Scan(&src.ID, &src.Name, &src.URL, &src.Method, &src.Body, &src.Auth, &src.AuthName, &src.Headers,
-		&src.SecretsSealed, &src.IntervalSeconds, &src.Sample, &created, &updated)
+		&src.SecretsSealed, &src.IntervalSeconds, &src.Sample, &src.NamedValues, &created, &updated)
 	if err != nil {
 		return CustomSource{}, err
 	}

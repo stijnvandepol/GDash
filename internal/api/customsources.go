@@ -29,6 +29,7 @@ func (s *Server) handleCustomSources(mux *http.ServeMux) {
 	mux.Handle("GET /api/custom-sources", s.requireUser(s.listCustomSources))
 	mux.Handle("POST /api/custom-sources", s.requireUser(s.postCustomSource))
 	mux.Handle("PUT /api/custom-sources/{id}", s.requireUser(s.putCustomSource))
+	mux.Handle("PUT /api/custom-sources/{id}/values", s.requireUser(s.putCustomSourceValues))
 	mux.Handle("DELETE /api/custom-sources/{id}", s.requireUser(s.deleteCustomSource))
 	mux.Handle("POST /api/custom-sources/{id}/tests", s.requireUser(s.postCustomSourceTest))
 	mux.Handle("POST /api/custom-rule-checks", s.requireUser(s.postCustomRuleCheck))
@@ -80,6 +81,28 @@ func (s *Server) putCustomSource(w http.ResponseWriter, r *http.Request) {
 	}
 	s.auditUser(r, auditCustomSourceChanged, describeCustomSource(src))
 	s.SettingsChanged()
+	writeJSON(w, http.StatusOK, src)
+}
+
+// putCustomSourceValues handles PUT /api/custom-sources/{id}/values with
+// {values, lists}: the named values the dashboard editor offers. 200 with
+// the source, 404, or 422 naming each field, such as values[1].path. The
+// fetching does not change, so the data hub is not told.
+func (s *Server) putCustomSourceValues(w http.ResponseWriter, r *http.Request) {
+	id, ok := customSourceID(w, r)
+	if !ok {
+		return
+	}
+	var in custom.Values
+	if !decodeJSON(w, r, &in) {
+		return
+	}
+	src, err := s.Settings.SetCustomSourceValues(r.Context(), id, in)
+	if err != nil {
+		s.writeSettingsError(w, "set named values of custom source", err)
+		return
+	}
+	s.auditUser(r, auditCustomSourceChanged, describeCustomSource(src))
 	writeJSON(w, http.StatusOK, src)
 }
 

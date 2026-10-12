@@ -31,6 +31,10 @@ type CustomSource struct {
 	Headers         []custom.Header `json:"headers"`
 	IntervalSeconds int             `json:"intervalSeconds"`
 	Sample          json.RawMessage `json:"sample"`
+	// Values and Lists are the named values that the dashboard editor
+	// offers for this source.
+	Values []custom.NamedValue `json:"values"`
+	Lists  []custom.NamedList  `json:"lists"`
 	// Unreadable is true when the secrets cannot be decrypted, for example
 	// after the database was moved without its secret.key.
 	Unreadable bool      `json:"unreadable"`
@@ -125,8 +129,30 @@ func (s *Service) UpdateCustomSource(ctx context.Context, id int64, in custom.In
 	if err != nil {
 		return CustomSource{}, err
 	}
-	row.CreatedAt = stored.CreatedAt
+	row.CreatedAt, row.NamedValues = stored.CreatedAt, stored.NamedValues
 	if err := s.Store.UpdateCustomSource(ctx, row); err != nil {
+		return CustomSource{}, err
+	}
+	return s.customView(row), nil
+}
+
+// SetCustomSourceValues replaces the named values of a source. It returns
+// a *validation.Error for invalid values and store.ErrNotFound for an
+// unknown ID.
+func (s *Service) SetCustomSourceValues(ctx context.Context, id int64, in custom.Values) (CustomSource, error) {
+	values, err := custom.CheckValues(in)
+	if err != nil {
+		return CustomSource{}, err
+	}
+	encoded, err := json.Marshal(values)
+	if err != nil {
+		return CustomSource{}, err
+	}
+	if err := s.Store.SetCustomSourceValues(ctx, id, string(encoded), s.Now().UTC()); err != nil {
+		return CustomSource{}, err
+	}
+	row, err := s.Store.CustomSource(ctx, id)
+	if err != nil {
 		return CustomSource{}, err
 	}
 	return s.customView(row), nil
@@ -203,9 +229,19 @@ func (s *Service) customView(row store.CustomSource) CustomSource {
 	v := CustomSource{
 		ID: row.ID, Name: row.Name, URL: row.URL, Method: row.Method, Body: row.Body,
 		IntervalSeconds: row.IntervalSeconds, CreatedAt: row.CreatedAt, UpdatedAt: row.UpdatedAt,
-		Headers: []custom.Header{},
+		Headers: []custom.Header{}, Values: []custom.NamedValue{}, Lists: []custom.NamedList{},
 	}
 	v.Auth.Kind, v.Auth.Name = row.Auth, row.AuthName
+	if row.NamedValues != "" {
+		var named custom.Values
+		if err := json.Unmarshal([]byte(row.NamedValues), &named); err != nil {
+			// Only GDash writes this column; the source keeps working
+			// without names, and saving them again repairs it.
+			s.Logger.Error("stored named values of a custom API are invalid", "source", row.Name, "error", err)
+		} else {
+			v.Values, v.Lists = named.Values, named.Lists
+		}
+	}
 	if row.Sample != "" {
 		v.Sample = json.RawMessage(row.Sample)
 	}
