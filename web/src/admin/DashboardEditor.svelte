@@ -3,11 +3,12 @@
   import { ask } from './confirm.svelte';
   import 'gridstack/dist/gridstack.min.css';
   import { GridStack, type GridStackNode, type GridStackWidget } from 'gridstack';
-  import { onDestroy, onMount } from 'svelte';
+  import { onDestroy, onMount, tick } from 'svelte';
   import { api, ApiError, type Dashboard, type Widget, type WidgetCatalogue } from './api';
   import type { PreviewDraft } from '../previewApi';
   import DashboardPreview from './DashboardPreview.svelte';
   import WidgetInspector from './WidgetInspector.svelte';
+  import WidgetPalette from './WidgetPalette.svelte';
   import { WIDGET_LABELS as LABELS, defaultSettings } from './widgetSettings';
 
   let {
@@ -36,6 +37,7 @@
   let dirty = $state(false);
 
   let container: HTMLDivElement;
+  let side: HTMLElement;
   let grid: GridStack | null = null;
   let resizeObserver: ResizeObserver | null = null;
 
@@ -123,6 +125,20 @@
     selected = id;
     message = '';
     dirty = true;
+    void focusSide('h2');
+  }
+
+  /** Back from a widget's settings to the widgets to add. */
+  function deselect() {
+    selected = null;
+    void focusSide('input[type="search"]');
+  }
+
+  // The side panel changes what it shows; the keyboard follows it there
+  // instead of falling back to the top of the page.
+  async function focusSide(selector: string) {
+    await tick();
+    side.querySelector<HTMLElement>(selector)?.focus();
   }
 
   function removeSelected() {
@@ -210,26 +226,37 @@
     onclose={close}
     onpreview={openPreview}
     onsave={save}
-    onadd={addWidget}
   />
 
-  <div class="canvas">
-    <div class="grid-stack" bind:this={container}></div>
+  <!-- The canvas, and beside it the widgets to add or the selected
+       widget's settings; on a narrow screen the panel goes below. -->
+  <div class="workspace">
+    <div class="stage">
+      <div class="canvas">
+        <div class="grid-stack" bind:this={container}></div>
+      </div>
+      <p class="muted small">Drag widgets to move them, drag a corner to resize. The canvas is the TV screen.</p>
+      {#if message}<p class="muted">{message}</p>{/if}
+      {#each errors as e, i (i)}<p class="error">{e}</p>{/each}
+    </div>
+
+    <aside class="side" bind:this={side} aria-label={selectedWidget ? 'Widget settings' : 'Add widgets'}>
+      {#if selectedWidget}
+        {#key selected}
+          <WidgetInspector
+            label={LABELS[selectedWidget.type] ?? selectedWidget.type}
+            type={selectedType}
+            settings={selectedWidget.settings ?? {}}
+            onchange={setSettings}
+            onremove={removeSelected}
+            onback={deselect}
+          />
+        {/key}
+      {:else}
+        <WidgetPalette types={Object.keys(catalogue.types)} onadd={addWidget} />
+      {/if}
+    </aside>
   </div>
-  <p class="muted small">Drag widgets to move them, drag a corner to resize. The canvas is the TV screen.</p>
-
-  {#if selectedWidget}
-    <WidgetInspector
-      label={LABELS[selectedWidget.type] ?? selectedWidget.type}
-      type={selectedType}
-      settings={selectedWidget.settings ?? {}}
-      onchange={setSettings}
-      onremove={removeSelected}
-    />
-  {/if}
-
-  {#if message}<p class="muted">{message}</p>{/if}
-  {#each errors as e, i (i)}<p class="error">{e}</p>{/each}
 </section>
 
 {#if previewing}
@@ -238,7 +265,43 @@
 
 <style>
   .editor {
-    --editor-chrome: 380px;
+    --editor-chrome: 300px;
+    --side-w: 340px;
+  }
+  .workspace {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--s-5);
+    align-items: start;
+  }
+  .stage {
+    display: grid;
+    gap: var(--s-3);
+    min-width: 0;
+  }
+  .side {
+    min-width: 0;
+    padding-top: var(--s-4);
+    border-top: 1px solid var(--rule);
+  }
+  /* Wide enough for both: the panel stands beside the TV and scrolls on its
+     own, so the canvas stays in view while choosing. */
+  @container page (min-width: 960px) {
+    .workspace {
+      grid-template-columns: minmax(0, 1fr) var(--side-w);
+    }
+    .side {
+      position: sticky;
+      top: calc(var(--topbar-h) + var(--s-4));
+      /* As tall as the canvas when the window's height limits it, so both
+         end on one line. */
+      max-height: max(16rem, calc(100dvh - var(--editor-chrome)));
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      padding: 0 var(--s-2) var(--s-4) var(--s-5);
+      border-top: 0;
+      border-left: 1px solid var(--border);
+    }
   }
   /* The canvas is the TV: dark, with the 24x14 grid drawn faintly so a
      widget's place and size can be judged while dragging. */

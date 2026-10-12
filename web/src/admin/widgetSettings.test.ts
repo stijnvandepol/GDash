@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { defaultSettings, isoDate, placeSetting } from './widgetSettings';
+import { WIDGETS, defaultSettings, isoDate, paletteGroups, placeSetting } from './widgetSettings';
 import type { WidgetType } from './api';
 
 const today = new Date(2026, 9, 9);
@@ -83,5 +83,35 @@ describe('placeSetting', () => {
 describe('isoDate', () => {
   it('pads months and days', () => {
     expect(isoDate(new Date(2026, 0, 5))).toBe('2026-01-05');
+  });
+});
+
+describe('paletteGroups', () => {
+  const types = Object.keys(WIDGETS);
+  const labels = (query: string, from = types) => paletteGroups(from, query).map((g) => [g.label, g.items.map((i) => i.label)]);
+
+  it('lists every type under its category, in order', () => {
+    const groups = paletteGroups(types);
+    expect(groups.map((g) => g.label)).toEqual(['Time & date', 'Weather & nature', 'Home', 'Agenda & household', 'Travel', 'Media & news']);
+    expect(groups[0]!.items.map((i) => i.type)).toEqual(['clock', 'countdown']);
+    expect(groups.flatMap((g) => g.items)).toHaveLength(types.length);
+  });
+
+  it('finds a widget by every word of its name or description, ignoring case', () => {
+    expect(labels('CLOCK')).toEqual([['Time & date', ['Clock']]]);
+    expect(labels('  pollen  ')).toEqual([['Weather & nature', ['Air quality']]]);
+    expect(labels('next')).toEqual([
+      ['Agenda & household', ['Calendar', 'Waste collection']],
+      ['Travel', ['Departures']],
+    ]);
+    expect(labels('the next')).toEqual([['Agenda & household', ['Waste collection']]]);
+    expect(labels('nothing like this')).toEqual([]);
+  });
+
+  it('leaves out types the server does not have and lists unknown ones under Other', () => {
+    expect(labels('', ['clock', 'homey'])).toEqual([
+      ['Time & date', ['Clock']],
+      ['Other', ['homey']],
+    ]);
   });
 });

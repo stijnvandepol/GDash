@@ -1,27 +1,86 @@
 import { roundCoordinate } from '../coordinates';
 import type { Place, WidgetType } from './api';
+import type { IconName } from './Icon.svelte';
 
-/** Names for the widget picker; unknown types show their id. */
-export const WIDGET_LABELS: Record<string, string> = {
-  clock: 'Clock',
-  weather: 'Weather',
-  forecast: 'Forecast',
-  sun: 'Sun',
-  airquality: 'Air quality',
-  waste: 'Waste collection',
-  energyprice: 'Energy price',
-  calendar: 'Calendar',
-  news: 'News',
-  text: 'Note',
-  countdown: 'Countdown',
-  photos: 'Photos',
-  homeassistant: 'Home Assistant',
-  homey: 'Homey',
-  homeypresence: 'Who’s home (Homey)',
-  departures: 'Departures',
-  fuel: 'Fuel prices',
-  custom: 'Custom API',
+/** The groups of the editor's widget palette, in the order they are shown. */
+export const WIDGET_CATEGORIES = [
+  { id: 'time', label: 'Time & date' },
+  { id: 'weather', label: 'Weather & nature' },
+  { id: 'home', label: 'Home' },
+  { id: 'agenda', label: 'Agenda & household' },
+  { id: 'travel', label: 'Travel' },
+  { id: 'media', label: 'Media & news' },
+] as const;
+
+export type WidgetCategory = (typeof WIDGET_CATEGORIES)[number]['id'];
+
+export interface WidgetInfo {
+  label: string;
+  category: WidgetCategory;
+  /** One line in the palette: what the widget shows. */
+  description: string;
+  icon: IconName;
+}
+
+/**
+ * Every widget type the editor knows, one line each, in palette order
+ * within its category. A type the server has but this table lacks is
+ * listed under Other by its id.
+ */
+export const WIDGETS: Record<string, WidgetInfo> = {
+  clock: { label: 'Clock', category: 'time', description: 'The time and date, large', icon: 'clock' },
+  countdown: { label: 'Countdown', category: 'time', description: 'Days left until a date', icon: 'countdown' },
+  weather: { label: 'Weather', category: 'weather', description: 'Temperature and sky now', icon: 'weather' },
+  forecast: { label: 'Forecast', category: 'weather', description: 'The coming days at a glance', icon: 'forecast' },
+  sun: { label: 'Sun', category: 'weather', description: 'Sunrise and sunset today', icon: 'sun' },
+  airquality: { label: 'Air quality', category: 'weather', description: 'Air quality and pollen', icon: 'air' },
+  homeassistant: { label: 'Home Assistant', category: 'home', description: 'Sensors and switches at home', icon: 'house' },
+  energyprice: { label: 'Energy price', category: 'home', description: "Today's electricity price", icon: 'bolt' },
+  custom: { label: 'Custom API', category: 'home', description: 'Values from an API in Settings', icon: 'braces' },
+  homey: { label: 'Homey', category: 'home', description: 'Device values from your Homey', icon: 'house' },
+  homeypresence: { label: 'Who’s home (Homey)', category: 'home', description: 'Who is home, from your Homey', icon: 'people' },
+  calendar: { label: 'Calendar', category: 'agenda', description: 'Your next appointments', icon: 'calendar' },
+  waste: { label: 'Waste collection', category: 'agenda', description: 'The next waste pickups', icon: 'bin' },
+  text: { label: 'Note', category: 'agenda', description: 'A short note for the household', icon: 'note' },
+  departures: { label: 'Departures', category: 'travel', description: 'Next buses and trains', icon: 'bus' },
+  fuel: { label: 'Fuel prices', category: 'travel', description: 'The cheapest fuel nearby', icon: 'fuel' },
+  news: { label: 'News', category: 'media', description: 'Headlines from your feeds', icon: 'news' },
+  photos: { label: 'Photos', category: 'media', description: 'A slideshow of your photos', icon: 'photo' },
 };
+
+/** Names of the widget types; unknown types show their id. */
+export const WIDGET_LABELS: Record<string, string> = Object.fromEntries(Object.entries(WIDGETS).map(([type, w]) => [type, w.label]));
+
+export interface PaletteItem {
+  type: string;
+  label: string;
+  description: string;
+  icon: IconName;
+}
+
+export interface PaletteGroup {
+  label: string;
+  items: PaletteItem[];
+}
+
+/**
+ * The palette for the types this server has, narrowed to those whose name
+ * or description holds every word of the search. Empty groups are left out.
+ */
+export function paletteGroups(types: string[], query = ''): PaletteGroup[] {
+  const words = query.toLowerCase().split(/\s+/).filter(Boolean);
+  const matches = (item: PaletteItem) => words.every((word) => `${item.label} ${item.description}`.toLowerCase().includes(word));
+  const item = (type: string): PaletteItem => {
+    const w = WIDGETS[type];
+    return { type, label: w?.label ?? type, description: w?.description ?? '', icon: w?.icon ?? 'widget' };
+  };
+  const known = Object.keys(WIDGETS).filter((type) => types.includes(type));
+  const groups: PaletteGroup[] = [
+    ...WIDGET_CATEGORIES.map((c) => ({ label: c.label, items: known.filter((type) => WIDGETS[type]!.category === c.id).map(item) })),
+    { label: 'Other', items: types.filter((type) => !WIDGETS[type]).map(item) },
+  ];
+  return groups.map((g) => ({ ...g, items: g.items.filter(matches) })).filter((g) => g.items.length > 0);
+}
 
 export const SETTING_LABELS: Record<string, string> = {
   maxItems: 'Items',

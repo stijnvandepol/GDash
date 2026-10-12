@@ -16,6 +16,8 @@ test('create a dashboard, add a clock and a note, edit the note, save and export
   await expect(page.getByLabel('Dashboard name')).toHaveValue('E2E Evening');
 
   await page.getByRole('button', { name: 'Clock', exact: true }).click();
+  // The new clock is selected, so the panel shows its settings; back to the widgets for the note.
+  await page.getByRole('button', { name: '← Add widgets' }).click();
   await page.getByRole('button', { name: 'Note', exact: true }).click();
   // The new widget is selected, so its settings show.
   await page.getByLabel('Text', { exact: true }).fill(NOTE_TEXT);
