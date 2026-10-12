@@ -341,7 +341,8 @@ ordering operators take two numbers or two texts, `+` also joins two texts (up t
 take booleans and stop early. Functions: `len(text | list | object)`, `contains(text, text)` or `contains(list,
 value)`, `lower(text)`, `upper(text)`, `round(number)` and `round(number, 0..6)`, `number(number | text)`,
 `minutesSince(time)` (ISO 8601 with or without a time and zone, UTC when absent, or a Unix time in seconds or
-milliseconds; negative for the future). Anything else, such as comparing `null` with a number, dividing by zero or a
+milliseconds; negative for the future), `isOn(value)` (whether a badge would be on: `true`, a number other than 0, or
+the text `on`, `home`, `yes`, `open` or `true` in any case). Anything else, such as comparing `null` with a number, dividing by zero or a
 result that is not a finite number, is an evaluation error: the rule does not match. A rule matches only when its
 condition gives `true`.
 

@@ -52,6 +52,8 @@ func TestExpressionValues(t *testing.T) {
 		"round(2.5)":                              3.0,
 		"number(\"21.5\") + 1":                    22.5,
 		"number(4)":                               4.0,
+		"isOn(\"Home\") and isOn(1) and isOn(ok)": true,
+		"isOn(0) or isOn(\"away\") or isOn(null)": false,
 		"minutesSince(\"2026-10-12T11:30:00Z\")":  30.0,
 		"minutesSince(\"2026-10-12T12:10:00\")":   -10.0,
 		"minutesSince(\"2026-10-12\")":            720.0,

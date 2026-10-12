@@ -39,6 +39,7 @@ var functions = map[string]*function{
 	"round":        {1, 2, round},
 	"number":       {1, 1, toNumber},
 	"minutesSince": {1, 1, minutesSince},
+	"isOn":         {1, 1, on},
 }
 
 func functionNames() string {
@@ -124,6 +125,12 @@ func toNumber(args []any, _ time.Time) (any, error) {
 		return f, nil
 	}
 	return nil, fmt.Errorf("needs a number or text, not %s", describe(args[0]))
+}
+
+// on tells whether a value is on, as a badge does: true, a number other
+// than 0, or a text such as "on" or "home". Anything else is off.
+func on(args []any, _ time.Time) (any, error) {
+	return isOn(args[0]), nil
 }
 
 // unixMillisFrom tells milliseconds from seconds in a Unix time: in
