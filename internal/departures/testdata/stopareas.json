@@ -1,0 +1,86 @@
+{
+ "utrcsw": {
+  "TimingPointTown": "Utrecht",
+  "TimingPointName": "Utrecht, CS Jaarbeurszijde",
+  "StopAreaCode": "utrcsw",
+  "Longitude": 5.108419,
+  "Latitude": 52.088524
+ },
+ "utrbus": {
+  "TimingPointTown": "Utrecht",
+  "TimingPointName": "Utrecht, CS Centrumzijde",
+  "StopAreaCode": "utrbus",
+  "Longitude": 5.1125884,
+  "Latitude": 52.0891
+ },
+ "utrler": {
+  "TimingPointTown": "Utrecht",
+  "TimingPointName": "Utrecht, Station Leidsche Rijn (Perron C)",
+  "StopAreaCode": "utrler",
+  "Longitude": 3.3135424,
+  "Latitude": 47.974766
+ },
+ "utrons": {
+  "TimingPointTown": "Utrecht",
+  "TimingPointName": "Utrecht, Station Overvecht (Perron B)",
+  "StopAreaCode": "utrons",
+  "Longitude": 3.3135424,
+  "Latitude": 47.974766
+ },
+ "05003": {
+  "TimingPointTown": "Amsterdam",
+  "TimingPointName": "Centraal Station",
+  "StopAreaCode": "05003",
+  "Longitude": 4.9020486,
+  "Latitude": 52.377132
+ },
+ "asdcs": {
+  "TimingPointTown": "Amsterdam",
+  "TimingPointName": "Amsterdam, Centraal Station",
+  "StopAreaCode": "asdcs",
+  "Longitude": 3.3135424,
+  "Latitude": 47.974766
+ },
+ "05095": {
+  "TimingPointTown": "Amsterdam",
+  "TimingPointName": "Centraal Station",
+  "StopAreaCode": "05095",
+  "Longitude": 3.3135424,
+  "Latitude": 47.974766
+ },
+ "OssCS": {
+  "TimingPointTown": "Oss",
+  "TimingPointName": "Centraal Station",
+  "StopAreaCode": "OssCS",
+  "Longitude": 3.3135424,
+  "Latitude": 47.974766
+ },
+ "Bd CS": {
+  "TimingPointTown": "Breda",
+  "TimingPointName": "Breda, Centraal Station W",
+  "StopAreaCode": "Bd CS",
+  "Longitude": 4.780834,
+  "Latitude": 51.596024
+ },
+ "W&aAnj": {
+  "TimingPointTown": "Wijk en Aalburg",
+  "TimingPointName": "Wijk en Aalburg, Anjelierstraat",
+  "StopAreaCode": "W&aAnj",
+  "Longitude": 5.1276283,
+  "Latitude": 51.759857
+ },
+ "agdwth": {
+  "TimingPointTown": "Aagtdorp",
+  "TimingPointName": "Aagtdorp, Poelenburgh",
+  "StopAreaCode": "agdwth",
+  "Longitude": 4.7022204,
+  "Latitude": 52.68644
+ },
+ "30267": {
+  "TimingPointTown": "Enschede",
+  "TimingPointName": "Enschede, Albert Cuypstraat",
+  "StopAreaCode": "30267",
+  "Longitude": 6.859742,
+  "Latitude": 52.213146
+ }
+}
