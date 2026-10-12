@@ -102,6 +102,8 @@ The kitchen TV (a Chromecast HD with Google TV, called "tv woonkamer" in Google 
 
 The Nest Hub ("Keuken", 192.168.1.33) ran an 8-hour test on 9 October from a separate instance, with the 9-minute restart: in 240 checks, one every two minutes, the dashboard was on screen 198 times; 40 times radio was playing, and GDash waited instead of taking the screen; twice the device did not answer for a moment and the dashboard came back by itself.
 
+On 12 October the Nest Hub ran the style presets for an hour from the same separate instance, with six dashboards in turn every two minutes (Frost, Walnut, Galaxy, Terminal, Neon, Gilded), so each switch loaded another typeface and texture: in 60 checks, one a minute, the dashboard was on screen every time and the screen kept its connection to the server; the server logged no warning or error. Afterwards the display's active hours were set outside the day, so GDash stopped the cast itself and the Nest Hub went back to its own screen.
+
 On 11 October at 23:07 the kitchen TV's server was updated from 0.5 to the current GDash (the evening, with permission; the TV was already on, so the restart could not switch it on). The database was renamed from daycast.db to gdash.db and migrated from version 12 to 15 with a backup before each step; a copy of the whole data directory and of the old program is kept next to it. The receiver restarted with the new page within three seconds, and the TV held five open connections to the server right after. The program still runs as daycast.exe, built from GDash: Windows Firewall only allows that path to accept connections from the TV, and changing firewall rules is left to Stijn (run gdash.exe once and allow it, then switch).
 
 ## Next
