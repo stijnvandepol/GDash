@@ -73,6 +73,10 @@ come from another site (cross-site request forgery protection).
 | `PUT /api/homeassistant` `{url, token}` | admin | `200 {"url": …}` after Home Assistant accepted the token | `401`, `422` naming `url` or `token` |
 | `DELETE /api/homeassistant` | admin | `204`; Home Assistant widgets show that it is not connected | `401` |
 | `GET /api/homeassistant/entities` | admin | `200 {"entities": [entity]}`, sorted by ID | `401`, `409 not_connected`, `502 upstream_unavailable` |
+| `PUT /api/homey` `{url, key}` | admin | `200 {"url": …}` after Homey accepted the API key | `401`, `422` naming `url` or `key` |
+| `DELETE /api/homey` | admin | `204`; Homey widgets show that it is not connected | `401` |
+| `GET /api/homey/capabilities` | admin | `200 {"capabilities": [capability]}`, every readable value of every device, sorted by zone, device and title | `401`, `409 not_connected`, `502 upstream_unavailable` |
+| `GET /api/homey/users` | admin | `200 {"users": [{id, name}]}`, sorted by name, without whether they are home | `401`, `409 not_connected`, `502 upstream_unavailable` (also when the key lacks View users) |
 | `GET /api/departures/stops?q=utrecht+cs` | admin | `200 {"stops": [stop]}`, at most 20, best matches first | `401`, `422` naming `q` (2 to 100 characters), `502 upstream_unavailable` |
 | `GET /api/custom-sources` and the other custom API routes | admin | see [Custom APIs](#custom-apis) | |
 | `GET /api/photos` | admin | `200 {"photos": [{name, size, addedAt}]}`, oldest first | `401` |
@@ -220,6 +224,15 @@ and never returns or logs the token. It only reads: once a minute it asks
 at most 40. The token gives the rights of the Home Assistant user who made
 it, so a separate, non-admin user for GDash is the safer choice.
 
+Homey is connected with the address of a Homey Pro (2023 or later) or Homey Self-Hosted Server and an API key made
+in the Homey web app under Settings, API Keys, with View devices and View zones, and View users for Who's home
+widgets. GDash tries the connection before storing it (`/api/manager/zones/zone` and `/api/manager/devices/device`
+must answer as Homey's local Web API does), stores address and key encrypted together, never returns or logs the
+key, sends it as `Authorization: Bearer`, and follows no redirects. It only reads: once a minute it asks
+`/api/manager/devices/device` when a Homey widget shows a value and `/api/manager/users/user` when a Who's home widget
+looks for someone, one request each, and keeps only what the widgets show, at most 40 values and 20 users. Homey
+Cloud and Homey Bridge, which only offer OAuth through Athom's cloud, are not supported.
+
 Departures come from OVapi (`v0.ovapi.nl`, the KV78Turbo feed of buses, trams, metros and ferries; no trains), which
 needs no key. The server asks `/stopareacode/<code>,<code>` once every 30 seconds, one request for all stops that
 dashboards show, at most ten, with a `User-Agent` that names GDash and its version. OVapi's HTTPS address answers with a
@@ -238,8 +251,8 @@ Changes apply at once: a changed source is fetched again, a removed one
 disappears from the displays. `status` has an entry per configured source by
 data key (`weather.current`, `airquality.current`, `news.default`,
 `calendar.default`, `homeassistant.default`, `departures.default`). The waste, energy price and fuel sources
-(`waste.default`, `energyprice.nl`, `fuel.default`) and custom sources (`custom.source.<id>`) exist only while a
-dashboard has a widget for them.
+(`waste.default`, `energyprice.nl`, `fuel.default`), the Homey sources (`homey.default` for values, `homey.users` for
+who is home) and custom sources (`custom.source.<id>`) exist only while a dashboard has a widget for them.
 
 Place search sends the typed name to Open-Meteo's geocoding service, which
 uses GeoNames data; the coordinates can also be entered by hand.
@@ -396,12 +409,14 @@ allows, overlaps another, lacks a required setting, or has a setting its type do
 | `photos` | 4x3 | `photos.default` | `seconds`: 5 to 600 per photo, default 30 |
 | `countdown` | 4x4 | none | `label`: 1 to 60 characters, `date`: `YYYY-MM-DD` (both required) |
 | `homeassistant` | 4x3 | `homeassistant.default` | `entities`: 1 to 8 entity IDs such as `sensor.living_room_temperature` (required) |
+| `homey` | 4x3 | `homey.default` | `capabilities`: 1 to 8 keys `<device id>/<capability id>` such as `5f2c…/measure_temperature`, from the search (required) |
+| `homeypresence` | 4x3 | `homey.presence` | `users`: 1 to 8 `{id, label}`, a Homey user's `id` and a label of 1 to 12 characters on one line, such as initials (required); screens receive this widget without its settings |
 | `departures` | 6x4 | `departures.default` | `stop`: a stop area code such as `utrcsw`, from the stop search (required), `stopName`: 1 to 100 characters, shown as the title, `maxItems`: 1 to 20 |
 | `fuel` | 6x4 | `fuel.default` | `place`: a place with `name`, `latitude` and `longitude`, default the weather location, `radius`: 1 to 25 km, default 5, `fuel`: `EURO95` (default), `EURO98`, `DIESEL`, `AUTOGAS` or `CNG`, `maxItems`: 1 to 10, default 5 |
 | `custom` | 4x3 | `custom.default` | `source`: the `id` of a custom source (required), `mode`: `value`, `list`, `keyValues` or `badges` (required), `title`: up to 60 characters; value mode: `path` (required), `label` (up to 40), `unit` (up to 12), `decimals` 0 to 6; list mode: `path` of the list and `fields`, 1 to 3 paths read from each item (both required); key-values and badges mode: `pairs`, 1 to 8 `{label, path}` (required); a badge is on when its value is `true`, a number other than 0, or the text `on`, `home`, `yes`, `open` or `true` in any case, and a screen only receives the labels of the badges that are on, as `badges`; `rules`: up to 6, see [Custom APIs](#custom-apis) |
 
-A setting's `kind` is `integer`, `text`, `date`, `calendar`, `entities`, `stop`, `place` or `choice`, or for the
-Custom widget `customSource`, `path`, `paths`, `pairs` and `rules`; `min` and `max` bound an integer, a text's length
+A setting's `kind` is `integer`, `text`, `date`, `calendar`, `entities`, `homeyCapabilities`, `homeyUsers`, `stop`,
+`place` or `choice`, or for the Custom widget `customSource`, `path`, `paths`, `pairs` and `rules`; `min` and `max` bound an integer, a text's length
 in characters, or the number of entities or items. A `choice` is one of the strings in the setting's `options`. A
 `place` is exactly `{"name": "Oss", "latitude": 51.765, "longitude": 5.518}`: a name of 1 to 100 characters, a latitude
 from -90 to 90 and a longitude from -180 to 180 as numbers, and no other field; it is what `GET /api/places` returns
@@ -423,6 +438,8 @@ an empty `title`, which the screen fills in in its own language.
 **place:** `{"name": "Oss", "region": "North Brabant, Netherlands", "latitude": 51.765, "longitude": 5.518}`
 
 **settings.homeAssistant:** `{"url": "http://192.168.1.10:8123", "unreadable": false}`, or `null` when not connected.
+
+**settings.homey:** `{"url": "http://192.168.1.20", "unreadable": false}`, or `null` when not connected.
 
 **weather data (`weather.current`):** the current values, `days` for the forecast and `sun`, the sunrise and sunset
 of yesterday and the coming days as local times, `{"date": "2026-10-09", "sunrise": "2026-10-09T07:50", "sunset": "2026-10-09T18:56"}`.
@@ -451,6 +468,16 @@ ends, or `null` when the day has fewer than three hours. Refreshed hourly.
 **entity:** `{"id": "sensor.living_room_temperature", "name": "Living room", "state": "21.4", "unit": "°C", "deviceClass": "temperature"}`.
 The `homeassistant.default` data on a screen maps the entity IDs that its own widgets show to the same object
 without `id`; an entity Home Assistant does not know is left out.
+
+**capability:** `{"key": "5f2c…/measure_temperature", "zone": "Kitchen", "device": "Thermostat", "title": "Temperature", "capability": "measure_temperature", "value": 21.5, "units": "°C", "decimals": 1}`,
+a value of a Homey device. `value` is a number, a boolean, a text or `null` when the device is unavailable; `units`,
+`decimals` (0 to 3) and `zone` are left out when Homey has none. The `homey.default` data on a screen maps the keys
+that its own widgets show to the same object without `key` and `zone`; a value Homey does not know is left out.
+
+**Homey presence data (`homey.presence`):** maps each Who's home widget on the screen, as `<dashboard id>/<widget id>`,
+to the labels of its users who are home, in the widget's order: `{"hall/home": ["AV", "CS"]}`. A user Homey does not
+know as present (`false` or `null`) is left out. The server builds it for each screen from `homey.users`, which
+never reaches a screen, and sends the widget without its `users` setting, so a screen cannot tell who is away.
 
 **stop:** `{"code": "utrcsw", "name": "Utrecht, CS Jaarbeurszijde"}`, a stop area of OVapi. The name includes the town.
 Codes that are not letters and digits only are not listed.
@@ -482,7 +509,7 @@ display's active hours; `data` is then empty. `announcement` is only present whi
 A preview snapshot has the same shape: `active` is true, the household's `language` and the chosen `textScale`
 (default 100) are set, there are no `pages`, and `data` holds the sources of that one dashboard. Its `version` is a
 hash of the content, so a poller sees whether anything changed. Data a draft needs that no saved dashboard uses yet
-(a new Home Assistant entity, transit stop or custom source) is absent until the dashboard is saved; a Custom widget
+(a new Home Assistant entity, Homey value or user, transit stop or custom source) is absent until the dashboard is saved; a Custom widget
 then has `state` `missing`. The web interface polls the preview every few
 seconds rather than opening a stream: a preview shows one dashboard that may be a draft, which the per-display
 event stream cannot do, and polling needs no connection kept open per editor.

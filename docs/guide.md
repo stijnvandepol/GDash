@@ -116,6 +116,8 @@ add calendars and feeds under Settings, Data sources, and the photos once you ad
 | Countdown | The days until a date, such as a holiday |
 | Photos | A slideshow of your photos |
 | Home Assistant | Up to eight sensors or switches from Home Assistant |
+| Homey | Up to eight sensors or switches from a Homey Pro; see [Homey](#homey) |
+| Who's home (Homey) | A round badge with initials for each chosen person who is home |
 | Departures | The next buses, trams, metros and ferries at one stop in the Netherlands |
 | Fuel prices | The cheapest petrol stations near a place, for one kind of fuel (Netherlands) |
 | Custom API | A value, a list or labelled values from any JSON API you add, with rules; see [Custom APIs](#custom-apis) |
@@ -204,6 +206,49 @@ Numbers are shown with their unit, doors and windows as open or closed,
 motion as detected or clear, people as home or away. The screen updates
 once a minute. Home Assistant's own dashboards remain the place to control
 things; GDash is the calm screen that shows the day.
+
+## Homey
+
+GDash can show what a Homey Pro knows, such as the temperature in the
+kitchen or whether the back door is open, and who is home. It only reads;
+it never switches anything. It works with a Homey Pro (2023 or later) and
+with Homey Self-Hosted Server on your own network. A Homey Cloud or Homey
+Bridge has no local API and cannot be connected.
+
+1. Open the Homey web app at [my.homey.app](https://my.homey.app), choose
+   your Homey, then **Settings**, **API Keys**, **New API Key**.
+2. Give it a name, such as GDash, and tick **View devices** and **View
+   zones**. Tick **View users** too if you want a Who's home widget; leave
+   everything else off, so the key cannot change anything.
+3. Confirm, and copy the key Homey shows. It is shown only once; if you
+   lose it, make a new one.
+4. Find the address of your Homey on your network, for example in your
+   router's list of devices, where it is called Homey. Give it a fixed
+   address in the router, so it does not change.
+5. In GDash, under Settings, Data sources, Homey, enter the address, such as
+   `http://192.168.1.20` (for Homey Self-Hosted Server add its port:
+   `http://192.168.1.20:4859`), and paste the key. GDash tries them before
+   it saves them, says which of the two is wrong, and stores the key
+   encrypted. GDash does not search the network for a Homey; enter the
+   address yourself.
+6. Add a **Homey** widget to a dashboard and search for the values it
+   should show, by room, device or name, such as "kitchen temperature",
+   up to eight. With one value the widget shows it large; with more, a list
+   named after the device and the value, such as "Thermostat · Temperature".
+
+Numbers are shown with Homey's units and decimals, switches as on or off,
+doors and windows as open or closed, motion as detected or clear, water as
+wet or dry, locks as locked or unlocked and other alarms as alarm or OK, in
+the language of the screens. A device that is offline shows a dash. The
+screen updates once a minute.
+
+The **Who's home (Homey)** widget shows a round badge for each chosen Homey
+user who is home, in the accent colour of the style, like the badges of the
+Custom widget. It suggests the initials of each name as the label; change
+it to anything of up to 12 characters, such as a nickname. When nobody is
+home it says so. Homey decides who is home, from the location of each
+user's phone. The screens only receive the labels of the people who are
+home: a TV never learns who is away, not even whom the widget looks for.
 
 ## Departures
 

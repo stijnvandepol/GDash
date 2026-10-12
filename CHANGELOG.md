@@ -19,6 +19,12 @@ the format follows [Keep a Changelog](https://keepachangelog.com).
   than 0, or `on`, `home`, `yes`, `open` or `true`), for example to show
   who is home. Screens only receive the badges that are on. See
   [docs/guide.md](docs/guide.md#badges-who-is-home).
+- **Homey**: connect a Homey Pro under Settings, Data sources with its
+  address and an API key (read only, stored encrypted). The Homey widget
+  shows up to eight device values with their units, and yes or no in
+  words; the Who's home widget shows a badge with initials for each chosen
+  person who is home, and screens never learn who is away. See
+  [docs/guide.md](docs/guide.md#homey).
 
 ## 0.7.0 – 2026-10-12
 

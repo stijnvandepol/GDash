@@ -3,8 +3,8 @@
 **Your household's day on every TV in the house.** GDash is a self-hosted
 dashboard for the Chromecast, Google TV, Nest Hub or any browser you already
 own: the time, the weather, the family calendar, the next bus, the waste
-collection, Home Assistant sensors and more, on a calm screen that runs all
-day. No extra hardware at the TV, no subscription, no cloud account.
+collection, Home Assistant or Homey sensors and more, on a calm screen that
+runs all day. No extra hardware at the TV, no subscription, no cloud account.
 
 > **Status: beta (0.6).** It runs every day on a TV and a Nest Hub at home,
 > but has not been used anywhere else yet. Run it on a network you trust.
@@ -56,6 +56,7 @@ survive the internet dropping out. GDash is made for exactly that.
 | Fuel prices | The cheapest petrol stations near a place | ANWB price data (Netherlands), no key |
 | Energy price | Today's dynamic electricity price per hour, cheapest window | [EnergyZero](https://www.energyzero.nl) (Netherlands), no key |
 | Home Assistant | Sensors and switches, such as the temperature or a door | Your Home Assistant, read only |
+| Homey | Sensors and switches, and who is home as badges with initials | Your Homey Pro, read only, with an API key |
 | News | Headlines from up to five RSS or Atom feeds | Any feed (default: NOS) |
 | Photos | A slideshow of photos you upload | Stored on your server |
 | Note and countdown | A short text, or the days until a date | — |
@@ -142,7 +143,7 @@ your home network no setup token is needed in that first hour.
 1. Open `http://<your-server>:8420/` and create your account with the setup
    token from the log.
 2. Under **Settings**, choose the location for the weather and add the
-   calendars, news feeds or Home Assistant you want.
+   calendars, news feeds, Home Assistant or Homey you want.
 3. Under **Dashboards**, start from a template such as Kitchen or Hallway, or
    build your own.
 4. Under **Displays**, add a display and pick your TV. GDash puts the
