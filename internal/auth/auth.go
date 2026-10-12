@@ -244,8 +244,13 @@ func (s *Service) ChangePassword(ctx context.Context, session, current, next, cl
 // the command line on the server: whoever can run that already controls
 // GDash. It returns the new password and whether two-step login was on, or
 // store.ErrNotFound for an unknown user.
-func (s *Service) ResetPassword(ctx context.Context, username string) (password string, twoStepWasOn bool, err error) {
-	u, err := s.store.UserByName(ctx, username)
+//
+// It is a function of the store, not of a Service, because it needs no key
+// file: the command may run as another OS user than the server (docker exec
+// runs as root), which must neither fail on the server's key nor create one
+// the server cannot read.
+func ResetPassword(ctx context.Context, st *store.Store, username string) (password string, twoStepWasOn bool, err error) {
+	u, err := st.UserByName(ctx, username)
 	if err != nil {
 		return "", false, err
 	}
@@ -258,7 +263,7 @@ func (s *Service) ResetPassword(ctx context.Context, username string) (password 
 		return "", false, err
 	}
 	// No session is kept: every browser of the account has to log in again.
-	twoStepWasOn, err = s.store.ResetPassword(ctx, u.ID, hash)
+	twoStepWasOn, err = st.ResetPassword(ctx, u.ID, hash)
 	if err != nil {
 		return "", false, err
 	}

@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/stijnvandepol/gdash/internal/auth"
-	"github.com/stijnvandepol/gdash/internal/secret"
 	"github.com/stijnvandepol/gdash/internal/store"
 )
 
@@ -37,17 +36,9 @@ func resetPassword(ctx context.Context, getenv func(string) string, username str
 		return err
 	}
 	defer db.Close()
-	box, err := secret.LoadOrCreateKey(filepath.Join(dataDir, secretKeyName))
-	if err != nil {
-		return err
-	}
-	// The setup token is not used: an account exists, or there is nothing
-	// to reset.
-	authService, err := auth.NewService(db, box, "")
-	if err != nil {
-		return err
-	}
-	password, twoStepWasOn, err := authService.ResetPassword(ctx, username)
+	// The key file is not opened: the reset does not need it, and this
+	// command may run as another OS user than the server.
+	password, twoStepWasOn, err := auth.ResetPassword(ctx, db, username)
 	if errors.Is(err, store.ErrNotFound) {
 		return fmt.Errorf("there is no user %q", username)
 	}

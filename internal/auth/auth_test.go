@@ -311,7 +311,7 @@ func TestResetPasswordEndsEverySession(t *testing.T) {
 	s, _ := newTestService(t)
 	session := setUp(t, s)
 
-	password, twoStepWasOn, err := s.ResetPassword(ctx, "STIJN")
+	password, twoStepWasOn, err := ResetPassword(ctx, s.store, "STIJN")
 	if err != nil || twoStepWasOn {
 		t.Fatalf("ResetPassword: two-step was on %v, err %v", twoStepWasOn, err)
 	}
@@ -327,7 +327,7 @@ func TestResetPasswordEndsEverySession(t *testing.T) {
 	if _, _, err := s.Login(ctx, Credentials{"stijn", password}, "192.168.1.20"); err != nil {
 		t.Fatalf("new password: %v", err)
 	}
-	if _, _, err := s.ResetPassword(ctx, "nobody"); !errors.Is(err, store.ErrNotFound) {
+	if _, _, err := ResetPassword(ctx, s.store, "nobody"); !errors.Is(err, store.ErrNotFound) {
 		t.Fatalf("reset of an unknown user: err = %v, want ErrNotFound", err)
 	}
 }

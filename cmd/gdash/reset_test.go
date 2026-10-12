@@ -4,6 +4,9 @@ import (
 	"bytes"
 	"context"
 	"encoding/base32"
+	"errors"
+	"io/fs"
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -117,6 +120,32 @@ func TestResetPasswordCommand(t *testing.T) {
 	empty := func(string) string { return filepath.Join(dir, "missing") }
 	if err := resetPassword(ctx, empty, "stijn", &out); err == nil || !strings.Contains(err.Error(), "GDASH_DATA_DIR") {
 		t.Fatalf("reset without a database: err = %v", err)
+	}
+}
+
+// The reset may run as another OS user than the server, such as root
+// through docker exec. It must not need the key file, which that user may
+// not be able to read, nor create one the server then cannot read.
+func TestResetPasswordCommandLeavesTheKeyFileAlone(t *testing.T) {
+	ctx := context.Background()
+	dir := newResetTestAccount(t, true)
+	keyPath := filepath.Join(dir, secretKeyName)
+	if err := os.Remove(keyPath); err != nil {
+		t.Fatal(err)
+	}
+	var out bytes.Buffer
+	if err := resetPassword(ctx, dataDirEnv(dir), "stijn", &out); err != nil {
+		t.Fatalf("reset without a key file: %v", err)
+	}
+	if _, err := os.Stat(keyPath); !errors.Is(err, fs.ErrNotExist) {
+		t.Fatalf("the reset created a key file: stat err = %v", err)
+	}
+	// A key file that cannot be read, here a directory in its place.
+	if err := os.Mkdir(keyPath, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := resetPassword(ctx, dataDirEnv(dir), "stijn", &out); err != nil {
+		t.Fatalf("reset with an unreadable key file: %v", err)
 	}
 }
 

@@ -282,7 +282,7 @@ func TestResetPasswordTurnsTwoStepOff(t *testing.T) {
 	ctx := context.Background()
 	s, _ := newTestService(t)
 	enableTwoStep(t, s, setUp(t, s))
-	password, wasOn, err := s.ResetPassword(ctx, "stijn")
+	password, wasOn, err := ResetPassword(ctx, s.store, "stijn")
 	if err != nil || !wasOn {
 		t.Fatalf("ResetPassword: two-step was on %v, err %v", wasOn, err)
 	}
