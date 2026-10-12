@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"unicode"
 
 	"github.com/stijnvandepol/gdash/internal/store"
 	"github.com/stijnvandepol/gdash/internal/token"
@@ -106,8 +107,15 @@ func (s *Service) checkAppCode(ctx context.Context, t store.TwoStep, userID int6
 }
 
 // normalizeCode accepts a code as people type or paste it: with spaces or
-// dashes, in either case.
+// dashes, in either case. Any white space counts as a space: a code copied
+// from a password manager or a document may hold tabs or non-breaking
+// spaces.
 func normalizeCode(code string) string {
-	code = strings.NewReplacer(" ", "", "-", "").Replace(code)
+	code = strings.Map(func(r rune) rune {
+		if r == '-' || unicode.IsSpace(r) {
+			return -1
+		}
+		return r
+	}, code)
 	return strings.ToLower(code)
 }
