@@ -8,7 +8,8 @@ import (
 // Confirm checks the current password of the user of session again, before
 // an action that should not rest on a session alone, such as changing the
 // password or downloading a backup with the secret key. Wrong passwords
-// count towards the same limits as logins. It returns the user, or
+// count towards the same limits as logins. With two-step login on, a right
+// password clears no failures, as at login. It returns the user, or
 // ErrWrongPassword, ErrRateLimited or ErrNoSession.
 func (s *Service) Confirm(ctx context.Context, session, password, clientIP string) (User, error) {
 	user, err := s.Authenticate(ctx, session)
@@ -32,10 +33,21 @@ func (s *Service) Confirm(ctx context.Context, session, password, clientIP strin
 	if !ok {
 		return User{}, ErrWrongPassword
 	}
-	// Only the account's own counts: the address may have failed logins
-	// for other usernames that must keep counting.
-	s.limiter.Reset(keys[1])
-	s.limiter.Release(keys[0])
-	s.accountLimiter.Reset(account)
+	twoStep, err := s.twoStepOn(ctx, stored.ID)
+	if err != nil {
+		return User{}, err
+	}
+	if twoStep {
+		// The failures may be wrong codes, which only a right code clears,
+		// as after the password at login.
+		s.limiter.Release(keys...)
+		s.accountLimiter.Release(account)
+	} else {
+		// Only the account's own counts: the address may have failed
+		// logins for other usernames that must keep counting.
+		s.limiter.Reset(keys[1])
+		s.limiter.Release(keys[0])
+		s.accountLimiter.Reset(account)
+	}
 	return User{ID: stored.ID, Username: stored.Username}, nil
 }
