@@ -570,8 +570,12 @@ phone.
 
 Turning it on logs out every other browser. From then on, logging in asks
 for the code after the password; **Use a recovery code** takes one of the
-saved codes instead. Every wrong code and every use of a recovery code is in
-the activity log. To turn it off, or to move to a new phone, enter your
+saved codes instead. After five wrong codes the login starts again with the
+password; more wrong codes in a row make the next one wait, up to an hour,
+and after 50 the app's codes are refused until you log in with a recovery
+code. That only happens to someone who knows your password: if you did not
+type those codes, change it. Every wrong code and every use of a recovery
+code is in the activity log. To turn it off, or to move to a new phone, enter your
 password and a code under the same heading and choose **Turn off two-step
 login**, then set it up again.
 

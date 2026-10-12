@@ -32,14 +32,14 @@ come from another site (cross-site request forgery protection).
 | `GET /api/setup` | no | `200 {"needed": bool}` | |
 | `POST /api/setup` `{setupToken, username, password}` | no | `201` user, sets cookie | `403 invalid_setup_token`, `409 setup_done`, `422`, `429 rate_limited` |
 | `POST /api/sessions` `{username, password}` | no | `201` user, sets cookie; with two-step login on `202 {"pending"}` and no cookie | `401 invalid_credentials`, `429 rate_limited` |
-| `POST /api/sessions/two-step` `{pending, code}` | no | `201` user, sets cookie; `code` is a 6-digit code from the app or a recovery code | `401 invalid_code` (try again), `401 login_expired` (after 5 minutes: password again), `429 rate_limited` |
+| `POST /api/sessions/two-step` `{pending, code}` | no | `201` user, sets cookie; `code` is a 6-digit code from the app or a recovery code | `401 invalid_code` (try again), `401 login_expired` (after 5 minutes or 5 codes: password again), `429 rate_limited` (with `Retry-After` when wrong codes make the next one wait), `429 two_step_locked` (app codes refused, see below) |
 | `DELETE /api/sessions/current` | admin | `204` | `401` |
 | `GET /api/me` | admin | `200` user | `401` |
 | `PUT /api/me/password` `{currentPassword, newPassword}` | admin | `204`; every other session of the account ends | `401`, `422` (wrong current or too short new password), `429 rate_limited` |
 | `GET /api/me/two-step` | admin | `200 {"enabled", "recoveryCodesLeft"}` | `401` |
 | `POST /api/me/two-step/enrolment` `{password}` | admin | `201 {secret, uri, qr}`: the new secret in base32, as an `otpauth://` address and as an SVG QR code; never returned again. Two-step login stays off until the next call | `401`, `409 two_step_on`, `422` (wrong password), `429 rate_limited` |
-| `PUT /api/me/two-step` `{code}` | admin | `200 {"recoveryCodes": [10 codes]}`, shown this once; two-step login is on and every other session of the account ends | `401`, `409 no_two_step_setup`, `two_step_setup_replaced` (another setup replaced the secret meanwhile: start again) or `two_step_on`, `422` (wrong code), `429 rate_limited` |
-| `DELETE /api/me/two-step` `{password, code}` | admin | `204`; `code` may be a recovery code | `401`, `409 two_step_off`, `422` (wrong password or code), `429 rate_limited` |
+| `PUT /api/me/two-step` `{code}` | admin | `200 {"recoveryCodes": [10 codes]}`, shown this once; two-step login is on and every other session of the account ends | `401`, `409 no_two_step_setup`, `two_step_setup_replaced` (another setup replaced the secret meanwhile: start again) or `two_step_on`, `422` (wrong code), `429 rate_limited` (wrong codes wait as for the login; at the stop the setup has to start again) |
+| `DELETE /api/me/two-step` `{password, code}` | admin | `204`; `code` may be a recovery code | `401`, `409 two_step_off`, `422` (wrong password or code), `429 rate_limited` or `two_step_locked` (as for the login) |
 | `POST /api/backup` `{password}` | admin | `200 application/zip` attachment with `gdash.db`, `secret.key` and `photos/`; recorded in the audit log | `401`, `422` (wrong password), `429 rate_limited` |
 | `GET /api/system` | admin | `200 {"version"}` | `401` |
 | `GET /api/audit-events?limit=100` | admin | `200 {"events": [{at, actor, action, detail, ip}]}`, newest first, at most 200 | `400`, `401` |
@@ -92,10 +92,37 @@ come from another site (cross-site request forgery protection).
 Codes follow RFC 6238 with the settings every authenticator app supports:
 HMAC-SHA-1, 6 digits, a new code every 30 seconds. The code of the current
 30 seconds and of the ones just before and after is accepted, each only
-once. A recovery code is 16 letters and digits in groups of four; spaces,
-dashes and case do not matter, and each works once. Wrong codes count
-towards the same limits as wrong passwords, and a right password does not
-clear them. `gdash reset-password` turns two-step login off.
+once. A recovery code is 16 letters and digits in groups of four; white
+space (also tabs and non-breaking spaces), dashes and case do not matter,
+and each works once.
+
+Wrong codes count towards the same limits as wrong passwords (5 per 15
+minutes per address, IPv6 per /64, and 50 per 15 minutes per account), and
+a right password does not clear them, also not when it is confirmed again
+for a backup or a password change. On top of that, codes from the app count
+per account, over all addresses:
+
+- A pending login ends after 5 codes; the password has to be entered again.
+- The first 5 wrong codes in a row cost nothing. After that the next code
+  waits 2, 4, 8, 16 and 32 minutes, then an hour each time (`429
+  rate_limited` with `Retry-After`), so at most 10 wrong codes fit in any
+  hour.
+- After 50 wrong codes in a row, codes from the app are refused, also right
+  ones (`429 two_step_locked`), until a recovery code is used or
+  `gdash reset-password` runs. That is reached after about 40 hours of
+  guessing as fast as allowed, and gives a guesser at most a 0.015% chance
+  (NIST SP 800-63B allows up to 100 failures in a row). Reaching it is in
+  the audit log as `two_step_locked`.
+- Only a right code, a recovery code, a new setup, turning two-step login
+  off or `gdash reset-password` ends a run of wrong codes. The count is kept
+  in the database, so a restart does not end it.
+- Codes are only checked after the right password, so nobody without it can
+  make the owner wait. Recovery codes (80 bits) do not wait and do not count
+  here, so they always work; only the limits per address and account apply.
+
+The first code of a new setup counts the same way; at the stop, the setup
+starts again with the password. `gdash reset-password` turns two-step login
+off.
 
 ## Pairing
 

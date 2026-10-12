@@ -29,14 +29,25 @@ fully trust, such as a guest's phone.
   the current, previous or next 30 seconds is accepted, and each time step
   only once, so a code seen over a shoulder cannot be replayed. Wrong codes
   count towards the login limits per address and per account, and a right
-  password does not clear them, so knowing the password buys no extra
-  guesses. The secret is encrypted with the key file (see Secrets), never
+  password, at login or confirmed again in a session, does not clear them.
+  On top of that, codes from the app count per account over all addresses,
+  so changing address buys no extra guesses: a pending login ends after 5
+  codes; after 5 wrong codes in a row the next one waits 2, 4, 8, 16 and 32
+  minutes, then an hour each time (at most 10 in any hour); and after 50 in
+  a row (NIST SP 800-63B allows up to 100) codes from the app are refused
+  until a recovery code is used or `gdash reset-password` runs. A guesser
+  with the password thus has at most a 0.015% chance, after about 40 hours.
+  Only a right code, a recovery code or turning it off ends a run of wrong
+  codes; the count is stored, so a restart does not. Codes are only checked
+  after the right password, so nobody without it can cause a wait or the
+  stop. Recovery codes cannot be guessed and are not held up, so the owner
+  always has a way in. The secret is encrypted with the key file (see Secrets), never
   logged and only shown while it is set up; setting it up asks for the
   password again and only takes effect after a first code, and then logs out
   every other browser. Ten recovery codes of 80 bits are shown once and
   stored as SHA-256 hashes; each works once. Turning it off needs the
-  password and a code. Wrong codes, recovery codes and every change are in
-  the audit log. `gdash reset-password` on the server turns it off; that is
+  password and a code. Wrong codes, recovery codes, reaching the stop and
+  every change are in the audit log. `gdash reset-password` on the server turns it off; that is
   the way back for an admin who lost the phone and the recovery codes.
 - **Screens:** a display only streams data to a screen that was paired with
   a code shown on it, or opened by GDash's own cast with a single-use token
@@ -54,7 +65,9 @@ fully trust, such as a guest's phone.
   the announcement route only, wrong tokens block the sending address for 15
   minutes, each token is limited to 30 announcements a minute, and tokens
   and messages are never logged. Announcements are plain text, kept in memory
-  and removed from the screen on time.
+  and removed from the screen on time. Tokens keep working when two-step
+  login is turned on: they only reach the announcement route, never the
+  web interface or the rest of the API.
 - **Photos:** only served to logged-in admins and paired screens; an
   upload is accepted by its content (JPEG, PNG or WebP), not by its name.
   Location, camera, date and other metadata (EXIF, XMP, IPTC, text chunks)
