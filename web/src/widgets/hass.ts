@@ -16,6 +16,15 @@ export interface Shown {
   dim: boolean;
 }
 
+/** One value of a smart home device as Readings.svelte shows it. */
+export interface Reading {
+  id: string;
+  name: string;
+  shown: Shown;
+  /** True when the device or value is not known any more. */
+  missing: boolean;
+}
+
 // Binary sensors say "on" and "off"; what that means depends on the kind.
 const BINARY: Record<string, [TextKey, TextKey]> = {
   door: ['haOpen', 'haClosed'],
