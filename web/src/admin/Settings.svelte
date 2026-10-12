@@ -12,6 +12,7 @@
   import AnnouncementSetting from './AnnouncementSetting.svelte';
   import ApiTokenSetting from './ApiTokenSetting.svelte';
   import SourceList from './SourceList.svelte';
+  import TwoStepSetting from './TwoStepSetting.svelte';
 
   let { onSessionEnded }: { onSessionEnded: () => void } = $props();
 
@@ -35,7 +36,7 @@
     { id: 'sources', label: 'Data sources', hint: 'Weather, news, calendars and Home Assistant' },
     { id: 'screens', label: 'Screens', hint: 'Language on the TVs and photos' },
     { id: 'automations', label: 'Automations', hint: 'API tokens and announcements' },
-    { id: 'account', label: 'Account', hint: 'Password, backup and recent activity' },
+    { id: 'account', label: 'Account', hint: 'Password, two-step login, backup and recent activity' },
   ] as const;
   type Section = (typeof SECTIONS)[number]['id'];
   let section = $state<Section>('sources');
@@ -179,6 +180,7 @@
   <AnnouncementSetting onerror={handle} />
 {:else if section === 'account'}
   <AccountSetting onerror={handle} />
+  <TwoStepSetting onerror={handle} />
   <BackupSetting onerror={handle} />
   <ActivityLog onerror={handle} />
 {/if}

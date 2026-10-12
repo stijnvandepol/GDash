@@ -181,6 +181,26 @@ export interface NewApiToken extends ApiToken {
   token: string;
 }
 
+/** The answer to a right password when two-step login is on: no session yet. */
+export interface PendingLogin {
+  pending: string;
+}
+
+export interface TwoStepStatus {
+  enabled: boolean;
+  recoveryCodesLeft: number;
+}
+
+/** A new authenticator secret; the server never returns it again. */
+export interface TwoStepEnrolment {
+  /** Base32, to type into the app. */
+  secret: string;
+  /** The otpauth:// address the QR code holds. */
+  uri: string;
+  /** The QR code as an SVG document, black on white. */
+  qr: string;
+}
+
 export interface CastDevice {
   id: string;
   name: string;

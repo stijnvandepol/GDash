@@ -31,6 +31,24 @@ describe('describeAction', () => {
     );
   });
 
+  it('describes two-step login', () => {
+    expect(describeAction({ ...base, detail: 'with a two-step code' })).toBe('Logged in with a two-step code');
+    expect(describeAction({ ...base, action: 'login_code_failed', detail: 'right password, wrong code' })).toBe(
+      'Failed two-step login: right password, wrong code',
+    );
+    expect(describeAction({ ...base, action: 'recovery_code_used', detail: '9 left' })).toBe('Logged in with a recovery code, 9 left');
+    expect(describeAction({ ...base, action: 'two_step_enabled', detail: 'other sessions logged out' })).toBe(
+      'Turned on two-step login, other sessions logged out',
+    );
+    expect(describeAction({ ...base, action: 'two_step_disabled' })).toBe('Turned off two-step login');
+    expect(describeAction({ ...base, action: 'two_step_change_failed', detail: 'wrong code' })).toBe(
+      'Failed to change two-step login: wrong code',
+    );
+    expect(describeAction({ ...base, actor: 'command line', action: 'two_step_reset', detail: 'stijn' })).toBe(
+      'Turned off two-step login from the command line for stijn',
+    );
+  });
+
   it('shows an action from a newer server as it is', () => {
     expect(describeAction({ ...base, action: 'backup_restored' })).toBe('backup_restored');
   });
@@ -43,5 +61,12 @@ describe('isWarning', () => {
     expect(isWarning({ ...base, action: 'setup_failed' })).toBe(true);
     expect(isWarning({ ...base, action: 'api_token_rejected' })).toBe(true);
     expect(isWarning(base)).toBe(false);
+  });
+
+  it('flags wrong two-step codes and every use of a recovery code', () => {
+    expect(isWarning({ ...base, action: 'login_code_failed' })).toBe(true);
+    expect(isWarning({ ...base, action: 'two_step_change_failed' })).toBe(true);
+    expect(isWarning({ ...base, action: 'recovery_code_used' })).toBe(true);
+    expect(isWarning({ ...base, action: 'two_step_enabled' })).toBe(false);
   });
 });

@@ -38,11 +38,14 @@ import type {
   Location,
   NewApiToken,
   NewsFeed,
+  PendingLogin,
   Photo,
   Place,
   Settings,
   Slot,
   SourceStatus,
+  TwoStepEnrolment,
+  TwoStepStatus,
   User,
   WidgetCatalogue,
 } from './types';
@@ -93,7 +96,15 @@ export const api = {
   setupNeeded: () => request<{ needed: boolean }>('GET', '/api/setup').then((r) => r.needed),
   setup: (setupToken: string, username: string, password: string) =>
     request<User>('POST', '/api/setup', { setupToken, username, password }),
-  login: (username: string, password: string) => request<User>('POST', '/api/sessions', { username, password }),
+  /** The user, or a pending login when the account has two-step login on. */
+  login: (username: string, password: string) =>
+    request<User | PendingLogin>('POST', '/api/sessions', { username, password }),
+  finishLogin: (pending: string, code: string) => request<User>('POST', '/api/sessions/two-step', { pending, code }),
+  twoStep: () => request<TwoStepStatus>('GET', '/api/me/two-step'),
+  startTwoStep: (password: string) => request<TwoStepEnrolment>('POST', '/api/me/two-step/enrolment', { password }),
+  enableTwoStep: (code: string) =>
+    request<{ recoveryCodes: string[] }>('PUT', '/api/me/two-step', { code }).then((r) => r.recoveryCodes),
+  disableTwoStep: (password: string, code: string) => request<void>('DELETE', '/api/me/two-step', { password, code }),
   logout: () => request<void>('DELETE', '/api/sessions/current'),
   me: () => request<User>('GET', '/api/me'),
   system: () => request<{ version: string }>('GET', '/api/system'),
