@@ -103,4 +103,10 @@ export const de: Record<TextKey, string> = {
   energyPriceHigh: 'Heute hoch',
   energyPriceCheapest: 'Am günstigsten {from}–{to}',
   energyPriceCheapestTomorrow: 'Morgen am günstigsten {from}–{to}',
+  departuresLoading: 'Abfahrten werden geladen…',
+  departuresFailed: 'Abfahrten sind nicht verfügbar',
+  departuresNotSetUp: 'Für dieses Widget ist keine Haltestelle gewählt.',
+  departuresNone: 'Gerade keine Abfahrten',
+  departuresNow: 'jetzt',
+  departuresMinutes: '{minutes} Min.',
 };

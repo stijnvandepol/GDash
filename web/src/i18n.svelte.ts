@@ -113,6 +113,12 @@ const en = {
   haUnlocked: 'Unlocked',
   haHome: 'Home',
   haAway: 'Away',
+  departuresLoading: 'Loading departures…',
+  departuresFailed: 'Could not load the departures',
+  departuresNotSetUp: 'No stop chosen for this widget.',
+  departuresNone: 'No departures right now',
+  departuresNow: 'now',
+  departuresMinutes: '{minutes} min',
 };
 
 export type TextKey = keyof typeof en;
@@ -221,6 +227,12 @@ export const TEXTS: Record<Language, Record<TextKey, string>> = {
     haUnlocked: 'Niet op slot',
     haHome: 'Thuis',
     haAway: 'Weg',
+    departuresLoading: 'Vertrektijden laden…',
+    departuresFailed: 'Vertrektijden zijn niet beschikbaar',
+    departuresNotSetUp: 'Voor deze widget is geen halte gekozen.',
+    departuresNone: 'Op dit moment geen vertrektijden',
+    departuresNow: 'nu',
+    departuresMinutes: '{minutes} min',
   },
   de,
   fr,

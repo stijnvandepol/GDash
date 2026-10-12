@@ -90,7 +90,7 @@ export interface WidgetType {
 
 /** A setting a widget type takes; internal/display validates the same. */
 export interface SettingRule {
-  kind: 'integer' | 'text' | 'date' | 'calendar' | 'entities';
+  kind: 'integer' | 'text' | 'date' | 'calendar' | 'entities' | 'stop';
   /** Bounds of an integer, of a text's length in characters, or of how many entities. */
   min?: number;
   max?: number;
@@ -142,6 +142,13 @@ export interface HomeAssistantEntity {
   name: string;
   state: string;
   unit?: string;
+}
+
+/** A public transport stop area, as the stop search lists it. */
+export interface DepartureStop {
+  code: string;
+  /** Includes the town, such as "Utrecht, CS Jaarbeurszijde". */
+  name: string;
 }
 
 /** Whether a data source works, by data key such as "weather.current". */

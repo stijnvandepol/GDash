@@ -23,6 +23,19 @@ describe('defaultSettings', () => {
     expect(defaultSettings(waste, today)).toEqual({});
   });
 
+  it('leaves the stop of a departures widget to be chosen', () => {
+    const departures: WidgetType = {
+      minW: 6,
+      minH: 4,
+      settings: {
+        stop: { kind: 'stop', required: true },
+        stopName: { kind: 'text', min: 1, max: 100, required: false },
+        maxItems: { kind: 'integer', min: 1, max: 20, required: false },
+      },
+    };
+    expect(defaultSettings(departures, today)).toEqual({ maxItems: 5 });
+  });
+
   it('skips settings it has no default for', () => {
     const odd: WidgetType = { minW: 1, minH: 1, settings: { colour: { kind: 'text', required: false } } };
     expect(defaultSettings(odd, today)).toEqual({});

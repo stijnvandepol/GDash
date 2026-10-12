@@ -31,6 +31,7 @@ import type {
   CastDevice,
   Dashboard,
   DashboardTemplate,
+  DepartureStop,
   Display,
   HomeAssistant,
   HomeAssistantEntity,
@@ -145,6 +146,8 @@ export const api = {
   disconnectHomeAssistant: () => request<void>('DELETE', '/api/homeassistant'),
   homeAssistantEntities: () =>
     request<{ entities: HomeAssistantEntity[] }>('GET', '/api/homeassistant/entities').then((r) => r.entities),
+  departureStops: (query: string) =>
+    request<{ stops: DepartureStop[] }>('GET', `/api/departures/stops?q=${encodeURIComponent(query)}`).then((r) => r.stops),
   deleteDisplay: (id: string) => request<void>('DELETE', `/api/displays/${encodeURIComponent(id)}`),
   pairScreen: (id: string, code: string) =>
     request<void>('POST', `/api/displays/${encodeURIComponent(id)}/pairings`, { code }),

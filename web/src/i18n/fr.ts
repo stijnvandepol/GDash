@@ -104,4 +104,10 @@ export const fr: Record<TextKey, string> = {
   energyPriceHigh: 'Élevé aujourd’hui',
   energyPriceCheapest: 'Le moins cher {from}–{to}',
   energyPriceCheapestTomorrow: 'Demain le moins cher {from}–{to}',
+  departuresLoading: 'Chargement des départs…',
+  departuresFailed: 'Départs indisponibles',
+  departuresNotSetUp: 'Aucun arrêt choisi pour ce widget.',
+  departuresNone: 'Aucun départ pour le moment',
+  departuresNow: 'maintenant',
+  departuresMinutes: '{minutes} min',
 };

@@ -15,6 +15,7 @@ export const WIDGET_LABELS: Record<string, string> = {
   countdown: 'Countdown',
   photos: 'Photos',
   homeassistant: 'Home Assistant',
+  departures: 'Departures',
 };
 
 export const SETTING_LABELS: Record<string, string> = {
@@ -25,6 +26,7 @@ export const SETTING_LABELS: Record<string, string> = {
   date: 'Date',
   seconds: 'Seconds per photo',
   calendar: 'Calendar',
+  stop: 'Stop',
 };
 
 const COUNTDOWN_DAYS = 30;
@@ -41,6 +43,7 @@ export function defaultSettings(type: WidgetType, today = new Date()): Record<st
     date: isoDate(later),
     entities: [],
   };
+  // stop and stopName stay unset until a stop is chosen: there is no sensible default.
   const settings: Record<string, unknown> = {};
   for (const key of Object.keys(type.settings)) {
     if (key in defaults) settings[key] = defaults[key];

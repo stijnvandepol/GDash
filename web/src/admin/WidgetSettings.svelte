@@ -1,8 +1,9 @@
 <script lang="ts">
-  import type { WidgetType } from './api';
+  import type { DepartureStop, WidgetType } from './api';
   import { SETTING_LABELS } from './widgetSettings';
   import EntityPicker from './EntityPicker.svelte';
   import CalendarPicker from './CalendarPicker.svelte';
+  import StopPicker from './StopPicker.svelte';
 
   // Texts up to this length get a single-line field, longer ones a text area.
   const SINGLE_LINE_MAX = 60;
@@ -18,7 +19,16 @@
     onchange: (settings: Record<string, unknown>) => void;
   } = $props();
 
-  const keys = $derived(Object.keys(type.settings).sort());
+  // The stop search stores the name beside the code, so it has no field.
+  const keys = $derived(
+    Object.keys(type.settings)
+      .filter((key) => !(key === 'stopName' && 'stop' in type.settings))
+      .sort(),
+  );
+
+  function pickStop(stop: DepartureStop) {
+    onchange({ ...settings, stop: stop.code, stopName: stop.name });
+  }
 
   function set(key: string, value: unknown) {
     const next = { ...settings };
@@ -47,6 +57,8 @@
     <EntityPicker selected={list(key)} max={rule.max ?? 1} onchange={(ids) => set(key, ids)} />
   {:else if rule.kind === 'calendar'}
     <CalendarPicker selected={typeof settings[key] === 'number' ? settings[key] : undefined} onchange={(id) => set(key, id)} />
+  {:else if rule.kind === 'stop'}
+    <StopPicker code={text(key)} name={text('stopName')} onpick={pickStop} />
   {:else}
   <label class="inline-label">
     {SETTING_LABELS[key] ?? key}
