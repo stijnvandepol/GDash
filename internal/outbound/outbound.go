@@ -12,6 +12,8 @@ import (
 	"net"
 	"net/http"
 	"net/netip"
+	"net/url"
+	"strings"
 	"syscall"
 	"time"
 )
@@ -118,4 +120,22 @@ func Allowed(addr netip.Addr) bool {
 		!addr.IsLinkLocalMulticast() &&
 		!addr.IsInterfaceLocalMulticast() &&
 		!addr.IsMulticast()
+}
+
+// BaseURL turns an address an admin typed for a service at home, such as
+// http://192.168.1.10:8123/, into its base URL without a trailing slash.
+// For an address that cannot be one it returns "" and a message for the web
+// interface; hint is the message for an address without a host, with an
+// example of a good one.
+func BaseURL(raw, hint string) (string, string) {
+	u, err := url.Parse(strings.TrimSpace(raw))
+	switch {
+	case err != nil || u.Host == "" || len(raw) > 2048:
+		return "", hint
+	case u.Scheme != "http" && u.Scheme != "https":
+		return "", "use an http or https address"
+	case u.User != nil || u.RawQuery != "" || u.Fragment != "":
+		return "", "use the address without a user name, ? or #"
+	}
+	return strings.TrimRight(u.Scheme+"://"+u.Host+u.Path, "/"), ""
 }

@@ -40,13 +40,19 @@ func CheckHomeAssistant(address, token string) (homeassistant.Connection, error)
 		errs.Add("url", msg)
 	}
 	token = strings.TrimSpace(token)
-	if token == "" || len(token) > maxTokenLength || strings.ContainsAny(token, " \t\r\n") {
+	if !pastedToken(token) {
 		errs.Add("token", "paste a long-lived access token from your Home Assistant profile")
 	}
 	if err := errs.Err(); err != nil {
 		return homeassistant.Connection{}, err
 	}
 	return homeassistant.Connection{URL: base, Token: token}, nil
+}
+
+// pastedToken reports whether a trimmed token or key, pasted from a smart
+// home's web interface, can be one: a single word of bounded length.
+func pastedToken(token string) bool {
+	return token != "" && len(token) <= maxTokenLength && !strings.ContainsAny(token, " \t\r\n")
 }
 
 // SetHomeAssistant stores a connection that CheckHomeAssistant returned

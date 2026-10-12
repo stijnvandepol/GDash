@@ -80,3 +80,21 @@ func TestRedirectsMayNotLeaveHTTPS(t *testing.T) {
 		t.Fatal("no error after the maximum number of redirects")
 	}
 }
+
+func TestBaseURL(t *testing.T) {
+	const hint = "paste the address, such as http://192.168.1.20"
+	tests := []struct{ in, want, msg string }{
+		{" http://192.168.1.10:8123/ ", "http://192.168.1.10:8123", ""},
+		{"https://home.example.org/sub/", "https://home.example.org/sub", ""},
+		{"192.168.1.20", "", hint},
+		{"homey.local:80", "", hint},
+		{"ftp://192.168.1.20", "", "use an http or https address"},
+		{"http://user:pw@192.168.1.20", "", "use the address without a user name, ? or #"},
+		{"http://192.168.1.20/?x=1", "", "use the address without a user name, ? or #"},
+	}
+	for _, tt := range tests {
+		if got, msg := BaseURL(tt.in, hint); got != tt.want || msg != tt.msg {
+			t.Errorf("BaseURL(%q) = %q, %q; want %q, %q", tt.in, got, msg, tt.want, tt.msg)
+		}
+	}
+}

@@ -11,10 +11,11 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"net/url"
 	"regexp"
 	"slices"
 	"strings"
+
+	"github.com/stijnvandepol/gdash/internal/outbound"
 )
 
 const (
@@ -188,14 +189,5 @@ func (c *Client) get(ctx context.Context, conn Connection, path string, limit in
 // NormalizeURL turns what an admin typed into a base URL, or returns an
 // error message for the web interface.
 func NormalizeURL(raw string) (string, string) {
-	u, err := url.Parse(strings.TrimSpace(raw))
-	switch {
-	case err != nil || u.Host == "" || len(raw) > 2048:
-		return "", "paste the address you open Home Assistant with, such as http://192.168.1.10:8123"
-	case u.Scheme != "http" && u.Scheme != "https":
-		return "", "use an http or https address"
-	case u.User != nil || u.RawQuery != "" || u.Fragment != "":
-		return "", "use the address without a user name, ? or #"
-	}
-	return strings.TrimRight(u.Scheme+"://"+u.Host+u.Path, "/"), ""
+	return outbound.BaseURL(raw, "paste the address you open Home Assistant with, such as http://192.168.1.10:8123")
 }
