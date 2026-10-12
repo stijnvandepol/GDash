@@ -94,6 +94,7 @@ var WidgetTypes = map[string]WidgetType{
 	}},
 	"departures": departuresWidget,
 	"fuel":       fuelWidget,
+	CustomWidget: customWidget,
 }
 
 // AirQualitySource is the data key of the air quality and pollen at the
@@ -195,6 +196,9 @@ func widgetProblem(w Widget, seen map[string]bool) string {
 		return fmt.Sprintf("a %s widget needs at least %dx%d cells", w.Type, kind.MinW, kind.MinH)
 	}
 	seen[w.ID] = true
+	if w.Type == CustomWidget {
+		return customProblem(w.Settings)
+	}
 	return settingsProblem(w, kind)
 }
 

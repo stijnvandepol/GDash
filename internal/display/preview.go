@@ -19,7 +19,7 @@ import (
 func PreviewSnapshot(now time.Time, d Dashboard, data map[string]datahub.Entry, language string, textScale int) (Snapshot, error) {
 	s := Snapshot{
 		Type: "snapshot", Active: true, Dashboard: withNightTheme(d, IsNight(now, data)),
-		Data: dataFor([]Dashboard{d}, data), Language: language, TextScale: textScale,
+		Data: dataFor([]Dashboard{d}, data, now), Language: language, TextScale: textScale,
 	}
 	// The hash leaves the server time out: it differs on every call.
 	content, err := json.Marshal(s)

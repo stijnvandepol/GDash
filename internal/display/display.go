@@ -188,7 +188,7 @@ func (b *Broadcaster) Publish(now time.Time, views map[string]View, data map[str
 		used := map[string]datahub.Entry{}
 		var shown *announcement.Announcement
 		if active {
-			used = dataFor(append([]Dashboard{dashboard}, pages...), data)
+			used = dataFor(append([]Dashboard{dashboard}, pages...), data, now)
 			shown = view.Announcement
 		}
 		msg, err := json.Marshal(Snapshot{
