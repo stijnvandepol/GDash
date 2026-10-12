@@ -5,6 +5,8 @@ the format follows [Keep a Changelog](https://keepachangelog.com).
 
 ## Unreleased
 
+## 0.8.0 – 2026-10-12
+
 ### Changed
 
 - The Displays page says what each screen is doing in plain words. A display
