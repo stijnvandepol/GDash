@@ -5,6 +5,10 @@
   import { waitingText } from './waiting';
   import { daylightChange, daylightMinutes, formatClock, pickDays, splitMinutes, sunDays } from './sun';
   import SunIcon from './SunIcon.svelte';
+  import { shrinkToWidth } from './fit';
+
+  // Smaller than this the two lines under the times are hard to read.
+  const MIN_LINE_PX = 18;
 
   let { entry }: { entry: Entry | undefined } = $props();
 
@@ -38,10 +42,10 @@
       </div>
     </div>
     {#if length !== null}
-      <span class="length">{t('sunDaylight', { duration: duration(length) })}</span>
+      <span class="length" use:shrinkToWidth={MIN_LINE_PX}>{t('sunDaylight', { duration: duration(length) })}</span>
     {/if}
     {#if change}
-      <span class="change">
+      <span class="change" use:shrinkToWidth={MIN_LINE_PX}>
         {#if change.kind === 'same'}
           {t('sunSame')}
         {:else}

@@ -41,6 +41,36 @@ export function fitItems(node: HTMLElement) {
 
 const SHRINK_STEP_PX = 2;
 
+/**
+ * Lowers the font size of a one-line text until it is as wide as its box,
+ * down to minPx, so a line set in a wide face (a mono or a typewriter face)
+ * shows whole instead of ending in an ellipsis. Below minPx the ellipsis of
+ * the text's own CSS takes over.
+ */
+export function shrinkToWidth(node: HTMLElement, minPx: number) {
+  const fit = () => {
+    node.style.fontSize = '';
+    let size = parseFloat(getComputedStyle(node).fontSize);
+    while (node.scrollWidth > node.clientWidth + 1 && size > minPx) {
+      size = Math.max(minPx, size - 1);
+      node.style.fontSize = `${size}px`;
+    }
+  };
+  const resize = new ResizeObserver(fit);
+  resize.observe(node);
+  const content = new MutationObserver(fit);
+  content.observe(node, { childList: true, subtree: true, characterData: true });
+  document.fonts.addEventListener('loadingdone', fit);
+  fit();
+  return {
+    destroy() {
+      resize.disconnect();
+      content.disconnect();
+      document.fonts.removeEventListener('loadingdone', fit);
+    },
+  };
+}
+
 let measure: CanvasRenderingContext2D | null | undefined;
 
 /**
