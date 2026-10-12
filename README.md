@@ -24,6 +24,9 @@ Google TV you already own. No extra hardware, no subscription, no cloud.
   inside or whether a door is open, with a long-lived access token. Read
   only; the token is stored encrypted. GDash works without Home
   Assistant too.
+- **Departures**: the next buses, trams, metros and ferries at a stop in the
+  Netherlands, live from [OVapi](https://v0.ovapi.nl) (no API key), with
+  delays and cancellations. Trains are not included.
 - **Announcements**: an automation, such as a Home Assistant rest_command,
   posts "The washing machine is done" with an API token and every TV, or the
   ones you choose, shows it over the dashboard for a while.

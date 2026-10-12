@@ -33,6 +33,14 @@ the format follows [Keep a Changelog](https://keepachangelog.com).
   only while a dashboard has the widget.
 - A `calendar` kind for widget settings, with a calendar picker in the
   dashboard editor.
+- A Departures widget: the next buses, trams, metros and ferries at one stop
+  in the Netherlands, from [OVapi](https://v0.ovapi.nl), without an API key.
+  Each line shows its number, destination and the minutes until it leaves, in
+  the warning colour with the delay when it is late, struck through when it is
+  cancelled. Search the stop by name or town in the dashboard editor. GDash
+  asks OVapi once every 30 seconds, only for stops a dashboard shows, and the
+  screen marks the times as stale when OVapi cannot be reached. Trains are not
+  in OVapi's data; see [docs/guide.md](docs/guide.md#departures).
 
 ### Fixed
 

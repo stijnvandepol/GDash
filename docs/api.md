@@ -68,6 +68,7 @@ come from another site (cross-site request forgery protection).
 | `PUT /api/homeassistant` `{url, token}` | admin | `200 {"url": …}` after Home Assistant accepted the token | `401`, `422` naming `url` or `token` |
 | `DELETE /api/homeassistant` | admin | `204`; Home Assistant widgets show that it is not connected | `401` |
 | `GET /api/homeassistant/entities` | admin | `200 {"entities": [entity]}`, sorted by ID | `401`, `409 not_connected`, `502 upstream_unavailable` |
+| `GET /api/departures/stops?q=utrecht+cs` | admin | `200 {"stops": [stop]}`, at most 20, best matches first | `401`, `422` naming `q` (2 to 100 characters), `502 upstream_unavailable` |
 | `GET /api/photos` | admin | `200 {"photos": [{name, size, addedAt}]}`, oldest first | `401` |
 | `POST /api/photos` multipart, field `photo` | admin | `201` photo | `401`, `409` at 50 photos, `422` for another kind of file or one over 8 MB |
 | `DELETE /api/photos/{name}` | admin | `204` | `401`, `404` |
@@ -176,10 +177,17 @@ and never returns or logs the token. It only reads: once a minute it asks
 at most 40. The token gives the rights of the Home Assistant user who made
 it, so a separate, non-admin user for GDash is the safer choice.
 
+Departures come from OVapi (`v0.ovapi.nl`, the KV78Turbo feed of buses, trams, metros and ferries; no trains), which
+needs no key. The server asks `/stopareacode/<code>,<code>` once every 30 seconds, one request for all stops that
+dashboards show, at most ten, with a `User-Agent` that names GDash and its version. OVapi's HTTPS address answers with a
+certificate for another domain, so the requests are plain HTTP; they carry no secret and the answer is public timetable
+data. The stop search loads `/stopareacode`, all 4600 stop areas, on first use and then once a day, and searches it in
+memory; when a refresh fails it keeps using the previous list.
+
 Changes apply at once: a changed source is fetched again, a removed one
 disappears from the displays. `status` has an entry per configured source by
 data key (`weather.current`, `airquality.current`, `news.default`,
-`calendar.default`, `homeassistant.default`). The waste and energy price sources
+`calendar.default`, `homeassistant.default`, `departures.default`). The waste and energy price sources
 (`waste.default`, `energyprice.nl`) exist only while a dashboard has a widget for them.
 
 Place search sends the typed name to Open-Meteo's geocoding service, which
@@ -251,11 +259,12 @@ allows, overlaps another, lacks a required setting, or has a setting its type do
 | `photos` | 4x3 | `photos.default` | `seconds`: 5 to 600 per photo, default 30 |
 | `countdown` | 4x4 | none | `label`: 1 to 60 characters, `date`: `YYYY-MM-DD` (both required) |
 | `homeassistant` | 4x3 | `homeassistant.default` | `entities`: 1 to 8 entity IDs such as `sensor.living_room_temperature` (required) |
+| `departures` | 6x4 | `departures.default` | `stop`: a stop area code such as `utrcsw`, from the stop search (required), `stopName`: 1 to 100 characters, shown as the title, `maxItems`: 1 to 20 |
 
-A setting's `kind` is `integer`, `text`, `date`, `calendar` or `entities`; `min` and `max` bound an integer, a text's length in
-characters, or the number of entities. A `calendar` setting is a whole number from 1 up, the `id` of a calendar; the
-server does not check that the calendar exists when a dashboard is saved, so a widget whose calendar is deleted later
-says on the screen that it cannot find it.
+A setting's `kind` is `integer`, `text`, `date`, `calendar`, `entities` or `stop`; `min` and `max` bound an integer, a
+text's length in characters, or the number of entities. A `calendar` setting is a whole number from 1 up, the `id` of a
+calendar; the server does not check that the calendar exists when a dashboard is saved, so a widget whose calendar is
+deleted later says on the screen that it cannot find it. A `stop` is one code of 1 to 16 letters and digits.
 Text settings are shown as plain text on the screen, never as HTML.
 
 **settings:** `{"language": "nl", "location": {"name": "Oss", "latitude": 51.77, "longitude": 5.52} | null, "newsFeeds": [{"id": 1, "name": "NOS", "url": "https://…"}], "calendars": [{"id": 2, "name": "Family", "host": "calendar.google.com", "color": "blue", "unreadable": false}]}`.
@@ -297,6 +306,18 @@ ends, or `null` when the day has fewer than three hours. Refreshed hourly.
 The `homeassistant.default` data on a screen maps the entity IDs that its own widgets show to the same object
 without `id`; an entity Home Assistant does not know is left out.
 
+**stop:** `{"code": "utrcsw", "name": "Utrecht, CS Jaarbeurszijde"}`, a stop area of OVapi. The name includes the town.
+Codes that are not letters and digits only are not listed.
+
+**departures data (`departures.default`):** maps the stop codes that a screen's own widgets show to their next
+departures, soonest first and at most 20:
+`{"utrcsw": [{"line": "28", "destination": "Science Park P+R", "expected": "2026-10-12T11:07:20+02:00", "delayMinutes": 3, "cancelled": true}]}`.
+`expected` is when the vehicle leaves according to the real-time data, as an instant; the times of OVapi are Dutch local
+times and GDash reads them as such. `delayMinutes` is how many whole minutes `expected` is later than the timetable and
+`cancelled` is true for a cancelled trip; both are left out when zero or false. A stop without departures has an empty
+list. Vehicles that have left, and journeys that end at the stop, are not in the list; the screen counts the minutes to
+`expected` itself and drops a vehicle when it has gone.
+
 **device:** `{"id": "e542…", "name": "Living room TV", "model": "Chromecast HD", "addr": "192.168.1.50:8009", "hasScreen": true}`
 
 **snapshot event:** `{"type": "snapshot", "version": 3, "serverTime": "…", "language": "nl", "dashboard": {…}, "data": {"weather.current": {"value": {…}, "fetchedAt": "…", "staleAfter": "…", "failing": false}}}`.
@@ -306,7 +327,7 @@ display's active hours; `data` is then empty. `announcement` is only present whi
 A preview snapshot has the same shape: `active` is true, the household's `language` and the chosen `textScale`
 (default 100) are set, there are no `pages`, and `data` holds the sources of that one dashboard. Its `version` is a
 hash of the content, so a poller sees whether anything changed. Data a draft needs that no saved dashboard uses yet
-(a new Home Assistant entity) is absent until the dashboard is saved. The web interface polls the preview every few
+(a new Home Assistant entity or transit stop) is absent until the dashboard is saved. The web interface polls the preview every few
 seconds rather than opening a stream: a preview shows one dashboard that may be a draft, which the per-display
 event stream cannot do, and polling needs no connection kept open per editor.
 The page `GET /preview/{id}` (optionally `?textScale=150`) shows that preview full screen, drawn by the same code

@@ -46,7 +46,9 @@ fully trust, such as a guest's phone.
   are removed before a photo is stored; only a JPEG's orientation stays.
 - **Outgoing requests:** feeds, calendars and Home Assistant are fetched with a
   client that refuses link-local addresses, where cloud hosts serve instance
-  metadata.
+  metadata. Departures are fetched from OVapi over plain HTTP, because its
+  HTTPS certificate belongs to another domain; the request carries no secret
+  and the answer is public timetable data.
 - **Web interface:** a strict Content-Security-Policy without inline scripts,
   cross-site request forgery protection, and no third-party scripts except
   Google's Cast framework on the receiver page.

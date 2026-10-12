@@ -248,5 +248,8 @@ Known oddities:   - Plain HTTP on the LAN, against "All transport is TLS". A TV 
                   - The keeper retries forever with backoff (a supervisor for a TV that is off for hours), restarts
                     the cast every 15 minutes (9 on a Nest Hub) against the Google TV screensaver, see
                     docs/progress.md, and its tests use short real timers (50 to 300 ms): timing is under test.
+                  - internal/departures fetches OVapi over plain HTTP, against "All transport is TLS": the HTTPS
+                    address of v0.ovapi.nl serves a certificate for another domain. Public timetable data, no
+                    secret in the request. Switch departures.DefaultBaseURL to https when OVapi fixes it.
 Do not touch:     web/dist (build output; only .gitkeep is committed so go:embed compiles).
 ```

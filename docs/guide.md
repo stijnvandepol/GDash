@@ -98,7 +98,7 @@ add calendars and feeds under Settings, Data sources, and the photos once you ad
   changes until you press Save. Choose a text size (100 to 200 %) and a screen
   shape (16:9 TV, 16:10 tablet or a 1024 × 600 Nest Hub) to see how the
   layout holds up on a small screen. Data that only a new widget needs, such
-  as a Home Assistant entity nobody shows yet, appears after you save.
+  as a Home Assistant entity or a transit stop nobody shows yet, appears after you save.
 - **Save** sends the dashboard to every screen that shows it within seconds.
 
 | Widget | Shows |
@@ -116,6 +116,7 @@ add calendars and feeds under Settings, Data sources, and the photos once you ad
 | Countdown | The days until a date, such as a holiday |
 | Photos | A slideshow of your photos |
 | Home Assistant | Up to eight sensors or switches from Home Assistant |
+| Departures | The next buses, trams, metros and ferries at one stop in the Netherlands |
 
 **Photos** are added under Settings, Screens, Photos: JPEG, PNG or WebP, up to 8 MB
 each and 50 in total. They stay on your server and only go to paired
@@ -200,6 +201,43 @@ Numbers are shown with their unit, doors and windows as open or closed,
 motion as detected or clear, people as home or away. The screen updates
 once a minute. Home Assistant's own dashboards remain the place to control
 things; GDash is the calm screen that shows the day.
+
+## Departures
+
+The Departures widget shows when the next buses, trams, metros and ferries
+leave one stop in the Netherlands, live, like the display at the stop. It
+needs no account or key: the times come from [OVapi](https://v0.ovapi.nl),
+a free service that collects the real-time data of the Dutch operators.
+
+1. Add a **Departures** widget to a dashboard and select it.
+2. Type the stop's name or the town under **Stop**, for example `utrecht cs`
+   or `amsterdam bijlmer`, and choose it from the list. A stop in OVapi is a
+   stop *area*, the stops of one place that belong together, so both
+   directions of a street are in one list.
+3. **Items** is how many departures to show at most, 1 to 20. The widget only
+   shows the lines that fit, so no line is cut off.
+
+Each line shows the line number, where it goes and the minutes until it
+leaves; "now" is the minute it leaves. A vehicle that runs late is shown in
+the warning colour with its delay, such as `14 min +3`, and one that is
+cancelled is struck through and shows its planned time. A vehicle that ends
+its journey at the stop is not a departure and is left out.
+
+The stop's name is stored in the widget when you choose it, so the screen
+shows it even before the first times arrive. If OVapi cannot be reached, the
+last times stay on screen, and the stop's name turns to the warning colour
+once they are more than a minute and a half old, so you can see that they may
+be out of date.
+
+Good to know:
+
+- **Trains are not included.** OVapi only has buses, trams, metros and
+  ferries; a station's bus stops are there, its platforms are not. Stops without
+  any departures at the moment, such as most stations, say so.
+- GDash asks OVapi once every 30 seconds, for all stops your dashboards show
+  together, and at most ten different stops. The list of stops that the search
+  uses is loaded once a day.
+- The times are in Dutch time, whatever the time zone of the server or TV.
 
 ## Announcements from Home Assistant or any automation
 
