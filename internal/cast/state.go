@@ -1,5 +1,11 @@
 package cast
 
+import "errors"
+
+// ErrDeviceNotFound is wrapped by a keeper's Resolve when discovery did not
+// find the device, so the web interface can say so instead of "no answer".
+var ErrDeviceNotFound = errors.New("cast device not found on the network")
+
 // State is what a keeper last found on its device, for the web interface.
 type State string
 

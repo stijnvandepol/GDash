@@ -38,20 +38,24 @@ describe('i18n', () => {
     speak('es');
     expect(currentLanguage()).toBe('en');
     display.snapshot = null;
-    expect(t('pairTitle')).toBe('Pair this screen');
+    expect(t('pairTitle')).toBe('Connect this screen');
     // A TV set to Dutch shows its pairing screen in Dutch.
     vi.stubGlobal('navigator', { language: 'nl-BE' });
-    expect(t('pairTitle')).toBe('Koppel dit scherm');
+    expect(t('pairTitle')).toBe('Verbind dit scherm');
     vi.stubGlobal('navigator', { language: 'de-AT' });
-    expect(t('pairTitle')).toBe('Diesen Bildschirm koppeln');
+    expect(t('pairTitle')).toBe('Diesen Bildschirm verbinden');
     vi.stubGlobal('navigator', { language: 'fr' });
-    expect(t('pairTitle')).toBe('Associer cet écran');
+    expect(t('pairTitle')).toBe('Connecter cet écran');
   });
 
-  it('tells a new screen where to pair it', () => {
-    const help = t('pairHelp', { address: '192.168.1.20:8420', id: 'kitchen' });
-    expect(help).toContain('192.168.1.20:8420');
-    expect(help).toContain('"kitchen"');
+  it('tells a new screen where to enter its code', () => {
+    // The web interface shows each display's address, so every language names it the same way.
+    for (const language of LANGUAGES) {
+      speak(language);
+      const help = t('pairHelp', { address: '192.168.1.20:8420', id: 'kitchen' });
+      expect(help, language).toContain('192.168.1.20:8420');
+      expect(help, language).toContain('/d/kitchen');
+    }
   });
 
   it('fills in placeholders', () => {

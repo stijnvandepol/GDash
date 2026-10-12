@@ -1,9 +1,13 @@
 <script lang="ts">
   import { toast } from './toast.svelte';
-  import { api, ApiError, slugify, type CastDevice } from './api';
+  import { api, ApiError, slugify, type CastDevice, type Dashboard } from './api';
+  import { DEFAULT_DASHBOARD_ID, suggestedDashboard } from './displays';
+  import DashboardThumb from './DashboardThumb.svelte';
 
   let {
     devices,
+    dashboards,
+    grid,
     searching,
     searchMessage,
     onsearch,
@@ -12,6 +16,9 @@
   }: {
     /** Cast devices found on the network. */
     devices: CastDevice[];
+    dashboards: Dashboard[];
+    /** The TV grid, to draw the chosen dashboard; null until it is known. */
+    grid: { columns: number; rows: number } | null;
     searching: boolean;
     searchMessage: string;
     onsearch: () => void;
@@ -27,6 +34,10 @@
   let createError = $state<ApiError | null>(null);
   let creating = $state(false);
   let showAddress = $state(false);
+  // The dashboard someone picked; until then the newest one is offered.
+  let pickedDashboard = $state<string | null>(null);
+  const dashboardId = $derived(pickedDashboard ?? suggestedDashboard(dashboards));
+  const chosen = $derived(dashboards.find((b) => b.id === dashboardId));
 
   const screens = $derived(devices.filter((d) => d.hasScreen));
   const speakers = $derived(devices.filter((d) => !d.hasScreen));
@@ -49,13 +60,20 @@
     creating = true;
     createError = null;
     try {
-      await api.createDisplay({ id: newId, name: newName.trim(), castDeviceId: newDevice });
-      toast.success(`Added ${newName.trim()}.`);
+      const name = newName.trim();
+      await api.createDisplay({
+        id: newId,
+        name,
+        castDeviceId: newDevice,
+        dashboardId: dashboardId === DEFAULT_DASHBOARD_ID ? '' : dashboardId,
+      });
+      toast.success(newDevice ? `Added ${name}. GDash puts it on the TV in a moment.` : `Added ${name}. Now connect a screen to it.`);
       newName = '';
       newId = '';
       idEdited = false;
       newDevice = '';
       showAddress = false;
+      pickedDashboard = null;
       await oncreated();
     } catch (err) {
       const message = onerror(err);
@@ -66,8 +84,8 @@
   }
 </script>
 
-<form class="card" onsubmit={create}>
-  <h2>Add a display</h2>
+<form class="card" onsubmit={create} aria-labelledby="add-display-title">
+  <h2 id="add-display-title">Add a display</h2>
   <label>
     Name
     <input id="display-name" bind:value={newName} oninput={nameChanged} placeholder="Kitchen" required />
@@ -91,9 +109,25 @@
     </p>
   {/if}
   <label>
-    TV
+    Shows
+    <span class="pick">
+      <select value={dashboardId} onchange={(e) => (pickedDashboard = (e.target as HTMLSelectElement).value)}>
+        {#each dashboards as b (b.id)}
+          <option value={b.id}>{b.name}</option>
+        {/each}
+      </select>
+      {#if grid && chosen}
+        <span class="thumb" aria-hidden="true">
+          <DashboardThumb widgets={chosen.widgets} theme={chosen.theme ?? 'minimal-dark'} font={chosen.font} columns={grid.columns} rows={grid.rows} labels={false} />
+        </span>
+      {/if}
+    </span>
+    {#if createError?.fieldMessage('dashboardId')}<span class="field-error">{createError.fieldMessage('dashboardId')}</span>{/if}
+  </label>
+  <label>
+    Cast TV
     <select bind:value={newDevice} onchange={nameFromDevice}>
-      <option value="">No Cast: I open the page myself in a browser or kiosk</option>
+      <option value="">None: I open its address on the screen myself (tablet, Fire TV, computer)</option>
       {#each screens as dev (dev.id)}
         <option value={dev.id}>{dev.name} ({dev.model})</option>
       {/each}
@@ -108,7 +142,7 @@
   </label>
   <p class="muted small">
     {#if searching}Searching for Cast devices…{:else}
-      {searchMessage || `Found ${screens.length} TVs and screens.`}
+      {searchMessage || `Found ${screens.length === 1 ? '1 Cast device' : `${screens.length} Cast devices`} with a screen.`}
       <button type="button" class="link" onclick={onsearch}>Search again</button>
     {/if}
   </p>
@@ -123,5 +157,18 @@
   .address code {
     font-family: var(--mono);
     color: var(--text-soft);
+  }
+  .pick {
+    display: flex;
+    align-items: center;
+    gap: var(--s-3);
+  }
+  .pick select {
+    flex: 1;
+    min-width: 0;
+  }
+  .thumb {
+    flex: none;
+    width: 96px;
   }
 </style>

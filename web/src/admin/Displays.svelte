@@ -9,6 +9,7 @@
   import AddDisplay from './AddDisplay.svelte';
   import DisplayItem from './DisplayItem.svelte';
   import EmptyDisplays from './EmptyDisplays.svelte';
+  import { DEFAULT_DASHBOARD_ID } from './displays';
 
   let { onSessionEnded }: { onSessionEnded: () => void } = $props();
 
@@ -25,8 +26,6 @@
 
   let editingId = $state<string | null>(null);
   let editName = $state('');
-  let pairingId = $state<string | null>(null);
-  let pairCode = $state('');
   let scheduleId = $state<string | null>(null);
   let rowError = $state('');
 
@@ -39,7 +38,7 @@
       .widgetTypes()
       .then((c) => (grid = { columns: c.columns, rows: c.rows }))
       .catch(() => (grid = null));
-    // Keeps "On screen since" and similar current while the page is open.
+    // Keeps what each TV is doing current while the page is open.
     const timer = setInterval(() => void load(), STATUS_REFRESH_MS);
     return () => clearInterval(timer);
   });
@@ -91,7 +90,7 @@
   }
 
   async function remove(d: Display) {
-    const message = `"${d.name}" stops showing GDash, and its paired screens are unpaired.`;
+    const message = `"${d.name}" stops showing GDash, and every screen connected to it is disconnected.`;
     if (!(await ask({ title: 'Remove this display?', message, action: 'Remove' }))) return;
     try {
       await api.deleteDisplay(d.id);
@@ -121,17 +120,11 @@
 
   async function chooseDashboard(d: Display, dashboardId: string) {
     try {
-      await api.updateDisplay(d.id, { dashboardId: dashboardId === 'default' ? '' : dashboardId });
+      await api.updateDisplay(d.id, { dashboardId: dashboardId === DEFAULT_DASHBOARD_ID ? '' : dashboardId });
       await load();
     } catch (err) {
       rowError = err instanceof ApiError ? (err.fieldMessage('dashboardId') ?? err.message) : handle(err);
     }
-  }
-
-  function describeHours(d: Display): string {
-    const hours = d.activeFrom ? `on ${d.activeFrom}–${d.activeUntil}` : 'always on';
-    const n = d.schedule.length;
-    return n === 0 ? hours : `${hours} · ${n === 1 ? '1 time slot' : `${n} time slots`}`;
   }
 
   async function closeSchedule(saved: boolean) {
@@ -139,27 +132,18 @@
     if (saved) await load();
   }
 
-  function startPairing(d: Display) {
-    pairingId = d.id;
-    pairCode = '';
-    rowError = '';
-  }
-
-  async function pair(event: SubmitEvent, id: string) {
-    event.preventDefault();
-    try {
-      await api.pairScreen(id, pairCode.trim());
-      toast.success('Screen paired. It shows the dashboard within seconds.');
-      pairingId = null;
-      await load();
-    } catch (err) {
-      rowError = handle(err);
-    }
+  /** Approves the code a screen shows. A wrong code rejects, for the form to show. */
+  async function pair(d: Display, code: string) {
+    await api.pairScreen(d.id, code);
+    toast.success(`Screen connected. It shows ${d.name} within a few seconds.`);
+    await load();
   }
 
   async function unpair(d: Display) {
-    const message = `Every screen showing "${d.name}" will ask for a new code.`;
-    if (!(await ask({ title: 'Unpair the screens?', message, action: 'Unpair' }))) return;
+    const message = d.castDeviceId
+      ? `The tablets and browsers showing "${d.name}" show a code again. ${deviceNames.get(d.castDeviceId) ?? 'The TV'} keeps showing it.`
+      : `Every screen showing "${d.name}" shows a code again, to be connected anew.`;
+    if (!(await ask({ title: 'Disconnect the screens?', message, action: 'Disconnect' }))) return;
     try {
       await api.unpairScreens(d.id);
       await load();
@@ -178,16 +162,6 @@
     } catch (err) {
       rowError = handle(err);
     }
-  }
-
-  function describeScreens(d: Display): string {
-    const n = d.pairedScreens ?? 0;
-    return n === 1 ? '1 paired screen' : `${n} paired screens`;
-  }
-
-  function describeDevice(id: string): string {
-    if (!id) return 'Browser or kiosk';
-    return deviceNames.get(id) ?? 'Cast device (not found right now)';
   }
 </script>
 
@@ -223,34 +197,22 @@
             </form>
           {:else if scheduleId === d.id}
             <ScheduleEditor display={d} {dashboards} onclose={closeSchedule} onerror={handle} />
-          {:else if pairingId === d.id}
-            <form class="inline" onsubmit={(e) => pair(e, d.id)}>
-              <input
-                bind:value={pairCode}
-                aria-label="Code shown on the screen"
-                placeholder="ABCD-EFGH"
-                autocomplete="off"
-                spellcheck="false"
-                required
-              />
-              <button type="submit">Pair</button>
-              <button type="button" class="link" onclick={() => (pairingId = null)}>Cancel</button>
-            </form>
           {:else}
             <DisplayItem
               display={d}
               {dashboards}
               textSizes={TEXT_SIZES}
               {grid}
-              meta="{describeDevice(d.castDeviceId)} · {describeScreens(d)} · {describeHours(d)}"
+              tvName={deviceNames.get(d.castDeviceId) ?? ''}
               ondashboard={(id) => chooseDashboard(d, id)}
               ontextscale={(percent) => chooseTextScale(d, percent)}
               onschedule={() => (scheduleId = d.id)}
-              onpair={() => startPairing(d)}
+              onpair={(code) => pair(d, code)}
               onunpair={() => unpair(d)}
               ontakeover={() => takeOver(d)}
               onrename={() => startRename(d)}
               onremove={() => remove(d)}
+              onerror={handle}
             />
           {/if}
         </li>
@@ -260,4 +222,4 @@
   {/if}
 </section>
 
-<AddDisplay {devices} {searching} {searchMessage} onsearch={search} oncreated={load} onerror={handle} />
+<AddDisplay {devices} {dashboards} {grid} {searching} {searchMessage} onsearch={search} oncreated={load} onerror={handle} />

@@ -32,6 +32,29 @@ func (s *Store) Dashboards(ctx context.Context) ([]display.Dashboard, error) {
 	return list, rows.Err()
 }
 
+// DashboardCreationTimes returns when each dashboard was created, so the
+// web interface can offer the newest one for a new display.
+func (s *Store) DashboardCreationTimes(ctx context.Context) (map[string]time.Time, error) {
+	rows, err := s.db.QueryContext(ctx, "SELECT id, created_at FROM dashboards LIMIT ?", MaxDashboards)
+	if err != nil {
+		return nil, fmt.Errorf("list dashboard creation times: %w", err)
+	}
+	defer rows.Close()
+	created := map[string]time.Time{}
+	for rows.Next() {
+		var id, at string
+		if err := rows.Scan(&id, &at); err != nil {
+			return nil, err
+		}
+		t, err := parseTime(at)
+		if err != nil {
+			return nil, fmt.Errorf("creation time of dashboard %q: %w", id, err)
+		}
+		created[id] = t
+	}
+	return created, rows.Err()
+}
+
 // Dashboard returns one dashboard, or ErrNotFound.
 func (s *Store) Dashboard(ctx context.Context, id string) (display.Dashboard, error) {
 	d, err := scanDashboard(s.db.QueryRowContext(ctx, "SELECT id, name, theme, font, night_theme, widgets FROM dashboards WHERE id = ?", id))

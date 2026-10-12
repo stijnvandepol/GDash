@@ -1,18 +1,20 @@
 <script lang="ts">
   import type { Dashboard, Display } from './api';
-  import { describeCast } from './status';
+  import { castTone, describeCast } from './status';
+  import { DEFAULT_DASHBOARD_ID, describeHours, describeScreens } from './displays';
   import Icon from './Icon.svelte';
   import DashboardThumb from './DashboardThumb.svelte';
+  import PairScreen from './PairScreen.svelte';
 
-  // One display in the list: what it is, what it shows, and what can be
-  // done with it. Editing forms (rename, schedule, pairing) stay in
+  // One display in the list: what its screen is doing, what it shows, and
+  // what can be done with it. Renaming and the schedule stay in
   // Displays.svelte, which swaps this item for them.
   let {
     display: d,
     dashboards,
     textSizes,
     grid,
-    meta,
+    tvName,
     ondashboard,
     ontextscale,
     onschedule,
@@ -21,6 +23,7 @@
     ontakeover,
     onrename,
     onremove,
+    onerror,
   }: {
     display: Display;
     dashboards: Dashboard[];
@@ -28,20 +31,35 @@
     textSizes: [number, string][];
     /** The TV grid, to draw the dashboard; null until it is known. */
     grid: { columns: number; rows: number } | null;
-    /** One line about the device, paired screens and hours. */
-    meta: string;
+    /** The name of the display's Cast device; empty when it was not found. */
+    tvName: string;
     ondashboard: (id: string) => void;
     ontextscale: (percent: number) => void;
     onschedule: () => void;
-    onpair: () => void;
+    /** Approves the code a screen shows; rejects when it is wrong. */
+    onpair: (code: string) => Promise<void>;
     onunpair: () => void;
     /** Ends a wait for the TV to be switched off; see describeCast. */
     ontakeover: () => void;
     onrename: () => void;
     onremove: () => void;
+    onerror: (err: unknown) => string;
   } = $props();
 
-  const shown = $derived(dashboards.find((b) => b.id === (d.dashboardId || 'default')));
+  const shown = $derived(dashboards.find((b) => b.id === (d.dashboardId || DEFAULT_DASHBOARD_ID)));
+  const isCast = $derived(d.castDeviceId !== '');
+  const screens = $derived(d.pairedScreens ?? 0);
+  const tv = $derived(tvName || 'the TV');
+  const address = $derived(`${location.origin}/d/${d.id}`);
+  // A display without Cast and without a screen shows how to connect one
+  // straight away; otherwise connecting another screen is a step away.
+  const needsScreen = $derived(!isCast && screens === 0);
+  let connecting = $state(false);
+
+  async function pair(code: string) {
+    await onpair(code);
+    connecting = false;
+  }
 </script>
 
 <article class="display">
@@ -60,66 +78,80 @@
   </div>
 
   <div class="body">
-  <header class="head">
-    <div class="title">
+    <header class="head">
       <h3>{d.name}</h3>
-      {#if d.cast}
-        <span
-          class="badge"
-          class:ok={d.cast.state === 'showing'}
-          class:warn={d.cast.state === 'other_app' || d.cast.state === 'yielded'}
-          class:bad={d.cast.state === 'unreachable'}
-          title={d.cast.problem ?? ''}
-        >
-          {describeCast(d.cast)}
-        </span>
-      {/if}
+      <a class="open" href="/d/{d.id}" target="_blank" rel="noopener" aria-label="Preview {d.name} in a new tab">
+        Preview <Icon name="external" size={16} />
+      </a>
+    </header>
+
+    <!-- What the screen is doing, first and in plain words. -->
+    {#if isCast}
+      <p class="badge state {castTone(d.cast)}" title={d.cast?.problem ?? ''}>{describeCast(d.cast, tv, d.activeFrom)}</p>
+    {:else if screens > 0}
+      <p class="badge state">{describeScreens(d)}</p>
+    {:else}
+      <p class="badge state warn">No screen yet</p>
+    {/if}
+    <p class="muted meta">
+      {describeHours(d)}{#if isCast && screens > 0}{' · '}{describeScreens(d)}{/if}
+    </p>
+
+    <div class="fields">
+      <label class="shows">
+        Shows
+        <!-- The accessible name keeps the display's name, so several
+             displays' lists stay apart for a screen reader. -->
+        <select
+          aria-label="Dashboard for {d.name}"
+          value={d.dashboardId || DEFAULT_DASHBOARD_ID}
+          onchange={(e) => ondashboard((e.target as HTMLSelectElement).value)}>
+          {#each dashboards as b (b.id)}
+            <option value={b.id}>{b.name}</option>
+          {/each}
+        </select>
+      </label>
+      <label>
+        Text size
+        <select
+          aria-label="Text size for {d.name}"
+          value={d.textScale || 100}
+          onchange={(e) => ontextscale(Number((e.target as HTMLSelectElement).value))}>
+          {#each textSizes as [value, label] (value)}
+            <option {value}>{label}</option>
+          {/each}
+        </select>
+      </label>
     </div>
-    <a class="open" href="/d/{d.id}" target="_blank" rel="noopener">
-      Open screen <Icon name="external" size={16} />
-    </a>
-  </header>
-  <p class="muted meta">{meta}</p>
 
-  <div class="fields">
-    <label>
-      Dashboard
-      <!-- The accessible name keeps the visible label and adds the display,
-           so several displays' lists stay apart for a screen reader. -->
-      <select
-        aria-label="Dashboard for {d.name}"
-        value={d.dashboardId || 'default'}
-        onchange={(e) => ondashboard((e.target as HTMLSelectElement).value)}>
-        {#each dashboards as b (b.id)}
-          <option value={b.id}>{b.name}</option>
-        {/each}
-      </select>
-    </label>
-    <label>
-      Text size
-      <select
-        aria-label="Text size for {d.name}"
-        value={d.textScale || 100}
-        onchange={(e) => ontextscale(Number((e.target as HTMLSelectElement).value))}>
-        {#each textSizes as [value, label] (value)}
-          <option {value}>{label}</option>
-        {/each}
-      </select>
-    </label>
-  </div>
+    {#if needsScreen || connecting}
+      <PairScreen {address} onpair={pair} {onerror} oncancel={needsScreen ? undefined : () => (connecting = false)}>
+        {#if needsScreen}
+          No screen shows {d.name} yet. Connect the TV or tablet it is meant for:
+        {:else if isCast}
+          GDash keeps this display on {tv} by itself. To show it on a tablet or computer as well:
+        {:else}
+          To show {d.name} on one more screen:
+        {/if}
+      </PairScreen>
+    {/if}
 
-  <div class="actions">
-    {#if d.cast?.state === 'yielded'}
-      <button onclick={ontakeover} aria-label="Show dashboard now on {d.name}">Show dashboard now</button>
-    {/if}
-    <button class="secondary" onclick={onschedule}>Schedule</button>
-    <button class="secondary" onclick={onpair}>Pair a screen</button>
-    {#if (d.pairedScreens ?? 0) > 0}
-      <button class="secondary" onclick={onunpair}>Unpair screens</button>
-    {/if}
-    <button class="link" onclick={onrename}>Rename</button>
-    <button class="link danger remove" onclick={onremove}>Remove</button>
-  </div>
+    <div class="actions">
+      {#if d.cast?.state === 'yielded'}
+        <button onclick={ontakeover} aria-label="Show dashboard now on {d.name}">Show dashboard now</button>
+      {/if}
+      <button class="secondary" onclick={onschedule}>Schedule</button>
+      {#if !needsScreen && !connecting}
+        <button class="link" onclick={() => (connecting = true)}>
+          {isCast ? 'Open on another screen…' : 'Add another screen…'}
+        </button>
+      {/if}
+      {#if screens > 0}
+        <button class="link" onclick={onunpair}>{isCast ? 'Disconnect the other screens' : 'Disconnect screens'}</button>
+      {/if}
+      <button class="link" onclick={onrename}>Rename</button>
+      <button class="link danger remove" onclick={onremove}>Remove</button>
+    </div>
   </div>
 </article>
 
@@ -141,6 +173,7 @@
   .set {
     display: grid;
     justify-items: center;
+    align-self: start;
     max-width: 280px;
   }
   .bezel {
@@ -193,13 +226,6 @@
     justify-content: space-between;
     gap: var(--s-2) var(--s-4);
   }
-  .title {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: baseline;
-    gap: var(--s-2) var(--s-4);
-    min-width: 0;
-  }
   h3 {
     font-size: var(--fs-xl);
     font-weight: 650;
@@ -217,6 +243,16 @@
   .open:hover {
     text-decoration-color: currentColor;
   }
+  .state {
+    margin: calc(-1 * var(--s-2)) 0 0;
+    font-size: var(--fs-md);
+    width: auto;
+    align-items: baseline;
+  }
+  /* The dot sits on the first line of a status that wraps. */
+  .state::before {
+    transform: translateY(-1px);
+  }
   .meta {
     margin: calc(-1 * var(--s-2)) 0 0;
     font-size: var(--fs-sm);
@@ -225,6 +261,19 @@
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
     gap: var(--s-3) var(--s-4);
+  }
+  /* What the display shows is the choice that matters most. */
+  @container page (min-width: 700px) {
+    .fields {
+      grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+    }
+  }
+  .shows {
+    font-weight: 650;
+    color: var(--text);
+  }
+  .shows select {
+    font-weight: 550;
   }
   .actions {
     display: flex;

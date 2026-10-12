@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { describeCast, describeStatus } from './status';
+import { castTone, describeCast, describeStatus } from './status';
 
 const now = Date.parse('2026-10-09T10:00:00Z');
 
@@ -28,17 +28,46 @@ describe('describeCast', () => {
   // TZ is Europe/Amsterdam in the test run, so 08:31 UTC shows as 10:31.
   const since = '2026-10-09T08:31:00Z';
 
-  it('describes each state', () => {
-    expect(describeCast({ state: 'showing', since })).toBe('On screen since 10:31');
-    expect(describeCast({ state: 'standby', since })).toBe('TV in standby since 10:31');
-    expect(describeCast({ state: 'other_app', since })).toBe('Something else is on the TV; GDash starts when it ends');
-    expect(describeCast({ state: 'yielded', since })).toBe('Someone is using the TV; GDash waits until it is switched off');
-    expect(describeCast({ state: 'resting', since })).toBe('Outside active hours');
-    expect(describeCast({ state: 'unreachable', since, problem: 'i/o timeout' })).toBe('Cannot reach the TV; retrying');
-    expect(describeCast({ state: 'connecting', since })).toBe('Connecting to the TV…');
+  it('leads with what the TV is doing, by its name', () => {
+    expect(describeCast({ state: 'showing', since }, 'Tv Keuken')).toBe('On Tv Keuken since 10:31');
+    expect(describeCast({ state: 'standby', since }, 'Tv Keuken')).toBe('Tv Keuken is asleep (standby) since 10:31');
+    expect(describeCast({ state: 'other_app', since }, 'Tv Keuken')).toBe(
+      'Another app is on Tv Keuken; GDash comes back when it stops',
+    );
+    expect(describeCast({ state: 'yielded', since }, 'Tv Keuken')).toBe(
+      'Someone is using Tv Keuken; GDash waits until it is switched off',
+    );
+    expect(describeCast({ state: 'connecting', since }, 'Tv Keuken')).toBe('Connecting to Tv Keuken…');
   });
 
-  it('says nothing for a display without a Cast device', () => {
-    expect(describeCast(undefined)).toBe('');
+  it('says when GDash comes back outside the hours', () => {
+    expect(describeCast({ state: 'resting', since }, 'Tv Keuken', '07:00')).toBe('Outside its hours; GDash comes back at 07:00');
+    expect(describeCast({ state: 'resting', since }, 'Tv Keuken')).toBe('Outside its hours');
+  });
+
+  it('says why the TV cannot be reached', () => {
+    expect(describeCast({ state: 'unreachable', since, reason: 'not_found', problem: 'x' })).toBe(
+      'Cannot find the TV on the network. Is it switched on and on the same network as GDash?',
+    );
+    expect(describeCast({ state: 'unreachable', since, reason: 'no_answer', problem: 'i/o timeout' })).toBe(
+      'The TV does not answer; GDash keeps trying',
+    );
+  });
+
+  it('is connecting before the keeper first reports', () => {
+    expect(describeCast(undefined, 'Tv Keuken')).toBe('Connecting to Tv Keuken…');
+  });
+});
+
+describe('castTone', () => {
+  const since = '2026-10-09T08:31:00Z';
+
+  it('lights the status by how well it goes', () => {
+    expect(castTone({ state: 'showing', since })).toBe('ok');
+    expect(castTone({ state: 'other_app', since })).toBe('warn');
+    expect(castTone({ state: 'yielded', since })).toBe('warn');
+    expect(castTone({ state: 'unreachable', since })).toBe('bad');
+    expect(castTone({ state: 'standby', since })).toBe('');
+    expect(castTone(undefined)).toBe('');
   });
 });

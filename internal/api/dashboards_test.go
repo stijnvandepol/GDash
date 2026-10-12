@@ -50,9 +50,18 @@ func TestDashboardCRUD(t *testing.T) {
 	}
 
 	_, body = env.do(t, "GET", "/api/dashboards", "")
-	var list struct{ Dashboards []display.Dashboard }
+	var list struct {
+		Dashboards []struct {
+			display.Dashboard
+			CreatedAt time.Time
+		}
+	}
 	if err := json.Unmarshal([]byte(body), &list); err != nil || len(list.Dashboards) != 1 || list.Dashboards[0].Name != "Mornings" {
 		t.Fatalf("list = %s", body)
+	}
+	// The web interface offers the newest dashboard for a new display.
+	if list.Dashboards[0].CreatedAt.IsZero() {
+		t.Fatalf("list = %s, want createdAt", body)
 	}
 	if status, _ := env.do(t, "DELETE", "/api/dashboards/morning", ""); status != http.StatusNoContent {
 		t.Fatalf("delete = %d", status)

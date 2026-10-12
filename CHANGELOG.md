@@ -7,6 +7,18 @@ the format follows [Keep a Changelog](https://keepachangelog.com).
 
 ### Changed
 
+- The Displays page says what each screen is doing in plain words. A display
+  on a Cast TV leads with the TV's state, such as "On Tv Keuken since 13:40",
+  "Tv Keuken is asleep (standby)" or "Cannot find Tv Keuken on the network",
+  and only counts the extra screens it is open on ("Also open on 2 other
+  screens"). A display without Cast says "No screen yet" with its address and
+  the field for the code right in its row, and "Shown on 1 screen" once
+  connected. "Pair a screen" became "Open on another screen…" or "Add another
+  screen…", "Open screen" became "Preview", and the dashboard choice is
+  labelled **Shows**. The cast status in `GET /api/displays` gains a `reason`
+  for an unreachable TV: `not_found` or `no_answer`.
+- The code screen on a TV says "Connect this screen" and names the display by
+  the address the web interface shows, in all four TV languages.
 - The dashboard editor adds widgets from a panel beside the canvas instead
   of a row of buttons above it: a search on name and description, then the
   widgets by category (Time & date, Weather & nature, Home, Agenda &
@@ -53,6 +65,9 @@ the format follows [Keep a Changelog](https://keepachangelog.com).
   (`PUT /api/custom-sources/{id}/values`); see
   [docs/guide.md](docs/guide.md#name-its-values).
 - `isOn(x)` in rule conditions, true when a badge would be on.
+- Adding a display asks what it **shows**, offering the newest dashboard
+  instead of always the default one. `POST /api/displays` takes `dashboardId`,
+  and `GET /api/dashboards` gives each dashboard's `createdAt`.
 
 ### Fixed
 

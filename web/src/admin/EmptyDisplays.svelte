@@ -13,7 +13,7 @@
     <p class="muted">Add one below. There are two ways to get a dashboard onto a screen:</p>
     <ul>
       <li><strong>A TV with Chromecast or Google TV</strong> on the same network is found on its own. GDash puts the dashboard on it and keeps it there.</li>
-      <li><strong>Any other screen</strong>, such as a tablet, a Fire TV or a computer, opens the display's page in a browser and is paired with the code it shows.</li>
+      <li><strong>Any other screen</strong>, such as a tablet, a Fire TV or a computer, opens the display's address in its browser. It then shows a code, which you enter here to connect it.</li>
     </ul>
   </div>
 </div>

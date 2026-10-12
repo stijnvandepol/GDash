@@ -47,14 +47,14 @@ come from another site (cross-site request forgery protection).
 | `POST /api/api-tokens` `{name}` | admin | `201` token with its secret in `token`, shown this once | `401`, `409` at 10 tokens, `422` |
 | `DELETE /api/api-tokens/{id}` | admin | `204`; automations that use it get `401` from then on | `401`, `404` |
 | `POST /api/announcements` `{message, title?, seconds?, displays?}` | API token or admin | `201 {title?, message, expiresAt, displays}` | `400`, `401 invalid_token` or `not_logged_in`, `422`, `429 rate_limited` |
-| `GET /api/displays` | admin | `200 {"displays": [display + pairedScreens + cast?]}` | `401` |
-| `POST /api/displays` `{id, name, castDeviceId, activeFrom?, activeUntil?, schedule?}` | admin | `201` display | `401`, `409 conflict`, `422` |
+| `GET /api/displays` | admin | `200 {"displays": [display + pairedScreens + cast?]}`; `pairedScreens` counts the screens paired with a code, never the TV a cast keeper opened | `401` |
+| `POST /api/displays` `{id, name, castDeviceId, dashboardId?, activeFrom?, activeUntil?, schedule?}` | admin | `201` display | `401`, `409 conflict`, `422` (also for an unknown dashboard) |
 | `PATCH /api/displays/{id}` `{name?, castDeviceId?, dashboardId?, activeFrom?, activeUntil?, schedule?, rotation?, rotateSeconds?, textScale?}` | admin | `200` display | `401`, `404 not_found`, `422` (also for an unknown dashboard) |
 | `DELETE /api/displays/{id}` | admin | `204` | `401`, `404 not_found` |
 | `POST /api/displays/{id}/cast-takeovers` | admin | `204`: the display's cast keeper shows the dashboard on the TV within seconds, also over what someone is watching, and stops waiting (`yielded`); recorded in the audit log as `cast_taken_over`. Not while the TV is in standby or outside active hours | `401`, `404 not_found`, `409 not_cast` (no Cast device) or `not_connected` (GDash is still connecting to the TV) |
 | `GET /api/widget-types` | admin | `200 {columns, rows, themes, fonts, types: {name: {minW, minH, settings: {key: {kind, min?, max?, required}}}}}` | `401` |
 | `GET /api/dashboard-templates` | admin | `200 {"templates": [{id, name, description, theme, widgets}]}`; create a dashboard from one with `POST /api/dashboards` and its `theme` and `widgets` | `401` |
-| `GET /api/dashboards` | admin | `200 {"dashboards": [dashboard]}` | `401` |
+| `GET /api/dashboards` | admin | `200 {"dashboards": [dashboard + createdAt]}` | `401` |
 | `POST /api/dashboards` `{id, name, theme?, font?, nightTheme?, widgets}` | admin | `201` dashboard | `401`, `409 conflict`, `422` |
 | `GET /api/dashboards/{id}` | admin | `200` dashboard | `401`, `404` |
 | `PUT /api/dashboards/{id}` `{name, theme?, font?, nightTheme?, widgets}` | admin | `200` dashboard; screens update at once | `401`, `404`, `422` |
@@ -373,11 +373,13 @@ while no slot applies; empty with `rotateSeconds` 0 means no rotation. Deleting 
 rotation. A rotating snapshot carries `pages` (the display's own dashboard first) and `pageSeconds`; the screen turns
 the page on its clock, so every screen of a display shows the same page.
 
-**cast:** `{"state": "showing", "since": "2026-10-09T08:31:00Z", "problem"?: "…"}`, only for a display on a Cast
-device. `state` is `connecting`, `showing`, `standby` (the TV sleeps), `other_app` (someone else is casting or the TV
-shows another input; GDash starts when it ends), `yielded` (someone took the TV from GDash, or used it when GDash
-started; GDash waits until the TV has been in standby, or a `cast-takeovers` request), `resting` (outside active hours)
-or `unreachable`, with `problem` saying why.
+**cast:** `{"state": "showing", "since": "2026-10-09T08:31:00Z", "problem"?: "…", "reason"?: "not_found"}`, only for
+a display on a Cast device. `state` is `connecting`, `showing`, `standby` (the receiver runs but the TV sleeps),
+`other_app` (someone else is casting or the TV shows another input; GDash starts when it ends), `yielded` (someone took
+the TV from GDash, or used it when GDash started; GDash waits until the TV has been in standby, its idle screen has
+shown for 10 minutes, or a `cast-takeovers` request), `resting` (outside active hours) or `unreachable`, with `problem`
+saying why in the words of the error and `reason` sorting it: `not_found` (discovery did not find the device) or
+`no_answer` (anything else, such as a device that refused or dropped the connection).
 
 `textScale` is the display's text size in percent: 100 (default), 125, 150 or 200. The snapshot carries it; the
 screen draws its stage narrower by that factor and in the screen's own shape (between 4:3 and 21:9), so a small

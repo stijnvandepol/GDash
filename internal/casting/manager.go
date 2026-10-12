@@ -4,6 +4,7 @@ package casting
 
 import (
 	"context"
+	"errors"
 	"log/slog"
 	"maps"
 	"sync"
@@ -42,8 +43,33 @@ type Status struct {
 	State cast.State `json:"state"`
 	// Since is when the display entered this state.
 	Since time.Time `json:"since"`
-	// Problem explains an unreachable device.
+	// Problem explains an unreachable device, in the words of the error.
 	Problem string `json:"problem,omitempty"`
+	// Reason sorts an unreachable device's problem for the web interface:
+	// ReasonNotFound or ReasonNoAnswer. Empty in the other states.
+	Reason string `json:"reason,omitempty"`
+}
+
+// Reasons a device is unreachable.
+const (
+	// ReasonNotFound: discovery did not find the device; it is off, asleep
+	// without network standby, or on another network.
+	ReasonNotFound = "not_found"
+	// ReasonNoAnswer: everything else, such as a device that was found but
+	// refused or dropped the connection.
+	ReasonNoAnswer = "no_answer"
+)
+
+// reasonFor sorts the error of an unreachable device.
+func reasonFor(state cast.State, err error) string {
+	switch {
+	case state != cast.StateUnreachable:
+		return ""
+	case errors.Is(err, cast.ErrDeviceNotFound):
+		return ReasonNotFound
+	default:
+		return ReasonNoAnswer
+	}
 }
 
 // Statuses returns the latest status by display ID, for displays with a
@@ -74,7 +100,7 @@ func (m *Manager) reporter(displayID string) func(cast.State, error) {
 		if m.statuses == nil {
 			m.statuses = map[string]Status{}
 		}
-		m.statuses[displayID] = Status{State: state, Since: now(), Problem: problem}
+		m.statuses[displayID] = Status{State: state, Since: now(), Problem: problem, Reason: reasonFor(state, err)}
 	}
 }
 

@@ -3,6 +3,7 @@ package api
 import (
 	"errors"
 	"net/http"
+	"time"
 
 	"github.com/stijnvandepol/gdash/internal/display"
 	"github.com/stijnvandepol/gdash/internal/store"
@@ -46,17 +47,28 @@ func (s *Server) getDashboardTemplates(w http.ResponseWriter, _ *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{"templates": display.Templates(s.Now())})
 }
 
-// listDashboards handles GET /api/dashboards: {"dashboards": [...]}.
+// listDashboards handles GET /api/dashboards: {"dashboards": [...]}, each
+// with when it was created.
 func (s *Server) listDashboards(w http.ResponseWriter, r *http.Request) {
 	list, err := s.Store.Dashboards(r.Context())
 	if err != nil {
 		s.internalError(w, "list dashboards", err)
 		return
 	}
-	if list == nil {
-		list = []display.Dashboard{}
+	created, err := s.Store.DashboardCreationTimes(r.Context())
+	if err != nil {
+		s.internalError(w, "list dashboards", err)
+		return
 	}
-	writeJSON(w, http.StatusOK, map[string]any{"dashboards": list})
+	type listed struct {
+		display.Dashboard
+		CreatedAt time.Time `json:"createdAt"`
+	}
+	out := make([]listed, len(list))
+	for i, d := range list {
+		out[i] = listed{Dashboard: d, CreatedAt: created[d.ID]}
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"dashboards": out})
 }
 
 // getDashboard handles GET /api/dashboards/{dashboard}.

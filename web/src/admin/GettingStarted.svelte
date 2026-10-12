@@ -67,7 +67,7 @@
       </li>
       <li class:done={hasDisplay}>
         <span class="marker" aria-hidden="true">{#if hasDisplay}<Icon name="check" size={14} />{:else}4{/if}</span>
-        <span class="step">Add a display and pick your TV, or pair a browser with the code it shows.</span>
+        <span class="step">Add a display and pick your TV, or connect a browser with the code it shows.</span>
         {#if !hasDisplay}<button class="link" onclick={() => onopen('displays')}>Open Displays</button>{/if}
       </li>
     </ol>

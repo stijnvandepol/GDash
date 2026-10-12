@@ -149,7 +149,7 @@ your home network no setup token is needed in that first hour.
    build your own.
 4. Under **Displays**, add a display and pick your TV. GDash puts the
    dashboard on it within seconds. For any other screen, open the display's
-   page in a browser and pair it with the code it shows.
+   address in its browser and enter the code it shows at the display.
 
 ## Screens it works with
 

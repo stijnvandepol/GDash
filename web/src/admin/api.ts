@@ -133,7 +133,8 @@ export const api = {
   changePassword: (currentPassword: string, newPassword: string) =>
     request<void>('PUT', '/api/me/password', { currentPassword, newPassword }),
   displays: () => request<{ displays: Display[] }>('GET', '/api/displays').then((r) => r.displays),
-  createDisplay: (d: { id: string; name: string; castDeviceId: string }) => request<Display>('POST', '/api/displays', d),
+  createDisplay: (d: { id: string; name: string; castDeviceId: string; dashboardId: string }) =>
+    request<Display>('POST', '/api/displays', d),
   updateDisplay: (
     id: string,
     changes: {

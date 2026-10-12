@@ -3,6 +3,7 @@ package casting
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"log/slog"
 	"sort"
@@ -137,8 +138,17 @@ func TestManagerKeepsTheLatestStatusPerDisplay(t *testing.T) {
 	clock = clock.Add(time.Minute)
 	report(cast.StateUnreachable, errors.New("no answer from 192.168.1.160:8009"))
 	got := m.Statuses()["kitchen"]
-	if got.State != cast.StateUnreachable || got.Problem != "no answer from 192.168.1.160:8009" || !got.Since.Equal(clock) {
+	if got.State != cast.StateUnreachable || got.Problem != "no answer from 192.168.1.160:8009" || got.Reason != ReasonNoAnswer || !got.Since.Equal(clock) {
 		t.Fatalf("status = %+v", got)
+	}
+
+	report(cast.StateUnreachable, fmt.Errorf("%w: abc123", cast.ErrDeviceNotFound))
+	if got := m.Statuses()["kitchen"]; got.Reason != ReasonNotFound {
+		t.Fatalf("reason = %q for a device discovery did not find, want %q", got.Reason, ReasonNotFound)
+	}
+	report(cast.StateShowing, nil)
+	if got := m.Statuses()["kitchen"]; got.Reason != "" || got.Problem != "" {
+		t.Fatalf("status = %+v; a device on screen has no problem", got)
 	}
 
 	m.forget("kitchen")

@@ -22,24 +22,50 @@ export function describeAge(minutes: number): string {
 
 const TIME = new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit' });
 
-/** What a display's TV is doing, for the display list. */
-export function describeCast(status: CastStatus | undefined): string {
-  if (!status) return '';
+/**
+ * What a display's TV is doing, in plain words, for the display list. tv
+ * names the TV; backAt is when the display's hours start again, for a TV
+ * that GDash leaves alone outside them. Without a status the keeper has not
+ * reported yet.
+ */
+export function describeCast(status: CastStatus | undefined, tv = 'the TV', backAt = ''): string {
+  if (!status) return `Connecting to ${tv}…`;
   const since = TIME.format(new Date(status.since));
   switch (status.state) {
     case 'showing':
-      return `On screen since ${since}`;
+      return `On ${tv} since ${since}`;
     case 'standby':
-      return `TV in standby since ${since}`;
+      return `${capitalize(tv)} is asleep (standby) since ${since}`;
     case 'other_app':
-      return 'Something else is on the TV; GDash starts when it ends';
+      return `Another app is on ${tv}; GDash comes back when it stops`;
     case 'yielded':
-      return 'Someone is using the TV; GDash waits until it is switched off';
+      return `Someone is using ${tv}; GDash waits until it is switched off`;
     case 'resting':
-      return 'Outside active hours';
+      return backAt ? `Outside its hours; GDash comes back at ${backAt}` : 'Outside its hours';
     case 'unreachable':
-      return 'Cannot reach the TV; retrying';
+      return status.reason === 'not_found'
+        ? `Cannot find ${tv} on the network. Is it switched on and on the same network as GDash?`
+        : `${capitalize(tv)} does not answer; GDash keeps trying`;
     default:
-      return 'Connecting to the TV…';
+      return `Connecting to ${tv}…`;
   }
+}
+
+/** The tone of a TV's status light: ok, warn, bad, or empty for neutral. */
+export function castTone(status: CastStatus | undefined): 'ok' | 'warn' | 'bad' | '' {
+  switch (status?.state) {
+    case 'showing':
+      return 'ok';
+    case 'other_app':
+    case 'yielded':
+      return 'warn';
+    case 'unreachable':
+      return 'bad';
+    default:
+      return '';
+  }
+}
+
+function capitalize(text: string): string {
+  return text.charAt(0).toUpperCase() + text.slice(1);
 }

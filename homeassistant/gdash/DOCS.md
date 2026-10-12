@@ -56,16 +56,17 @@ directly anyway. Open it with the button on the app page, or bookmark it.
 ## Pairing TVs
 
 Under **Displays, Add a display**, GDash lists the Cast devices it found.
-Pick your TV and give the display a name, such as Kitchen. Within a few
-seconds the TV shows the default dashboard, and GDash keeps it on screen.
+Pick your TV, give the display a name, such as Kitchen, and choose what it
+shows. Within a few seconds the TV shows that dashboard, and GDash keeps it on
+screen.
 
 If the list says **No Cast devices found**, GDash is not in the same network
 segment as the TV, or multicast is blocked. Check that the app runs with host
 networking (it does by default) and see "Troubleshooting" below.
 
 A screen without Cast, such as a tablet or a Raspberry Pi in kiosk mode, opens
-`http://<home-assistant-address>:8420/d/<display>`, shows a code, and you enter
-that code at the display in the web interface.
+`http://<home-assistant-address>:8420/d/<display>` and shows a code. Enter that
+code at the display under **Displays** and choose **Connect**.
 
 ## Show Home Assistant values on a TV
 

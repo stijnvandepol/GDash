@@ -175,3 +175,22 @@ func TestDisplayTextScale(t *testing.T) {
 		t.Fatalf("odd size = %d %s", status, body)
 	}
 }
+
+func TestNewDisplayShowsTheChosenDashboard(t *testing.T) {
+	env := newTestEnv(t, nil)
+	env.setUp(t)
+	if status, body := env.do(t, "POST", "/api/dashboards", `{"id":"kitchen","name":"Kitchen","widgets":[]}`); status != http.StatusCreated {
+		t.Fatalf("create dashboard = %d %s", status, body)
+	}
+	status, body := env.do(t, "POST", "/api/displays", `{"id":"keuken","name":"Keuken","dashboardId":"kitchen"}`)
+	if status != http.StatusCreated || !strings.Contains(body, `"dashboardId":"kitchen"`) {
+		t.Fatalf("create = %d %s", status, body)
+	}
+	status, body = env.do(t, "POST", "/api/displays", `{"id":"hal","name":"Hal","dashboardId":"missing"}`)
+	if status != http.StatusUnprocessableEntity || !strings.Contains(body, `"field":"dashboardId"`) {
+		t.Fatalf("unknown dashboard = %d %s, want 422 on dashboardId", status, body)
+	}
+	if status, body = env.do(t, "POST", "/api/displays", `{"id":"zolder","name":"Zolder"}`); status != http.StatusCreated || !strings.Contains(body, `"dashboardId":""`) {
+		t.Fatalf("without a dashboard = %d %s, want the default", status, body)
+	}
+}

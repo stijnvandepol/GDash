@@ -93,7 +93,7 @@ func resolveDevice(deviceID string) func(ctx context.Context) (cast.Device, erro
 				return d, nil
 			}
 		}
-		return cast.Device{}, fmt.Errorf("cast device %s not found on the network; is it switched on?", deviceID)
+		return cast.Device{}, fmt.Errorf("%w: %s; is it switched on?", cast.ErrDeviceNotFound, deviceID)
 	}
 }
 

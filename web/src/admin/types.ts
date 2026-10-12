@@ -10,7 +10,10 @@ export interface Display {
   name: string;
   castDeviceId: string;
   createdAt: string;
-  /** Screens paired by code; only present in the display list. */
+  /**
+   * Screens paired by code; only present in the display list. The TV that
+   * GDash casts to is not one of them.
+   */
   pairedScreens?: number;
   /** Empty means the default dashboard. */
   dashboardId: string;
@@ -31,8 +34,10 @@ export interface Display {
 export interface CastStatus {
   state: 'connecting' | 'unreachable' | 'showing' | 'standby' | 'other_app' | 'yielded' | 'resting';
   since: string;
-  /** Why the device cannot be reached. */
+  /** Why the device cannot be reached, in the words of the error. */
   problem?: string;
+  /** What kind of problem: not found on the network, or found but not answering. */
+  reason?: 'not_found' | 'no_answer';
 }
 
 /** A dashboard shown from one time of day until another, as HH:MM. */
@@ -63,6 +68,8 @@ export interface Dashboard {
   /** The theme to switch to between sunset and sunrise at the weather location; empty keeps the theme. */
   nightTheme?: string;
   widgets: Widget[];
+  /** When it was made; only in the dashboard list. */
+  createdAt?: string;
 }
 
 /** A ready-made layout to start a dashboard from. */

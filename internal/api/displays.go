@@ -16,7 +16,9 @@ const defaultTextScale = 100
 
 // listDisplays handles GET /api/displays: {"displays": [...]}, at most
 // displays.MaxDisplays, each with the number of screens paired by code and,
-// for a display on a Cast device, what its keeper last found there.
+// for a display on a Cast device, what its keeper last found there. The TV
+// a cast keeper opened is not among the paired screens: for a Cast display
+// they are the screens it is open on besides its TV.
 func (s *Server) listDisplays(w http.ResponseWriter, r *http.Request) {
 	list, err := s.Store.Displays(r.Context())
 	if err != nil {
@@ -45,13 +47,16 @@ func (s *Server) listDisplays(w http.ResponseWriter, r *http.Request) {
 }
 
 // createDisplay handles POST /api/displays {id, name, castDeviceId,
-// activeFrom, activeUntil, schedule}: 201 with the display, 409 when the id
-// is taken or the limit reached, 422 for invalid fields.
+// dashboardId, activeFrom, activeUntil, schedule}: 201 with the display, 409
+// when the id is taken or the limit reached, 422 for invalid fields or a
+// dashboard that does not exist. An empty dashboardId means the default
+// dashboard.
 func (s *Server) createDisplay(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		ID            string          `json:"id"`
 		Name          string          `json:"name"`
 		CastDeviceID  string          `json:"castDeviceId"`
+		DashboardID   string          `json:"dashboardId"`
 		ActiveFrom    string          `json:"activeFrom"`
 		ActiveUntil   string          `json:"activeUntil"`
 		Schedule      []displays.Slot `json:"schedule"`
@@ -63,7 +68,7 @@ func (s *Server) createDisplay(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	d := displays.Display{
-		ID: body.ID, Name: body.Name, CastDeviceID: body.CastDeviceID,
+		ID: body.ID, Name: body.Name, CastDeviceID: body.CastDeviceID, DashboardID: body.DashboardID,
 		Hours:    schedule.Hours{From: body.ActiveFrom, Until: body.ActiveUntil},
 		Schedule: displays.NormalizeSchedule(body.Schedule), CreatedAt: s.Now().UTC(),
 		Rotation: displays.NormalizeRotation(body.Rotation), RotateSeconds: body.RotateSeconds,

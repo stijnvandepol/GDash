@@ -22,21 +22,26 @@ disappears when the basics are done.
 3. **Settings, Screens, Language on the TVs:** English, Nederlands, Deutsch or Français.
 4. **Displays, Add a display:** pick your TV from the list of Cast devices
    GDash found and give the display a name, such as Kitchen; without one it
-   takes the TV's name.
+   takes the TV's name. **Shows** is the dashboard it starts with: the
+   newest one you made, or the default dashboard (clock, weather, calendar
+   and news) when you have not made one yet.
 
-Within a few seconds the TV shows the default dashboard: clock, weather,
-calendar and news.
+Within a few seconds the TV shows the dashboard, and the display's row says
+what the TV is doing, such as "On Tv Keuken since 13:40" or "Cannot find Tv
+Keuken on the network". Change what it shows at any time under **Shows**.
 
 ## A screen without Cast
 
 Any browser can show a display: a tablet on the wall, a laptop, or a
 Raspberry Pi connected to a monitor.
 
-1. Add a display and choose "No Cast: I open the page myself".
-2. Open `http://<server>:8420/d/<display>` on the screen, for example
-   `http://192.168.1.10:8420/d/kitchen`. It shows a code.
-3. In the web interface, choose **Pair a screen** at that display and enter
-   the code. The screen shows the dashboard at once and stays paired.
+1. Add a display and choose **None** as the Cast TV.
+2. The display's row says "No screen yet" and shows its address, for example
+   `http://192.168.1.10:8420/d/kitchen`. Open that address on the screen. It
+   shows a code.
+3. Enter the code in the row and choose **Connect**. The screen shows the
+   dashboard at once and stays connected; the row then says "Shown on 1
+   screen". **Add another screen…** connects one more.
 
 **Raspberry Pi as a kiosk:** with Raspberry Pi OS (desktop), let Chromium
 start full-screen at login. On releases with the labwc desktop, add a line
@@ -47,10 +52,15 @@ like this to `~/.config/labwc/autostart` (older releases call the program
 chromium --kiosk --noerrdialogs --disable-infobars http://192.168.1.10:8420/d/kitchen
 ```
 
-Pair it once with the code; a reboot keeps it paired.
+Connect it once with the code; a reboot keeps it connected.
 
-**Unpair screens** at a display logs out every screen paired with it, for
-example a tablet that was lost. They ask for a new code within 20 seconds.
+A display on a Cast TV can be open on other screens too: **Open on another
+screen…** at the display works the same way, and the row then says "Also open
+on 1 other screen". The TV itself needs no code; GDash connects it.
+
+**Disconnect screens** at a display logs out every screen connected with a
+code, for example a tablet that was lost. They show a new code within 20
+seconds. A Cast TV stays connected.
 
 ## Dashboards
 
