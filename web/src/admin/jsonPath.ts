@@ -124,9 +124,14 @@ export function formatPath(steps: (string | number)[]): string {
  * "$" for the item itself. Null when the path is not inside that list.
  */
 export function relativeTo(listPath: string, clicked: string): string | null {
-  const match = /^\[-?[0-9]+\]/.exec(clicked.slice(listPath.length));
-  if (listPath === '' || !clicked.startsWith(listPath) || !match) return null;
-  const rest = clicked.slice(listPath.length + match[0].length);
+  if (listPath === '') return null;
+  // $ is the top of the answer: "$" and "[0].id" are written without it.
+  const fromTop = (p: string) => (p.startsWith('$.') ? p.slice(2) : p.startsWith('$') ? p.slice(1) : p);
+  const list = fromTop(listPath);
+  const path = fromTop(clicked);
+  const match = /^\[-?[0-9]+\]/.exec(path.slice(list.length));
+  if (!path.startsWith(list) || !match) return null;
+  const rest = path.slice(list.length + match[0].length);
   if (rest === '') return '$';
   return rest.startsWith('.') ? rest.slice(1) : rest;
 }

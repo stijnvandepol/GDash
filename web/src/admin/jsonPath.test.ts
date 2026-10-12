@@ -81,6 +81,8 @@ describe('relativeTo', () => {
     expect(relativeTo('data.items', 'data.items[0].name')).toBe('name');
     expect(relativeTo('data.items', 'data.items[2]["odd key"]')).toBe('["odd key"]');
     expect(relativeTo('data.items', 'data.items[1]')).toBe('$');
+    expect(relativeTo('$', '[0].tag_name')).toBe('tag_name');
+    expect(relativeTo('$.data.items', 'data.items[0].name')).toBe('name');
   });
 
   it('refuses a path outside the list', () => {
