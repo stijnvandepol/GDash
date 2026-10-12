@@ -39,7 +39,7 @@ func newResetTestAccount(t *testing.T, twoStep bool) string {
 	if err != nil {
 		t.Fatal(err)
 	}
-	session, _, err := authService.Setup(ctx, "setup-token", auth.Credentials{Username: "stijn", Password: resetTestPassword}, "127.0.0.1")
+	session, _, err := authService.Setup(ctx, "setup-token", auth.Credentials{Username: "stijn", Password: resetTestPassword}, "127.0.0.1", false)
 	if err != nil {
 		t.Fatal(err)
 	}
