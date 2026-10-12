@@ -16,3 +16,4 @@
 !/web/dist/.gitkeep
 /web/test-results
 /web/playwright-report
+/homeassistant

@@ -1,0 +1,21 @@
+#!/usr/bin/with-contenv bashio
+# shellcheck shell=bash
+# ==============================================================================
+# Start GDash with the options of the app as environment variables.
+# ==============================================================================
+
+# Only the options that are set; GDash has its own defaults for the rest. A
+# value that GDash cannot read is reported by GDash itself in the app log.
+if bashio::config.has_value 'cast_app_id'; then
+    export GDASH_CAST_APP_ID="$(bashio::config 'cast_app_id')"
+fi
+if bashio::config.has_value 'trusted_proxies'; then
+    export GDASH_TRUSTED_PROXIES="$(bashio::config 'trusted_proxies')"
+fi
+
+# The Supervisor mounts /data owned by root; only GDash may read it.
+chown -R gdash:gdash /data
+chmod 0700 /data
+
+bashio::log.info "Starting GDash, read the setup token below on the first start."
+exec s6-setuidgid gdash /usr/bin/gdash

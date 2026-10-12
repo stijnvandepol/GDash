@@ -1,0 +1,29 @@
+---
+# Keep "version" equal to the GDash release the Dockerfile copies (ARG
+# GDASH_VERSION); CI checks this. There is no "image" key on purpose: the
+# Supervisor then builds the Dockerfile on the Home Assistant machine. The
+# published GDash image cannot be used as it is, because its user cannot
+# write the root-owned /data that the Supervisor mounts, and it has no way
+# to read the app's options.
+name: GDash
+version: "0.6.0"
+slug: gdash
+description: Your day on every TV in the house, cast to the Chromecast or Google TV you already own
+url: https://github.com/stijnvandepol/gdash
+stage: experimental
+arch:
+  - aarch64
+  - amd64
+# Cast devices are found with mDNS, which does not cross the bridge network
+# of apps. The TVs also open the dashboard on port 8420 directly.
+host_network: true
+# The base image starts the service with s6-overlay, which is its own init.
+init: false
+# GDash writes SQLite in WAL mode: stop it for a backup instead of copying
+# files that are being written. GDash also keeps its own daily copies.
+backup: cold
+# Not ingress: the web interface and the TV pages use absolute addresses.
+webui: "http://[HOST]:[PORT:8420]/"
+schema:
+  cast_app_id: "match(^[0-9A-F]{8}$)?"
+  trusted_proxies: "str?"

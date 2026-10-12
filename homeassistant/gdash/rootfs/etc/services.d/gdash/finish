@@ -1,0 +1,12 @@
+#!/usr/bin/with-contenv bashio
+# shellcheck shell=bash
+# ==============================================================================
+# Stop the app when GDash exits with an error, so the Supervisor (and the
+# watchdog) report it instead of a service that restarts in a loop. $1 is the
+# exit code; 256 means GDash was ended by a signal, which is a normal stop.
+# ==============================================================================
+
+if [[ "${1}" -ne 0 ]] && [[ "${1}" -ne 256 ]]; then
+    bashio::log.warning "GDash stopped with exit code ${1}, stopping the app."
+    /run/s6/basedir/bin/halt
+fi

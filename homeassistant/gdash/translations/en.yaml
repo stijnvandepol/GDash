@@ -1,0 +1,12 @@
+---
+configuration:
+  cast_app_id:
+    name: Cast receiver app ID
+    description: >-
+      Only if you registered your own Cast receiver (8 characters, such as
+      ABCD1234). Leave empty to use the public DashCast receiver.
+  trusted_proxies:
+    name: Trusted reverse proxies
+    description: >-
+      Addresses or ranges of a reverse proxy in front of GDash, separated by
+      commas, such as 192.168.1.5. Leave empty when you open GDash directly.

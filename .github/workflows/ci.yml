@@ -167,3 +167,25 @@ jobs:
           context: .
           platforms: linux/amd64,linux/arm64
           push: false
+
+  # The Home Assistant app in homeassistant/. It is built on the user's own
+  # machine, so this checks that its files are valid. It needs no secrets.
+  addon:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Lint the app
+        uses: frenck/action-addon-linter@b9cfd1bc62ba60d2c4fc96317b5f7ada5923f4a7 # v2.21.1
+        with:
+          path: ./homeassistant/gdash
+      - name: The app version is the GDash version its Dockerfile copies
+        run: |
+          app="$(sed -n 's/^version: *"\(.*\)"$/\1/p' homeassistant/gdash/config.yaml)"
+          image="$(sed -n 's/^ARG GDASH_VERSION=\(.*\)$/\1/p' homeassistant/gdash/Dockerfile)"
+          echo "config.yaml: $app, Dockerfile: $image"
+          if [ -z "$app" ] || [ "$app" != "$image" ]; then
+            echo "Set version in config.yaml and GDASH_VERSION in the Dockerfile to the same GDash release."
+            exit 1
+          fi
