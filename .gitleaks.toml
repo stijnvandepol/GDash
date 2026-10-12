@@ -1,5 +1,5 @@
 # Configuration for the secret scan in .github/workflows/ci.yml: the default
-# rules plus an allowlist of the three findings that were checked by hand and
+# rules plus an allowlist of the findings that were checked by hand and
 # are not secrets. Each entry needs the path and the exact text, so a real
 # secret in the same file is still found.
 title = "GDash secret scan"
@@ -24,3 +24,9 @@ description = "Made-up password in a test that checks it is never written to the
 condition = "AND"
 paths = ['''internal/api/audit_test\.go''']
 regexes = ['''private-0123456789''']
+
+[[allowlists]]
+description = "The RFC 6238 test secret (base32 of 12345678901234567890) in a QR code test"
+condition = "AND"
+paths = ['''internal/qr/qr_test\.go''']
+regexes = ['''GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ''']
