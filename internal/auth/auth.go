@@ -9,6 +9,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"net/netip"
 	"regexp"
 	"time"
 
@@ -76,6 +77,9 @@ type Service struct {
 	accountLimiter *ratelimit.Limiter
 	now            func() time.Time
 	setupToken     string
+	// setupOpenUntil ends the time in which the first account can be
+	// created from the home network without the setup token.
+	setupOpenUntil time.Time
 	// dummyHash is verified when a username does not exist, so a login for
 	// an unknown user takes as long as one with a wrong password.
 	dummyHash string
@@ -97,7 +101,29 @@ func NewService(st *store.Store, box *secret.Box, setupToken string) (*Service, 
 		limiter:        ratelimit.New(time.Now, maxFailures, failureWindow),
 		accountLimiter: ratelimit.New(time.Now, maxAccountFailures, failureWindow),
 		now:            time.Now, setupToken: setupToken, dummyHash: dummy, box: box,
+		setupOpenUntil: time.Now().Add(SetupWindow),
 	}, nil
+}
+
+// SetupWindow is how long after GDash starts the first account can be
+// created without the setup token, from a private address. Like Home
+// Assistant's onboarding, the person who just installed GDash opens it
+// right away; a forgotten install that nobody set up still needs the
+// token from the log.
+const SetupWindow = time.Hour
+
+// SetupTokenRequired reports whether a setup from clientIP needs the token:
+// after SetupWindow, or from an address outside the home network.
+func (s *Service) SetupTokenRequired(clientIP string) bool {
+	if !s.now().Before(s.setupOpenUntil) {
+		return true
+	}
+	addr, err := netip.ParseAddr(clientIP)
+	if err != nil {
+		return true
+	}
+	addr = addr.Unmap()
+	return !(addr.IsPrivate() || addr.IsLoopback())
 }
 
 // NewSetupToken returns a random token for the first-run setup.
@@ -122,7 +148,8 @@ func (s *Service) Setup(ctx context.Context, setupToken string, c Credentials, c
 	if !s.limiter.Allowed(key) {
 		return "", User{}, ErrRateLimited
 	}
-	if subtle.ConstantTimeCompare([]byte(setupToken), []byte(s.setupToken)) != 1 {
+	tokenFree := setupToken == "" && !s.SetupTokenRequired(clientIP)
+	if !tokenFree && subtle.ConstantTimeCompare([]byte(setupToken), []byte(s.setupToken)) != 1 {
 		s.limiter.Fail(key)
 		return "", User{}, ErrInvalidSetupToken
 	}

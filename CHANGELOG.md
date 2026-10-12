@@ -5,6 +5,13 @@ the format follows [Keep a Changelog](https://keepachangelog.com).
 
 ## Unreleased
 
+### Changed
+
+- The first account can be created without the setup token from the home
+  network, in the first hour after GDash starts, as with Home Assistant's
+  onboarding. After that hour, or from outside the home network, the token
+  from the log is still needed.
+
 ### Added
 
 - **Badges** for the Custom widget: a round badge with a short label,

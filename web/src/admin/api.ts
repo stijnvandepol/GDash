@@ -96,7 +96,8 @@ async function toApiError(response: Response): Promise<ApiError> {
 
 export const api = {
   backup: (password: string) => download('/api/backup', { password }),
-  setupNeeded: () => request<{ needed: boolean }>('GET', '/api/setup').then((r) => r.needed),
+  /** Whether the first account is still to be made, and whether this browser needs the setup token for it. */
+  setupState: () => request<{ needed: boolean; tokenRequired: boolean }>('GET', '/api/setup'),
   setup: (setupToken: string, username: string, password: string) =>
     request<User>('POST', '/api/setup', { setupToken, username, password }),
   /** The user, or a pending login when the account has two-step login on. */

@@ -70,19 +70,21 @@ func clientIP(r *http.Request) string {
 	return host
 }
 
-// getSetup handles GET /api/setup: {"needed": true} while no account exists.
+// getSetup handles GET /api/setup: {"needed": true} while no account exists,
+// and whether this browser must enter the setup token.
 func (s *Server) getSetup(w http.ResponseWriter, r *http.Request) {
 	needed, err := s.Auth.SetupNeeded(r.Context())
 	if err != nil {
 		s.internalError(w, "check setup", err)
 		return
 	}
-	writeJSON(w, http.StatusOK, map[string]bool{"needed": needed})
+	writeJSON(w, http.StatusOK, map[string]bool{"needed": needed, "tokenRequired": needed && s.Auth.SetupTokenRequired(clientIP(r))})
 }
 
 // postSetup handles POST /api/setup {setupToken, username, password}: creates
-// the first account, logs it in and answers 201 with the user. 403 for a
-// wrong token, 409 when setup is done, 422 for invalid fields, 429 after
+// the first account, logs it in and answers 201 with the user. The token may
+// be empty from the home network in the first hour (auth.SetupWindow). 403
+// for a wrong token, 409 when setup is done, 422 for invalid fields, 429 after
 // too many attempts.
 func (s *Server) postSetup(w http.ResponseWriter, r *http.Request) {
 	var body struct {

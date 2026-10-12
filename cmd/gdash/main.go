@@ -104,9 +104,10 @@ func main() {
 	}
 }
 
-// newAuthService prepares login. On a fresh install it prints a one-time
-// setup token to the log: whoever can read the log (the person who started
-// GDash) can create the first account, nobody else on the network.
+// newAuthService prepares login. On a fresh install the first account can be
+// created from the home network in the first hour without a token; after
+// that, or from elsewhere, it takes the one-time setup token in the log,
+// which only the person who started GDash can read.
 func newAuthService(ctx context.Context, db *store.Store, box *secret.Box, logger *slog.Logger) (*auth.Service, error) {
 	token, err := auth.NewSetupToken()
 	if err != nil {
@@ -121,7 +122,7 @@ func newAuthService(ctx context.Context, db *store.Store, box *secret.Box, logge
 		return nil, err
 	}
 	if needed {
-		logger.Warn("GDash is not set up yet. Open the web interface and enter this setup token.", "setup_token", token)
+		logger.Warn("GDash is not set up yet. Open the web interface within an hour to create the first account; after that, or from outside the home network, it asks for this setup token.", "setup_token", token)
 	}
 	return service, nil
 }

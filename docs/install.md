@@ -55,8 +55,10 @@ docker compose logs gdash
 command `/gdash healthcheck`, which you can also run by hand with
 `docker compose exec gdash /gdash healthcheck`.
 
-The log of the first start shows a **setup token**. Open
-`http://<server>:8420/`, enter it and create your account. Then choose the
+Open `http://<server>:8420/` and create your account. From your home network
+no token is needed in the first hour after GDash starts. After that hour, or
+from an address outside the home network, GDash asks for the **setup token**
+that its log shows; restarting GDash opens the hour again. Then choose the
 location under **Settings**, add a display and pick your TV.
 
 To build the image yourself instead, use the `compose.yaml` in this

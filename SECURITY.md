@@ -137,8 +137,14 @@ fully trust, such as a guest's phone.
 - GDash does not verify the TLS certificates of Cast devices: they use
   Google's device CA, which no trust store contains. Home Assistant and
   pychromecast do the same.
-- Anyone who can read the server's log during the first start can create the
-  first account with the setup token printed there, and anyone who can run
+- Until the first account exists, anyone on the home network can create it in
+  the first hour after GDash starts, without a token, as with Home
+  Assistant's onboarding: the person who installs GDash opens it right away.
+  After that hour, or from an address that is not private, it takes the
+  setup token printed in the log. Behind Docker's port mapping every client
+  can look like a private address, so do not expose a fresh install to the
+  internet before creating the account. Anyone who can read the server's log
+  can create the first account with the setup token printed there, and anyone who can run
   commands on the server can reset a password with `gdash reset-password`.
   Both already control the server.
 - There is one kind of account, the household's admin. Two-step login is

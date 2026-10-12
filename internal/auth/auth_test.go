@@ -93,6 +93,39 @@ func TestSetupRejectsWrongTokenAndRateLimits(t *testing.T) {
 	}
 }
 
+func TestSetupWithoutTokenOnlyFromHomeAndInTheWindow(t *testing.T) {
+	creds := Credentials{"stijn", "correct horse battery"}
+	cases := []struct {
+		ip       string
+		after    time.Duration
+		tokenNow bool
+	}{
+		{"192.168.1.109", 0, false},
+		{"::1", 0, false},
+		{"fd00::5", 0, false},
+		{"::ffff:10.0.0.7", 0, false},
+		{"203.0.113.9", 0, true},
+		{"2001:db8::1", 0, true},
+		{"not an address", 0, true},
+		{"192.168.1.109", SetupWindow, true},
+	}
+	for _, c := range cases {
+		s, clock := newTestService(t)
+		s.setupOpenUntil = clock.t.Add(SetupWindow)
+		clock.t = clock.t.Add(c.after)
+		if got := s.SetupTokenRequired(c.ip); got != c.tokenNow {
+			t.Errorf("SetupTokenRequired(%q) after %v = %v", c.ip, c.after, got)
+		}
+		_, _, err := s.Setup(context.Background(), "", creds, c.ip)
+		if c.tokenNow && !errors.Is(err, ErrInvalidSetupToken) {
+			t.Errorf("Setup without token from %q after %v: err = %v, want ErrInvalidSetupToken", c.ip, c.after, err)
+		}
+		if !c.tokenNow && err != nil {
+			t.Errorf("Setup without token from %q: %v", c.ip, err)
+		}
+	}
+}
+
 func TestSetupValidatesAccount(t *testing.T) {
 	s, _ := newTestService(t)
 	_, _, err := s.Setup(context.Background(), testToken, Credentials{"stijn van de pol", "short"}, "192.168.1.109")

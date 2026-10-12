@@ -14,7 +14,7 @@
   import ConfirmDialog from './ConfirmDialog.svelte';
   import { toast } from './toast.svelte';
 
-  type Screen = { name: 'loading' } | { name: 'error'; message: string } | { name: 'setup' } | { name: 'login' } | { name: 'app'; user: User };
+  type Screen = { name: 'loading' } | { name: 'error'; message: string } | { name: 'setup'; tokenRequired: boolean } | { name: 'login' } | { name: 'app'; user: User };
   type Tab = 'displays' | 'dashboards' | 'settings';
 
   const TABS: { id: Tab; label: string; icon: IconName }[] = [
@@ -40,8 +40,9 @@
 
   onMount(async () => {
     try {
-      if (await api.setupNeeded()) {
-        screen = { name: 'setup' };
+      const setup = await api.setupState();
+      if (setup.needed) {
+        screen = { name: 'setup', tokenRequired: setup.tokenRequired };
         return;
       }
       screen = { name: 'app', user: await api.me() };
@@ -120,7 +121,7 @@
   {#if screen.name === 'setup' || screen.name === 'login'}
     <main class="auth">
       {#if screen.name === 'setup'}
-        <Setup onDone={created} />
+        <Setup tokenRequired={screen.tokenRequired} onDone={created} />
       {:else}
         <Login onDone={(user) => (screen = { name: 'app', user })} />
       {/if}

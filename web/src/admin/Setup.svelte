@@ -2,7 +2,9 @@
   import { api, ApiError, type User } from './api';
   import Logo from './Logo.svelte';
 
-  let { onDone }: { onDone: (user: User) => void } = $props();
+  // From the home network, in the first hour after GDash starts, no setup
+  // token is needed (auth.SetupWindow); otherwise it is in the server's log.
+  let { tokenRequired, onDone }: { tokenRequired: boolean; onDone: (user: User) => void } = $props();
 
   let setupToken = $state('');
   let username = $state('');
@@ -34,6 +36,7 @@
   <form class="card auth-form" onsubmit={submit}>
     <h1>Set up this server</h1>
 
+    {#if tokenRequired}
     <label>
       Setup token
       <input bind:value={setupToken} autocomplete="off" spellcheck="false" required />
@@ -50,7 +53,12 @@
         <li>Linux service: run <code>journalctl -u gdash</code></li>
         <li>Started in a terminal: it is in that window</li>
       </ul>
+      <p>
+        No token is needed from your home network in the first hour after GDash starts. Restart GDash to open that
+        hour again.
+      </p>
     </details>
+    {/if}
 
     <label>
       Username

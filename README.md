@@ -128,8 +128,10 @@ volumes:
 
 ```bash
 docker compose up -d
-docker compose logs gdash      # shows the one-time setup token
 ```
+
+Open `http://<server>:8420/` within an hour and create your account; from
+your home network no setup token is needed in that first hour.
 
 **Without Docker:** download the archive for your system from the
 [releases](https://github.com/stijnvandepol/gdash/releases), unpack it and run

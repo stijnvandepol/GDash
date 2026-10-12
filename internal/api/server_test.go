@@ -293,7 +293,7 @@ func post(t *testing.T, client *http.Client, url, body string) (int, string) {
 
 func TestSetupThenLoginLogout(t *testing.T) {
 	env := newTestEnv(t, nil)
-	if _, body := env.do(t, "GET", "/api/setup", ""); body != "{\"needed\":true}\n" {
+	if _, body := env.do(t, "GET", "/api/setup", ""); body != "{\"needed\":true,\"tokenRequired\":false}\n" {
 		t.Fatalf("setup state before = %s", body)
 	}
 	if status, _ := env.do(t, "GET", "/api/me", ""); status != http.StatusUnauthorized {
@@ -337,6 +337,17 @@ func TestSessionCookieFlags(t *testing.T) {
 		if !strings.Contains(header, want) {
 			t.Errorf("Set-Cookie %q lacks %q", header, want)
 		}
+	}
+}
+
+func TestSetupWithoutTokenFromTheHomeNetwork(t *testing.T) {
+	env := newTestEnv(t, nil)
+	status, body := env.do(t, "POST", "/api/setup", `{"setupToken":"","username":"stijn","password":"correct horse battery"}`)
+	if status != http.StatusCreated {
+		t.Fatalf("setup without token from loopback = %d %s", status, body)
+	}
+	if _, body := env.do(t, "GET", "/api/setup", ""); body != "{\"needed\":false,\"tokenRequired\":false}\n" {
+		t.Fatalf("setup state after = %s", body)
 	}
 }
 

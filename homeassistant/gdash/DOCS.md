@@ -33,15 +33,17 @@ This page covers what is different when GDash runs as an app.
 
 ## First start
 
-1. Open the **Log** tab. The first start prints a **setup token**:
+1. Choose **Open Web UI**, or go to `http://<home-assistant-address>:8420/`,
+   and create your account (at least 12 characters). From your home network
+   no token is needed in the first hour after the app starts.
+2. After that hour, GDash asks for the **setup token** in the **Log** tab:
 
    ```text
-   level=WARN msg="GDash is not set up yet. Open the web interface and enter this setup token." setup_token=...
+   level=WARN msg="GDash is not set up yet. Open the web interface within an hour to create the first account; …" setup_token=...
    ```
 
-2. Choose **Open Web UI**, or go to `http://<home-assistant-address>:8420/`.
-   Enter the token and create your account (at least 12 characters). The token
-   only works while no account exists.
+   It only works while no account exists; restarting the app opens the hour
+   again.
 3. Under **Settings, Data sources**, choose the location for the weather and
    add news feeds and calendars.
 
