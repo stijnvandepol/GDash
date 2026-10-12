@@ -50,7 +50,7 @@ func TestTwoStepLifecycle(t *testing.T) {
 	if err := s.CreateSession(ctx, "other", u.ID, created); err != nil {
 		t.Fatal(err)
 	}
-	if err := s.EnableTwoStep(ctx, u.ID, 100, []string{"h1", "h2"}, "keep"); err != nil {
+	if err := s.EnableTwoStep(ctx, u.ID, "sealed-2", 100, []string{"h1", "h2"}, "keep"); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := s.SessionByHash(ctx, "other"); !errors.Is(err, ErrNotFound) {
@@ -65,7 +65,7 @@ func TestTwoStepLifecycle(t *testing.T) {
 	if err := s.StartTwoStep(ctx, u.ID, "sealed-3", created); !errors.Is(err, ErrConflict) {
 		t.Fatalf("StartTwoStep while on: err = %v, want ErrConflict", err)
 	}
-	if err := s.EnableTwoStep(ctx, u.ID, 101, nil, "keep"); !errors.Is(err, ErrNotFound) {
+	if err := s.EnableTwoStep(ctx, u.ID, "sealed-2", 101, nil, "keep"); !errors.Is(err, ErrNotFound) {
 		t.Fatalf("EnableTwoStep twice: err = %v, want ErrNotFound", err)
 	}
 
@@ -81,13 +81,40 @@ func TestTwoStepLifecycle(t *testing.T) {
 	}
 }
 
+// A second setup, in another browser tab, may replace the secret between
+// the check of the first code and turning two-step login on; it must not
+// turn on with a secret whose code nobody checked.
+func TestEnableTwoStepNeedsTheCheckedSecret(t *testing.T) {
+	ctx := context.Background()
+	s, u := twoStepUser(t)
+	if err := s.StartTwoStep(ctx, u.ID, "checked", created); err != nil {
+		t.Fatal(err)
+	}
+	if err := s.StartTwoStep(ctx, u.ID, "replaced", created); err != nil {
+		t.Fatal(err)
+	}
+	if err := s.EnableTwoStep(ctx, u.ID, "checked", 100, []string{"h1"}, ""); !errors.Is(err, ErrConflict) {
+		t.Fatalf("EnableTwoStep with a replaced secret: err = %v, want ErrConflict", err)
+	}
+	got, err := s.TwoStep(ctx, u.ID)
+	if err != nil || got.Enabled || got.SecretSealed != "replaced" {
+		t.Fatalf("TwoStep after the refused enable = %+v, %v", got, err)
+	}
+	if n, _ := s.RecoveryCodesLeft(ctx, u.ID); n != 0 {
+		t.Fatalf("%d recovery codes stored by the refused enable", n)
+	}
+	if err := s.EnableTwoStep(ctx, u.ID, "replaced", 100, nil, ""); err != nil {
+		t.Fatalf("EnableTwoStep with the current secret: %v", err)
+	}
+}
+
 func TestTwoStepStepIsUsedOnce(t *testing.T) {
 	ctx := context.Background()
 	s, u := twoStepUser(t)
 	if err := s.StartTwoStep(ctx, u.ID, "sealed", created); err != nil {
 		t.Fatal(err)
 	}
-	if err := s.EnableTwoStep(ctx, u.ID, 100, nil, ""); err != nil {
+	if err := s.EnableTwoStep(ctx, u.ID, "sealed", 100, nil, ""); err != nil {
 		t.Fatal(err)
 	}
 	for _, c := range []struct {
@@ -106,7 +133,7 @@ func TestRecoveryCodesAreSingleUse(t *testing.T) {
 	if err := s.StartTwoStep(ctx, u.ID, "sealed", created); err != nil {
 		t.Fatal(err)
 	}
-	if err := s.EnableTwoStep(ctx, u.ID, 1, []string{"h1", "h2", "h3"}, ""); err != nil {
+	if err := s.EnableTwoStep(ctx, u.ID, "sealed", 1, []string{"h1", "h2", "h3"}, ""); err != nil {
 		t.Fatal(err)
 	}
 	if left, ok, err := s.UseRecoveryCode(ctx, u.ID, "h2"); err != nil || !ok || left != 2 {
@@ -129,7 +156,7 @@ func TestResetPasswordTurnsTwoStepOff(t *testing.T) {
 	if err := s.StartTwoStep(ctx, u.ID, "sealed", created); err != nil {
 		t.Fatal(err)
 	}
-	if err := s.EnableTwoStep(ctx, u.ID, 1, []string{"h1"}, ""); err != nil {
+	if err := s.EnableTwoStep(ctx, u.ID, "sealed", 1, []string{"h1"}, ""); err != nil {
 		t.Fatal(err)
 	}
 	if err := s.CreateSession(ctx, "browser", u.ID, created); err != nil {

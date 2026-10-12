@@ -38,7 +38,7 @@ come from another site (cross-site request forgery protection).
 | `PUT /api/me/password` `{currentPassword, newPassword}` | admin | `204`; every other session of the account ends | `401`, `422` (wrong current or too short new password), `429 rate_limited` |
 | `GET /api/me/two-step` | admin | `200 {"enabled", "recoveryCodesLeft"}` | `401` |
 | `POST /api/me/two-step/enrolment` `{password}` | admin | `201 {secret, uri, qr}`: the new secret in base32, as an `otpauth://` address and as an SVG QR code; never returned again. Two-step login stays off until the next call | `401`, `409 two_step_on`, `422` (wrong password), `429 rate_limited` |
-| `PUT /api/me/two-step` `{code}` | admin | `200 {"recoveryCodes": [10 codes]}`, shown this once; two-step login is on and every other session of the account ends | `401`, `409 no_two_step_setup` or `two_step_on`, `422` (wrong code), `429 rate_limited` |
+| `PUT /api/me/two-step` `{code}` | admin | `200 {"recoveryCodes": [10 codes]}`, shown this once; two-step login is on and every other session of the account ends | `401`, `409 no_two_step_setup`, `two_step_setup_replaced` (another setup replaced the secret meanwhile: start again) or `two_step_on`, `422` (wrong code), `429 rate_limited` |
 | `DELETE /api/me/two-step` `{password, code}` | admin | `204`; `code` may be a recovery code | `401`, `409 two_step_off`, `422` (wrong password or code), `429 rate_limited` |
 | `POST /api/backup` `{password}` | admin | `200 application/zip` attachment with `gdash.db`, `secret.key` and `photos/`; recorded in the audit log | `401`, `422` (wrong password), `429 rate_limited` |
 | `GET /api/system` | admin | `200 {"version"}` | `401` |

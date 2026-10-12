@@ -78,7 +78,8 @@ func (s *Server) postTwoStepEnrolment(w http.ResponseWriter, r *http.Request) {
 // putTwoStep handles PUT /api/me/two-step {code}: turns two-step login on
 // with a first code of the new secret and answers 200 {recoveryCodes}, the
 // only time they are shown. Every other session of the account ends. 422
-// on "code", 409 no_two_step_setup or two_step_on, 429 rate_limited.
+// on "code", 409 no_two_step_setup, two_step_setup_replaced (a newer setup
+// replaced the secret meanwhile) or two_step_on, 429 rate_limited.
 func (s *Server) putTwoStep(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		Code string `json:"code"`
@@ -135,6 +136,9 @@ func (s *Server) writeTwoStepError(w http.ResponseWriter, r *http.Request, op st
 		writeError(w, http.StatusConflict, "two_step_off", "Two-step login is already off.")
 	case errors.Is(err, auth.ErrNoSetup):
 		writeError(w, http.StatusConflict, "no_two_step_setup", "Start setting up two-step login again.")
+	case errors.Is(err, auth.ErrSetupReplaced):
+		writeError(w, http.StatusConflict, "two_step_setup_replaced",
+			"Two-step login was set up again in another window. Start again, and scan only the newest QR code.")
 	default:
 		return s.writeAuthError(w, op, err)
 	}

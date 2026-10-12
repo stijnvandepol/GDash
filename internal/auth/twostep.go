@@ -42,6 +42,9 @@ var (
 	ErrTwoStepOff = errors.New("two-step login is off")
 	// ErrNoSetup is returned for a first code without a setup waiting.
 	ErrNoSetup = errors.New("two-step login has not been set up")
+	// ErrSetupReplaced is returned for a first code when another setup, in
+	// another browser tab, replaced the secret while the code was checked.
+	ErrSetupReplaced = errors.New("two-step login was set up again in the meantime")
 )
 
 var recoveryEncoding = base32.StdEncoding.WithPadding(base32.NoPadding)
@@ -114,8 +117,8 @@ func (s *Service) StartTwoStep(ctx context.Context, session, password, clientIP 
 // is a current code of the secret StartTwoStep made, and ends the user's
 // other sessions, which only had the password. It returns the recovery
 // codes, which exist nowhere else afterwards. Wrong codes count towards the
-// login limits. It returns ErrNoSetup, ErrTwoStepOn, ErrWrongCode,
-// ErrRateLimited or ErrNoSession.
+// login limits. It returns ErrNoSetup, ErrSetupReplaced, ErrTwoStepOn,
+// ErrWrongCode, ErrRateLimited or ErrNoSession.
 func (s *Service) EnableTwoStep(ctx context.Context, session, code, clientIP string) ([]string, error) {
 	user, err := s.Authenticate(ctx, session)
 	if err != nil {
@@ -150,10 +153,16 @@ func (s *Service) EnableTwoStep(ctx context.Context, session, code, clientIP str
 	if err != nil {
 		return nil, err
 	}
-	if err := s.store.EnableTwoStep(ctx, user.ID, step, hashes, token.Hash(session)); errors.Is(err, store.ErrNotFound) {
+	err = s.store.EnableTwoStep(ctx, user.ID, setup.SecretSealed, step, hashes, token.Hash(session))
+	switch {
+	case errors.Is(err, store.ErrNotFound):
 		// Another request turned it on, or off, in between.
 		return nil, ErrNoSetup
-	} else if err != nil {
+	case errors.Is(err, store.ErrConflict):
+		// Another setup, in another tab, replaced the secret whose code
+		// was checked.
+		return nil, ErrSetupReplaced
+	case err != nil:
 		return nil, err
 	}
 	return codes, nil

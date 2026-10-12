@@ -59,22 +59,27 @@ func (s *Store) StartTwoStep(ctx context.Context, userID int64, secretSealed str
 	return nil
 }
 
-// EnableTwoStep turns on the setup of userID after its first code, of time
-// step step, stores the hashes of its recovery codes, and ends every other
-// session of the user except keepTokenHash, in one transaction. It returns
-// ErrNotFound when no setup waits.
-func (s *Store) EnableTwoStep(ctx context.Context, userID, step int64, recoveryHashes []string, keepTokenHash string) error {
+// EnableTwoStep turns on the setup of userID with secretSealed after its
+// first code, of time step step, stores the hashes of its recovery codes,
+// and ends every other session of the user except keepTokenHash, in one
+// transaction. It returns ErrNotFound when no setup waits, and ErrConflict
+// when the setup that waits has another secret: a newer setup replaced the
+// one whose code was checked.
+func (s *Store) EnableTwoStep(ctx context.Context, userID int64, secretSealed string, step int64, recoveryHashes []string, keepTokenHash string) error {
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
 	}
 	defer tx.Rollback()
 	res, err := tx.ExecContext(ctx,
-		"UPDATE two_step SET enabled = 1, last_step = ? WHERE user_id = ? AND enabled = 0", step, userID)
+		"UPDATE two_step SET enabled = 1, last_step = ? WHERE user_id = ? AND enabled = 0 AND secret_sealed = ?",
+		step, userID, secretSealed)
 	if err != nil {
 		return fmt.Errorf("enable two-step login: %w", err)
 	}
-	if err := requireOneRow(res); err != nil {
+	if err := requireOneRow(res); errors.Is(err, ErrNotFound) {
+		return setupGone(ctx, tx, userID)
+	} else if err != nil {
 		return err
 	}
 	for _, hash := range recoveryHashes {
@@ -86,6 +91,20 @@ func (s *Store) EnableTwoStep(ctx context.Context, userID, step int64, recoveryH
 		return fmt.Errorf("end other sessions: %w", err)
 	}
 	return tx.Commit()
+}
+
+// setupGone says why no setup of userID was turned on: none waits
+// (ErrNotFound), or one with another secret does (ErrConflict).
+func setupGone(ctx context.Context, tx *sql.Tx, userID int64) error {
+	var enabled bool
+	err := tx.QueryRowContext(ctx, "SELECT enabled FROM two_step WHERE user_id = ?", userID).Scan(&enabled)
+	if errors.Is(err, sql.ErrNoRows) || err == nil && enabled {
+		return ErrNotFound
+	}
+	if err != nil {
+		return fmt.Errorf("find two-step setup: %w", err)
+	}
+	return fmt.Errorf("%w: two-step login was set up again with another secret", ErrConflict)
 }
 
 // UseTwoStepStep records that the code of step was used, and reports false
