@@ -86,6 +86,22 @@ launches once the TV is switched on (within one 30-second status poll), and
 asks the device for its state before every periodic restart. Tested with a
 simulated device; not yet on the real TV.
 
+## Not fighting for the TV (12 October)
+
+Two GDash servers cast to the kitchen TV and took it from each other every
+few minutes, and the keeper relaunched the dashboard seconds after someone
+pressed Back. Decided (the open "relaunch policy"): GDash keeps the session
+it launched and yields when someone takes the TV, until the TV has been in
+standby or an admin chooses **Show dashboard now**; a keeper that starts
+with the server and finds something on the TV yields too, because it
+cannot prove the page is its own; it never launches while the TV reports
+another input. See `claim` in `internal/cast/claim.go` and
+[guide.md](guide.md#when-gdash-is-not-on-the-tv). Tested with the simulated
+device; still to watch on the real Google TV: the status after Back or
+Home, after opening Netflix, after switching HDMI input and back, during
+and after standby, and on a Nest Hub whether `isActiveInput` is absent
+rather than false.
+
 ## Not tested yet
 
 - **An own receiver** (option A from the research): needs a Cast developer account (USD 5) and a registered device, see [receiver.md](receiver.md).
@@ -94,7 +110,6 @@ simulated device; not yet on the real TV.
 
 ## Open decisions
 
-- **Relaunch policy** (`ShouldRelaunch` in `internal/cast/keeper.go`): GDash only takes over a screen when nothing else runs. Google TV reports "no apps" while a native app such as Netflix is on screen, so GDash could start over it.
 - **TLS:** the code guidelines require TLS for all traffic, but a TV opening the display page through DashCast can only use plain HTTP on a LAN address. See "Known oddities" in CODE_GUIDELINES.md.
 - **TLS verification towards Cast devices:** off, as in pychromecast. Pinning the certificate on first connection is an option.
 - **Name:** GDash since 9 October 2026, the owner's choice; before that Daycast (taken by 22 repositories and an iOS app) and, for one day, Nookboard. GDash is not unique either: ripienaar/gdash (a Graphite dashboard, 750 stars) and kadalu/gdash (GlusterFS) exist and the GitHub user `gdash` is taken. A trademark check (BOIP, EUIPO) is still to do.

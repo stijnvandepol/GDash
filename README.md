@@ -159,9 +159,10 @@ your home network no setup token is needed in that first hour.
 | Any browser, kiosk, Fire TV, tablet or Raspberry Pi | Opens `/d/<display>` and pairs with a code | Chromium (in the browser tests) |
 
 GDash restarts the cast every 15 minutes, because Google TV covers a running
-cast with its screensaver after about 19 minutes; it waits when another app
-such as YouTube is on screen. The dashboard shifts a few pixels every three
-minutes to protect OLED screens.
+cast with its screensaver after about 19 minutes. It waits when another app
+such as YouTube is on screen, and when someone takes the TV away from the
+dashboard it waits until the TV has been switched off. The dashboard shifts
+a few pixels every three minutes to protect OLED screens.
 
 ## Configuration
 

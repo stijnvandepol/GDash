@@ -7,6 +7,14 @@ the format follows [Keep a Changelog](https://keepachangelog.com).
 
 ### Changed
 
+- **GDash no longer takes the TV back from someone using it.** When the
+  dashboard is closed on the remote, an app or another cast replaces it,
+  or the TV switches input, GDash waits until the TV has been switched off
+  (state `yielded`, "Someone is using the TV"). Two GDash servers on one TV
+  no longer take it from each other. After a restart GDash also waits when
+  it finds something on the TV, and it never starts while the TV shows
+  another input. See
+  [docs/guide.md](docs/guide.md#when-gdash-is-not-on-the-tv).
 - The first account can be created without the setup token from the home
   network, in the first hour after GDash starts, as with Home Assistant's
   onboarding. After that hour, or from outside the home network, the token
@@ -25,6 +33,8 @@ the format follows [Keep a Changelog](https://keepachangelog.com).
   words; the Who's home widget shows a badge with initials for each chosen
   person who is home, and screens never learn who is away. See
   [docs/guide.md](docs/guide.md#homey).
+- **Show dashboard now** at a display whose TV someone else is using, and
+  `POST /api/displays/{id}/cast-takeovers` for the same.
 
 ## 0.7.0 – 2026-10-12
 

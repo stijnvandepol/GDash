@@ -51,6 +51,7 @@ come from another site (cross-site request forgery protection).
 | `POST /api/displays` `{id, name, castDeviceId, activeFrom?, activeUntil?, schedule?}` | admin | `201` display | `401`, `409 conflict`, `422` |
 | `PATCH /api/displays/{id}` `{name?, castDeviceId?, dashboardId?, activeFrom?, activeUntil?, schedule?, rotation?, rotateSeconds?, textScale?}` | admin | `200` display | `401`, `404 not_found`, `422` (also for an unknown dashboard) |
 | `DELETE /api/displays/{id}` | admin | `204` | `401`, `404 not_found` |
+| `POST /api/displays/{id}/cast-takeovers` | admin | `204`: the display's cast keeper shows the dashboard on the TV within seconds, also over what someone is watching, and stops waiting (`yielded`); recorded in the audit log as `cast_taken_over`. Not while the TV is in standby or outside active hours | `401`, `404 not_found`, `409 not_cast` (no Cast device) or `not_connected` (GDash is still connecting to the TV) |
 | `GET /api/widget-types` | admin | `200 {columns, rows, themes, fonts, types: {name: {minW, minH, settings: {key: {kind, min?, max?, required}}}}}` | `401` |
 | `GET /api/dashboard-templates` | admin | `200 {"templates": [{id, name, description, theme, widgets}]}`; create a dashboard from one with `POST /api/dashboards` and its `theme` and `widgets` | `401` |
 | `GET /api/dashboards` | admin | `200 {"dashboards": [dashboard]}` | `401` |
@@ -359,8 +360,10 @@ rotation. A rotating snapshot carries `pages` (the display's own dashboard first
 the page on its clock, so every screen of a display shows the same page.
 
 **cast:** `{"state": "showing", "since": "2026-10-09T08:31:00Z", "problem"?: "…"}`, only for a display on a Cast
-device. `state` is `connecting`, `showing`, `standby` (the receiver runs but the TV sleeps), `other_app` (someone else
-is casting; GDash waits), `resting` (outside active hours) or `unreachable`, with `problem` saying why.
+device. `state` is `connecting`, `showing`, `standby` (the TV sleeps), `other_app` (someone else is casting or the TV
+shows another input; GDash starts when it ends), `yielded` (someone took the TV from GDash, or used it when GDash
+started; GDash waits until the TV has been in standby, or a `cast-takeovers` request), `resting` (outside active hours)
+or `unreachable`, with `problem` saying why.
 
 `textScale` is the display's text size in percent: 100 (default), 125, 150 or 200. The snapshot carries it; the
 screen draws its stage narrower by that factor and in the screen's own shape (between 4:3 and 21:9), so a small
