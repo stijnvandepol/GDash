@@ -29,6 +29,9 @@ import type {
   ApiToken,
   Calendar,
   CastDevice,
+  CustomSource,
+  CustomSourceInput,
+  CustomTest,
   Dashboard,
   DashboardTemplate,
   DepartureStop,
@@ -159,6 +162,14 @@ export const api = {
     request<{ entities: HomeAssistantEntity[] }>('GET', '/api/homeassistant/entities').then((r) => r.entities),
   departureStops: (query: string) =>
     request<{ stops: DepartureStop[] }>('GET', `/api/departures/stops?q=${encodeURIComponent(query)}`).then((r) => r.stops),
+  customSources: () => request<{ sources: CustomSource[] }>('GET', '/api/custom-sources').then((r) => r.sources),
+  addCustomSource: (input: CustomSourceInput) => request<CustomSource>('POST', '/api/custom-sources', input),
+  saveCustomSource: (id: number, input: CustomSourceInput) =>
+    request<CustomSource>('PUT', `/api/custom-sources/${id}`, input),
+  deleteCustomSource: (id: number) => request<void>('DELETE', `/api/custom-sources/${id}`),
+  testCustomSource: (id: number) => request<CustomTest>('POST', `/api/custom-sources/${id}/tests`),
+  checkRule: (check: { when: string; data: unknown; value?: unknown; row?: unknown }) =>
+    request<{ result?: unknown; error?: string }>('POST', '/api/custom-rule-checks', check),
   deleteDisplay: (id: string) => request<void>('DELETE', `/api/displays/${encodeURIComponent(id)}`),
   pairScreen: (id: string, code: string) =>
     request<void>('POST', `/api/displays/${encodeURIComponent(id)}/pairings`, { code }),

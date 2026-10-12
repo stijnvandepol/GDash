@@ -18,6 +18,7 @@ export const WIDGET_LABELS: Record<string, string> = {
   homeassistant: 'Home Assistant',
   departures: 'Departures',
   fuel: 'Fuel prices',
+  custom: 'Custom API',
 };
 
 export const SETTING_LABELS: Record<string, string> = {
@@ -61,6 +62,8 @@ export function defaultSettings(type: WidgetType, today = new Date()): Record<st
     fuel: 'EURO95',
   };
   // stop and stopName stay unset until a stop is chosen: there is no sensible default.
+  // A Custom widget starts as one value; its API and path are chosen in its form.
+  if (type.settings.source?.kind === 'customSource') return { mode: 'value' };
   // A fuel widget without a place follows the weather location.
   const settings: Record<string, unknown> = {};
   for (const key of Object.keys(type.settings)) {

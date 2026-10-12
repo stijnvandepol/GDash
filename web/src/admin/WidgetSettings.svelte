@@ -5,6 +5,7 @@
   import CalendarPicker from './CalendarPicker.svelte';
   import StopPicker from './StopPicker.svelte';
   import PlacePicker from './PlacePicker.svelte';
+  import CustomWidgetSettings from './CustomWidgetSettings.svelte';
 
   // Texts up to this length get a single-line field, longer ones a text area.
   const SINGLE_LINE_MAX = 60;
@@ -28,6 +29,9 @@
       .sort()
       .sort((a, b) => Number(b === 'place') - Number(a === 'place')),
   );
+
+  // The Custom widget's settings depend on each other, so it has its own form.
+  const isCustom = $derived(type.settings.source?.kind === 'customSource');
 
   function pickStop(stop: DepartureStop) {
     onchange({ ...settings, stop: stop.code, stopName: stop.name });
@@ -64,6 +68,9 @@
   }
 </script>
 
+{#if isCustom}
+  <CustomWidgetSettings {settings} {onchange} />
+{:else}
 {#each keys as key (key)}
   {@const rule = type.settings[key]!}
   {#if rule.kind === 'entities'}
@@ -113,6 +120,7 @@
   </label>
   {/if}
 {/each}
+{/if}
 
 <style>
   .inline-label {

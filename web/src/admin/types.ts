@@ -90,8 +90,21 @@ export interface WidgetType {
 
 /** A setting a widget type takes; internal/display validates the same. */
 export interface SettingRule {
-  kind: 'integer' | 'text' | 'date' | 'calendar' | 'entities' | 'stop' | 'place' | 'choice';
-  /** Bounds of an integer, of a text's length in characters, or of how many entities. */
+  kind:
+    | 'integer'
+    | 'text'
+    | 'date'
+    | 'calendar'
+    | 'entities'
+    | 'stop'
+    | 'place'
+    | 'customSource'
+    | 'choice'
+    | 'path'
+    | 'paths'
+    | 'pairs'
+    | 'rules';
+  /** Bounds of an integer, of a text's length in characters, or of how many entities or items. */
   min?: number;
   max?: number;
   required: boolean;
@@ -151,6 +164,50 @@ export interface DepartureStop {
   code: string;
   /** Includes the town, such as "Utrecht, CS Jaarbeurszijde". */
   name: string;
+}
+
+export type CustomAuthKind = 'none' | 'bearer' | 'header' | 'query' | 'basic';
+
+/** An extra request header of a custom API; a secret one comes back without its value. */
+export interface CustomHeader {
+  name: string;
+  value: string;
+  secret: boolean;
+}
+
+/** A JSON API set up under Settings; its secrets never leave the server. */
+export interface CustomSource {
+  id: number;
+  name: string;
+  url: string;
+  method: 'GET' | 'POST';
+  body: string;
+  auth: { kind: CustomAuthKind; name: string; secretSet: boolean };
+  headers: CustomHeader[];
+  intervalSeconds: number;
+  /** A pasted answer to design widgets against, or null. */
+  sample: unknown;
+  /** True when the secrets cannot be decrypted with this server's key. */
+  unreadable: boolean;
+}
+
+/** A custom API as the form sends it; an empty secret keeps the stored one. */
+export interface CustomSourceInput {
+  name: string;
+  url: string;
+  method: 'GET' | 'POST';
+  body: string;
+  auth: { kind: CustomAuthKind; name: string; secret: string };
+  headers: CustomHeader[];
+  intervalSeconds: number;
+  sample: unknown;
+}
+
+/** One answer of a custom API, cut down for the editor. */
+export interface CustomTest {
+  data: unknown;
+  truncated: boolean;
+  bytes: number;
 }
 
 /** Whether a data source works, by data key such as "weather.current". */

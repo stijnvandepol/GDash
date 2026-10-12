@@ -49,6 +49,10 @@ const ACTIONS: Record<string, string> = {
   two_step_disabled: 'Turned off two-step login',
   two_step_change_failed: 'Failed to change two-step login',
   two_step_reset: 'Turned off two-step login from the command line for',
+  custom_source_added: 'Added custom API',
+  custom_source_changed: 'Changed custom API',
+  custom_source_removed: 'Removed custom API',
+  custom_rule_announced: 'A Custom widget rule announced on',
 };
 
 // Actions whose detail means nothing to a person, such as a photo's file name.

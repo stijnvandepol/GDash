@@ -50,6 +50,19 @@ describe('defaultSettings', () => {
     expect(defaultSettings(fuel, today)).toEqual({ radius: 5, fuel: 'EURO95', maxItems: 5 });
   });
 
+  it('starts a Custom widget as one value, without borrowing the countdown label', () => {
+    const custom: WidgetType = {
+      minW: 4,
+      minH: 3,
+      settings: {
+        source: { kind: 'customSource', required: true },
+        mode: { kind: 'choice', options: ['value', 'list', 'keyValues'], required: true },
+        label: { kind: 'text', max: 40, required: false },
+      },
+    };
+    expect(defaultSettings(custom, today)).toEqual({ mode: 'value' });
+  });
+
   it('skips settings it has no default for', () => {
     const odd: WidgetType = { minW: 1, minH: 1, settings: { colour: { kind: 'text', required: false } } };
     expect(defaultSettings(odd, today)).toEqual({});
