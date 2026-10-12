@@ -43,7 +43,7 @@
             <span class="price">{priceText(row.price)}</span>
             <span class="station">
               <span class="name">{row.name}</span>
-              <span class="meta">{distanceText(row.distanceKm)}{#if row.cheapest && saving}<span class="saving"> · {saving}</span>{/if}</span>
+              <span class="meta">{distanceText(row.distanceKm)}{#if row.cheapest && saving}<span class="saving">{' · '}{saving}</span>{/if}</span>
             </span>
           </li>
         {/each}
