@@ -85,7 +85,13 @@ add calendars and feeds under Settings, Data sources, and the photos once you ad
   glowing on black), Noir (black and white, typed out) and Mars (rust-red
   dust). Each theme has its own typeface; under **Typeface** you can pick
   another of the eleven for this dashboard. All of them ship with
-  GDash and work offline.
+  GDash and work offline. Under **After sunset** the dashboard can switch to
+  another theme between sunset and sunrise, for instance Frost to Frost
+  night, Minimal light to Minimal dark or Warm light to Night; the typeface
+  stays. The switch follows the sun at the weather location from Settings
+  and reaches the screen within a minute; without a location the style never
+  changes. The default is Keep this style, and the preview shows what a
+  screen shows right now.
 - **Preview** shows the dashboard the way a TV draws it, with your real
   weather, news and calendar, without a display or a paired screen. It
   includes changes you have not saved yet; nothing is stored and no screen
@@ -120,7 +126,8 @@ in the list at the display.
 
 **Export** saves a dashboard as a file, as a backup or to share a layout.
 **Import a dashboard** adds such a file as a new dashboard, also in another
-GDash. The file holds the layout, the theme and the widget settings, such
+GDash. The file holds the layout, the theme (with its night theme and
+typeface, if any) and the widget settings, such
 as the text of a note; it holds no data and no calendar addresses.
 
 ## Home Assistant

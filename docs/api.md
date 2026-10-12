@@ -49,12 +49,12 @@ come from another site (cross-site request forgery protection).
 | `GET /api/widget-types` | admin | `200 {columns, rows, themes, fonts, types: {name: {minW, minH, settings: {key: {kind, min?, max?, required}}}}}` | `401` |
 | `GET /api/dashboard-templates` | admin | `200 {"templates": [{id, name, description, theme, widgets}]}`; create a dashboard from one with `POST /api/dashboards` and its `theme` and `widgets` | `401` |
 | `GET /api/dashboards` | admin | `200 {"dashboards": [dashboard]}` | `401` |
-| `POST /api/dashboards` `{id, name, theme?, font?, widgets}` | admin | `201` dashboard | `401`, `409 conflict`, `422` |
+| `POST /api/dashboards` `{id, name, theme?, font?, nightTheme?, widgets}` | admin | `201` dashboard | `401`, `409 conflict`, `422` |
 | `GET /api/dashboards/{id}` | admin | `200` dashboard | `401`, `404` |
-| `PUT /api/dashboards/{id}` `{name, theme?, font?, widgets}` | admin | `200` dashboard; screens update at once | `401`, `404`, `422` |
+| `PUT /api/dashboards/{id}` `{name, theme?, font?, nightTheme?, widgets}` | admin | `200` dashboard; screens update at once | `401`, `404`, `422` |
 | `DELETE /api/dashboards/{id}` | admin | `204`; its displays fall back to the default | `401`, `404`, `409` for `default` |
-| `GET /api/dashboards/{id}/preview?textScale=` | admin | `200` snapshot of the stored dashboard with the data a screen gets now; no display needed | `401`, `404`, `422` for a `textScale` other than 100, 125, 150 or 200 |
-| `POST /api/dashboards/{id}/preview?textScale=` `{name, theme?, font?, widgets}` | admin | `200` snapshot of that unsaved layout; nothing is stored and no screen changes | `401`, `404` (the dashboard must exist), `422` |
+| `GET /api/dashboards/{id}/preview?textScale=` | admin | `200` snapshot of the stored dashboard with the data a screen gets now, in its night theme after sunset; no display needed | `401`, `404`, `422` for a `textScale` other than 100, 125, 150 or 200 |
+| `POST /api/dashboards/{id}/preview?textScale=` `{name, theme?, font?, nightTheme?, widgets}` | admin | `200` snapshot of that unsaved layout; nothing is stored and no screen changes | `401`, `404` (the dashboard must exist), `422` |
 | `GET /api/settings` | admin | `200 {"settings": settings, "status": {key: {updatedAt?, failing}}}` | `401` |
 | `PUT /api/settings/location` `{name, latitude, longitude}` | admin | `200` location | `401`, `422` |
 | `PUT /api/settings/language` `{language}` | admin | `200`; screens switch at once | `401`, `422` for a language other than `en`, `nl`, `de` or `fr` |
@@ -214,7 +214,7 @@ still applies at 00:30 on Saturday. Times follow the same rules as
 active hours, but both are required. Deleting a dashboard removes the slots that use it. Field errors are named
 `schedule[i]`, and `schedule` for a slot with an unknown dashboard.
 
-**dashboard:** `{"id": "default", "name": "Default", "columns": 24, "rows": 14, "theme": "minimal-dark", "font": "", "widgets": [widget]}`.
+**dashboard:** `{"id": "default", "name": "Default", "columns": 24, "rows": 14, "theme": "minimal-dark", "font": "", "nightTheme": "", "widgets": [widget]}`.
 `theme` is one of `minimal-dark` (default), `minimal-light`, `glass`, `warm-light`, `high-contrast`, `night`, `frost`, `walnut`,
 `swiss`, `tonal`, `gilded`, `riviera`, `galaxy`, `terminal`, `parchment`, `neon`, `frost-night`, `candy`, `upside-down`, `noir` and
 `mars`; `font` is empty for the theme's own typeface or one of `geist`, `inter`, `outfit`, `space-grotesk`, `lora`, `cormorant`, `bodoni`,
@@ -222,6 +222,14 @@ active hours, but both are required. Deleting a dashboard removes the slots that
 or font is a `422`. A `PUT` replaces the whole dashboard: leaving `theme` or `font` out sets the default theme or the
 theme's own typeface. The grid size and
 every widget's `source` are set by the server; values sent by a client are ignored.
+
+`nightTheme` is empty (the default: no switch) or one of the themes. Between sunset and sunrise at the weather location the server
+sends screens, and answers the preview, with that theme as the dashboard's `theme`; the `font` stays as chosen, and `nightTheme`
+itself is still in the dashboard object. The sun times and the location's UTC offset come from the weather report, so a dashboard
+never switches without a weather location, while the first report is still loading, or when the report has no sun times for today.
+Screens get a new snapshot every minute, so the switch is on screen within a minute of sunset or sunrise. Near the poles, where
+the sun does not rise or set on some days, a day with only a sunset is day until then, a day with only a sunrise is night until
+then, and a day with neither follows the weather report's own day or night. An unknown `nightTheme` is a `422` on that field.
 
 **widget:** `{"id": "news", "type": "news", "x": 10, "y": 9, "w": 14, "h": 5, "source": "news.default", "settings": {"maxItems": 3}}`.
 A layout is rejected with field errors such as `widgets[2]` when a widget is outside the grid, smaller than its type
@@ -258,7 +266,9 @@ an empty `title`, which the screen fills in in its own language.
 
 **weather data (`weather.current`):** the current values, `days` for the forecast and `sun`, the sunrise and sunset
 of yesterday and the coming days as local times, `{"date": "2026-10-09", "sunrise": "2026-10-09T07:50", "sunset": "2026-10-09T18:56"}`.
-Both times are empty on a day without a sunrise or sunset.
+Either time is empty on a day without that sunrise or sunset. `utcOffsetSeconds` is how far the location's local time is ahead
+of UTC, which the server needs to compare its clock with those local times (see `nightTheme`); a report cached by an older
+version lacks it until the next fetch.
 
 **air quality data (`airquality.current`):** `{"europeanAqi": 20, "observedAt": "2026-10-09T13:00", "pollen": [{"type": "birch", "grainsPerM3": 12.5}]}`.
 The index runs from 0 to 100 and above (good, fair, moderate, poor, very poor, extremely poor at 20, 40, 60, 80, 100).

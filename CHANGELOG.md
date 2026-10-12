@@ -10,6 +10,12 @@ the format follows [Keep a Changelog](https://keepachangelog.com).
 - German and French on the TV, next to English and Dutch: every text,
   the weather words and the dates, chosen under Settings, Screens,
   Language on the TVs.
+- A dashboard can switch to another theme after sunset: pick one under
+  Style → After sunset (for instance Frost night after Frost). The server
+  follows sunset and sunrise at the weather location and the screen changes
+  within a minute, keeping the typeface; without a location nothing
+  changes. The preview shows what a screen shows now, and dashboard files
+  keep the choice.
 
 ## 0.6.0 – 2026-10-11
 
