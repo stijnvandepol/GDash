@@ -156,7 +156,7 @@ func (s *Service) Sources(ctx context.Context) (Sources, error) {
 			s.Logger.Error("calendar address cannot be decrypted; remove the calendar and add it again", "calendar", c.Name, "error", err)
 			continue
 		}
-		out.Calendars = append(out.Calendars, calendar.Source{Name: c.Name, URL: address, Color: calendarColor(c.Color, i)})
+		out.Calendars = append(out.Calendars, calendar.Source{ID: c.ID, Name: c.Name, URL: address, Color: calendarColor(c.Color, i)})
 	}
 	conn, ok, err := s.HomeAssistantConnection(ctx)
 	if err != nil {

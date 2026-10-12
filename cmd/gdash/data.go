@@ -15,6 +15,7 @@ import (
 	"github.com/stijnvandepol/gdash/internal/calendar"
 	"github.com/stijnvandepol/gdash/internal/datahub"
 	"github.com/stijnvandepol/gdash/internal/display"
+	"github.com/stijnvandepol/gdash/internal/energyprice"
 	"github.com/stijnvandepol/gdash/internal/homeassistant"
 	"github.com/stijnvandepol/gdash/internal/news"
 	"github.com/stijnvandepol/gdash/internal/outbound"
@@ -33,6 +34,7 @@ type dataSources struct {
 	news       *news.Client
 	calendar   *calendar.Client
 	home       *homeassistant.Client
+	energy     energyprice.Client
 	// dashboards lists every dashboard, for the Home Assistant entities
 	// their widgets show.
 	dashboards func(ctx context.Context) ([]display.Dashboard, error)
@@ -65,6 +67,10 @@ func startData(ctx context.Context, cfg config, db *store.Store, svc *settings.S
 	publisher.Refresh(ctx)
 	go republishEveryMinute(ctx, publisher)
 
+	dutch, err := time.LoadLocation(dutchTimeZone)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("load the Dutch time zone: %w", err)
+	}
 	sources := &dataSources{
 		hub:        hub,
 		settings:   svc,
@@ -76,6 +82,7 @@ func startData(ctx context.Context, cfg config, db *store.Store, svc *settings.S
 		home:       &homeassistant.Client{HTTP: outbound.NewClient(upstreamTimeout)},
 		dashboards: db.Dashboards,
 		logger:     logger,
+		energy:     energyprice.Client{BaseURL: energyprice.DefaultBaseURL, HTTP: outbound.NewClient(upstreamTimeout), Location: dutch, Now: time.Now},
 	}
 	if err := sources.sync(ctx); err != nil {
 		return nil, nil, nil, err
@@ -120,7 +127,8 @@ func (d *dataSources) sync(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("read dashboards: %w", err)
 	}
-	d.hub.Configure(ctx, d.build(cfg, display.EntityIDs(dashboards)))
+	sources := d.build(cfg, display.EntityIDs(dashboards))
+	d.hub.Configure(ctx, append(sources, d.dashboardSources(cfg, dashboards)...))
 	return nil
 }
 

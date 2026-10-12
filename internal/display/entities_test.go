@@ -29,8 +29,8 @@ func TestEachDisplayGetsOnlyItsOwnEntities(t *testing.T) {
 }
 
 func TestUnreadableEntitiesAreDropped(t *testing.T) {
-	entry := onlyEntities(datahub.Entry{Value: []byte(`[1,2]`), Failing: true}, []string{"sensor.temp"})
+	entry := onlyKeys(datahub.Entry{Value: []byte(`[1,2]`), Failing: true}, []string{"sensor.temp"})
 	if entry.Value != nil || !entry.Failing {
-		t.Fatalf("onlyEntities = %+v, want no value and the status kept", entry)
+		t.Fatalf("onlyKeys = %+v, want no value and the status kept", entry)
 	}
 }

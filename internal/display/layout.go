@@ -65,15 +65,17 @@ var maxItems = map[string]Setting{"maxItems": {Kind: SettingInteger, Min: 1, Max
 // WidgetTypes is the catalogue of widgets. A widget's data source follows
 // from its type, so a dashboard cannot point a widget at arbitrary data.
 var WidgetTypes = map[string]WidgetType{
-	"clock":      {MinW: 4, MinH: 3},
-	"weather":    {Source: WeatherSource, MinW: 4, MinH: 4},
-	"forecast":   {Source: WeatherSource, MinW: 6, MinH: 4, Settings: map[string]Setting{"days": {Kind: SettingInteger, Min: 1, Max: 7}}},
-	"sun":        {Source: WeatherSource, MinW: 5, MinH: 4},
-	"airquality": {Source: AirQualitySource, MinW: 5, MinH: 4},
-	"news":       {Source: "news.default", MinW: 6, MinH: 4, Settings: maxItems},
-	"calendar":   {Source: "calendar.default", MinW: 6, MinH: 4, Settings: maxItems},
-	"text":       {MinW: 4, MinH: 3, Settings: map[string]Setting{"text": {Kind: SettingText, Min: 1, Max: 300, Required: true}}},
-	"photos":     {Source: PhotosSource, MinW: 4, MinH: 3, Settings: map[string]Setting{"seconds": {Kind: SettingInteger, Min: 5, Max: 600}}},
+	"clock":       {MinW: 4, MinH: 3},
+	"weather":     {Source: WeatherSource, MinW: 4, MinH: 4},
+	"forecast":    {Source: WeatherSource, MinW: 6, MinH: 4, Settings: map[string]Setting{"days": {Kind: SettingInteger, Min: 1, Max: 7}}},
+	"sun":         {Source: WeatherSource, MinW: 5, MinH: 4},
+	"airquality":  {Source: AirQualitySource, MinW: 5, MinH: 4},
+	"waste":       {Source: WasteSource, MinW: 5, MinH: 4, Settings: wasteSettings},
+	"energyprice": {Source: EnergyPriceSource, MinW: 6, MinH: 4},
+	"news":        {Source: "news.default", MinW: 6, MinH: 4, Settings: maxItems},
+	"calendar":    {Source: "calendar.default", MinW: 6, MinH: 4, Settings: maxItems},
+	"text":        {MinW: 4, MinH: 3, Settings: map[string]Setting{"text": {Kind: SettingText, Min: 1, Max: 300, Required: true}}},
+	"photos":      {Source: PhotosSource, MinW: 4, MinH: 3, Settings: map[string]Setting{"seconds": {Kind: SettingInteger, Min: 5, Max: 600}}},
 	"countdown": {MinW: 4, MinH: 4, Settings: map[string]Setting{
 		"label": {Kind: SettingText, Min: 1, Max: 60, Required: true},
 		"date":  {Kind: SettingDate, Required: true},
@@ -211,11 +213,7 @@ func settingsProblem(w Widget, kind WidgetType) string {
 func valueProblem(key string, value any, rule Setting) string {
 	switch rule.Kind {
 	case SettingInteger:
-		// JSON numbers decode as float64.
-		n, ok := value.(float64)
-		if i, isInt := value.(int); isInt {
-			n, ok = float64(i), true
-		}
+		n, ok := number(value)
 		if !ok || n != math.Trunc(n) || n < float64(rule.Min) || n > float64(rule.Max) {
 			return fmt.Sprintf("%s must be a whole number from %d to %d", key, rule.Min, rule.Max)
 		}
@@ -229,6 +227,10 @@ func valueProblem(key string, value any, rule Setting) string {
 		text, ok := value.(string)
 		if _, err := time.Parse(dateLayout, text); !ok || err != nil {
 			return fmt.Sprintf("%s must be a date as YYYY-MM-DD", key)
+		}
+	case SettingCalendar:
+		if _, ok := calendarID(value); !ok {
+			return fmt.Sprintf("%s must be the number of a calendar added under Settings", key)
 		}
 	case SettingEntities:
 		if ids, ok := entityIDs(value, rule.Max); !ok || len(ids) < rule.Min {

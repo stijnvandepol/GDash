@@ -17,18 +17,22 @@ func dataFor(dashboards []Dashboard, data map[string]datahub.Entry) map[string]d
 		}
 	}
 	if entry, ok := used[HomeAssistantSource]; ok {
-		used[HomeAssistantSource] = onlyEntities(entry, EntityIDs(dashboards))
+		used[HomeAssistantSource] = onlyKeys(entry, EntityIDs(dashboards))
+	}
+	if entry, ok := used[WasteSource]; ok {
+		used[WasteSource] = onlyCalendars(entry, WasteCalendarIDs(dashboards))
 	}
 	return used
 }
 
-// onlyEntities narrows the Home Assistant entry to the entities in ids.
-// The server fetches the entities of every dashboard in one entry, but a
+// onlyKeys narrows an entry that holds an object to the keys in ids: the
+// Home Assistant entities, or the calendars of waste collection widgets.
+// The server fetches those of every dashboard in one entry, but a
 // display may only receive what its own widgets show: a hall screen with a
 // temperature must not get the door locks of the living room dashboard.
 // An entry that cannot be read is replaced by one without a value, so the
 // widget waits instead of showing more than it should.
-func onlyEntities(entry datahub.Entry, ids []string) datahub.Entry {
+func onlyKeys(entry datahub.Entry, ids []string) datahub.Entry {
 	if len(entry.Value) == 0 {
 		return entry
 	}
