@@ -58,7 +58,10 @@ type Keeper struct {
 	// now: it ends a yield and launches over whatever is on the TV, unless
 	// the TV is in standby or the display is outside its active hours.
 	TakeOver <-chan struct{}
-	Logger   *slog.Logger
+	// Now is the clock for how long the device shows its idle screen
+	// during a yield; nil means time.Now.
+	Now    func() time.Time
+	Logger *slog.Logger
 
 	// claim is who controls the screen. Only the Run goroutine uses it.
 	claim claim
@@ -130,6 +133,13 @@ func (k *Keeper) session(ctx context.Context) error {
 			return err
 		}
 	}
+}
+
+func (k *Keeper) now() time.Time {
+	if k.Now == nil {
+		return time.Now()
+	}
+	return k.Now()
 }
 
 func (k *Keeper) refreshInterval(d Device) time.Duration {

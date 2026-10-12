@@ -107,6 +107,10 @@ func (s *keeperSession) reconcile(ctx context.Context, status ReceiverStatus) er
 		k.Logger.Info("someone else is using the TV; waiting until it is switched off", "reason", reason)
 		c.yielded = true
 	}
+	if c.yielded && c.idleLongEnough(status, k.now()) {
+		k.Logger.Info("the TV showed its idle screen long enough; it is free again", "after", idleYieldTimeout)
+		c.yielded = false
+	}
 	app, running := status.App(k.AppID)
 	holds := c.holds(app, running)
 	if !holds {

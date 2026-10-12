@@ -1,5 +1,7 @@
 package cast
 
+import "time"
+
 // claim is what a keeper knows about who controls the screen. It belongs to
 // the Keeper, not to one connection, so it survives a reconnect; a server
 // restart starts with a new, empty claim.
@@ -38,7 +40,16 @@ type claim struct {
 	// force: an admin asked to show the dashboard now, over whatever is on
 	// the screen.
 	force bool
+	// idleSince is when a yielded keeper first saw the device's idle
+	// screen in an unbroken run of such statuses; zero when not counting.
+	idleSince time.Time
 }
+
+// idleYieldTimeout is how long the device must show its own idle screen,
+// awake and on its input, before a yield ends. A Nest Hub and TVs without
+// HDMI-CEC never report standby, the usual end of a yield, and their idle
+// screen means that the radio or cast that took the TV has ended.
+const idleYieldTimeout = 10 * time.Minute
 
 // holds reports whether app is the session GDash launched.
 func (c *claim) holds(app Application, running bool) bool {
@@ -80,9 +91,28 @@ func (c *claim) observe(status ReceiverStatus, appID string) string {
 	return ""
 }
 
+// idleLongEnough follows, while GDash yields, how long the device has shown
+// its own idle screen without a break, and reports whether that lasted
+// idleYieldTimeout. Any other status starts the count again.
+func (c *claim) idleLongEnough(status ReceiverStatus, now time.Time) bool {
+	if !status.showsIdleScreen() {
+		c.idleSince = time.Time{}
+		return false
+	}
+	if c.idleSince.IsZero() {
+		c.idleSince = now
+	}
+	if now.Sub(c.idleSince) < idleYieldTimeout {
+		return false
+	}
+	c.idleSince = time.Time{}
+	return true
+}
+
 // endYield is called when the TV reports standby: whoever used it switched
 // it off, so the next time it is on, the screen is GDash's again.
 func (c *claim) endYield() {
+	c.idleSince = time.Time{}
 	c.yielded = false
 	c.replace = true
 	c.force = false
@@ -110,4 +140,5 @@ func (c *claim) launched(sessionID string, otherInput bool) {
 	c.session, c.stopping = sessionID, ""
 	c.sawInput, c.pageSent = !otherInput, false
 	c.yielded, c.replace, c.force = false, false, false
+	c.idleSince = time.Time{}
 }

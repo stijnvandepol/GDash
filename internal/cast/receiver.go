@@ -35,6 +35,21 @@ func (s ReceiverStatus) OnThisInput() bool { return s.IsActiveInput != nil && *s
 // a game console. A device that does not say is not on another input.
 func (s ReceiverStatus) OnOtherInput() bool { return s.IsActiveInput != nil && !*s.IsActiveInput }
 
+// showsIdleScreen reports whether the device says it shows its own idle
+// screen, such as Backdrop, on an awake TV that is not on another input.
+// No apps at all does not count: Google TV reports that while Netflix runs.
+func (s ReceiverStatus) showsIdleScreen() bool {
+	if len(s.Applications) == 0 || s.InStandby() || s.OnOtherInput() {
+		return false
+	}
+	for _, app := range s.Applications {
+		if !app.IsIdleScreen {
+			return false
+		}
+	}
+	return true
+}
+
 // hasOtherApp reports whether an app other than appID, and other than the
 // device's idle screen, is running.
 func (s ReceiverStatus) hasOtherApp(appID string) bool {

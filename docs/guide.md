@@ -698,9 +698,13 @@ it notices when someone takes the TV away from it:
 The display list then says **Someone is using the TV; GDash waits until it
 is switched off**. GDash starts nothing and does not restart the dashboard
 against the screensaver. When the TV has been in standby and is switched
-on again, the dashboard appears within about 30 seconds. Switching back to
-the TV's Cast input while the dashboard still runs there also counts as
-giving it back. To have it back at once, choose **Show dashboard now** at
+on again, the dashboard appears within about 30 seconds. The same happens
+when the device shows its own idle screen, such as the photo frame of a
+Nest Hub or the ambient screen of a Chromecast, for 10 minutes without a
+break (on an awake TV, not on another input): whatever played has ended.
+Switching back to the TV's Cast input while the dashboard still runs there
+also counts as giving it back. To have it back at once, choose **Show
+dashboard now** at
 the display: it stops whatever is on the TV and switches the TV to the
 dashboard.
 
@@ -716,7 +720,9 @@ Some situations GDash cannot tell apart:
   against the screensaver until the TV has been off or you choose **Show
   dashboard now**.
 - **A TV without HDMI-CEC, or a Nest Hub,** never reports standby, so a
-  wait there only ends with **Show dashboard now**.
+  wait there ends after 10 minutes of the device's idle screen, or with
+  **Show dashboard now**. A Google TV that reports no apps at all does not
+  count as idle, because it reports the same while Netflix plays.
 - **Google TV does not report its own apps** to GDash. When the dashboard
   is not on screen, for example when the TV is switched on, a free Google
   TV and one playing Netflix look the same, and GDash starts. Use active

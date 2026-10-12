@@ -20,11 +20,12 @@ the format follows [Keep a Changelog](https://keepachangelog.com).
   storing paths, so existing dashboards and dashboard files work as before.
 - **GDash no longer takes the TV back from someone using it.** When the
   dashboard is closed on the remote, an app or another cast replaces it,
-  or the TV switches input, GDash waits until the TV has been switched off
-  (state `yielded`, "Someone is using the TV"). Two GDash servers on one TV
-  no longer take it from each other. After a restart GDash also waits when
-  it finds something on the TV, and it never starts while the TV shows
-  another input. See
+  or the TV switches input, GDash waits until the TV has been switched off,
+  or has shown its own idle screen for 10 minutes, as a Nest Hub does after
+  the radio (state `yielded`, "Someone is using the TV"). Two GDash
+  servers on one TV no longer take it from each other. After a restart
+  GDash also waits when it finds something on the TV, and it never starts
+  while the TV shows another input. See
   [docs/guide.md](docs/guide.md#when-gdash-is-not-on-the-tv).
 - The first account can be created without the setup token from the home
   network, in the first hour after GDash starts, as with Home Assistant's

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"slices"
+	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -276,6 +277,134 @@ func TestKeeperTakesTheTVBackOnRequest(t *testing.T) {
 	time.Sleep(100 * time.Millisecond) // the keeper sees the TV follow
 	device.setInput(false)
 	rec.waitFor(t, StateYielded)
+}
+
+// fakeClock is a keeper's clock that the test moves, and that counts how
+// often the keeper read it: a yielded keeper reads it for every status.
+type fakeClock struct {
+	mu    sync.Mutex
+	now   time.Time
+	reads int
+}
+
+func (c *fakeClock) Now() time.Time {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.reads++
+	return c.now
+}
+
+func (c *fakeClock) advance(d time.Duration) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.now = c.now.Add(d)
+}
+
+func (c *fakeClock) readCount() int {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return c.reads
+}
+
+var (
+	backdrop = Application{AppID: "E8C28D3C", DisplayName: "Backdrop", IsIdleScreen: true}
+	radio    = Application{AppID: "radio", DisplayName: "Radio", SessionID: "radio", TransportID: "radio"}
+)
+
+// idleTest is a keeper that yielded to radio cast to the device, with a
+// clock the test moves.
+type idleTest struct {
+	device *fakeDevice
+	clock  *fakeClock
+	rec    *stateRecorder
+}
+
+func newIdleTest(t *testing.T) *idleTest {
+	t.Helper()
+	device := newFakeDevice(t)
+	clock := &fakeClock{now: time.Date(2026, 10, 12, 20, 0, 0, 0, time.UTC)}
+	keeper := newRefreshingKeeper(device, 0)
+	keeper.Now = clock.Now
+	rec := startKeeper(t, keeper)
+	rec.waitFor(t, StateShowing)
+	device.castFrom(radio)
+	rec.waitFor(t, StateYielded)
+	return &idleTest{device: device, clock: clock, rec: rec}
+}
+
+// status changes the device, tells the keeper, and waits until the keeper
+// has looked at the new status.
+func (it *idleTest) status(t *testing.T, change func(d *fakeDevice)) {
+	t.Helper()
+	before := it.clock.readCount()
+	it.device.change(func() { change(it.device) })
+	deadline := time.Now().Add(testTimeout)
+	for it.clock.readCount() == before {
+		if time.Now().After(deadline) {
+			t.Fatal("the keeper did not look at the new status")
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+}
+
+func showIdleScreen(d *fakeDevice) { d.apps = []Application{backdrop} }
+func playRadio(d *fakeDevice)      { d.apps = []Application{radio} }
+func unchanged(*fakeDevice)        {}
+
+func TestYieldOutlastsAnIdleScreenThatIsInterrupted(t *testing.T) {
+	it := newIdleTest(t)
+	it.status(t, showIdleScreen)
+	it.clock.advance(9 * time.Minute)
+	it.status(t, unchanged)
+	// The radio plays again for a moment: the idle time starts over.
+	it.status(t, playRadio)
+	it.status(t, showIdleScreen)
+	it.clock.advance(9 * time.Minute)
+	it.status(t, unchanged)
+
+	expectLaunches(t, it.device, 1, "nine minutes of idle screen at a time do not end the yield")
+	if got := it.rec.last(); got != StateYielded {
+		t.Fatalf("state = %s, want yielded", got)
+	}
+}
+
+func TestYieldEndsAfterTenMinutesOfIdleScreen(t *testing.T) {
+	// A Nest Hub never reports standby; its own screen after the radio
+	// stopped says that nobody uses it any more.
+	it := newIdleTest(t)
+	it.status(t, showIdleScreen)
+	it.clock.advance(idleYieldTimeout)
+	it.status(t, unchanged)
+
+	waitForLaunches(t, it.device, 2)
+	it.rec.waitFor(t, StateShowing)
+}
+
+func TestYieldOutlastsWhatOnlyLooksIdle(t *testing.T) {
+	for _, tt := range []struct {
+		name   string
+		change func(d *fakeDevice)
+	}{
+		// Google TV reports no apps while Netflix plays.
+		{"no apps", func(d *fakeDevice) { d.apps = nil }},
+		{"idle screen while the TV shows another input", func(d *fakeDevice) {
+			otherInput := false
+			d.apps, d.activeInput = []Application{backdrop}, &otherInput
+		}},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			it := newIdleTest(t)
+			it.status(t, tt.change)
+			for range 2 {
+				it.clock.advance(15 * time.Minute)
+				it.status(t, unchanged)
+			}
+			expectLaunches(t, it.device, 1, "30 minutes of this do not end the yield")
+			if got := it.rec.last(); got != StateYielded {
+				t.Fatalf("state = %s, want yielded", got)
+			}
+		})
+	}
 }
 
 func TestReceiverStatusTellsUnreportedFromFalse(t *testing.T) {
