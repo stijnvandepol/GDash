@@ -279,7 +279,7 @@ empty outside Europe and, depending on the model, outside the pollen season.
 The `homeassistant.default` data on a screen maps the entity IDs that its own widgets show to the same object
 without `id`; an entity Home Assistant does not know is left out.
 
-**device:** `{"id": "e542…", "name": "tv woonkamer", "model": "Chromecast HD", "addr": "192.168.1.160:8009", "hasScreen": true}`
+**device:** `{"id": "e542…", "name": "Living room TV", "model": "Chromecast HD", "addr": "192.168.1.50:8009", "hasScreen": true}`
 
 **snapshot event:** `{"type": "snapshot", "version": 3, "serverTime": "…", "language": "nl", "dashboard": {…}, "data": {"weather.current": {"value": {…}, "fetchedAt": "…", "staleAfter": "…", "failing": false}}}`.
 Each display gets the dashboard for the current time (its schedule or its own), and `data` only holds the sources its widgets use. `active` is false outside the
