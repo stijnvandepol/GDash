@@ -5,6 +5,8 @@ the format follows [Keep a Changelog](https://keepachangelog.com).
 
 ## Unreleased
 
+## 0.7.0 – 2026-10-12
+
 ### Added
 
 - German and French on the TV, next to English and Dutch: every text,
