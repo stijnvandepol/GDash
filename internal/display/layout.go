@@ -40,6 +40,11 @@ const (
 	// SettingStop is the code of a public transport stop area, chosen with
 	// the stop search.
 	SettingStop = "stop"
+	// SettingPlace is a place chosen with the place search: an object with
+	// a name, a latitude and a longitude.
+	SettingPlace = "place"
+	// SettingChoice is one of Options.
+	SettingChoice = "choice"
 )
 
 // Setting is one setting a widget type takes.
@@ -49,6 +54,8 @@ type Setting struct {
 	Min      int  `json:"min,omitempty"`
 	Max      int  `json:"max,omitempty"`
 	Required bool `json:"required"`
+	// Options are the values a choice takes.
+	Options []string `json:"options,omitempty"`
 }
 
 // WidgetType describes a kind of widget: where its data comes from, how
@@ -86,6 +93,7 @@ var WidgetTypes = map[string]WidgetType{
 		"entities": {Kind: SettingEntities, Min: 1, Max: MaxEntitiesPerWidget, Required: true},
 	}},
 	"departures": departuresWidget,
+	"fuel":       fuelWidget,
 }
 
 // AirQualitySource is the data key of the air quality and pollen at the
@@ -244,6 +252,10 @@ func valueProblem(key string, value any, rule Setting) string {
 		}
 	case SettingStop:
 		return stopProblem(key, value)
+	case SettingPlace:
+		return placeProblem(key, value)
+	case SettingChoice:
+		return choiceProblem(key, value, rule)
 	}
 	return ""
 }

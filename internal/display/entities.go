@@ -66,6 +66,9 @@ func narrowShared(used map[string]datahub.Entry, dashboards []Dashboard) {
 	if entry, ok := used[DeparturesSource]; ok {
 		used[DeparturesSource] = onlyKeys(entry, StopCodes(dashboards))
 	}
+	if entry, ok := used[FuelSource]; ok {
+		used[FuelSource] = onlyKeys(entry, FuelKeys(dashboards))
+	}
 }
 
 // entityIDs reads an entities setting: a list of distinct entity IDs, at

@@ -77,13 +77,19 @@ func (q Query) Key() string {
 	return fmt.Sprintf("%s,%s,%d,%s", Coordinate(q.Area.Latitude), Coordinate(q.Area.Longitude), q.Area.RadiusKm, q.Fuel)
 }
 
-// Coordinate writes a latitude or longitude rounded to three decimals
-// without trailing zeros, as JavaScript writes the same number.
-func Coordinate(degrees float64) string {
+// Round rounds a latitude or longitude to three decimals. Places are stored
+// and fetched rounded, so every widget at the same town shares one request.
+func Round(degrees float64) float64 {
 	rounded := math.Round(degrees*coordinateScale) / coordinateScale
 	if rounded == 0 {
 		// Go writes a negative zero as "-0", JavaScript as "0".
-		rounded = 0
+		return 0
 	}
-	return strconv.FormatFloat(rounded, 'f', -1, 64)
+	return rounded
+}
+
+// Coordinate writes a rounded latitude or longitude without trailing zeros,
+// as JavaScript writes the same number.
+func Coordinate(degrees float64) string {
+	return strconv.FormatFloat(Round(degrees), 'f', -1, 64)
 }
