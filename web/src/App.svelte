@@ -25,6 +25,8 @@
   import Countdown from './widgets/Countdown.svelte';
   import Photos from './widgets/Photos.svelte';
   import HomeAssistant from './widgets/HomeAssistant.svelte';
+  import Homey from './widgets/Homey.svelte';
+  import HomeyPresence from './widgets/HomeyPresence.svelte';
   import Departures from './widgets/Departures.svelte';
   import Fuel from './widgets/Fuel.svelte';
   import Custom from './widgets/Custom.svelte';
@@ -155,6 +157,10 @@
             <Photos entry={widget.source ? display.snapshot?.data[widget.source] : undefined} settings={widget.settings} />
           {:else if widget.type === 'homeassistant'}
             <HomeAssistant entry={widget.source ? display.snapshot?.data[widget.source] : undefined} settings={widget.settings} />
+          {:else if widget.type === 'homey'}
+            <Homey entry={widget.source ? display.snapshot?.data[widget.source] : undefined} settings={widget.settings} />
+          {:else if widget.type === 'homeypresence'}
+            <HomeyPresence entry={widget.source ? display.snapshot?.data[widget.source] : undefined} key="{dashboard.id}/{widget.id}" />
           {:else if widget.type === 'departures'}
             <Departures entry={widget.source ? display.snapshot?.data[widget.source] : undefined} settings={widget.settings} />
           {:else if widget.type === 'fuel'}

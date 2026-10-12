@@ -12,6 +12,8 @@ export type Source =
   | 'news'
   | 'calendar'
   | 'homeassistant'
+  | 'homey'
+  | 'homeypresence'
   | 'departures'
   | 'fuel';
 
@@ -30,6 +32,9 @@ const TEXTS: Record<Source, { notSetUp: TextKey; failed: TextKey; loading: TextK
   news: { notSetUp: 'newsNotSetUp', failed: 'newsFailed', loading: 'newsLoading' },
   calendar: { notSetUp: 'calendarNotSetUp', failed: 'calendarFailed', loading: 'calendarLoading' },
   homeassistant: { notSetUp: 'haNotSetUp', failed: 'haFailed', loading: 'haLoading' },
+  homey: { notSetUp: 'homeyNotSetUp', failed: 'homeyFailed', loading: 'homeyLoading' },
+  // Who is home comes from Homey's users, which the API key may not read.
+  homeypresence: { notSetUp: 'homeyNotSetUp', failed: 'homeyPresenceFailed', loading: 'homeyLoading' },
   departures: { notSetUp: 'departuresNotSetUp', failed: 'departuresFailed', loading: 'departuresLoading' },
   // Without a place the widget follows the weather location, and without
   // that the server sends no entry.

@@ -2,6 +2,9 @@
   import type { DepartureStop, Place, WidgetType } from './api';
   import { FUEL_LABELS, SETTING_LABELS, placeSetting } from './widgetSettings';
   import EntityPicker from './EntityPicker.svelte';
+  import HomeyCapabilityPicker from './HomeyCapabilityPicker.svelte';
+  import HomeyUserPicker from './HomeyUserPicker.svelte';
+  import { presenceUsers } from './homey';
   import CalendarPicker from './CalendarPicker.svelte';
   import StopPicker from './StopPicker.svelte';
   import PlacePicker from './PlacePicker.svelte';
@@ -75,6 +78,10 @@
   {@const rule = type.settings[key]!}
   {#if rule.kind === 'entities'}
     <EntityPicker selected={list(key)} max={rule.max ?? 1} onchange={(ids) => set(key, ids)} />
+  {:else if rule.kind === 'homeyCapabilities'}
+    <HomeyCapabilityPicker selected={list(key)} max={rule.max ?? 1} onchange={(keys) => set(key, keys)} />
+  {:else if rule.kind === 'homeyUsers'}
+    <HomeyUserPicker selected={presenceUsers(settings[key])} max={rule.max ?? 1} onchange={(users) => set(key, users)} />
   {:else if rule.kind === 'calendar'}
     <CalendarPicker selected={typeof settings[key] === 'number' ? settings[key] : undefined} onchange={(id) => set(key, id)} />
   {:else if rule.kind === 'stop'}

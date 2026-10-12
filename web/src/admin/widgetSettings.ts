@@ -16,6 +16,8 @@ export const WIDGET_LABELS: Record<string, string> = {
   countdown: 'Countdown',
   photos: 'Photos',
   homeassistant: 'Home Assistant',
+  homey: 'Homey',
+  homeypresence: 'Who’s home (Homey)',
   departures: 'Departures',
   fuel: 'Fuel prices',
   custom: 'Custom API',
@@ -58,6 +60,8 @@ export function defaultSettings(type: WidgetType, today = new Date()): Record<st
     label: 'Holiday',
     date: isoDate(later),
     entities: [],
+    capabilities: [],
+    users: [],
     radius: 5,
     fuel: 'EURO95',
   };

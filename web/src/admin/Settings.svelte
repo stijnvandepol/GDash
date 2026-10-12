@@ -7,6 +7,7 @@
   import ActivityLog from './ActivityLog.svelte';
   import BackupSetting from './BackupSetting.svelte';
   import HomeAssistantSetting from './HomeAssistantSetting.svelte';
+  import HomeySetting from './HomeySetting.svelte';
   import CustomSourceSetting from './CustomSourceSetting.svelte';
   import LocationSetting from './LocationSetting.svelte';
   import PhotoSetting from './PhotoSetting.svelte';
@@ -34,7 +35,7 @@
   // Settings is long; it is shown in four groups, one at a time, so a
   // household finds a setting by what it is about.
   const SECTIONS = [
-    { id: 'sources', label: 'Data sources', hint: 'Weather, news, calendars, Home Assistant and custom APIs' },
+    { id: 'sources', label: 'Data sources', hint: 'Weather, news, calendars, Home Assistant, Homey and custom APIs' },
     { id: 'screens', label: 'Screens', hint: 'Language on the TVs and photos' },
     { id: 'automations', label: 'Automations', hint: 'API tokens and announcements' },
     { id: 'account', label: 'Account', hint: 'Password, two-step login, backup and recent activity' },
@@ -148,6 +149,13 @@
     <HomeAssistantSetting
       connection={settings.homeAssistant}
       status={status['homeassistant.default']}
+      onchanged={load}
+      onerror={handle}
+    />
+
+    <HomeySetting
+      connection={settings.homey}
+      status={status['homey.default'] ?? status['homey.users']}
       onchanged={load}
       onerror={handle}
     />

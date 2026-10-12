@@ -38,6 +38,9 @@ import type {
   Display,
   HomeAssistant,
   HomeAssistantEntity,
+  Homey,
+  HomeyCapability,
+  HomeyUser,
   Location,
   NewApiToken,
   NewsFeed,
@@ -161,6 +164,11 @@ export const api = {
   disconnectHomeAssistant: () => request<void>('DELETE', '/api/homeassistant'),
   homeAssistantEntities: () =>
     request<{ entities: HomeAssistantEntity[] }>('GET', '/api/homeassistant/entities').then((r) => r.entities),
+  connectHomey: (url: string, key: string) => request<Homey>('PUT', '/api/homey', { url, key }),
+  disconnectHomey: () => request<void>('DELETE', '/api/homey'),
+  homeyCapabilities: () =>
+    request<{ capabilities: HomeyCapability[] }>('GET', '/api/homey/capabilities').then((r) => r.capabilities),
+  homeyUsers: () => request<{ users: HomeyUser[] }>('GET', '/api/homey/users').then((r) => r.users),
   departureStops: (query: string) =>
     request<{ stops: DepartureStop[] }>('GET', `/api/departures/stops?q=${encodeURIComponent(query)}`).then((r) => r.stops),
   customSources: () => request<{ sources: CustomSource[] }>('GET', '/api/custom-sources').then((r) => r.sources),

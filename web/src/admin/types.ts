@@ -96,6 +96,8 @@ export interface SettingRule {
     | 'date'
     | 'calendar'
     | 'entities'
+    | 'homeyCapabilities'
+    | 'homeyUsers'
     | 'stop'
     | 'place'
     | 'customSource'
@@ -143,6 +145,33 @@ export interface Settings {
   language: 'en' | 'nl' | 'de' | 'fr';
   /** Null until Home Assistant is connected; the token never leaves the server. */
   homeAssistant: HomeAssistant | null;
+  /** Null until Homey is connected; the API key never leaves the server. */
+  homey: Homey | null;
+}
+
+export interface Homey {
+  url: string;
+  /** True when the connection cannot be decrypted with this server's key. */
+  unreadable: boolean;
+}
+
+/** A capability of a Homey device, as the widget editor lists it. */
+export interface HomeyCapability {
+  /** "<device id>/<capability id>", what a Homey widget stores. */
+  key: string;
+  zone?: string;
+  device: string;
+  title: string;
+  capability: string;
+  value: number | boolean | string | null;
+  units?: string;
+  decimals?: number;
+}
+
+/** A Homey user, as the Who's home editor lists them. */
+export interface HomeyUser {
+  id: string;
+  name: string;
 }
 
 export interface HomeAssistant {

@@ -24,6 +24,14 @@ describe('matchEntities', () => {
     expect(matchEntities(all, '  ', [])).toEqual([]);
   });
 
+  it('counts the zone as part of the name', () => {
+    const values = [
+      { id: 'd1/measure_temperature', name: 'Thermostat · Temperature', zone: 'Kitchen' },
+      { id: 'd2/measure_temperature', name: 'Sensor · Temperature', zone: 'Hall' },
+    ];
+    expect(matchEntities(values, 'kitchen temp', []).map((e) => e.id)).toEqual(['d1/measure_temperature']);
+  });
+
   it('lists a bounded number', () => {
     const many = Array.from({ length: 100 }, (_, i) => entity(`light.l${i}`, `Light ${i}`));
     expect(matchEntities(many, 'light', [])).toHaveLength(MAX_MATCHES);

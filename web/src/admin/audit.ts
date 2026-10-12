@@ -41,6 +41,8 @@ const ACTIONS: Record<string, string> = {
   photo_removed: 'Removed a photo',
   homeassistant_connected: 'Connected Home Assistant at',
   homeassistant_removed: 'Disconnected Home Assistant',
+  homey_connected: 'Connected Homey at',
+  homey_removed: 'Disconnected Homey',
   api_token_created: 'Made API token',
   api_token_revoked: 'Revoked API token',
   login_code_failed: 'Failed two-step login',
