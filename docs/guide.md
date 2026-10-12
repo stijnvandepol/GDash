@@ -363,6 +363,34 @@ Choose **Schedule** at a display:
 - **Settings, Account, Recent activity** lists logins, failed logins, pairings and
   changes of the last 90 days.
 
+## Two-step login
+
+With two-step login on, GDash asks for a 6-digit code from an authenticator
+app on your phone after your password, so a password that leaks is not
+enough to get in. Any app that makes time-based codes works, such as Google
+Authenticator, Microsoft Authenticator, Aegis or the passwords app of your
+phone.
+
+1. Under **Settings, Account, Two-step login**, enter your password and
+   choose **Set up two-step login**.
+2. Scan the QR code with the app, or add an account by hand with the key
+   shown below it (time-based).
+3. Enter the code the app shows and choose **Turn on two-step login**.
+4. Save the ten recovery codes: download them as a text file, print them or
+   put them in a password manager. They are shown only this once. Each logs
+   in once when your phone is not at hand.
+
+Turning it on logs out every other browser. From then on, logging in asks
+for the code after the password; **Use a recovery code** takes one of the
+saved codes instead. Every wrong code and every use of a recovery code is in
+the activity log. To turn it off, or to move to a new phone, enter your
+password and a code under the same heading and choose **Turn off two-step
+login**, then set it up again.
+
+Lost the phone and the recovery codes? Someone who can run commands on the
+server can run `gdash reset-password <user>`: it sets a new password and turns
+two-step login off. See [Troubleshooting](install.md#troubleshooting).
+
 ## When GDash is not on the TV
 
 GDash does not take over a TV that someone casts to, such as YouTube from

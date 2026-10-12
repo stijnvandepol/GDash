@@ -215,6 +215,11 @@ same address.
 Under Settings, Account, "Recent activity" lists logins, failed logins, pairings and
 changes for 90 days, with the address they came from.
 
+Two-step login (Settings → Account) asks for a code from an authenticator app
+after the password. Its secret is stored encrypted with `secret.key`, like the
+calendar addresses. A restored backup keeps it on, and your app's codes keep
+working.
+
 GDash serves plain HTTP on the LAN, because a TV that opens the dashboard
 through Cast cannot be given a certificate it trusts for a LAN address. The
 web interface carries your login: if you open it from outside your home
@@ -234,6 +239,12 @@ with the same `GDASH_DATA_DIR` as the server; in Docker:
 `docker compose exec gdash /gdash reset-password <user>`. It prints a new
 password, logs out every browser and notes the reset in the activity log.
 Only someone who can run commands on the server can do this.
+
+**Lost the phone with two-step login.** Log in with one of the recovery
+codes you saved when you turned two-step login on, then turn it off and on
+again under Settings → Account with your new phone. Without a recovery code,
+`gdash reset-password <user>` (above) is the way back in: besides a new
+password, it turns two-step login off. Turn it on again afterwards.
 
 **"No Cast devices found."** GDash is not in the same network segment as
 the TV, multicast is blocked, or the container has no host networking. Run

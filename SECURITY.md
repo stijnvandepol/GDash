@@ -23,6 +23,21 @@ fully trust, such as a guest's phone.
   over all addresses, so a device on the network cannot lock the admin out.
   Sessions expire after 7 days idle or 30 days in total, and changing the
   password logs out every other browser.
+- **Two-step login (optional):** a 6-digit code from an authenticator app
+  (RFC 6238: HMAC-SHA-1, 30 seconds) after the password. The right password
+  alone gives no session, only a pending login for five minutes. A code of
+  the current, previous or next 30 seconds is accepted, and each time step
+  only once, so a code seen over a shoulder cannot be replayed. Wrong codes
+  count towards the login limits per address and per account, and a right
+  password does not clear them, so knowing the password buys no extra
+  guesses. The secret is encrypted with the key file (see Secrets), never
+  logged and only shown while it is set up; setting it up asks for the
+  password again and only takes effect after a first code, and then logs out
+  every other browser. Ten recovery codes of 80 bits are shown once and
+  stored as SHA-256 hashes; each works once. Turning it off needs the
+  password and a code. Wrong codes, recovery codes and every change are in
+  the audit log. `gdash reset-password` on the server turns it off; that is
+  the way back for an admin who lost the phone and the recovery codes.
 - **Screens:** a display only streams data to a screen that was paired with
   a code shown on it, or opened by GDash's own cast with a single-use token
   that expires after two minutes. Unpairing takes effect within 20 seconds,
@@ -96,10 +111,11 @@ fully trust, such as a guest's phone.
   first account with the setup token printed there, and anyone who can run
   commands on the server can reset a password with `gdash reset-password`.
   Both already control the server.
-- There is one kind of account, the household's admin, without two-factor
-  authentication: GDash is meant for a home network behind its router, and
-  sessions last 7 days idle so a TV-side admin is not asked to log in daily.
-  Put it behind a reverse proxy with its own login if you expose it.
+- There is one kind of account, the household's admin. Two-step login is
+  optional and off by default: GDash is meant for a home network behind its
+  router. Sessions last 7 days idle so a TV-side admin is not asked to log in
+  daily; a session already open is not asked for a code again. Put GDash
+  behind a reverse proxy with its own login if you expose it.
 - Cast itself does not authenticate senders. With an own registered receiver
   (`GDASH_CAST_APP_ID`), a device on the network could send that receiver a
   made-up dashboard; it only accepts dashboards, shown as plain text, never

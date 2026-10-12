@@ -47,6 +47,20 @@ the format follows [Keep a Changelog](https://keepachangelog.com).
 - Calendar titles no longer show the backslash that feeds put before an escaped
   comma, such as `Plastic\, blik en drinkpakken`.
 
+### Security
+
+- Optional two-step login under Settings → Account: after the password,
+  GDash asks for a 6-digit code from an authenticator app (RFC 6238; the QR
+  code to scan is drawn by GDash itself). Setting it up asks for the
+  password again and only turns it on after a first code; ten single-use
+  recovery codes are shown once, with a download as text. Each code works
+  once, wrong codes count towards the login limits, and the right password
+  no longer clears them. The secret is encrypted with `secret.key`. Turning
+  it off needs the password and a code. Wrong codes, recovery codes and
+  every change are in the activity log. `gdash reset-password` now also
+  turns two-step login off, for an admin who lost the phone and the
+  recovery codes.
+
 ## 0.6.0 – 2026-10-11
 
 ### Changed

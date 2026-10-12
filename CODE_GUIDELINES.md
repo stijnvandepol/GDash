@@ -245,6 +245,8 @@ Known oddities:   - Plain HTTP on the LAN, against "All transport is TLS". A TV 
                   - The receiver loads the Cast framework from gstatic without SRI: Google requires that URL
                     and updates the file in place, so a hash would break it.
                   - CastMessage protobuf is encoded by hand (7 fields) instead of adding a protobuf dependency.
+                  - Two-step codes (internal/totp, RFC 6238 on crypto/hmac) and their QR code (internal/qr, byte
+                    mode, level M, versions 1-10) are written here instead of adding dependencies; both test vectors.
                   - The keeper retries forever with backoff (a supervisor for a TV that is off for hours), restarts
                     the cast every 15 minutes (9 on a Nest Hub) against the Google TV screensaver, see
                     docs/progress.md, and its tests use short real timers (50 to 300 ms): timing is under test.
