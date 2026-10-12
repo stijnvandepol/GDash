@@ -21,6 +21,23 @@ the format follows [Keep a Changelog](https://keepachangelog.com).
   user. See [docs/install.md](docs/install.md#home-assistant-app).
 - `CONTRIBUTING.md`, issue and pull request templates, a code of conduct and
   a checklist for making the repository public ([docs/publishing.md](docs/publishing.md)).
+- A **Waste collection** widget: the next pickup of each kind of household
+  waste in the coming 14 days, with a colour dot per kind, from one of your
+  calendars. Add the iCal link of your municipality or of mijnafvalwijzer or
+  afvalkalender as a calendar under Settings, then choose it in the widget.
+  GFT, PMD, papier, restafval, glas and textiel (and their English names) are
+  recognised; other titles are shown as they are.
+- An **Energy price** widget: the dynamic electricity price in the Netherlands
+  from the free EnergyZero API, with whether it is low, average or high today, a
+  bar for every hour and the cheapest three hours. It is fetched hourly, and
+  only while a dashboard has the widget.
+- A `calendar` kind for widget settings, with a calendar picker in the
+  dashboard editor.
+
+### Fixed
+
+- Calendar titles no longer show the backslash that feeds put before an escaped
+  comma, such as `Plastic\, blik en drinkpakken`.
 
 ## 0.6.0 – 2026-10-11
 

@@ -108,6 +108,8 @@ add calendars and feeds under Settings, Data sources, and the photos once you ad
 | Forecast | Up to seven days, with the chance of rain |
 | Sun | Sunrise, sunset, the length of the day and how it compares with yesterday |
 | Air quality | The European air quality index in words, and the pollen in the air (Europe only) |
+| Waste collection | The next pickup of each kind of household waste in the coming 14 days, from one of your calendars |
+| Energy price | The electricity price now, whether it is low, average or high today, today's prices per hour and the cheapest three hours (Netherlands) |
 | Calendar | The coming week from your calendars |
 | News | Headlines from your feeds |
 | Note | A short text for the household |
@@ -129,6 +131,53 @@ in the list at the display.
 GDash. The file holds the layout, the theme (with its night theme and
 typeface, if any) and the widget settings, such
 as the text of a note; it holds no data and no calendar addresses.
+
+## Waste collection
+
+Many municipalities, and the sites mijnafvalwijzer and afvalkalender, offer
+the pickup dates as an **iCal link**. GDash can show the next pickups from it.
+
+1. Find the iCal (or "ICS" or "agenda") link of your address on the site of
+   your waste collector. It is an address that ends in `.ics` or is called
+   "subscribe to calendar".
+2. In GDash, under Settings, Data sources, Calendars, add that link as a
+   calendar and give it a name such as "Waste". It is stored encrypted, like
+   any calendar.
+3. Add a **Waste collection** widget to a dashboard. It asks which calendar to
+   use: choose the one you just added. A choice is required; GDash does not
+   guess, as your other calendars hold appointments and not pickups.
+
+The widget lists the next pickup of each kind in the coming 14 days, the
+soonest first, with the day as Today, Tomorrow or the weekday, in the
+language of the screens. GDash recognises the usual names in the titles of
+the events, Dutch and English: GFT, groente, green or organic as organic
+waste; PMD, plastic or packaging; papier or paper; restafval, rest or
+general waste; glas or glass; textiel or textile. Any other title is shown
+as it is, with a yellow dot. The colours are green for organic waste, orange
+for plastic, blue for paper, grey for general waste, teal for glass and purple
+for textile.
+
+A waste calendar can also be shown in the Calendar widget; that is a
+different widget and lists every event of the week. If the calendar is
+removed later, the widget says that it cannot find it, until you choose
+another. The pickups follow the calendar's own refresh, every 30 minutes.
+
+## Energy price
+
+The **Energy price** widget shows the dynamic electricity price in the
+Netherlands per hour, in euro per kWh including VAT. It needs no account and
+no setting: GDash reads the prices from the free EnergyZero API once an
+hour, only while a dashboard has the widget. It shows the price of the hour
+that is on now in large figures, whether that is low, average or high
+compared with the other hours of the day (the lowest, middle and highest
+third of the day's range), a bar for every hour of today with the current
+hour marked, and the cheapest stretch of three hours, for example
+"Cheapest 13:00 to 16:00". The prices for tomorrow are published around
+15:00; once the cheapest hours of today are over, the widget names the
+cheapest hours of tomorrow as soon as they are known. Days start and end in
+Dutch time. The figures are the prices that EnergyZero publishes, with VAT;
+a contract can add a supplier surcharge, so what you pay can differ, but
+which hours are cheap does not. The widget needs at least 6 by 4 cells.
 
 ## Home Assistant
 

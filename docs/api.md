@@ -179,7 +179,8 @@ it, so a separate, non-admin user for GDash is the safer choice.
 Changes apply at once: a changed source is fetched again, a removed one
 disappears from the displays. `status` has an entry per configured source by
 data key (`weather.current`, `airquality.current`, `news.default`,
-`calendar.default`, `homeassistant.default`).
+`calendar.default`, `homeassistant.default`). The waste and energy price sources
+(`waste.default`, `energyprice.nl`) exist only while a dashboard has a widget for them.
 
 Place search sends the typed name to Open-Meteo's geocoding service, which
 uses GeoNames data; the coordinates can also be entered by hand.
@@ -242,6 +243,8 @@ allows, overlaps another, lacks a required setting, or has a setting its type do
 | `forecast` | 6x4 | `weather.current` | `days`: 1 to 7, default 5 |
 | `sun` | 5x4 | `weather.current` | |
 | `airquality` | 5x4 | `airquality.current` | |
+| `waste` | 6x4 | `waste.default` | `calendar`: the `id` of one of the calendars in the settings (required) |
+| `energyprice` | 6x4 | `energyprice.nl` | |
 | `news` | 6x4 | `news.default` | `maxItems`: 1 to 20 |
 | `calendar` | 6x4 | `calendar.default` | `maxItems`: 1 to 20 |
 | `text` | 4x3 | none | `text`: 1 to 300 characters, line breaks allowed (required) |
@@ -249,8 +252,10 @@ allows, overlaps another, lacks a required setting, or has a setting its type do
 | `countdown` | 4x4 | none | `label`: 1 to 60 characters, `date`: `YYYY-MM-DD` (both required) |
 | `homeassistant` | 4x3 | `homeassistant.default` | `entities`: 1 to 8 entity IDs such as `sensor.living_room_temperature` (required) |
 
-A setting's `kind` is `integer`, `text`, `date` or `entities`; `min` and `max` bound an integer, a text's length in
-characters, or the number of entities.
+A setting's `kind` is `integer`, `text`, `date`, `calendar` or `entities`; `min` and `max` bound an integer, a text's length in
+characters, or the number of entities. A `calendar` setting is a whole number from 1 up, the `id` of a calendar; the
+server does not check that the calendar exists when a dashboard is saved, so a widget whose calendar is deleted later
+says on the screen that it cannot find it.
 Text settings are shown as plain text on the screen, never as HTML.
 
 **settings:** `{"language": "nl", "location": {"name": "Oss", "latitude": 51.77, "longitude": 5.52} | null, "newsFeeds": [{"id": 1, "name": "NOS", "url": "https://…"}], "calendars": [{"id": 2, "name": "Family", "host": "calendar.google.com", "color": "blue", "unreadable": false}]}`.
@@ -274,6 +279,19 @@ version lacks it until the next fetch.
 The index runs from 0 to 100 and above (good, fair, moderate, poor, very poor, extremely poor at 20, 40, 60, 80, 100).
 `pollen` only lists the kinds (alder, birch, grass, mugwort, olive, ragweed) that Open-Meteo has a value for; it is
 empty outside Europe and, depending on the model, outside the pollen season.
+
+**waste data (`waste.default`):** the pickups of the calendars that the waste widgets of the display show, by calendar
+`id` as text: `{"3": [{"kind": "gft", "title": "GFT", "date": "2026-10-13"}]}`. `kind` is `gft`, `pmd`, `paper`, `rest`,
+`glass`, `textile` or `other`, recognised from the event's title (Dutch and English names); `title` is the title as the
+calendar has it, which the screen shows for `other`; `date` is the local day the event starts. The server fetches the
+next 15 days of each calendar every 30 minutes, at most 60 pickups per calendar, and the screen shows the next pickup of
+each kind within 14 days. A calendar that is deleted or cannot be read is left out.
+
+**energy price data (`energyprice.nl`):** `{"days": [{"date": "2026-10-12", "hours": [{"start": "2026-10-12T00:00:00+02:00", "price": 0.22}], "cheapest": {"start": "2026-10-12T12:00:00+02:00", "end": "2026-10-12T15:00:00+02:00", "average": 0.1767}}]}`.
+`days` holds today and, from the afternoon on, tomorrow, by Dutch calendar day (`Europe/Amsterdam`); a day has 23, 24 or 25
+`hours`. `price` is euro per kWh including VAT as EnergyZero reports it, and can be negative. `cheapest` is the cheapest
+stretch of three consecutive hours of that day (the earliest when several cost the same), `end` being when its last hour
+ends, or `null` when the day has fewer than three hours. Refreshed hourly.
 
 **entity:** `{"id": "sensor.living_room_temperature", "name": "Living room", "state": "21.4", "unit": "°C", "deviceClass": "temperature"}`.
 The `homeassistant.default` data on a screen maps the entity IDs that its own widgets show to the same object
