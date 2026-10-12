@@ -124,4 +124,9 @@ export const fr: Record<TextKey, string> = {
   fuelDiesel: 'Diesel',
   fuelAutogas: 'GPL',
   fuelCng: 'GNV',
+  customLoading: 'Chargement…',
+  customFailed: 'L’API n’a pas pu être récupérée',
+  customMissing: 'Cette API n’est pas disponible. Choisissez-en une dans les réglages du widget.',
+  customYes: 'Oui',
+  customNo: 'Non',
 };

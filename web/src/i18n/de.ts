@@ -123,4 +123,9 @@ export const de: Record<TextKey, string> = {
   fuelDiesel: 'Diesel',
   fuelAutogas: 'LPG',
   fuelCng: 'CNG',
+  customLoading: 'Wird geladen…',
+  customFailed: 'Die API konnte nicht abgerufen werden',
+  customMissing: 'Diese API ist nicht verfügbar. Wähle eine in den Einstellungen des Widgets.',
+  customYes: 'Ja',
+  customNo: 'Nein',
 };

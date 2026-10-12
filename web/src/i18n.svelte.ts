@@ -133,6 +133,11 @@ const en = {
   fuelDiesel: 'Diesel',
   fuelAutogas: 'LPG',
   fuelCng: 'CNG',
+  customLoading: 'Loading…',
+  customFailed: 'The API could not be fetched',
+  customMissing: 'This API is not available. Choose one in the widget’s settings.',
+  customYes: 'Yes',
+  customNo: 'No',
 };
 
 export type TextKey = keyof typeof en;
@@ -261,6 +266,11 @@ export const TEXTS: Record<Language, Record<TextKey, string>> = {
     fuelDiesel: 'Diesel',
     fuelAutogas: 'LPG',
     fuelCng: 'CNG',
+    customLoading: 'Laden…',
+    customFailed: 'De API kon niet worden opgehaald',
+    customMissing: 'Deze API is niet beschikbaar. Kies er een in de instellingen van de widget.',
+    customYes: 'Ja',
+    customNo: 'Nee',
   },
   de,
   fr,
