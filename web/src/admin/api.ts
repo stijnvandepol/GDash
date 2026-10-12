@@ -32,6 +32,7 @@ import type {
   CustomSource,
   CustomSourceInput,
   CustomTest,
+  CustomValues,
   Dashboard,
   DashboardTemplate,
   DepartureStop,
@@ -175,6 +176,8 @@ export const api = {
   addCustomSource: (input: CustomSourceInput) => request<CustomSource>('POST', '/api/custom-sources', input),
   saveCustomSource: (id: number, input: CustomSourceInput) =>
     request<CustomSource>('PUT', `/api/custom-sources/${id}`, input),
+  saveCustomSourceValues: (id: number, values: CustomValues) =>
+    request<CustomSource>('PUT', `/api/custom-sources/${id}/values`, values),
   deleteCustomSource: (id: number) => request<void>('DELETE', `/api/custom-sources/${id}`),
   testCustomSource: (id: number) => request<CustomTest>('POST', `/api/custom-sources/${id}/tests`),
   checkRule: (check: { when: string; data: unknown; value?: unknown; row?: unknown }) =>

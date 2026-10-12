@@ -4,8 +4,9 @@
   import { ask } from './confirm.svelte';
   import { api, type CustomSource, type CustomTest, type SourceStatus } from './api';
   import { describeStatus } from './status';
-  import { describeInterval, describeSize, hostOf } from './customSources';
+  import { describeInterval, describeNamed, describeSize, hostOf } from './customSources';
   import CustomSourceForm from './CustomSourceForm.svelte';
+  import CustomSourceValues from './CustomSourceValues.svelte';
   import JsonTree from './JsonTree.svelte';
 
   // internal/custom allows this many sources.
@@ -26,6 +27,8 @@
   let error = $state('');
   // 'new', the id of the source being edited, or null.
   let editing = $state<'new' | number | null>(null);
+  // The id of the source whose values are being named, or null.
+  let naming = $state<number | null>(null);
   let testing = $state<number | null>(null);
   let result = $state<{ id: number; test: CustomTest } | null>(null);
   let picked = $state('');
@@ -45,6 +48,12 @@
     editing = null;
     await load();
     await onchanged();
+  }
+
+  async function savedValues(source: CustomSource) {
+    toast.success(`The values of ${source.name} are saved.`);
+    naming = null;
+    await load();
   }
 
   async function remove(source: CustomSource) {
@@ -80,8 +89,8 @@
   <h2>Custom APIs</h2>
   <p class="muted">
     Show data from any API that answers with JSON, such as a public transport, energy or weather service, or a device
-    on your network. Add the API here, then a Custom widget to a dashboard to choose what it shows. Only APIs that a
-    dashboard shows are fetched.
+    on your network. Add the API here and name the values it should show under Values; then add a Custom API widget
+    to a dashboard and choose them by name. Only APIs that a dashboard shows are fetched.
   </p>
   {#if sources.length > 0}
     <ul class="list">
@@ -90,7 +99,7 @@
         <li>
           <div class="grow">
             <strong>{source.name}</strong>
-            <span class="muted small">{source.method} {hostOf(source.url)} · {describeInterval(source.intervalSeconds)}</span>
+            <span class="muted small">{source.method} {hostOf(source.url)} · {describeInterval(source.intervalSeconds)} · {describeNamed(source)}</span>
             {#if source.unreadable}
               <span class="field-error">Its secrets cannot be read on this server. Edit it and enter them again.</span>
             {:else if st}
@@ -102,12 +111,18 @@
           <button class="link" disabled={testing !== null} onclick={() => test(source)}>
             {testing === source.id ? 'Testing…' : 'Test'}
           </button>
+          <button class="link" onclick={() => (naming = naming === source.id ? null : source.id)} aria-expanded={naming === source.id}>Values</button>
           <button class="link" onclick={() => (editing = source.id)}>Edit</button>
           <button class="link danger" onclick={() => remove(source)}>Remove</button>
         </li>
         {#if editing === source.id}
           <li class="form-row">
             <CustomSourceForm {source} onsaved={saved} oncancel={() => (editing = null)} {onerror} />
+          </li>
+        {/if}
+        {#if naming === source.id}
+          <li class="form-row">
+            <CustomSourceValues {source} onsaved={savedValues} onclose={() => (naming = null)} {onerror} />
           </li>
         {/if}
         {#if result?.id === source.id}

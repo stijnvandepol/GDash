@@ -216,8 +216,32 @@ export interface CustomSource {
   intervalSeconds: number;
   /** A pasted answer to design widgets against, or null. */
   sample: unknown;
+  /** The values named under Settings, which the dashboard editor offers by name. */
+  values: NamedValue[];
+  lists: NamedList[];
   /** True when the secrets cannot be decrypted with this server's key. */
   unreadable: boolean;
+}
+
+/** A value of a custom API's answer with a name, such as "Outside" at current.temperature_2m. */
+export interface NamedValue {
+  name: string;
+  path: string;
+  unit?: string;
+  /** Decimals a number shows; absent shows it as sent. */
+  decimals?: number;
+}
+
+/** A list in a custom API's answer with up to three columns, each read from an item. */
+export interface NamedList {
+  name: string;
+  path: string;
+  columns: { name: string; path: string }[];
+}
+
+export interface CustomValues {
+  values: NamedValue[];
+  lists: NamedList[];
 }
 
 /** A custom API as the form sends it; an empty secret keeps the stored one. */

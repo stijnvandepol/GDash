@@ -1,6 +1,16 @@
 import { describe, expect, it } from 'vitest';
 import type { CustomSource } from './api';
-import { describeInterval, describeSize, hostOf, parseSample, sampleText, secretPlaceholder, toInput } from './customSources';
+import {
+  describeInterval,
+  describeNamed,
+  describeSize,
+  hostOf,
+  parseSample,
+  sampleText,
+  secretPlaceholder,
+  suggestName,
+  toInput,
+} from './customSources';
 
 const source: CustomSource = {
   id: 3,
@@ -12,6 +22,8 @@ const source: CustomSource = {
   headers: [{ name: 'X-Tenant', value: '', secret: true }],
   intervalSeconds: 900,
   sample: { price: 1 },
+  values: [],
+  lists: [],
   unreadable: false,
 };
 
@@ -54,5 +66,32 @@ describe('describeInterval and hostOf', () => {
     expect(hostOf('not a url')).toBe('not a url');
     expect(describeSize(312)).toBe('312 bytes');
     expect(describeSize(14 * 1024 + 100)).toBe('14 KB');
+  });
+});
+
+describe('suggestName', () => {
+  it('names a value after its last key, in words', () => {
+    expect(suggestName('current.temperature_2m', [])).toBe('Temperature 2m');
+    expect(suggestName('main.feelsLike', [])).toBe('Feels like');
+    expect(suggestName('weather[0]', [])).toBe('Weather 1');
+    expect(suggestName('weather[0].description', [])).toBe('Description');
+    expect(suggestName('$', [])).toBe('Item');
+    expect(suggestName('["wind-speed"]', [])).toBe('Wind speed');
+  });
+
+  it('adds a number to a name that is taken, ignoring case', () => {
+    expect(suggestName('a.temp', ['Temp'])).toBe('Temp 2');
+    expect(suggestName('a.temp', ['temp', 'TEMP 2'])).toBe('Temp 3');
+    expect(suggestName(`a.${'x'.repeat(60)}`, [`X${'x'.repeat(39)}`])).toHaveLength(40);
+  });
+});
+
+describe('describeNamed', () => {
+  it('counts the named values and lists', () => {
+    expect(describeNamed({ values: [], lists: [] })).toBe('No values named yet');
+    expect(describeNamed({ values: [{ name: 'A', path: 'a' }], lists: [] })).toBe('1 value');
+    expect(describeNamed({ values: [{ name: 'A', path: 'a' }, { name: 'B', path: 'b' }], lists: [{ name: 'L', path: 'l', columns: [] }] })).toBe(
+      '2 values · 1 list',
+    );
   });
 });

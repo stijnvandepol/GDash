@@ -1,4 +1,5 @@
 import type { CustomAuthKind, CustomSource, CustomSourceInput } from './api';
+import { parsePath } from './jsonPath';
 
 /** How often a custom API can be fetched; internal/custom allows 30 seconds to 24 hours. */
 export const INTERVALS: { seconds: number; label: string }[] = [
@@ -89,4 +90,45 @@ export function hostOf(url: string): string {
   } catch {
     return url;
   }
+}
+
+/** internal/custom allows names of this many characters, 3 columns per list. */
+export const MAX_VALUE_NAME = 40;
+export const MAX_COLUMNS = 3;
+
+/** "2 values · 1 list", or that none are named yet. */
+export function describeNamed(source: Pick<CustomSource, 'values' | 'lists'>): string {
+  const count = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
+  if (source.values.length + source.lists.length === 0) return 'No values named yet';
+  return [count(source.values.length, 'value', 'values'), source.lists.length > 0 ? count(source.lists.length, 'list', 'lists') : '']
+    .filter(Boolean)
+    .join(' · ');
+}
+
+/**
+ * A name for a value clicked at path: its last key in words, such as
+ * "Temperature 2m" for current.temperature_2m or "Items 1" for items[0],
+ * made unique among taken (ignoring case) with a number.
+ */
+export function suggestName(path: string, taken: string[]): string {
+  const segments = parsePath(path)?.segments ?? [];
+  const last = segments[segments.length - 1];
+  const key = [...segments].reverse().find((s) => s.kind === 'key');
+  let base = key?.kind === 'key' ? words(key.key) : 'Item';
+  if (last?.kind === 'index' && last.index >= 0) base = `${base} ${last.index + 1}`;
+  base = base.slice(0, MAX_VALUE_NAME);
+  const used = new Set(taken.map((t) => t.toLowerCase()));
+  let name = base;
+  for (let n = 2; used.has(name.toLowerCase()); n++) name = `${base.slice(0, MAX_VALUE_NAME - String(n).length - 1)} ${n}`;
+  return name;
+}
+
+/** feelsLike or feels_like as "Feels like". */
+function words(key: string): string {
+  const text = key
+    .replace(/([a-z])([A-Z])/g, '$1 $2')
+    .replace(/[_\-.]+/g, ' ')
+    .trim()
+    .toLowerCase();
+  return text ? text[0]!.toUpperCase() + text.slice(1) : 'Value';
 }

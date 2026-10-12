@@ -83,6 +83,13 @@
     font-family: var(--mono);
     font-size: var(--fs-sm);
   }
+  /* A tree inside a list row (Settings) must not take that list's rules
+     and padding. */
+  .tree li {
+    display: block;
+    padding: 0;
+    border: 0;
+  }
   .tree.top {
     padding-left: 0;
     max-height: 24rem;
