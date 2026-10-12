@@ -1,5 +1,6 @@
 // Package settings manages what GDash fetches: the weather location, news
-// feeds, calendars and the Home Assistant connection. They are edited in the web interface and stored in
+// feeds, calendars, the Home Assistant connection and custom API sources.
+// They are edited in the web interface and stored in
 // SQLite; environment variables only fill them on the very first start.
 package settings
 

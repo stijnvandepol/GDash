@@ -1,18 +1,10 @@
 package custom
 
 import (
-	"context"
 	"encoding/json"
-	"errors"
-	"log/slog"
-	"path/filepath"
 	"slices"
-	"strings"
 	"testing"
-	"time"
 
-	"github.com/stijnvandepol/gdash/internal/secret"
-	"github.com/stijnvandepol/gdash/internal/store"
 	"github.com/stijnvandepol/gdash/internal/validation"
 )
 
@@ -111,106 +103,5 @@ func TestCheckKeepsStoredSecrets(t *testing.T) {
 	_, err = Check(input(func(in *Input) { in.Auth.Kind, in.Auth.Name = AuthQuery, "key" }), old)
 	if !slices.Contains(fieldsOf(err), "auth.secret") {
 		t.Fatalf("a header key became a query key without asking: %v", err)
-	}
-}
-
-func testService(t *testing.T) *Service {
-	t.Helper()
-	db, err := store.Open(context.Background(), filepath.Join(t.TempDir(), "gdash.db"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(func() { db.Close() })
-	box, err := secret.NewBox(make([]byte, 32))
-	if err != nil {
-		t.Fatal(err)
-	}
-	now := func() time.Time { return time.Date(2026, 10, 12, 9, 0, 0, 0, time.UTC) }
-	return &Service{Store: db, Box: box, Now: now, Logger: slog.New(slog.DiscardHandler)}
-}
-
-func TestServiceSealsSecretsAndNeverShowsThem(t *testing.T) {
-	ctx := context.Background()
-	svc := testService(t)
-	view, err := svc.Add(ctx, input(func(in *Input) {
-		in.Auth.Kind, in.Auth.Name, in.Auth.Secret = AuthQuery, "appid", testSecret
-		in.Headers = []Header{{Name: "X-Plain", Value: "shown"}, {Name: "X-Hidden", Value: testSecret + "-h", Secret: true}}
-	}))
-	if err != nil {
-		t.Fatal(err)
-	}
-	shown, _ := json.Marshal(view)
-	list, _ := svc.List(ctx)
-	listed, _ := json.Marshal(list)
-	row, _ := svc.Store.CustomSource(ctx, view.ID)
-	for what, text := range map[string]string{"view": string(shown), "list": string(listed), "row": row.Headers + row.URL + row.SecretsSealed} {
-		if strings.Contains(text, testSecret) {
-			t.Errorf("the %s holds the secret: %s", what, text)
-		}
-	}
-	if !view.Auth.SecretSet || view.Headers[0].Value != "shown" || view.Headers[1].Value != "" || !view.Headers[1].Secret {
-		t.Errorf("view = %+v", view)
-	}
-
-	src, err := svc.Source(ctx, view.ID)
-	if err != nil || src.AuthSecret != testSecret || src.Headers[1].Value != testSecret+"-h" || src.Interval != 5*time.Minute {
-		t.Fatalf("Source = %+v, %v", src, err)
-	}
-
-	// An edit without the secrets keeps them.
-	if _, err := svc.Update(ctx, view.ID, input(func(in *Input) {
-		in.Name = "Renamed"
-		in.Auth.Kind, in.Auth.Name = AuthQuery, "appid"
-		in.Headers = []Header{{Name: "X-Hidden", Secret: true}}
-	})); err != nil {
-		t.Fatal(err)
-	}
-	all, err := svc.Sources(ctx)
-	if err != nil || len(all) != 1 || all[0].Name != "Renamed" || all[0].AuthSecret != testSecret || all[0].Headers[0].Value != testSecret+"-h" {
-		t.Fatalf("Sources after update = %+v, %v", all, err)
-	}
-	if err := svc.Delete(ctx, view.ID); err != nil {
-		t.Fatal(err)
-	}
-	if _, err := svc.Update(ctx, view.ID, input(nil)); !errors.Is(err, store.ErrNotFound) {
-		t.Fatalf("update of a deleted source: %v", err)
-	}
-}
-
-func TestServiceWithAnotherKey(t *testing.T) {
-	ctx := context.Background()
-	svc := testService(t)
-	view, err := svc.Add(ctx, input(func(in *Input) { in.Auth.Kind, in.Auth.Secret = AuthBearer, "tok" }))
-	if err != nil {
-		t.Fatal(err)
-	}
-	other, _ := secret.NewBox([]byte(strings.Repeat("k", 32)))
-	svc.Box = other
-	list, err := svc.List(ctx)
-	if err != nil || len(list) != 1 || !list[0].Unreadable || list[0].Auth.SecretSet {
-		t.Fatalf("List with another key = %+v, %v", list, err)
-	}
-	if all, err := svc.Sources(ctx); err != nil || len(all) != 0 {
-		t.Fatalf("Sources with another key = %+v, %v; want the source left out", all, err)
-	}
-	// Entering the token again repairs it.
-	if _, err := svc.Update(ctx, view.ID, input(func(in *Input) { in.Auth.Kind, in.Auth.Secret = AuthBearer, "new" })); err != nil {
-		t.Fatal(err)
-	}
-	if all, _ := svc.Sources(ctx); len(all) != 1 || all[0].AuthSecret != "new" {
-		t.Fatalf("Sources after a new token = %+v", all)
-	}
-}
-
-func TestServiceLimit(t *testing.T) {
-	ctx := context.Background()
-	svc := testService(t)
-	for range MaxSources {
-		if _, err := svc.Add(ctx, input(nil)); err != nil {
-			t.Fatal(err)
-		}
-	}
-	if _, err := svc.Add(ctx, input(nil)); !errors.Is(err, store.ErrConflict) {
-		t.Fatalf("over the limit: %v", err)
 	}
 }

@@ -1,21 +1,22 @@
-package custom
+package settings
 
 import (
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log/slog"
 	"strings"
 	"time"
 
-	"github.com/stijnvandepol/gdash/internal/secret"
+	"github.com/stijnvandepol/gdash/internal/custom"
 	"github.com/stijnvandepol/gdash/internal/store"
 )
 
-// SourceView is a source as the web interface sees it: everything but the
-// secrets, which only say whether they are set.
-type SourceView struct {
+// CustomSource is a custom API source as the web interface sees it:
+// everything but the secrets, which only say whether they are set. The
+// sources themselves, their checks and fetching are in internal/custom;
+// this file stores them, with the secrets sealed.
+type CustomSource struct {
 	ID     int64  `json:"id"`
 	Name   string `json:"name"`
 	URL    string `json:"url"`
@@ -27,7 +28,7 @@ type SourceView struct {
 		SecretSet bool   `json:"secretSet"`
 	} `json:"auth"`
 	// Headers carry an empty value when they are secret.
-	Headers         []Header        `json:"headers"`
+	Headers         []custom.Header `json:"headers"`
 	IntervalSeconds int             `json:"intervalSeconds"`
 	Sample          json.RawMessage `json:"sample"`
 	// Unreadable is true when the secrets cannot be decrypted, for example
@@ -37,53 +38,46 @@ type SourceView struct {
 	UpdatedAt  time.Time `json:"updatedAt"`
 }
 
-// sealedSecrets is what secrets_sealed holds.
-type sealedSecrets struct {
+// sealedCustomSecrets is what secrets_sealed holds.
+type sealedCustomSecrets struct {
 	Auth    string            `json:"auth,omitempty"`
 	Headers map[string]string `json:"headers,omitempty"`
 }
 
-// Service reads and changes the custom sources.
-type Service struct {
-	Store  *store.Store
-	Box    *secret.Box
-	Now    func() time.Time
-	Logger *slog.Logger
-}
-
-// List returns every source for the web interface.
-func (s *Service) List(ctx context.Context) ([]SourceView, error) {
+// CustomSources returns every custom API source for the web interface.
+func (s *Service) CustomSources(ctx context.Context) ([]CustomSource, error) {
 	rows, err := s.Store.CustomSources(ctx)
 	if err != nil {
 		return nil, err
 	}
-	out := make([]SourceView, 0, len(rows))
+	out := make([]CustomSource, 0, len(rows))
 	for _, row := range rows {
-		out = append(out, s.view(row))
+		out = append(out, s.customView(row))
 	}
 	return out, nil
 }
 
-// Source returns one source with its secrets, for fetching it; it returns
-// store.ErrNotFound for an unknown ID.
-func (s *Service) Source(ctx context.Context, id int64) (Source, error) {
+// CustomSourceWithSecrets returns one source with its secrets, for
+// fetching it; it returns store.ErrNotFound for an unknown ID.
+func (s *Service) CustomSourceWithSecrets(ctx context.Context, id int64) (custom.Source, error) {
 	row, err := s.Store.CustomSource(ctx, id)
 	if err != nil {
-		return Source{}, err
+		return custom.Source{}, err
 	}
-	return s.open(row)
+	return s.openCustom(row)
 }
 
-// Sources returns every source that can be fetched. A source whose secrets
-// cannot be decrypted is left out and logged, so the others keep working.
-func (s *Service) Sources(ctx context.Context) ([]Source, error) {
+// FetchableCustomSources returns every source with its secrets. A source
+// whose secrets cannot be decrypted is left out and logged, so the others
+// keep working.
+func (s *Service) FetchableCustomSources(ctx context.Context) ([]custom.Source, error) {
 	rows, err := s.Store.CustomSources(ctx)
 	if err != nil {
 		return nil, err
 	}
-	var out []Source
+	var out []custom.Source
 	for _, row := range rows {
-		src, err := s.open(row)
+		src, err := s.openCustom(row)
 		if err != nil {
 			s.Logger.Error("custom API secrets cannot be decrypted; enter them again", "source", row.Name, "error", err)
 			continue
@@ -93,61 +87,61 @@ func (s *Service) Sources(ctx context.Context) ([]Source, error) {
 	return out, nil
 }
 
-// Add stores a new source. It returns a *validation.Error for invalid input
-// and store.ErrConflict when MaxSources exist.
-func (s *Service) Add(ctx context.Context, in Input) (SourceView, error) {
-	src, err := Check(in, nil)
+// AddCustomSource stores a new source. It returns a *validation.Error for
+// invalid input and store.ErrConflict when custom.MaxSources exist.
+func (s *Service) AddCustomSource(ctx context.Context, in custom.Input) (CustomSource, error) {
+	src, err := custom.Check(in, nil)
 	if err != nil {
-		return SourceView{}, err
+		return CustomSource{}, err
 	}
-	row, err := s.row(src)
+	row, err := s.customRow(src)
 	if err != nil {
-		return SourceView{}, err
+		return CustomSource{}, err
 	}
 	row.CreatedAt = row.UpdatedAt
-	if row.ID, err = s.Store.AddCustomSource(ctx, row, MaxSources); err != nil {
-		return SourceView{}, err
+	if row.ID, err = s.Store.AddCustomSource(ctx, row, custom.MaxSources); err != nil {
+		return CustomSource{}, err
 	}
-	return s.view(row), nil
+	return s.customView(row), nil
 }
 
-// Update changes a source; empty secrets keep the stored ones. It returns
-// store.ErrNotFound for an unknown ID.
-func (s *Service) Update(ctx context.Context, id int64, in Input) (SourceView, error) {
+// UpdateCustomSource changes a source; empty secrets keep the stored ones.
+// It returns store.ErrNotFound for an unknown ID.
+func (s *Service) UpdateCustomSource(ctx context.Context, id int64, in custom.Input) (CustomSource, error) {
 	stored, err := s.Store.CustomSource(ctx, id)
 	if err != nil {
-		return SourceView{}, err
+		return CustomSource{}, err
 	}
-	old, err := s.open(stored)
+	old, err := s.openCustom(stored)
 	if err != nil {
 		// The secrets are lost with the key; the admin enters them again.
-		old = Source{ID: id}
+		old = custom.Source{ID: id}
 	}
-	src, err := Check(in, &old)
+	src, err := custom.Check(in, &old)
 	if err != nil {
-		return SourceView{}, err
+		return CustomSource{}, err
 	}
-	row, err := s.row(src)
+	row, err := s.customRow(src)
 	if err != nil {
-		return SourceView{}, err
+		return CustomSource{}, err
 	}
 	row.CreatedAt = stored.CreatedAt
 	if err := s.Store.UpdateCustomSource(ctx, row); err != nil {
-		return SourceView{}, err
+		return CustomSource{}, err
 	}
-	return s.view(row), nil
+	return s.customView(row), nil
 }
 
-// Delete removes a source, or returns store.ErrNotFound. Widgets that show
-// it then say that their source is gone.
-func (s *Service) Delete(ctx context.Context, id int64) error {
+// DeleteCustomSource removes a source, or returns store.ErrNotFound.
+// Widgets that show it then say that their source is gone.
+func (s *Service) DeleteCustomSource(ctx context.Context, id int64) error {
 	return s.Store.DeleteCustomSource(ctx, id)
 }
 
-// row seals the secrets of src for storing.
-func (s *Service) row(src Source) (store.CustomSource, error) {
-	secrets := sealedSecrets{Auth: src.AuthSecret, Headers: map[string]string{}}
-	shown := make([]Header, len(src.Headers))
+// customRow seals the secrets of src for storing.
+func (s *Service) customRow(src custom.Source) (store.CustomSource, error) {
+	secrets := sealedCustomSecrets{Auth: src.AuthSecret, Headers: map[string]string{}}
+	shown := make([]custom.Header, len(src.Headers))
 	for i, h := range src.Headers {
 		shown[i] = h
 		if h.Secret {
@@ -176,25 +170,25 @@ func (s *Service) row(src Source) (store.CustomSource, error) {
 	}, nil
 }
 
-// open decrypts a stored source.
-func (s *Service) open(row store.CustomSource) (Source, error) {
-	src := Source{
+// openCustom decrypts a stored source.
+func (s *Service) openCustom(row store.CustomSource) (custom.Source, error) {
+	src := custom.Source{
 		ID: row.ID, Name: row.Name, URL: row.URL, Method: row.Method, Body: row.Body, Auth: row.Auth,
 		AuthName: row.AuthName, Interval: time.Duration(row.IntervalSeconds) * time.Second, Sample: row.Sample,
 	}
 	if err := json.Unmarshal([]byte(row.Headers), &src.Headers); err != nil {
-		return Source{}, fmt.Errorf("stored headers of custom source %d are invalid: %w", row.ID, err)
+		return custom.Source{}, fmt.Errorf("stored headers of custom source %d are invalid: %w", row.ID, err)
 	}
 	if row.SecretsSealed == "" {
 		return src, nil
 	}
 	plain, err := s.Box.Open(row.SecretsSealed)
 	if err != nil {
-		return Source{}, err
+		return custom.Source{}, err
 	}
-	var secrets sealedSecrets
+	var secrets sealedCustomSecrets
 	if err := json.Unmarshal([]byte(plain), &secrets); err != nil {
-		return Source{}, errors.New("stored secrets are invalid")
+		return custom.Source{}, errors.New("stored secrets are invalid")
 	}
 	src.AuthSecret = secrets.Auth
 	for i, h := range src.Headers {
@@ -205,11 +199,11 @@ func (s *Service) open(row store.CustomSource) (Source, error) {
 	return src, nil
 }
 
-func (s *Service) view(row store.CustomSource) SourceView {
-	v := SourceView{
+func (s *Service) customView(row store.CustomSource) CustomSource {
+	v := CustomSource{
 		ID: row.ID, Name: row.Name, URL: row.URL, Method: row.Method, Body: row.Body,
 		IntervalSeconds: row.IntervalSeconds, CreatedAt: row.CreatedAt, UpdatedAt: row.UpdatedAt,
-		Headers: []Header{},
+		Headers: []custom.Header{},
 	}
 	v.Auth.Kind, v.Auth.Name = row.Auth, row.AuthName
 	if row.Sample != "" {
@@ -223,7 +217,7 @@ func (s *Service) view(row store.CustomSource) SourceView {
 		v.Unreadable = v.Unreadable || err != nil
 		// Header secrets are listed by their header; only the auth one is
 		// a separate flag.
-		v.Auth.SecretSet = row.Auth != AuthNone && err == nil
+		v.Auth.SecretSet = row.Auth != custom.AuthNone && err == nil
 	}
 	return v
 }
