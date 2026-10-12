@@ -91,6 +91,7 @@ type testEnv struct {
 	pairing         *pairing.Service
 	store           *store.Store
 	sources         *fakeSources
+	stops           *fakeStops
 	board           *announcement.Board
 	// announced counts AnnouncementsChanged calls.
 	announced *atomic.Int32
@@ -119,6 +120,7 @@ func newTestEnv(t *testing.T, discover func(context.Context) ([]cast.Device, err
 	logger := slog.New(slog.NewTextHandler(logs, nil))
 	now := func() time.Time { return time.Date(2026, 10, 8, 17, 0, 0, 0, time.UTC) }
 	sources := &fakeSources{}
+	stops := &fakeStops{}
 	board := announcement.NewBoard(now)
 	album, err := photos.NewStore(filepath.Join(t.TempDir(), "photos"))
 	if err != nil {
@@ -142,6 +144,7 @@ func newTestEnv(t *testing.T, discover func(context.Context) ([]cast.Device, err
 		DashboardsChanged:    func() { changes.Add(1) },
 		Settings:             &settings.Service{Store: st, Box: box, Now: now, Logger: logger},
 		Places:               sources,
+		Stops:                stops,
 		HomeAssistant:        &homeassistant.Client{HTTP: &http.Client{Timeout: 5 * time.Second}},
 		SettingsChanged:      func() { settingsChanges.Add(1) },
 		Announcements:        board,
@@ -165,7 +168,7 @@ func newTestEnv(t *testing.T, discover func(context.Context) ([]cast.Device, err
 	jar, _ := cookiejar.New(nil)
 	return &testEnv{
 		srv: srv, client: &http.Client{Jar: jar}, changes: changes, settingsChanges: settingsChanges,
-		pairing: pairingService, store: st, sources: sources, board: board, announced: announced, logs: logs,
+		pairing: pairingService, store: st, sources: sources, stops: stops, board: board, announced: announced, logs: logs,
 	}
 }
 

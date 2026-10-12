@@ -55,6 +55,11 @@ const (
 	homeAssistantInterval    = time.Minute
 	homeAssistantTimeout     = 30 * time.Second
 	maxHomeAssistantEntities = 40
+	// OVapi is run by volunteers: one request for all stops, at most every
+	// 30 seconds, and only for stops that a dashboard shows. A departure
+	// board counts down in minutes, so a longer wait would show old times.
+	departuresInterval = 30 * time.Second
+	maxDepartureStops  = 10
 	// A refresh fetches all feeds or all calendars, partly in parallel;
 	// each request may take upstreamTimeout.
 	newsTimeout     = 30 * time.Second
@@ -180,6 +185,7 @@ func serve(ctx context.Context, logger *slog.Logger) error {
 		Settings:       settingsService,
 		Places:         weather.Geocoder{BaseURL: weather.DefaultGeocodingURL, HTTP: &http.Client{Timeout: upstreamTimeout}},
 		HomeAssistant:  sources.home,
+		Stops:          sources.stops,
 		TrustedProxies: cfg.trustedProxies,
 		Web:            frontend,
 		Discover:       cast.Discover,
@@ -188,7 +194,8 @@ func serve(ctx context.Context, logger *slog.Logger) error {
 			castManager.Changed()
 		},
 		DashboardsChanged: func() {
-			// A dashboard can start or stop showing a Home Assistant entity.
+			// A dashboard can start or stop showing a Home Assistant entity
+			// or a transit stop.
 			if err := sources.sync(ctx); err != nil {
 				logger.Error("could not follow the dashboard change; restart GDash", "error", err)
 			}

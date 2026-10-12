@@ -14,6 +14,7 @@ import (
 	"github.com/stijnvandepol/gdash/internal/announcement"
 	"github.com/stijnvandepol/gdash/internal/calendar"
 	"github.com/stijnvandepol/gdash/internal/datahub"
+	"github.com/stijnvandepol/gdash/internal/departures"
 	"github.com/stijnvandepol/gdash/internal/display"
 	"github.com/stijnvandepol/gdash/internal/energyprice"
 	"github.com/stijnvandepol/gdash/internal/homeassistant"
@@ -35,8 +36,11 @@ type dataSources struct {
 	calendar   *calendar.Client
 	home       *homeassistant.Client
 	energy     energyprice.Client
+	departures *departures.Client
+	// stops searches the stop areas for the widget editor.
+	stops *departures.Directory
 	// dashboards lists every dashboard, for the Home Assistant entities
-	// their widgets show.
+	// and transit stops their widgets show.
 	dashboards func(ctx context.Context) ([]display.Dashboard, error)
 	logger     *slog.Logger
 
@@ -71,6 +75,12 @@ func startData(ctx context.Context, cfg config, db *store.Store, svc *settings.S
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("load the Dutch time zone: %w", err)
 	}
+	transit := &departures.Client{
+		BaseURL:   departures.DefaultBaseURL,
+		HTTP:      outbound.NewClient(upstreamTimeout),
+		UserAgent: "GDash/" + currentVersion() + " (self-hosted TV dashboard; +https://github.com/stijnvandepol/gdash)",
+		Now:       time.Now,
+	}
 	sources := &dataSources{
 		hub:        hub,
 		settings:   svc,
@@ -80,6 +90,8 @@ func startData(ctx context.Context, cfg config, db *store.Store, svc *settings.S
 		news:       &news.Client{HTTP: outbound.NewClient(upstreamTimeout)},
 		calendar:   &calendar.Client{HTTP: outbound.NewClient(upstreamTimeout), Location: time.Local, Now: time.Now},
 		home:       &homeassistant.Client{HTTP: outbound.NewClient(upstreamTimeout)},
+		departures: transit,
+		stops:      &departures.Directory{Source: transit, Now: time.Now, Logger: logger},
 		dashboards: db.Dashboards,
 		logger:     logger,
 		energy:     energyprice.Client{BaseURL: energyprice.DefaultBaseURL, HTTP: outbound.NewClient(upstreamTimeout), Location: dutch, Now: time.Now},
@@ -127,15 +139,16 @@ func (d *dataSources) sync(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("read dashboards: %w", err)
 	}
-	sources := d.build(cfg, display.EntityIDs(dashboards))
+	sources := d.build(cfg, display.EntityIDs(dashboards), display.StopCodes(dashboards))
 	d.hub.Configure(ctx, append(sources, d.dashboardSources(cfg, dashboards)...))
 	return nil
 }
 
 // build turns settings into hub sources. A source that has nothing to fetch
 // is left out, so its widgets show that it is not set up. entities are the
-// Home Assistant entities that dashboards show.
-func (d *dataSources) build(cfg settings.Sources, entities []string) []datahub.Source {
+// Home Assistant entities and stops the transit stop areas that dashboards
+// show.
+func (d *dataSources) build(cfg settings.Sources, entities, stops []string) []datahub.Source {
 	var sources []datahub.Source
 	if loc := cfg.Location; loc != nil {
 		sources = append(sources, datahub.Source{
@@ -178,6 +191,16 @@ func (d *dataSources) build(cfg settings.Sources, entities []string) []datahub.S
 			Timeout:  homeAssistantTimeout,
 			Version:  d.fingerprint(struct{ Connection, Entities any }{*conn, entities}),
 			Fetch:    func(ctx context.Context) (any, error) { return d.home.States(ctx, *conn, entities) },
+		})
+	}
+	if len(stops) > 0 {
+		// One request covers all stops; the cap keeps the address short.
+		stops = stops[:min(len(stops), maxDepartureStops)]
+		sources = append(sources, datahub.Source{
+			Key:      display.DeparturesSource,
+			Interval: departuresInterval,
+			Version:  d.fingerprint(stops),
+			Fetch:    func(ctx context.Context) (any, error) { return d.departures.Boards(ctx, stops) },
 		})
 	}
 	return sources
