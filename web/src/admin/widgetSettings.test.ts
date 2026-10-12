@@ -109,9 +109,9 @@ describe('paletteGroups', () => {
   });
 
   it('leaves out types the server does not have and lists unknown ones under Other', () => {
-    expect(labels('', ['clock', 'homey'])).toEqual([
+    expect(labels('', ['clock', 'aquarium'])).toEqual([
       ['Time & date', ['Clock']],
-      ['Other', ['homey']],
+      ['Other', ['aquarium']],
     ]);
   });
 });
