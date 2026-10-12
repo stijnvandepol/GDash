@@ -26,6 +26,7 @@
   import Photos from './widgets/Photos.svelte';
   import HomeAssistant from './widgets/HomeAssistant.svelte';
   import Departures from './widgets/Departures.svelte';
+  import Fuel from './widgets/Fuel.svelte';
   import Calendar from './widgets/Calendar.svelte';
 
   // Dashboards are designed on a fixed 1920x1080 stage and scaled to the
@@ -155,6 +156,8 @@
             <HomeAssistant entry={widget.source ? display.snapshot?.data[widget.source] : undefined} settings={widget.settings} />
           {:else if widget.type === 'departures'}
             <Departures entry={widget.source ? display.snapshot?.data[widget.source] : undefined} settings={widget.settings} />
+          {:else if widget.type === 'fuel'}
+            <Fuel entry={widget.source ? display.snapshot?.data[widget.source] : undefined} settings={widget.settings} />
           {:else}
             <p class="muted">{t('unknownWidget', { type: widget.type })}</p>
           {/if}

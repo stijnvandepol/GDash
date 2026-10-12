@@ -29,6 +29,7 @@ describe('waitingText', () => {
     expect(waitingText(undefined, 'airquality')).toBe('No location set. Choose one under Settings.');
     expect(waitingText(undefined, 'waste')).toBe('No calendar. Add one under Settings.');
     expect(waitingText(undefined, 'energyprice')).toBe('Loading the electricity price…');
+    expect(waitingText(undefined, 'fuel')).toBe('Set a weather location under Settings, or choose a place for this widget.');
   });
 
   it('says loading while the first fetch runs', () => {
@@ -41,6 +42,7 @@ describe('waitingText', () => {
     expect(waitingText({ ...entry, failing: true }, 'airquality')).toBe('Could not load the air quality');
     expect(waitingText({ ...entry, failing: true }, 'waste')).toBe('Could not load the waste collection');
     expect(waitingText({ ...entry, failing: true }, 'energyprice')).toBe('Could not load the electricity price');
+    expect(waitingText({ ...entry, failing: true }, 'fuel')).toBe('Could not load the fuel prices');
   });
 
   it('speaks the household language', () => {
@@ -50,6 +52,7 @@ describe('waitingText', () => {
     expect(waitingText(entry, 'airquality')).toBe('Luchtkwaliteit laden…');
     expect(waitingText(entry, 'waste')).toBe('Afvalkalender laden…');
     expect(waitingText(entry, 'energyprice')).toBe('Stroomprijs laden…');
+    expect(waitingText(entry, 'fuel')).toBe('Brandstofprijzen laden…');
     expect(waitingText(undefined, 'news')).toBe('Geen nieuwsfeed. Voeg er een toe onder Settings.');
   });
 });

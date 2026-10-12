@@ -12,7 +12,8 @@ export type Source =
   | 'news'
   | 'calendar'
   | 'homeassistant'
-  | 'departures';
+  | 'departures'
+  | 'fuel';
 
 const TEXTS: Record<Source, { notSetUp: TextKey; failed: TextKey; loading: TextKey }> = {
   weather: { notSetUp: 'weatherNotSetUp', failed: 'weatherFailed', loading: 'weatherLoading' },
@@ -30,6 +31,9 @@ const TEXTS: Record<Source, { notSetUp: TextKey; failed: TextKey; loading: TextK
   calendar: { notSetUp: 'calendarNotSetUp', failed: 'calendarFailed', loading: 'calendarLoading' },
   homeassistant: { notSetUp: 'haNotSetUp', failed: 'haFailed', loading: 'haLoading' },
   departures: { notSetUp: 'departuresNotSetUp', failed: 'departuresFailed', loading: 'departuresLoading' },
+  // Without a place the widget follows the weather location, and without
+  // that the server sends no entry.
+  fuel: { notSetUp: 'fuelNotSetUp', failed: 'fuelFailed', loading: 'fuelLoading' },
 };
 
 /**
