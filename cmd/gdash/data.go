@@ -13,6 +13,7 @@ import (
 	"github.com/stijnvandepol/gdash/internal/airquality"
 	"github.com/stijnvandepol/gdash/internal/announcement"
 	"github.com/stijnvandepol/gdash/internal/calendar"
+	"github.com/stijnvandepol/gdash/internal/custom"
 	"github.com/stijnvandepol/gdash/internal/datahub"
 	"github.com/stijnvandepol/gdash/internal/departures"
 	"github.com/stijnvandepol/gdash/internal/display"
@@ -39,10 +40,11 @@ type dataSources struct {
 	energy     energyprice.Client
 	departures *departures.Client
 	fuel       *fuel.Client
+	custom     *custom.Fetcher
 	// stops searches the stop areas for the widget editor.
 	stops *departures.Directory
-	// dashboards lists every dashboard, for the Home Assistant entities
-	// and transit stops their widgets show.
+	// dashboards lists every dashboard, for the Home Assistant entities,
+	// transit stops and custom sources their widgets show.
 	dashboards func(ctx context.Context) ([]display.Dashboard, error)
 	logger     *slog.Logger
 
@@ -60,6 +62,7 @@ func startData(ctx context.Context, cfg config, db *store.Store, svc *settings.S
 	}
 	broadcaster := display.NewBroadcaster()
 	var hub *datahub.Hub
+	var rules *customRules
 	publisher := &display.Publisher{
 		Broadcaster:   broadcaster,
 		Views:         db.DisplayViews,
@@ -69,9 +72,24 @@ func startData(ctx context.Context, cfg config, db *store.Store, svc *settings.S
 		Now:           time.Now,
 		Logger:        logger,
 	}
-	hub = datahub.New(cache, logger, func() { publisher.Refresh(ctx) })
+	refresh := func() {
+		rules.check(ctx)
+		publisher.Refresh(ctx)
+	}
+	rules = &customRules{
+		announcer:  custom.Announcer{Gap: custom.AnnounceGap},
+		dashboards: db.Dashboards,
+		displays:   db.Displays,
+		data:       func() map[string]datahub.Entry { return hub.Entries() },
+		board:      publisher.Announcements,
+		announced:  announced(ctx, publisher),
+		audit:      db.AddAuditEvent,
+		now:        time.Now,
+		logger:     logger,
+	}
+	hub = datahub.New(cache, logger, refresh)
 	publisher.Refresh(ctx)
-	go republishEveryMinute(ctx, publisher)
+	go everyMinute(ctx, refresh)
 
 	dutch, err := time.LoadLocation(dutchTimeZone)
 	if err != nil {
@@ -95,6 +113,7 @@ func startData(ctx context.Context, cfg config, db *store.Store, svc *settings.S
 		home:       &homeassistant.Client{HTTP: outbound.NewClient(upstreamTimeout)},
 		departures: transit,
 		fuel:       &fuel.Client{BaseURL: fuel.DefaultBaseURL, HTTP: outbound.NewClient(upstreamTimeout), UserAgent: userAgent},
+		custom:     &custom.Fetcher{HTTP: outbound.NewClient(upstreamTimeout), UserAgent: userAgent},
 		stops:      &departures.Directory{Source: transit, Now: time.Now, Logger: logger},
 		dashboards: db.Dashboards,
 		logger:     logger,
@@ -143,8 +162,13 @@ func (d *dataSources) sync(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("read dashboards: %w", err)
 	}
+	customs, err := d.settings.FetchableCustomSources(ctx)
+	if err != nil {
+		return fmt.Errorf("read custom sources: %w", err)
+	}
 	sources := d.build(cfg, display.EntityIDs(dashboards), display.StopCodes(dashboards))
-	d.hub.Configure(ctx, append(sources, d.dashboardSources(cfg, dashboards)...))
+	sources = append(sources, d.dashboardSources(cfg, dashboards)...)
+	d.hub.Configure(ctx, append(sources, d.customSources(customs, display.CustomSourceIDs(dashboards))...))
 	return nil
 }
 
@@ -217,9 +241,10 @@ func (d *dataSources) fingerprint(v any) string {
 	return d.settings.Box.Fingerprint(fmt.Appendf(nil, "%+v", v))
 }
 
-// republishEveryMinute lets displays cross the edge of their active hours on
-// time, even when no data changes.
-func republishEveryMinute(ctx context.Context, publisher *display.Publisher) {
+// everyMinute runs refresh every minute, so displays cross the edge of
+// their active hours on time and time-based rules apply, even when no data
+// changes.
+func everyMinute(ctx context.Context, refresh func()) {
 	ticker := time.NewTicker(time.Minute)
 	defer ticker.Stop()
 	for {
@@ -227,7 +252,17 @@ func republishEveryMinute(ctx context.Context, publisher *display.Publisher) {
 		case <-ctx.Done():
 			return
 		case <-ticker.C:
-			publisher.Refresh(ctx)
+			refresh()
 		}
+	}
+}
+
+// announced returns what to do after an announcement is posted: show it
+// now, and take it out of the snapshot a screen gets when it connects
+// later, once it expires (the screen drops it by itself).
+func announced(ctx context.Context, publisher *display.Publisher) func(expiresAt time.Time) {
+	return func(expiresAt time.Time) {
+		publisher.Refresh(ctx)
+		time.AfterFunc(time.Until(expiresAt), func() { publisher.Refresh(ctx) })
 	}
 }

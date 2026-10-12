@@ -190,6 +190,7 @@ func serve(ctx context.Context, logger *slog.Logger) error {
 		Places:         weather.Geocoder{BaseURL: weather.DefaultGeocodingURL, HTTP: &http.Client{Timeout: upstreamTimeout}},
 		HomeAssistant:  sources.home,
 		Stops:          sources.stops,
+		CustomFetcher:  sources.custom,
 		TrustedProxies: cfg.trustedProxies,
 		Web:            frontend,
 		Discover:       cast.Discover,
@@ -198,20 +199,15 @@ func serve(ctx context.Context, logger *slog.Logger) error {
 			castManager.Changed()
 		},
 		DashboardsChanged: func() {
-			// A dashboard can start or stop showing a Home Assistant entity
-			// or a transit stop.
+			// A dashboard can start or stop showing a Home Assistant entity,
+			// a transit stop or a custom source.
 			if err := sources.sync(ctx); err != nil {
 				logger.Error("could not follow the dashboard change; restart GDash", "error", err)
 			}
 			publisher.Refresh(ctx)
 		},
-		Announcements: publisher.Announcements,
-		AnnouncementsChanged: func(expiresAt time.Time) {
-			publisher.Refresh(ctx)
-			// The screen drops the message itself; this takes it out of
-			// the snapshot a screen gets when it connects later.
-			time.AfterFunc(time.Until(expiresAt), func() { publisher.Refresh(ctx) })
-		},
+		Announcements:        publisher.Announcements,
+		AnnouncementsChanged: announced(ctx, publisher),
 		SettingsChanged: func() {
 			if err := sources.sync(ctx); err != nil {
 				logger.Error("could not apply the new settings; restart GDash", "error", err)
