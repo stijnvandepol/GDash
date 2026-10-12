@@ -47,7 +47,7 @@ func newTestService(t *testing.T) (*Service, *testClock) {
 
 func setUp(t *testing.T, s *Service) string {
 	t.Helper()
-	token, _, err := s.Setup(context.Background(), testToken, Credentials{"stijn", "correct horse battery"}, "192.168.1.109")
+	token, _, err := s.Setup(context.Background(), testToken, Credentials{"stijn", "correct horse battery"}, "192.168.1.109", false)
 	if err != nil {
 		t.Fatalf("Setup: %v", err)
 	}
@@ -73,7 +73,7 @@ func TestSetupCreatesAccountAndSession(t *testing.T) {
 func TestSetupOnlyOnce(t *testing.T) {
 	s, _ := newTestService(t)
 	setUp(t, s)
-	_, _, err := s.Setup(context.Background(), testToken, Credentials{"attacker", "another long password"}, "192.168.1.66")
+	_, _, err := s.Setup(context.Background(), testToken, Credentials{"attacker", "another long password"}, "192.168.1.66", false)
 	if !errors.Is(err, ErrSetupDone) {
 		t.Fatalf("second Setup: err = %v, want ErrSetupDone", err)
 	}
@@ -82,12 +82,12 @@ func TestSetupOnlyOnce(t *testing.T) {
 func TestSetupRejectsWrongTokenAndRateLimits(t *testing.T) {
 	s, _ := newTestService(t)
 	for range maxFailures {
-		_, _, err := s.Setup(context.Background(), "guess", Credentials{"stijn", "correct horse battery"}, "192.168.1.66")
+		_, _, err := s.Setup(context.Background(), "guess", Credentials{"stijn", "correct horse battery"}, "192.168.1.66", false)
 		if !errors.Is(err, ErrInvalidSetupToken) {
 			t.Fatalf("Setup with wrong token: err = %v", err)
 		}
 	}
-	_, _, err := s.Setup(context.Background(), testToken, Credentials{"stijn", "correct horse battery"}, "192.168.1.66")
+	_, _, err := s.Setup(context.Background(), testToken, Credentials{"stijn", "correct horse battery"}, "192.168.1.66", false)
 	if !errors.Is(err, ErrRateLimited) {
 		t.Fatalf("Setup after %d failures: err = %v, want ErrRateLimited", maxFailures, err)
 	}
@@ -97,26 +97,28 @@ func TestSetupWithoutTokenOnlyFromHomeAndInTheWindow(t *testing.T) {
 	creds := Credentials{"stijn", "correct horse battery"}
 	cases := []struct {
 		ip       string
+		viaProxy bool
 		after    time.Duration
 		tokenNow bool
 	}{
-		{"192.168.1.109", 0, false},
-		{"::1", 0, false},
-		{"fd00::5", 0, false},
-		{"::ffff:10.0.0.7", 0, false},
-		{"203.0.113.9", 0, true},
-		{"2001:db8::1", 0, true},
-		{"not an address", 0, true},
-		{"192.168.1.109", SetupWindow, true},
+		{"192.168.1.109", false, 0, false},
+		{"::1", false, 0, false},
+		{"fd00::5", false, 0, false},
+		{"::ffff:10.0.0.7", false, 0, false},
+		{"203.0.113.9", false, 0, true},
+		{"2001:db8::1", false, 0, true},
+		{"not an address", false, 0, true},
+		{"192.168.1.109", false, SetupWindow, true},
+		{"172.17.0.1", true, 0, true},
 	}
 	for _, c := range cases {
 		s, clock := newTestService(t)
 		s.setupOpenUntil = clock.t.Add(SetupWindow)
 		clock.t = clock.t.Add(c.after)
-		if got := s.SetupTokenRequired(c.ip); got != c.tokenNow {
+		if got := s.SetupTokenRequired(c.ip, c.viaProxy); got != c.tokenNow {
 			t.Errorf("SetupTokenRequired(%q) after %v = %v", c.ip, c.after, got)
 		}
-		_, _, err := s.Setup(context.Background(), "", creds, c.ip)
+		_, _, err := s.Setup(context.Background(), "", creds, c.ip, c.viaProxy)
 		if c.tokenNow && !errors.Is(err, ErrInvalidSetupToken) {
 			t.Errorf("Setup without token from %q after %v: err = %v, want ErrInvalidSetupToken", c.ip, c.after, err)
 		}
@@ -128,7 +130,7 @@ func TestSetupWithoutTokenOnlyFromHomeAndInTheWindow(t *testing.T) {
 
 func TestSetupValidatesAccount(t *testing.T) {
 	s, _ := newTestService(t)
-	_, _, err := s.Setup(context.Background(), testToken, Credentials{"stijn van de pol", "short"}, "192.168.1.109")
+	_, _, err := s.Setup(context.Background(), testToken, Credentials{"stijn van de pol", "short"}, "192.168.1.109", false)
 	fields := validation.Fields(err)
 	if len(fields) != 2 || fields[0].Field != "username" || fields[1].Field != "password" {
 		t.Fatalf("Setup error = %v, want username and password field errors", err)

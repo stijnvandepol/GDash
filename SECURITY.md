@@ -140,10 +140,13 @@ fully trust, such as a guest's phone.
 - Until the first account exists, anyone on the home network can create it in
   the first hour after GDash starts, without a token, as with Home
   Assistant's onboarding: the person who installs GDash opens it right away.
-  After that hour, or from an address that is not private, it takes the
-  setup token printed in the log. Behind Docker's port mapping every client
-  can look like a private address, so do not expose a fresh install to the
-  internet before creating the account. Anyone who can read the server's log
+  After that hour, from an address that is not private, or through a reverse
+  proxy that is not listed in `GDASH_TRUSTED_PROXIES` (a request with
+  `X-Forwarded-For`, `Forwarded` or `X-Real-IP`), it takes the setup token
+  printed in the log. Only the TCP peer address counts. A router port
+  forward to Docker's port mapping can still make an internet client look
+  private, so do not expose a fresh install to the internet before creating
+  the account. Anyone who can read the server's log
   can create the first account with the setup token printed there, and anyone who can run
   commands on the server can reset a password with `gdash reset-password`.
   Both already control the server.

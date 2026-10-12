@@ -351,6 +351,27 @@ func TestSetupWithoutTokenFromTheHomeNetwork(t *testing.T) {
 	}
 }
 
+func TestSetupThroughAnUntrustedProxyNeedsTheToken(t *testing.T) {
+	env := newTestEnv(t, nil)
+	// The peer is the loopback address, like a reverse proxy on the same
+	// host, but the visitor could be anywhere.
+	req, err := http.NewRequest("POST", env.srv.URL+"/api/setup", strings.NewReader(`{"setupToken":"","username":"stijn","password":"correct horse battery"}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("X-Forwarded-For", "203.0.113.9")
+	resp, err := env.client.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer resp.Body.Close()
+	body, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode != http.StatusForbidden || !strings.Contains(string(body), "invalid_setup_token") {
+		t.Fatalf("setup without token through a proxy = %d %s", resp.StatusCode, body)
+	}
+}
+
 func TestSetupRejectsWrongToken(t *testing.T) {
 	env := newTestEnv(t, nil)
 	status, body := env.do(t, "POST", "/api/setup", `{"setupToken":"guess","username":"stijn","password":"correct horse battery"}`)

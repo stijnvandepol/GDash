@@ -10,6 +10,9 @@ import (
 
 type forwardedHTTPSKey struct{}
 
+// trustedProxyKey marks a request that came through a trusted proxy.
+type trustedProxyKey struct{}
+
 // behindProxies trusts the X-Forwarded-For and X-Forwarded-Proto headers of
 // requests that come from one of trusted, such as a reverse proxy that
 // serves the web interface over HTTPS. The client address then becomes the
@@ -34,7 +37,7 @@ func behindProxies(trusted []netip.Prefix, next http.Handler) http.Handler {
 			next.ServeHTTP(w, r)
 			return
 		}
-		r = r.Clone(r.Context())
+		r = r.Clone(context.WithValue(r.Context(), trustedProxyKey{}, true))
 		if client, ok := forwardedClient(r.Header.Values("X-Forwarded-For"), isTrusted); ok {
 			r.RemoteAddr = net.JoinHostPort(client.String(), "0")
 		}
@@ -43,6 +46,16 @@ func behindProxies(trusted []netip.Prefix, next http.Handler) http.Handler {
 		}
 		next.ServeHTTP(w, r)
 	})
+}
+
+// viaUntrustedProxy reports whether r carries the headers a reverse proxy
+// adds while GDash does not trust that proxy, so the address it sees is the
+// proxy's and says nothing about where the person is. A trusted proxy's
+// client address has already replaced RemoteAddr in behindProxies.
+func viaUntrustedProxy(r *http.Request) bool {
+	forwarded := r.Header.Get("X-Forwarded-For") != "" || r.Header.Get("Forwarded") != "" || r.Header.Get("X-Real-IP") != ""
+	trusted, _ := r.Context().Value(trustedProxyKey{}).(bool)
+	return forwarded && !trusted
 }
 
 // forwardedClient returns the client address from X-Forwarded-For: the

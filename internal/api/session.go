@@ -78,7 +78,7 @@ func (s *Server) getSetup(w http.ResponseWriter, r *http.Request) {
 		s.internalError(w, "check setup", err)
 		return
 	}
-	writeJSON(w, http.StatusOK, map[string]bool{"needed": needed, "tokenRequired": needed && s.Auth.SetupTokenRequired(clientIP(r))})
+	writeJSON(w, http.StatusOK, map[string]bool{"needed": needed, "tokenRequired": needed && s.Auth.SetupTokenRequired(clientIP(r), viaUntrustedProxy(r))})
 }
 
 // postSetup handles POST /api/setup {setupToken, username, password}: creates
@@ -95,7 +95,7 @@ func (s *Server) postSetup(w http.ResponseWriter, r *http.Request) {
 	if !decodeJSON(w, r, &body) {
 		return
 	}
-	token, user, err := s.Auth.Setup(r.Context(), body.SetupToken, auth.Credentials{Username: body.Username, Password: body.Password}, clientIP(r))
+	token, user, err := s.Auth.Setup(r.Context(), body.SetupToken, auth.Credentials{Username: body.Username, Password: body.Password}, clientIP(r), viaUntrustedProxy(r))
 	if errors.Is(err, auth.ErrInvalidSetupToken) {
 		s.audit(r, "", auditSetupFailed, "wrong setup token")
 	}

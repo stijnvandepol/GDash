@@ -113,9 +113,11 @@ func NewService(st *store.Store, box *secret.Box, setupToken string) (*Service, 
 const SetupWindow = time.Hour
 
 // SetupTokenRequired reports whether a setup from clientIP needs the token:
-// after SetupWindow, or from an address outside the home network.
-func (s *Service) SetupTokenRequired(clientIP string) bool {
-	if !s.now().Before(s.setupOpenUntil) {
+// after SetupWindow, from an address outside the home network, or through a
+// reverse proxy GDash does not trust (viaProxy): every request then comes
+// from the proxy's own private address, also one from the internet.
+func (s *Service) SetupTokenRequired(clientIP string, viaProxy bool) bool {
+	if viaProxy || !s.now().Before(s.setupOpenUntil) {
 		return true
 	}
 	addr, err := netip.ParseAddr(clientIP)
@@ -142,13 +144,14 @@ func (s *Service) SetupNeeded(ctx context.Context) (bool, error) {
 }
 
 // Setup creates the first account and logs it in. It returns the session
-// token to put in a cookie.
-func (s *Service) Setup(ctx context.Context, setupToken string, c Credentials, clientIP string) (string, User, error) {
+// token to put in a cookie. The token may be empty when SetupTokenRequired
+// says so for clientIP and viaProxy.
+func (s *Service) Setup(ctx context.Context, setupToken string, c Credentials, clientIP string, viaProxy bool) (string, User, error) {
 	key := "setup|" + ratelimit.AddressKey(clientIP)
 	if !s.limiter.Allowed(key) {
 		return "", User{}, ErrRateLimited
 	}
-	tokenFree := setupToken == "" && !s.SetupTokenRequired(clientIP)
+	tokenFree := setupToken == "" && !s.SetupTokenRequired(clientIP, viaProxy)
 	if !tokenFree && subtle.ConstantTimeCompare([]byte(setupToken), []byte(s.setupToken)) != 1 {
 		s.limiter.Fail(key)
 		return "", User{}, ErrInvalidSetupToken
