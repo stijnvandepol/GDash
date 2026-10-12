@@ -159,7 +159,7 @@ test('a TV that someone uses can be given back to the dashboard', async ({ admin
   const dialog = page.getByRole('dialog', { name: 'Show the dashboard now?' });
   await dialog.getByRole('button', { name: 'Show dashboard' }).click();
 
-  await expect(row).toContainText('On screen since');
+  await expect(row).toContainText('On the TV since');
   await expect(row.getByRole('button', { name: /Show dashboard now/ })).toHaveCount(0);
   expect(takeovers).toEqual(['/api/displays/e2e-living-room/cast-takeovers']);
 });
