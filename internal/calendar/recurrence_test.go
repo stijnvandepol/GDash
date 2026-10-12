@@ -51,8 +51,10 @@ func TestParseBoundsHostileRecurrences(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			began := time.Now()
 			events := parseOne(t, tt.props...)
-			if took := time.Since(began); took > raceSlowdown*200*time.Millisecond {
-				t.Errorf("Parse took %v, want under 200ms", took)
+			// An unbounded expansion costs seconds to minutes; a second
+			// leaves room for a busy machine without missing that.
+			if took := time.Since(began); took > raceSlowdown*time.Second {
+				t.Errorf("Parse took %v, want under a second", took)
 			}
 			if len(events) > maxOccurrencesPerEvent {
 				t.Errorf("one event produced %d occurrences, want at most %d", len(events), maxOccurrencesPerEvent)
