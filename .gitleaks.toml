@@ -30,3 +30,9 @@ description = "The RFC 6238 test secret (base32 of 12345678901234567890) in a QR
 condition = "AND"
 paths = ['''internal/qr/qr_test\.go''']
 regexes = ['''GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ''']
+
+[[allowlists]]
+description = "Made-up API key of a stand-in API in the custom source tests"
+condition = "AND"
+paths = ['''internal/api/customsources_test\.go''']
+regexes = ['''k3y-0123456789''']
