@@ -67,9 +67,15 @@ the layout; the button adds it as a new dashboard and opens it in the editor,
 where you can change anything. The calendar and news widgets fill up once you
 add calendars and feeds under Settings, Data sources, and the photos once you add photos.
 
-- **Add** a widget with the buttons above the canvas, drag it to move it and
-  drag its corner to resize it. Click a widget to change its settings, such
-  as the number of headlines or the text of a note.
+- **Add** a widget from the panel beside the canvas (below it on a phone):
+  the widgets are grouped by what they are about, such as Time & date or
+  Travel, and the search field on top finds one by its name or what it
+  shows (Escape clears it, Enter adds the first match). Drag a widget to
+  move it and drag its corner to resize it. Click a widget to change its
+  settings, such as the number of headlines or the text of a note; the
+  panel then shows them, and **← Add widgets** goes back. The editor is
+  about how a dashboard looks: addresses, keys and the values an API gives
+  are set up under Settings.
 - **Style:** the Style button opens a gallery of twenty-one themes in three
   groups, each shown as a small screen. Minimal dark (the default, best for OLED screens),
   Minimal light and Warm light for bright rooms, Glass, High contrast for
@@ -354,23 +360,46 @@ field empty. **Test** fetches the API once and shows the answer as a tree;
 click a value to see its path. GDash only fetches an API while a dashboard
 shows it.
 
+### Name its values
+
+Still under Settings, **Values** next to the API names the values a
+dashboard can show, so the dashboard editor offers "Outside" instead of
+`current.temperature_2m`:
+
+1. **Use the sample** or **Fetch the API now** shows the answer as a tree.
+2. Click a value to add it. It gets a name from its key, such as
+   `Temperature 2m`; change it to what you want to read in the editor, and
+   add a unit (`°C`) or a number of decimals if you like.
+3. For a list of items, choose **Use this list** next to it, then choose
+   **A column to** that list and click up to three values inside one item,
+   such as its name and price.
+4. **Save values.**
+
+A value can also be added by typing its path (see [Paths](#paths)). Names
+are up to 40 characters and different for each value of an API. Renaming or
+removing a value later does not change a dashboard: a widget keeps the path
+it was given, and the editor then shows "(custom path)".
+
 ### Example: the temperature from Open-Meteo, no key
 
 1. Add a custom API named `Weather in Oss` with the address
    `https://api.open-meteo.com/v1/forecast?latitude=51.77&longitude=5.52&current=temperature_2m,wind_speed_10m`,
    no authentication, refreshed every 15 minutes. **Test** shows
    `{"current": {"time": "2026-10-12T10:00", "temperature_2m": 14.2, "wind_speed_10m": 11.3, …}, …}`.
-2. Add a **Custom API** widget to a dashboard and select it. Choose the API
-   and **Show: One value**, then **Fetch the API now**.
-3. Click the value field, then `temperature_2m` in the tree: the field says
-   `current.temperature_2m`. Set the label `Outside`, the unit `°C` and 1
-   decimal.
-4. Add a rule: when `value < 0`, colour **Bad**, message `Frost: mind the
-   roads`. Add another: when `minutesSince(current.time) > 60`, message
-   `The weather is more than an hour old`. (Open-Meteo gives times in UTC
-   unless you ask for a time zone; a time without a zone counts as UTC.)
+2. Under **Values**, fetch the API and click `temperature_2m`. Name it
+   `Outside`, with the unit `°C` and 1 decimal, and save the values.
+3. In a dashboard, add a **Custom API** widget (under Home) and select it.
+   Choose the API, **Show: One value** and **Value: Outside**, and give it
+   the label `Outside`.
+4. Add a rule: **When** the value **is below** `0`, colour **Bad**, message
+   `Frost: mind the roads`.
 5. Save. The TV shows `14.2 °C`, in the warning colour with the message on
    frosty mornings.
+
+A rule that the sentence cannot say, such as "the weather is more than an
+hour old", goes under **Advanced: write the condition** of a rule:
+`minutesSince(current.time) > 60`. (Open-Meteo gives times in UTC unless you
+ask for a time zone; a time without a zone counts as UTC.)
 
 ### Example: OpenWeatherMap, with an API key
 
@@ -380,10 +409,11 @@ shows it.
    **Authentication: API key in the address**, parameter name `appid` and
    your key. GDash adds `appid=<key>` to the address when it fetches; the
    key never appears in the address that is stored or shown.
-3. In a Custom widget choose **Show: Labelled values** and add lines:
-   `Temperature` with `main.temp`, `Feels like` with `main.feels_like`,
-   `Humidity` with `main.humidity` and `Sky` with
-   `weather[0].description`.
+3. Under **Values**, click `main.temp`, `main.feels_like`, `main.humidity`
+   and `weather[0].description`, and name them `Temperature`, `Feels like`,
+   `Humidity` and `Sky`.
+4. In a Custom widget choose **Show: Labelled values** and add a line for
+   each: pick the value, and its label is filled in with its name.
 
 ### Badges: who is home
 
@@ -394,24 +424,25 @@ or `true` (in any case), so it works with Home Assistant's `home` and `on`
 states as well as with plain true and false.
 
 For an API that answers
-`{"home": {"aanwezigheid_anna": true, "aanwezigheid_bram": false, …}}`, add a
-badge per person: label `AN` with `home.aanwezigheid_anna`, label `BR` with
-`home.aanwezigheid_bram`, and so on, up to eight. The TV shows `AN` while
+`{"home": {"aanwezigheid_anna": true, "aanwezigheid_bram": false, …}}`, name
+`home.aanwezigheid_anna` `Anna`, `home.aanwezigheid_bram` `Bram` and so on
+under Values. In the widget, **Add a badge** per person and pick the value:
+the label becomes the initials, `AN`, which you can change. Up to eight. The TV shows `AN` while
 Anna is home; when nobody is home it shows a dash. Only the badges that are
 on are sent to the screens, so a TV never learns who is away.
 
 ### Lists
 
 **Show: A list** shows one row per item of a list in the answer, with up to
-three values per row. Click **Use this list** in the tree, or type the list's
-path, such as `data.items`. Then click a value inside the list: a field gets
-the part below the item, such as `name`. A rule that reads `row`, such as
-`row.price > 2` or `row.stock == 0`, is checked for every item and colours or
-hides that row. For example, the latest Home Assistant releases from GitHub's
-open API: address `https://api.github.com/repos/home-assistant/core/releases?per_page=5`,
-list `$` (the answer itself is the list), fields `tag_name` and
-`published_at`, and a rule `minutesSince(row.published_at) < 1440` with
-colour Good.
+three values per row: the columns of a list named under Values. A rule on
+**each item's** column, such as "each item's Price is above 2", is checked
+for every item and colours or hides that row. For example, the latest Home
+Assistant releases from GitHub's open API: address
+`https://api.github.com/repos/home-assistant/core/releases?per_page=5`; under
+Values, **Use this list** on the answer itself (its path is `$`) and add the
+columns `tag_name` and `published_at`. An advanced rule
+`minutesSince(row.published_at) < 1440` with colour Good marks the releases
+of the last day.
 
 ### Paths
 
@@ -435,7 +466,14 @@ the widget, hide the data, or **announce** the message on every display. A
 widget has up to six rules. The most serious colour of all matching rules
 wins; the first matching rule with a message decides the message.
 
-Conditions use:
+In the editor a rule reads as a sentence: **When** the value, one of the
+API's named values or each item's column, **is above**, **is below**,
+**equals**, **is not**, **contains** (ignoring case), **is on** or **is
+off** (as for a badge), and the number or text to compare with. Above and
+below also read numbers that an API sends as text. Anything more goes under
+**Advanced: write the condition**, in a small expression language.
+
+Written conditions use:
 
 - numbers (`25`, `0.5`), text in quotes (`"open"`), `true`, `false`, `null`;
 - paths into the answer, plus `value` (the value shown, in value mode) and
@@ -448,10 +486,11 @@ Conditions use:
   time.
 
 For example `value > 25 and value < 30`, `contains(lower(status), "error")`
-or `number(row.delay) >= 5`. A condition that does not apply to the data,
-such as `value > 3` while the value is missing, simply does not match.
-**Check** in the editor evaluates a condition against the sample or the
-fetched answer.
+or `number(row.delay) >= 5`; `isOn(x)` is what **is on** writes. A
+condition that does not apply to the data, such as `value > 3` while the
+value is missing, simply does not match. **Check against the answer** under
+Advanced evaluates a condition against the sample, or a fresh answer when
+the API has no sample.
 
 An announcing rule posts its message over every display when it *starts* to
 hold, not as long as it holds, and at most once every ten minutes, so a

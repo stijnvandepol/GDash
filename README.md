@@ -91,9 +91,10 @@ screen marks data that has gone stale.
 - **Announcements**: a Home Assistant automation posts "The washing machine is
   done" with an API token, and the TVs show it over the dashboard.
 - **Custom APIs** without code: add any JSON API, test it or paste a sample
-  answer, click the values to show, and add rules such as `value > 25` that
-  colour the value, show a message or announce it on every display. Rules
-  are a small expression language, not scripts, so nothing from the web
+  answer, click and name the values to show, then pick them by name in the
+  editor and add rules such as "Outside is below 0" that colour the value,
+  show a message or announce it on every display. Rules are a small
+  expression language, not scripts, so nothing from the web
   interface ever runs as code on the server or the TVs.
 - **Two-step login** with an authenticator app, a **backup** download, and an
   **activity log** of logins, pairings and changes.

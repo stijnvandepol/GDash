@@ -7,6 +7,17 @@ the format follows [Keep a Changelog](https://keepachangelog.com).
 
 ### Changed
 
+- The dashboard editor adds widgets from a panel beside the canvas instead
+  of a row of buttons above it: a search on name and description, then the
+  widgets by category (Time & date, Weather & nature, Home, Agenda &
+  household, Travel, Media & news), each with an icon and a line on what it
+  shows. A selected widget's settings take the panel's place, with a way
+  back; on a phone the panel sits below the canvas.
+- The Custom API widget's settings are about design only: choose the API,
+  how to show it and its named values from lists, and build rules as a
+  sentence ("When Outside is below 0, colour Bad"). The JSON tree and paths
+  moved to Settings; written conditions stay under Advanced. Widgets keep
+  storing paths, so existing dashboards and dashboard files work as before.
 - **GDash no longer takes the TV back from someone using it.** When the
   dashboard is closed on the remote, an app or another cast replaces it,
   or the TV switches input, GDash waits until the TV has been switched off
@@ -35,6 +46,12 @@ the format follows [Keep a Changelog](https://keepachangelog.com).
   [docs/guide.md](docs/guide.md#homey).
 - **Show dashboard now** at a display whose TV someone else is using, and
   `POST /api/displays/{id}/cast-takeovers` for the same.
+- **Named values** for custom APIs: under Settings, Custom APIs, Values,
+  click values in the answer to give them a name (with a unit and
+  decimals) and name lists with up to three columns. Stored with the API
+  (`PUT /api/custom-sources/{id}/values`); see
+  [docs/guide.md](docs/guide.md#name-its-values).
+- `isOn(x)` in rule conditions, true when a badge would be on.
 
 ## 0.7.0 – 2026-10-12
 
