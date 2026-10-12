@@ -55,6 +55,8 @@ type fakeSources struct {
 	err     error
 	entries map[string]datahub.Entry
 	cast    map[string]casting.Status
+	// takeOvers are the displays whose TV an admin took back.
+	takeOvers []string
 }
 
 func (f *fakeSources) Search(context.Context, string) ([]weather.Place, error) {
@@ -73,6 +75,18 @@ func (f *fakeSources) CastStatus() map[string]casting.Status {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	return f.cast
+}
+
+// TakeOverCast plays the cast manager: a display with a status has a
+// running keeper.
+func (f *fakeSources) TakeOverCast(displayID string) bool {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if _, ok := f.cast[displayID]; !ok {
+		return false
+	}
+	f.takeOvers = append(f.takeOvers, displayID)
+	return true
 }
 
 func (f *fakeSources) set(places []weather.Place, err error, entries map[string]datahub.Entry) {
@@ -158,6 +172,7 @@ func newTestEnv(t *testing.T, discover func(context.Context) ([]cast.Device, err
 		Data:                 sources.Entries,
 		Version:              "v1.2.3",
 		CastStatus:           sources.CastStatus,
+		TakeOverCast:         sources.TakeOverCast,
 		Photos:               album,
 		Backup:               fakeBackup{},
 		PhotosChanged:        func() { changes.Add(1) },
@@ -414,6 +429,7 @@ func TestDisplayAPIRequiresLogin(t *testing.T) {
 		{"POST", "/api/displays", `{"id":"keuken","name":"Keuken"}`},
 		{"PATCH", "/api/displays/keuken", `{"name":"x"}`},
 		{"DELETE", "/api/displays/keuken", ""},
+		{"POST", "/api/displays/keuken/cast-takeovers", ""},
 		{"GET", "/api/cast-devices", ""},
 	} {
 		if status, _ := env.do(t, r.method, r.path, r.body); status != http.StatusUnauthorized {

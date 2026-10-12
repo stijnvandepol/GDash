@@ -168,6 +168,18 @@
     }
   }
 
+  async function takeOver(d: Display) {
+    const message = `Whatever is on "${d.name}" now stops, and the TV switches to the dashboard.`;
+    if (!(await ask({ title: 'Show the dashboard now?', message, action: 'Show dashboard' }))) return;
+    try {
+      await api.takeOverCast(d.id);
+      toast.success(`The dashboard returns to ${d.name} within seconds.`);
+      await load();
+    } catch (err) {
+      rowError = handle(err);
+    }
+  }
+
   function describeScreens(d: Display): string {
     const n = d.pairedScreens ?? 0;
     return n === 1 ? '1 paired screen' : `${n} paired screens`;
@@ -236,6 +248,7 @@
               onschedule={() => (scheduleId = d.id)}
               onpair={() => startPairing(d)}
               onunpair={() => unpair(d)}
+              ontakeover={() => takeOver(d)}
               onrename={() => startRename(d)}
               onremove={() => remove(d)}
             />

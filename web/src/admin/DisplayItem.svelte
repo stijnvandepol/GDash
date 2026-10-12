@@ -18,6 +18,7 @@
     onschedule,
     onpair,
     onunpair,
+    ontakeover,
     onrename,
     onremove,
   }: {
@@ -34,6 +35,8 @@
     onschedule: () => void;
     onpair: () => void;
     onunpair: () => void;
+    /** Ends a wait for the TV to be switched off; see describeCast. */
+    ontakeover: () => void;
     onrename: () => void;
     onremove: () => void;
   } = $props();
@@ -64,7 +67,7 @@
         <span
           class="badge"
           class:ok={d.cast.state === 'showing'}
-          class:warn={d.cast.state === 'other_app'}
+          class:warn={d.cast.state === 'other_app' || d.cast.state === 'yielded'}
           class:bad={d.cast.state === 'unreachable'}
           title={d.cast.problem ?? ''}
         >
@@ -106,6 +109,9 @@
   </div>
 
   <div class="actions">
+    {#if d.cast?.state === 'yielded'}
+      <button onclick={ontakeover} aria-label="Show dashboard now on {d.name}">Show dashboard now</button>
+    {/if}
     <button class="secondary" onclick={onschedule}>Schedule</button>
     <button class="secondary" onclick={onpair}>Pair a screen</button>
     {#if (d.pairedScreens ?? 0) > 0}

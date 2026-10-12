@@ -221,6 +221,7 @@ func serve(ctx context.Context, logger *slog.Logger) error {
 		Data:          publisher.Data,
 		Version:       currentVersion(),
 		CastStatus:    castManager.Statuses,
+		TakeOverCast:  castManager.TakeOver,
 		Photos:        album,
 		Backup:        backup.Archive{DataDir: cfg.dataDir, DatabaseName: databaseName, Write: db.WriteCopy},
 		PhotosChanged: func() { publisher.Refresh(ctx) },

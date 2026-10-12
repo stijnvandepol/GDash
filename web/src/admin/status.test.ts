@@ -31,7 +31,8 @@ describe('describeCast', () => {
   it('describes each state', () => {
     expect(describeCast({ state: 'showing', since })).toBe('On screen since 10:31');
     expect(describeCast({ state: 'standby', since })).toBe('TV in standby since 10:31');
-    expect(describeCast({ state: 'other_app', since })).toBe('Another app is on the TV; GDash waits until it stops');
+    expect(describeCast({ state: 'other_app', since })).toBe('Something else is on the TV; GDash starts when it ends');
+    expect(describeCast({ state: 'yielded', since })).toBe('Someone is using the TV; GDash waits until it is switched off');
     expect(describeCast({ state: 'resting', since })).toBe('Outside active hours');
     expect(describeCast({ state: 'unreachable', since, problem: 'i/o timeout' })).toBe('Cannot reach the TV; retrying');
     expect(describeCast({ state: 'connecting', since })).toBe('Connecting to the TV…');

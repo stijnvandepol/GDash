@@ -29,7 +29,7 @@ export interface Display {
 }
 
 export interface CastStatus {
-  state: 'connecting' | 'unreachable' | 'showing' | 'standby' | 'other_app' | 'resting';
+  state: 'connecting' | 'unreachable' | 'showing' | 'standby' | 'other_app' | 'yielded' | 'resting';
   since: string;
   /** Why the device cannot be reached. */
   problem?: string;

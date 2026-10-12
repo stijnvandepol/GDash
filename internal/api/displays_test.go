@@ -93,6 +93,53 @@ func TestDisplayListShowsCastStatus(t *testing.T) {
 	}
 }
 
+func TestCastTakeoverAsksTheKeeperToShowTheDashboard(t *testing.T) {
+	env := newTestEnv(t, nil)
+	env.setUp(t)
+	env.createKitchen(t)
+	tv := `{"id":"woonkamer","name":"Woonkamer","castDeviceId":"0123456789abcdef0123456789abcdef"}`
+	if status, body := env.do(t, "POST", "/api/displays", tv); status != http.StatusCreated {
+		t.Fatalf("create = %d %s", status, body)
+	}
+
+	if status, body := env.do(t, "POST", "/api/displays/keuken/cast-takeovers", ""); status != http.StatusConflict || !strings.Contains(body, "not_cast") {
+		t.Fatalf("takeover of a browser display = %d %s, want 409 not_cast", status, body)
+	}
+	if status, body := env.do(t, "POST", "/api/displays/woonkamer/cast-takeovers", ""); status != http.StatusConflict || !strings.Contains(body, "not_connected") {
+		t.Fatalf("takeover before the keeper runs = %d %s, want 409 not_connected", status, body)
+	}
+	if status, _ := env.do(t, "POST", "/api/displays/zolder/cast-takeovers", ""); status != http.StatusNotFound {
+		t.Fatalf("takeover of an unknown display = %d, want 404", status)
+	}
+
+	env.sources.mu.Lock()
+	env.sources.cast = map[string]casting.Status{"woonkamer": {State: cast.StateYielded}}
+	env.sources.mu.Unlock()
+	if status, body := env.do(t, "POST", "/api/displays/woonkamer/cast-takeovers", ""); status != http.StatusNoContent {
+		t.Fatalf("takeover = %d %s, want 204", status, body)
+	}
+	env.sources.mu.Lock()
+	takeOvers := env.sources.takeOvers
+	env.sources.mu.Unlock()
+	if len(takeOvers) != 1 || takeOvers[0] != "woonkamer" {
+		t.Fatalf("keeper requests = %v, want one for woonkamer", takeOvers)
+	}
+	if _, body := env.do(t, "GET", "/api/audit-events", ""); !strings.Contains(body, `"action":"cast_taken_over","detail":"woonkamer"`) {
+		t.Fatalf("audit log lacks the takeover:\n%s", body)
+	}
+
+	req, _ := http.NewRequest("POST", env.srv.URL+"/api/displays/woonkamer/cast-takeovers", nil)
+	req.Header.Set("Sec-Fetch-Site", "cross-site")
+	resp, err := env.client.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	resp.Body.Close()
+	if resp.StatusCode != http.StatusForbidden {
+		t.Fatalf("cross-site takeover = %d, want 403", resp.StatusCode)
+	}
+}
+
 func TestDisplayRotation(t *testing.T) {
 	env := newTestEnv(t, nil)
 	env.setUp(t)

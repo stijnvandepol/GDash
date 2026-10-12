@@ -17,6 +17,12 @@ describe('describeAction', () => {
     expect(describeAction({ ...base, action: 'api_token_revoked', detail: 'Home Assistant' })).toBe('Revoked API token Home Assistant');
   });
 
+  it('names the display whose TV was taken back', () => {
+    expect(describeAction({ ...base, action: 'cast_taken_over', detail: 'kitchen' })).toBe(
+      'Put the dashboard back on the TV of display kitchen',
+    );
+  });
+
   it('leaves out file names of photos', () => {
     expect(describeAction({ ...base, action: 'photo_added', detail: '17ffba802f212d49844c20cc3dca1edb.png' })).toBe('Added a photo');
   });

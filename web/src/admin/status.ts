@@ -32,7 +32,9 @@ export function describeCast(status: CastStatus | undefined): string {
     case 'standby':
       return `TV in standby since ${since}`;
     case 'other_app':
-      return 'Another app is on the TV; GDash waits until it stops';
+      return 'Something else is on the TV; GDash starts when it ends';
+    case 'yielded':
+      return 'Someone is using the TV; GDash waits until it is switched off';
     case 'resting':
       return 'Outside active hours';
     case 'unreachable':

@@ -162,6 +162,30 @@ func (s *Server) deleteDisplay(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
+// postCastTakeover handles POST /api/displays/{display}/cast-takeovers: 204
+// when the display's cast keeper was asked to show the dashboard on the TV
+// now, also over what someone is watching, so it stops waiting for the TV to
+// be switched off; 404 for an unknown display, 409 not_cast for a display
+// without a Cast device and 409 not_connected while GDash has no keeper for
+// it yet.
+func (s *Server) postCastTakeover(w http.ResponseWriter, r *http.Request) {
+	d, err := s.Store.Display(r.Context(), r.PathValue("display"))
+	if err != nil {
+		s.writeStoreError(w, "find display", err)
+		return
+	}
+	if d.CastDeviceID == "" {
+		writeError(w, http.StatusConflict, "not_cast", "This display is not linked to a Cast device.")
+		return
+	}
+	if !s.TakeOverCast(d.ID) {
+		writeError(w, http.StatusConflict, "not_connected", "GDash is still connecting to this TV. Try again in a moment.")
+		return
+	}
+	s.auditUser(r, auditCastTakenOver, d.ID)
+	w.WriteHeader(http.StatusNoContent)
+}
+
 func (s *Server) writeStoreError(w http.ResponseWriter, op string, err error) {
 	switch {
 	case errors.Is(err, store.ErrUnknownDashboard):

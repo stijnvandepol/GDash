@@ -26,13 +26,20 @@ func newRecorder() *recorder {
 	return &recorder{running: map[string]string{}, events: make(chan string, 32)}
 }
 
-func (r *recorder) run(ctx context.Context, d displays.Display, report func(cast.State, error)) {
+func (r *recorder) run(ctx context.Context, d displays.Display, report func(cast.State, error), takeOver <-chan struct{}) {
 	report(cast.StateShowing, nil)
 	r.mu.Lock()
 	r.running[d.ID] = d.CastDeviceID
 	r.mu.Unlock()
 	r.events <- "start " + d.ID
-	<-ctx.Done()
+	for running := true; running; {
+		select {
+		case <-takeOver:
+			r.events <- "take over " + d.ID
+		case <-ctx.Done():
+			running = false
+		}
+	}
 	r.mu.Lock()
 	delete(r.running, d.ID)
 	r.mu.Unlock()
@@ -159,6 +166,36 @@ func TestManagerForgetsStatusOfRemovedDisplay(t *testing.T) {
 	for len(m.Statuses()) > 0 {
 		if time.Now().After(deadline) {
 			t.Fatalf("statuses after removing the display = %v", m.Statuses())
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+}
+
+func TestManagerPassesTakeOverToTheDisplaysKeeper(t *testing.T) {
+	list := &fakeList{}
+	list.set(displays.Display{ID: "kitchen", CastDeviceID: "aaa"}, displays.Display{ID: "browser-only"})
+	rec := newRecorder()
+	m := &Manager{List: list.get, RunDisplay: rec.run, Logger: slog.New(slog.NewTextHandler(io.Discard, nil))}
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	go m.Run(ctx)
+	rec.expect(t, "start kitchen")
+
+	if !m.TakeOver("kitchen") {
+		t.Fatal("TakeOver(kitchen) = false for a running keeper")
+	}
+	rec.expect(t, "take over kitchen")
+	if m.TakeOver("browser-only") || m.TakeOver("unknown") {
+		t.Fatal("TakeOver = true for a display without a keeper")
+	}
+
+	list.set()
+	m.Changed()
+	rec.expect(t, "stop kitchen")
+	deadline := time.Now().Add(2 * time.Second)
+	for m.TakeOver("kitchen") {
+		if time.Now().After(deadline) {
+			t.Fatal("TakeOver still reaches the keeper of a removed display")
 		}
 		time.Sleep(10 * time.Millisecond)
 	}

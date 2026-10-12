@@ -86,7 +86,10 @@ type Server struct {
 	Version string
 	// CastStatus returns what each display's cast keeper last found.
 	CastStatus func() map[string]casting.Status
-	Photos     *photos.Store
+	// TakeOverCast asks a display's cast keeper to show the dashboard on
+	// the TV now; false when the display has no running keeper.
+	TakeOverCast func(displayID string) bool
+	Photos       *photos.Store
 	// Backup writes the zip that POST /api/backup downloads.
 	Backup BackupWriter
 	// PhotosChanged is called after a photo is added or removed, so photo
@@ -179,6 +182,7 @@ func (s *Server) Handler() http.Handler {
 	mux.Handle("POST /api/displays", s.requireUser(s.createDisplay))
 	mux.Handle("PATCH /api/displays/{display}", s.requireUser(s.updateDisplay))
 	mux.Handle("DELETE /api/displays/{display}", s.requireUser(s.deleteDisplay))
+	mux.Handle("POST /api/displays/{display}/cast-takeovers", s.requireUser(s.postCastTakeover))
 
 	// Rejects state-changing requests that a browser sends from another
 	// site (CSRF), based on Sec-Fetch-Site and Origin.

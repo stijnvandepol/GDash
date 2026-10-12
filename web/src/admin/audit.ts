@@ -26,6 +26,7 @@ const ACTIONS: Record<string, string> = {
   display_created: 'Added display',
   display_updated: 'Changed display',
   display_deleted: 'Removed display',
+  cast_taken_over: 'Put the dashboard back on the TV of display',
   dashboard_created: 'Added dashboard',
   dashboard_updated: 'Changed dashboard',
   dashboard_deleted: 'Removed dashboard',

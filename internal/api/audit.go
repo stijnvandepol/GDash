@@ -24,6 +24,7 @@ const (
 	auditDisplayCreated         = "display_created"
 	auditDisplayUpdated         = "display_updated"
 	auditDisplayDeleted         = "display_deleted"
+	auditCastTakenOver          = "cast_taken_over"
 	auditDashboardCreated       = "dashboard_created"
 	auditDashboardUpdated       = "dashboard_updated"
 	auditDashboardDeleted       = "dashboard_deleted"

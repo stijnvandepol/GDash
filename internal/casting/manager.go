@@ -22,8 +22,9 @@ const reconcileInterval = time.Minute
 type Manager struct {
 	List func(ctx context.Context) ([]displays.Display, error)
 	// RunDisplay keeps one display on its Cast device until ctx ends,
-	// passing every state it finds to report.
-	RunDisplay func(ctx context.Context, d displays.Display, report func(cast.State, error))
+	// passing every state it finds to report. Each value on takeOver is an
+	// admin's request to show the dashboard on the TV now.
+	RunDisplay func(ctx context.Context, d displays.Display, report func(cast.State, error), takeOver <-chan struct{})
 	// Now is the clock for Status.Since; nil means time.Now.
 	Now    func() time.Time
 	Logger *slog.Logger
@@ -31,8 +32,9 @@ type Manager struct {
 	triggerOnce sync.Once
 	trigger     chan struct{}
 
-	mu       sync.Mutex
-	statuses map[string]Status
+	mu        sync.Mutex
+	statuses  map[string]Status
+	takeOvers map[string]chan struct{}
 }
 
 // Status is what the keeper of a display last reported.
@@ -76,10 +78,41 @@ func (m *Manager) reporter(displayID string) func(cast.State, error) {
 	}
 }
 
+// TakeOver asks the keeper of a display to show the dashboard on its TV now,
+// also over what someone else is showing. It reports false when the display
+// has no running keeper. It never blocks: a request that is still waiting
+// covers a second one.
+func (m *Manager) TakeOver(displayID string) bool {
+	m.mu.Lock()
+	request, ok := m.takeOvers[displayID]
+	m.mu.Unlock()
+	if !ok {
+		return false
+	}
+	select {
+	case request <- struct{}{}:
+	default:
+	}
+	return true
+}
+
+// track makes a display's keeper reachable for TakeOver.
+func (m *Manager) track(displayID string) <-chan struct{} {
+	request := make(chan struct{}, 1)
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if m.takeOvers == nil {
+		m.takeOvers = map[string]chan struct{}{}
+	}
+	m.takeOvers[displayID] = request
+	return request
+}
+
 func (m *Manager) forget(displayID string) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	delete(m.statuses, displayID)
+	delete(m.takeOvers, displayID)
 }
 
 type running struct {
@@ -153,9 +186,10 @@ func (m *Manager) reconcile(ctx context.Context, active map[string]running) {
 		}
 		keeperCtx, cancel := context.WithCancel(ctx)
 		done := make(chan struct{})
+		takeOver := m.track(d.ID)
 		go func() {
 			defer close(done)
-			m.RunDisplay(keeperCtx, d, m.reporter(d.ID))
+			m.RunDisplay(keeperCtx, d, m.reporter(d.ID), takeOver)
 		}()
 		active[id] = running{castDeviceID: d.CastDeviceID, cancel: cancel, done: done}
 	}

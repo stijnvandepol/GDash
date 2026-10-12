@@ -184,6 +184,7 @@ export const api = {
     request<void>('POST', `/api/displays/${encodeURIComponent(id)}/pairings`, { code }),
   unpairScreens: (id: string) =>
     request<{ removed: number }>('DELETE', `/api/displays/${encodeURIComponent(id)}/pairings`),
+  takeOverCast: (id: string) => request<void>('POST', `/api/displays/${encodeURIComponent(id)}/cast-takeovers`),
   widgetTypes: () => request<WidgetCatalogue>('GET', '/api/widget-types'),
   dashboardTemplates: () => request<{ templates: DashboardTemplate[] }>('GET', '/api/dashboard-templates').then((r) => r.templates),
   dashboards: () => request<{ dashboards: Dashboard[] }>('GET', '/api/dashboards').then((r) => r.dashboards),
