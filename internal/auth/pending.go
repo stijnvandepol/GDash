@@ -91,7 +91,9 @@ func (p *pendingLogins) end(secret string) {
 // code from the authenticator app or a recovery code, and starts the
 // session. Wrong codes count towards the same limits as wrong passwords.
 // It returns ErrWrongCode, ErrRateLimited or ErrLoginExpired; the pending
-// login survives a wrong code, so the person can try again.
+// login survives a wrong code, so the person can try again. With
+// ErrWrongCode it also returns the user: a wrong code after the right
+// password is worth a line in the audit log.
 func (s *Service) FinishLogin(ctx context.Context, pending, code, clientIP string) (string, User, CodeUse, error) {
 	login, err := s.pending.find(pending, s.now())
 	if err != nil {
@@ -114,6 +116,9 @@ func (s *Service) FinishLogin(ctx context.Context, pending, code, clientIP strin
 		// Turned off in between, by a reset: the password is new too.
 		s.pending.end(pending)
 		return "", User{}, CodeUse{}, ErrLoginExpired
+	}
+	if errors.Is(err, ErrWrongCode) {
+		return "", User{ID: u.ID, Username: u.Username}, CodeUse{}, err
 	}
 	if err != nil {
 		return "", User{}, CodeUse{}, err

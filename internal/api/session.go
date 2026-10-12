@@ -106,8 +106,10 @@ func (s *Server) postSetup(w http.ResponseWriter, r *http.Request) {
 }
 
 // postSession handles POST /api/sessions {username, password}: logs in, sets
-// the session cookie and answers 201 with the user. 401 for wrong
-// credentials, 429 after too many attempts.
+// the session cookie and answers 201 with the user. With two-step login on
+// it answers 202 {pending} without a cookie, and POST /api/sessions/two-step
+// finishes the login. 401 for wrong credentials, 429 after too many
+// attempts.
 func (s *Server) postSession(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		Username string `json:"username"`
@@ -117,6 +119,11 @@ func (s *Server) postSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	token, user, err := s.Auth.Login(r.Context(), auth.Credentials{Username: body.Username, Password: body.Password}, clientIP(r))
+	var codeNeeded *auth.CodeNeeded
+	if errors.As(err, &codeNeeded) {
+		writeJSON(w, http.StatusAccepted, map[string]string{"pending": codeNeeded.Pending})
+		return
+	}
 	// No username: people sometimes type their password there. A login
 	// refused by the rate limit is not recorded: the failures before it
 	// are, and recording each refusal would let anyone flood the log.

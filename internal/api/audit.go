@@ -41,6 +41,11 @@ const (
 	auditHomeAssistantRemoved   = "homeassistant_removed"
 	auditAPITokenCreated        = "api_token_created"
 	auditAPITokenRevoked        = "api_token_revoked"
+	auditLoginCodeFailed        = "login_code_failed"
+	auditRecoveryCodeUsed       = "recovery_code_used"
+	auditTwoStepEnabled         = "two_step_enabled"
+	auditTwoStepDisabled        = "two_step_disabled"
+	auditTwoStepChangeFailed    = "two_step_change_failed"
 	defaultAuditPage            = 100
 	maxAuditDetailCharacters    = 200
 )
