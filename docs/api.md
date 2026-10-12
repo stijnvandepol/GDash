@@ -287,7 +287,7 @@ status is under `custom.source.<id>` in `GET /api/settings`. The raw answer stay
 widget of that screen's own dashboards, keyed `<dashboardId>/<widgetId>`, only what the widget shows:
 `{"kitchen/prices": {"state": "ok", "stale": false, "failing": false, "mode": "list", "title": "Prices", "rows": [{"cells": ["Bread", 2.5], "tone": "warn"}], "tone": "", "message": "Something is dear", "hidden": false}}`.
 `state` is `ok`, `loading`, `failing` (no answer yet) or `missing` (the source does not exist or no saved dashboard
-uses it yet). Value mode has `value`, `label`, `unit` and `decimals`; key-values mode `pairs: [{label, value}]`.
+uses it yet). Value mode has `value`, `label`, `unit` and `decimals`; key-values mode `pairs: [{label, value}]`; badges mode `badges`, the labels of the badges that are on.
 Values are numbers, `true`, `false`, `null` or one line of at most 100 characters; a list or object becomes text. A
 list sends at most 15 rows. The screen shows everything as text, never as HTML.
 
@@ -398,7 +398,7 @@ allows, overlaps another, lacks a required setting, or has a setting its type do
 | `homeassistant` | 4x3 | `homeassistant.default` | `entities`: 1 to 8 entity IDs such as `sensor.living_room_temperature` (required) |
 | `departures` | 6x4 | `departures.default` | `stop`: a stop area code such as `utrcsw`, from the stop search (required), `stopName`: 1 to 100 characters, shown as the title, `maxItems`: 1 to 20 |
 | `fuel` | 6x4 | `fuel.default` | `place`: a place with `name`, `latitude` and `longitude`, default the weather location, `radius`: 1 to 25 km, default 5, `fuel`: `EURO95` (default), `EURO98`, `DIESEL`, `AUTOGAS` or `CNG`, `maxItems`: 1 to 10, default 5 |
-| `custom` | 4x3 | `custom.default` | `source`: the `id` of a custom source (required), `mode`: `value`, `list` or `keyValues` (required), `title`: up to 60 characters; value mode: `path` (required), `label` (up to 40), `unit` (up to 12), `decimals` 0 to 6; list mode: `path` of the list and `fields`, 1 to 3 paths read from each item (both required); key-values mode: `pairs`, 1 to 8 `{label, path}` (required); `rules`: up to 6, see [Custom APIs](#custom-apis) |
+| `custom` | 4x3 | `custom.default` | `source`: the `id` of a custom source (required), `mode`: `value`, `list`, `keyValues` or `badges` (required), `title`: up to 60 characters; value mode: `path` (required), `label` (up to 40), `unit` (up to 12), `decimals` 0 to 6; list mode: `path` of the list and `fields`, 1 to 3 paths read from each item (both required); key-values and badges mode: `pairs`, 1 to 8 `{label, path}` (required); a badge is on when its value is `true`, a number other than 0, or the text `on`, `home`, `yes`, `open` or `true` in any case, and a screen only receives the labels of the badges that are on, as `badges`; `rules`: up to 6, see [Custom APIs](#custom-apis) |
 
 A setting's `kind` is `integer`, `text`, `date`, `calendar`, `entities`, `stop`, `place` or `choice`, or for the
 Custom widget `customSource`, `path`, `paths`, `pairs` and `rules`; `min` and `max` bound an integer, a text's length

@@ -7,6 +7,7 @@ export const MODES = [
   { mode: 'value', label: 'One value' },
   { mode: 'list', label: 'A list' },
   { mode: 'keyValues', label: 'Labelled values' },
+  { mode: 'badges', label: 'Badges' },
 ] as const;
 
 export const TONES = [

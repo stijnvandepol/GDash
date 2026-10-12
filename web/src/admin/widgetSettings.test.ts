@@ -56,7 +56,7 @@ describe('defaultSettings', () => {
       minH: 3,
       settings: {
         source: { kind: 'customSource', required: true },
-        mode: { kind: 'choice', options: ['value', 'list', 'keyValues'], required: true },
+        mode: { kind: 'choice', options: ['value', 'list', 'keyValues', 'badges'], required: true },
         label: { kind: 'text', max: 40, required: false },
       },
     };

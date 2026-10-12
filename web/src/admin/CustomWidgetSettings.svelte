@@ -130,7 +130,7 @@
   </div>
 {/if}
 
-{#if mode !== 'keyValues'}
+{#if mode !== 'keyValues' && mode !== 'badges'}
   <label class="inline-label">
     {mode === 'list' ? 'List' : 'Value'}
     <input value={text('path')} spellcheck="false" autocomplete="off" placeholder={mode === 'list' ? 'data.items' : 'current.temperature_2m'}
@@ -157,9 +157,12 @@
   {/each}
   {#if fields.length < MAX_FIELDS}<button type="button" class="link" onclick={() => set('fields', [...fields, ''])}>Add a field</button>{/if}
 {:else}
+  {#if mode === 'badges'}
+    <p class="small muted">A badge shows its label, such as initials, while its value is on: true, a number other than 0, or the text on, home, yes, open or true.</p>
+  {/if}
   {#each pairList as pair, i (i)}
     <div class="pair">
-      <input value={pair.label} maxlength="40" aria-label="Label {i + 1}" placeholder="Label"
+      <input value={pair.label} maxlength="40" aria-label="Label {i + 1}" placeholder={mode === 'badges' ? 'ST' : 'Label'}
         oninput={(e) => set('pairs', pairList.map((p, j) => (j === i ? { ...p, label: (e.target as HTMLInputElement).value } : p)))} />
       <input value={pair.path} aria-label="Path {i + 1}" spellcheck="false" autocomplete="off" placeholder="data.temp" onfocus={() => (target = { kind: 'pair', index: i })}
         oninput={(e) => set('pairs', pairList.map((p, j) => (j === i ? { ...p, path: (e.target as HTMLInputElement).value } : p)))} />
@@ -168,7 +171,7 @@
     </div>
   {/each}
   {#if pairList.length < MAX_PAIRS}
-    <button type="button" class="link" onclick={() => set('pairs', [...pairList, { label: '', path: '' }])}>Add a line</button>
+    <button type="button" class="link" onclick={() => set('pairs', [...pairList, { label: '', path: '' }])}>{mode === 'badges' ? 'Add a badge' : 'Add a line'}</button>
   {/if}
 {/if}
 

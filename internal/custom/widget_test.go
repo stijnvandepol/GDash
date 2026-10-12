@@ -33,6 +33,7 @@ func TestParseWidgetAcceptsEachMode(t *testing.T) {
 		`{"source": 1, "mode": "value", "path": "data.items[0].price", "label": "Milk", "unit": "€", "decimals": 2, "title": "Shop"}`,
 		`{"source": 1, "mode": "list", "path": "data.items", "fields": ["name", "price"]}`,
 		`{"source": 1, "mode": "keyValues", "pairs": [{"label": "First", "path": "data.items[0].name"}]}`,
+		`{"source": 1, "mode": "badges", "pairs": [{"label": "ST", "path": "home.stijn"}]}`,
 		`{"source": 1, "mode": "value", "path": "ok", "rules": [
 			{"when": "value == true", "tone": "ok"},
 			{"when": "value == false", "message": "Down", "announce": true, "hide": true}]}`,
@@ -57,6 +58,7 @@ func TestParseWidgetNamesTheSetting(t *testing.T) {
 		`{"source": 1, "mode": "list", "path": "a", "fields": ["a", "b", "c", "d"]}`:                     "fields",
 		`{"source": 1, "mode": "list", "path": "a", "fields": ["a", "("]}`:                               "fields[1]",
 		`{"source": 1, "mode": "keyValues"}`:                                                             "pairs",
+		`{"source": 1, "mode": "badges", "pairs": []}`:                                                   "pairs",
 		`{"source": 1, "mode": "keyValues", "pairs": [{"label": "", "path": "a"}]}`:                      "pairs[0].label",
 		`{"source": 1, "mode": "keyValues", "pairs": [{"label": "A", "path": 3}]}`:                       "pairs[0].path",
 		`{"source": 1, "mode": "value", "path": "a", "rules": [{"when": "value >", "tone": "ok"}]}`:      "rules[0].when",
@@ -145,6 +147,24 @@ func TestShowKeyValues(t *testing.T) {
 	want := []ShownPair{{"Names", "Milk, Bread, Eggs"}, {"Odd", `{"a.b":7}`}, {"None", nil}}
 	if !reflect.DeepEqual(got.Pairs, want) || !got.Hidden {
 		t.Fatalf("Show = %+v", got)
+	}
+}
+
+func TestShowBadges(t *testing.T) {
+	w := mustWidget(t, `{"source": 1, "mode": "badges", "pairs": [
+		{"label": "ST", "path": "home.stijn"}, {"label": "BR", "path": "home.britt"},
+		{"label": "RE", "path": "home.rens"}, {"label": "SA", "path": "home.sandra"},
+		{"label": "AL", "path": "home.alfredo"}, {"label": "X", "path": "missing"}]}`)
+	doc := map[string]any{"home": map[string]any{
+		"stijn": true, "britt": false, "rens": " Home ", "sandra": 0.0, "alfredo": 2.0}}
+	got := w.Show(Data{Doc: doc, HasValue: true}, exprNow)
+	if want := []string{"ST", "RE", "AL"}; !reflect.DeepEqual(got.Badges, want) || got.Pairs != nil {
+		t.Fatalf("Show = %+v, want badges %v", got, want)
+	}
+	for _, v := range []any{"off", "not_home", "", nil, map[string]any{}, []any{true}} {
+		if isOn(v) {
+			t.Errorf("isOn(%#v) = true", v)
+		}
 	}
 }
 

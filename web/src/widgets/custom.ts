@@ -9,7 +9,7 @@ export interface Shown {
   state: 'ok' | 'loading' | 'failing' | 'missing';
   stale?: boolean;
   failing?: boolean;
-  mode: 'value' | 'list' | 'keyValues';
+  mode: 'value' | 'list' | 'keyValues' | 'badges';
   title?: string;
   label?: string;
   unit?: string;
@@ -17,6 +17,8 @@ export interface Shown {
   value?: unknown;
   rows?: { cells: unknown[]; tone?: Tone }[];
   pairs?: { label: string; value: unknown }[];
+  /** The labels of the badges that are on; those that are off are not sent. */
+  badges?: string[];
   tone?: Tone;
   message?: string;
   hidden?: boolean;

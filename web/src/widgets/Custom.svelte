@@ -48,6 +48,14 @@
             <li class="none">–</li>
           {/each}
         </ul>
+      {:else if shown.mode === 'badges'}
+        <ul class="badges">
+          {#each shown.badges ?? [] as badge, i (i)}
+            <li class="badge {toneClass(shown.tone)}">{badge}</li>
+          {:else}
+            <li class="none">–</li>
+          {/each}
+        </ul>
       {:else}
         <ul class="rows" use:fitItems>
           {#each shown.pairs ?? [] as pair, i (i)}
@@ -168,6 +176,47 @@
   }
   .none {
     color: var(--text-muted);
+  }
+  /* Badges wrap onto more lines when there are many; a short label such as
+     initials makes a circle, a longer one a pill. */
+  .badges {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    align-content: center;
+    gap: min(16px, 3cqw);
+    flex: 1 1 0;
+    min-height: 0;
+    overflow: hidden;
+  }
+  .badge {
+    --size: clamp(56px, min(26cqw, 48cqh), 140px);
+    display: grid;
+    place-items: center;
+    min-width: var(--size);
+    height: var(--size);
+    padding: 0 0.35em;
+    box-sizing: border-box;
+    border: max(3px, calc(var(--size) * 0.05)) solid var(--accent);
+    border-radius: 999px;
+    /* Accent on the tile is a pair every theme keeps at 4.5:1 or more
+       (themes.test.ts); a filled badge would need a colour for its text
+       that the themes do not define. */
+    color: var(--accent);
+    font-size: calc(var(--size) * 0.38);
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+  }
+  .badge.tone-warn,
+  .badge.tone-bad {
+    border-color: var(--warning);
+  }
+  .badges .none {
+    font-size: clamp(24px, 6cqw, 40px);
   }
   /* Tones use colours every theme defines and keeps readable on its tiles:
      the accent for good, the warning colour for a warning, and the warning

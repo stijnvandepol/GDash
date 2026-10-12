@@ -16,10 +16,14 @@ const (
 	ModeValue     = "value"
 	ModeList      = "list"
 	ModeKeyValues = "keyValues"
+	ModeBadges    = "badges"
 )
 
 // Modes lists the display modes, for the widget catalogue.
-var Modes = []string{ModeValue, ModeList, ModeKeyValues}
+var Modes = []string{ModeValue, ModeList, ModeKeyValues, ModeBadges}
+
+// pairMode reports whether mode shows a set of labelled paths.
+func pairMode(mode string) bool { return mode == ModeKeyValues || mode == ModeBadges }
 
 // Tones a rule can give a value or row; the TV shows them in the theme's
 // own colours.
@@ -58,7 +62,7 @@ type Widget struct {
 	Rules  []Rule
 }
 
-// Pair is one line of key-values mode.
+// Pair is one line of key-values mode, or one badge.
 type Pair struct {
 	Label string
 	Path  Path
@@ -97,7 +101,7 @@ func ParseWidget(settings map[string]any) (Widget, error) {
 	}
 	w.Mode, _ = settings["mode"].(string)
 	if !slices.Contains(Modes, w.Mode) {
-		errs.Add("mode", "choose value, list or keyValues")
+		errs.Add("mode", "choose value, list, keyValues or badges")
 	}
 	w.Title = optionalText(&errs, settings, "title", maxTitle)
 	w.Label = optionalText(&errs, settings, "label", maxLabel)
@@ -109,7 +113,7 @@ func ParseWidget(settings map[string]any) (Widget, error) {
 		}
 		w.Decimals = n
 	}
-	if text, set := settings["path"]; set || w.Mode != ModeKeyValues {
+	if text, set := settings["path"]; set || !pairMode(w.Mode) {
 		w.Path = parsePathSetting(&errs, "path", text)
 	}
 	w.Fields = parseFields(&errs, settings["fields"], w.Mode)
@@ -184,10 +188,10 @@ func parseFields(errs *validation.Collector, v any, mode string) []Path {
 
 func parsePairs(errs *validation.Collector, v any, mode string) []Pair {
 	list, ok := v.([]any)
-	if v == nil && mode != ModeKeyValues {
+	if v == nil && !pairMode(mode) {
 		return nil
 	}
-	if !ok || len(list) > MaxPairs || (mode == ModeKeyValues && len(list) == 0) {
+	if !ok || len(list) > MaxPairs || (pairMode(mode) && len(list) == 0) {
 		errs.Add("pairs", fmt.Sprintf("add 1 to %d lines with a label and a value", MaxPairs))
 		return nil
 	}

@@ -2,6 +2,7 @@ package custom
 
 import (
 	"encoding/json"
+	"slices"
 	"strings"
 	"time"
 	"unicode"
@@ -52,6 +53,9 @@ type Shown struct {
 	Value any         `json:"value"`
 	Rows  []ShownRow  `json:"rows,omitempty"`
 	Pairs []ShownPair `json:"pairs,omitempty"`
+	// Badges are the labels of the badges that are on, in badges mode.
+	// Those that are off are left out, so a TV never learns about them.
+	Badges []string `json:"badges,omitempty"`
 	// Tone applies to the value, or to every row and pair without its own.
 	Tone    string `json:"tone,omitempty"`
 	Message string `json:"message,omitempty"`
@@ -114,6 +118,12 @@ func (w Widget) evaluate(d Data, now time.Time) (Shown, []bool) {
 			v, _ := p.Path.Resolve(d.Doc)
 			s.Pairs = append(s.Pairs, ShownPair{Label: p.Label, Value: cell(v)})
 		}
+	case ModeBadges:
+		for _, p := range w.Pairs {
+			if v, _ := p.Path.Resolve(d.Doc); isOn(v) {
+				s.Badges = append(s.Badges, p.Label)
+			}
+		}
 	case ModeList:
 		s.Rows = w.rows(d.Doc, now, matched)
 	}
@@ -170,6 +180,25 @@ func (w Widget) rows(doc any, now time.Time, matched []bool) []ShownRow {
 		rows = append(rows, row)
 	}
 	return rows
+}
+
+// onWords are the texts that turn a badge on, as APIs such as Home
+// Assistant send a state: a person is "home", a switch is "on".
+var onWords = []string{"true", "on", "yes", "home", "open"}
+
+// isOn reports whether a badge with value v shows: true, a number other
+// than 0, or one of onWords in any case. Anything else, and a value that
+// is missing, leaves it off.
+func isOn(v any) bool {
+	switch x := v.(type) {
+	case bool:
+		return x
+	case float64:
+		return x != 0
+	case string:
+		return slices.Contains(onWords, strings.ToLower(strings.TrimSpace(x)))
+	}
+	return false
 }
 
 var toneWeight = map[string]int{"": 0, ToneOK: 1, ToneWarn: 2, ToneBad: 3}

@@ -340,6 +340,21 @@ shows it.
    `Humidity` with `main.humidity` and `Sky` with
    `weather[0].description`.
 
+### Badges: who is home
+
+**Show: Badges** shows a round badge with a short label, such as initials,
+for every value that is on, and nothing for the others. A value is on when
+it is `true`, a number other than 0, or the text `on`, `home`, `yes`, `open`
+or `true` (in any case), so it works with Home Assistant's `home` and `on`
+states as well as with plain true and false.
+
+For an API that answers
+`{"home": {"aanwezigheid_anna": true, "aanwezigheid_bram": false, …}}`, add a
+badge per person: label `AN` with `home.aanwezigheid_anna`, label `BR` with
+`home.aanwezigheid_bram`, and so on, up to eight. The TV shows `AN` while
+Anna is home; when nobody is home it shows a dash. Only the badges that are
+on are sent to the screens, so a TV never learns who is away.
+
 ### Lists
 
 **Show: A list** shows one row per item of a list in the answer, with up to

@@ -5,6 +5,14 @@ the format follows [Keep a Changelog](https://keepachangelog.com).
 
 ## Unreleased
 
+### Added
+
+- **Badges** for the Custom widget: a round badge with a short label,
+  such as initials, for every value that is on (`true`, a number other
+  than 0, or `on`, `home`, `yes`, `open` or `true`), for example to show
+  who is home. Screens only receive the badges that are on. See
+  [docs/guide.md](docs/guide.md#badges-who-is-home).
+
 ## 0.7.0 – 2026-10-12
 
 ### Added
