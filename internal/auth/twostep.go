@@ -132,7 +132,7 @@ func (s *Service) EnableTwoStep(ctx context.Context, session, code, clientIP str
 		return nil, ErrTwoStepOn
 	}
 	var step int64
-	err = s.limited(user.Username, clientIP, func() error {
+	err = s.limited(user.Username, clientIP, inSession, func() error {
 		secret, err := s.box.Open(setup.SecretSealed)
 		if err != nil {
 			return fmt.Errorf("open two-step secret of user %d: %w", user.ID, err)
@@ -169,7 +169,7 @@ func (s *Service) DisableTwoStep(ctx context.Context, session, password, code, c
 		return CodeUse{}, err
 	}
 	var use CodeUse
-	err = s.limited(user.Username, clientIP, func() error {
+	err = s.limited(user.Username, clientIP, inSession, func() error {
 		use, err = s.verifyCode(ctx, user.ID, code)
 		return err
 	})
@@ -232,11 +232,21 @@ func (s *Service) verifyCode(ctx context.Context, userID int64, code string) (Co
 	return CodeUse{}, nil
 }
 
+// codeCheck says what a right code clears, as the password checks do.
+type codeCheck bool
+
+const (
+	// finishesLogin clears the address's failures too, as Login does.
+	finishesLogin codeCheck = true
+	// inSession clears only the account's own failures, as Confirm does:
+	// the address may have failed for other usernames, and those keep
+	// counting.
+	inSession codeCheck = false
+)
+
 // limited runs check as an attempt of username from clientIP, counted like
-// a password attempt: it stays a failure unless check succeeds. On success
-// only the account's own failures are cleared, as Confirm does: the address
-// may have failed for other usernames, and those keep counting.
-func (s *Service) limited(username, clientIP string, check func() error) error {
+// a password attempt: it stays a failure unless check succeeds.
+func (s *Service) limited(username, clientIP string, kind codeCheck, check func() error) error {
 	keys, account := attemptKeys(username, clientIP)
 	if !s.attempt(keys, account) {
 		return ErrRateLimited
@@ -244,8 +254,12 @@ func (s *Service) limited(username, clientIP string, check func() error) error {
 	if err := check(); err != nil {
 		return err
 	}
-	s.limiter.Reset(keys[1])
-	s.limiter.Release(keys[0])
+	if kind == finishesLogin {
+		s.limiter.Reset(keys...)
+	} else {
+		s.limiter.Reset(keys[1])
+		s.limiter.Release(keys[0])
+	}
 	s.accountLimiter.Reset(account)
 	return nil
 }

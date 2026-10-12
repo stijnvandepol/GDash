@@ -149,6 +149,24 @@ func TestWrongCodesAreRateLimited(t *testing.T) {
 	}
 }
 
+func TestRightCodeClearsFailuresAsALoginDoes(t *testing.T) {
+	ctx := context.Background()
+	s, clock := newTestService(t)
+	secret, _ := enableTwoStep(t, s, setUp(t, s))
+	for round := range 2 {
+		clock.t = clock.t.Add(totp.Period * time.Second)
+		pending := passwordStep(t, s, homeIP)
+		for range maxFailures - 1 {
+			if _, _, _, err := s.FinishLogin(ctx, pending, "000000", homeIP); !errors.Is(err, ErrWrongCode) {
+				t.Fatalf("round %d, wrong code: err = %v", round, err)
+			}
+		}
+		if _, _, _, err := s.FinishLogin(ctx, pending, totp.Code(secret, totp.Step(clock.t)), homeIP); err != nil {
+			t.Fatalf("round %d, right code after %d slips: %v", round, maxFailures-1, err)
+		}
+	}
+}
+
 func TestPendingLoginExpires(t *testing.T) {
 	ctx := context.Background()
 	s, clock := newTestService(t)

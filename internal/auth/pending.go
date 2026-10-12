@@ -87,6 +87,20 @@ func (p *pendingLogins) end(secret string) {
 	delete(p.logins, token.Hash(secret))
 }
 
+// awaitCode answers a right password of u, whose account has two-step login
+// on, with a *CodeNeeded. The password attempt is not counted as a failure,
+// but it does not clear the earlier ones either: otherwise someone who
+// knows the password could wipe the count of wrong codes at will.
+func (s *Service) awaitCode(u store.User, keys []string, account string) error {
+	s.limiter.Release(keys...)
+	s.accountLimiter.Release(account)
+	pending, err := s.pending.start(u, s.now())
+	if err != nil {
+		return err
+	}
+	return &CodeNeeded{Pending: pending}
+}
+
 // FinishLogin completes a login that Login answered with CodeNeeded, with a
 // code from the authenticator app or a recovery code, and starts the
 // session. Wrong codes count towards the same limits as wrong passwords.
@@ -108,7 +122,7 @@ func (s *Service) FinishLogin(ctx context.Context, pending, code, clientIP strin
 		return "", User{}, CodeUse{}, err
 	}
 	var use CodeUse
-	err = s.limited(u.Username, clientIP, func() error {
+	err = s.limited(u.Username, clientIP, finishesLogin, func() error {
 		use, err = s.verifyCode(ctx, u.ID, code)
 		return err
 	})

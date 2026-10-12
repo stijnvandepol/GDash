@@ -174,16 +174,7 @@ func (s *Service) Login(ctx context.Context, c Credentials, clientIP string) (st
 		return "", User{}, err
 	}
 	if twoStep {
-		// The right password is not counted as a failure, but it does not
-		// clear the earlier ones either: otherwise someone who knows the
-		// password could wipe the count of wrong codes at will.
-		s.limiter.Release(keys...)
-		s.accountLimiter.Release(account)
-		pending, err := s.pending.start(u, s.now())
-		if err != nil {
-			return "", User{}, err
-		}
-		return "", User{}, &CodeNeeded{Pending: pending}
+		return "", User{}, s.awaitCode(u, keys, account)
 	}
 	s.limiter.Reset(keys...)
 	s.accountLimiter.Reset(account)
