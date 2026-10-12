@@ -247,9 +247,11 @@ func (s *Service) Authenticate(ctx context.Context, displayToken string) (string
 	return t.DisplayID, nil
 }
 
-// Unpair removes every screen of a display and returns how many there were.
+// Unpair removes the screens paired with a code and returns how many there
+// were. A TV that a cast keeper opened stays paired, so unpairing the extra
+// screens of a Cast display never makes its TV ask for a code.
 func (s *Service) Unpair(ctx context.Context, displayID string) (int64, error) {
-	return s.store.DeleteDisplayTokens(ctx, displayID)
+	return s.store.DeleteScreenTokens(ctx, displayID)
 }
 
 func (s *Service) issue(ctx context.Context, displayID, kind string) (string, error) {

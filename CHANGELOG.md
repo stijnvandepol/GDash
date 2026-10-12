@@ -54,6 +54,11 @@ the format follows [Keep a Changelog](https://keepachangelog.com).
   [docs/guide.md](docs/guide.md#name-its-values).
 - `isOn(x)` in rule conditions, true when a badge would be on.
 
+### Fixed
+
+- Unpairing the extra screens of a display on a Cast TV no longer unpairs
+  the TV itself, which then showed a pairing code until the next relaunch.
+
 ## 0.7.0 – 2026-10-12
 
 ### Added

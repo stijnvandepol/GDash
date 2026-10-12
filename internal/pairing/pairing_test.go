@@ -208,6 +208,14 @@ func TestEveryLaunchReplacesTheCastToken(t *testing.T) {
 func TestUnpairRevokesScreens(t *testing.T) {
 	ctx := context.Background()
 	s, _ := newTestService(t)
+	launchToken, err := s.NewLaunchToken("kitchen", tvAddr)
+	if err != nil {
+		t.Fatal(err)
+	}
+	castToken, _, err := s.Exchange(ctx, launchToken, tvAddr.String())
+	if err != nil {
+		t.Fatal(err)
+	}
 	req, err := s.Begin(ctx, "kitchen", "192.168.1.160")
 	if err != nil {
 		t.Fatal(err)
@@ -224,6 +232,10 @@ func TestUnpairRevokesScreens(t *testing.T) {
 	}
 	if _, err := s.Authenticate(ctx, token); !errors.Is(err, ErrInvalidToken) {
 		t.Fatalf("Authenticate after Unpair: err = %v, want ErrInvalidToken", err)
+	}
+	// The TV that the cast keeper opened keeps showing the display.
+	if _, err := s.Authenticate(ctx, castToken); err != nil {
+		t.Fatalf("cast TV after Unpair: %v", err)
 	}
 }
 

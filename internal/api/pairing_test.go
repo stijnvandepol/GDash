@@ -74,14 +74,7 @@ func TestOpenStreamEndsWhenScreenIsUnpaired(t *testing.T) {
 	env := newTestEnv(t, nil)
 	env.setUp(t)
 	env.createKitchen(t)
-	launch, err := env.pairing.NewLaunchToken("keuken", netip.MustParseAddr("127.0.0.1"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	screen := tv()
-	if status, _ := post(t, screen, env.srv.URL+"/api/display-sessions", `{"launchToken":"`+launch+`"}`); status != http.StatusCreated {
-		t.Fatal("launch exchange failed")
-	}
+	screen := pairedScreen(t, env)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()

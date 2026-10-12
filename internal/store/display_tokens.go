@@ -129,10 +129,12 @@ func (s *Store) DeleteDisplayToken(ctx context.Context, tokenHash string) error 
 	return nil
 }
 
-// DeleteDisplayTokens unpairs every screen of a display and returns how
-// many there were.
-func (s *Store) DeleteDisplayTokens(ctx context.Context, displayID string) (int64, error) {
-	res, err := s.db.ExecContext(ctx, "DELETE FROM display_tokens WHERE display_id = ?", displayID)
+// DeleteScreenTokens unpairs the screens of a display that were paired with
+// a code and returns how many there were. The page a cast keeper opened
+// keeps its token: the keeper put it there, and it is replaced on the next
+// launch anyway.
+func (s *Store) DeleteScreenTokens(ctx context.Context, displayID string) (int64, error) {
+	res, err := s.db.ExecContext(ctx, "DELETE FROM display_tokens WHERE display_id = ? AND kind = ?", displayID, TokenScreen)
 	if err != nil {
 		return 0, fmt.Errorf("delete display tokens: %w", err)
 	}

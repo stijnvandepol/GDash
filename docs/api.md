@@ -142,8 +142,10 @@ valid for 2 minutes, and exchanges it with
 `POST /api/display-sessions {launchToken}`. A display keeps one such cast token,
 replaced on every launch.
 
-Open streams re-check their access every 20 seconds, so unpairing stops a
-screen within that time. Deleting a display unpairs all its screens.
+`DELETE /api/displays/{id}/pairings` unpairs the screens paired with a code;
+the TV a cast keeper opened stays paired, and `removed` does not count it. Open
+streams re-check their access every 20 seconds, so unpairing stops a screen
+within that time. Deleting a display unpairs all its screens, the TV as well.
 
 ## Announcements
 
