@@ -11,7 +11,7 @@ cloud account and no extra hardware at the TV.
 | GDash | TVs and Cast devices, TCP 8009 | Start and keep the dashboard on screen |
 | GDash | the network, UDP 5353 multicast | Find Cast devices (mDNS) |
 | TVs and browsers | GDash, TCP 8420 | Load the dashboard and receive updates |
-| GDash | the internet, HTTPS | Weather, air quality, electricity prices (EnergyZero), news, calendars and place search |
+| GDash | the internet, HTTPS | Weather, air quality, electricity prices (EnergyZero), fuel prices (`api.anwb.nl`), news, calendars and place search |
 
 GDash and the TVs must be in the same network segment (VLAN). A guest
 network that isolates devices, or a switch that drops multicast, hides the

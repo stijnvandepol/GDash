@@ -117,6 +117,7 @@ add calendars and feeds under Settings, Data sources, and the photos once you ad
 | Photos | A slideshow of your photos |
 | Home Assistant | Up to eight sensors or switches from Home Assistant |
 | Departures | The next buses, trams, metros and ferries at one stop in the Netherlands |
+| Fuel prices | The cheapest petrol stations near a place, for one kind of fuel (Netherlands) |
 
 **Photos** are added under Settings, Screens, Photos: JPEG, PNG or WebP, up to 8 MB
 each and 50 in total. They stay on your server and only go to paired
@@ -238,6 +239,45 @@ Good to know:
   together, and at most ten different stops. The list of stops that the search
   uses is loaded once a day.
 - The times are in Dutch time, whatever the time zone of the server or TV.
+
+## Fuel prices
+
+The Fuel prices widget lists the cheapest petrol stations within a few
+kilometres of a place, for the fuel you choose. It needs no account or key:
+the prices are the public price data of the [ANWB](https://www.anwb.nl),
+the same that its route planner and app show.
+
+1. Add a **Fuel prices** widget to a dashboard and select it.
+2. **Place**: type a town or postcode and choose it from the list. Leave it
+   empty and the widget uses the weather location from Settings, so a
+   household with one home needs no setup at all.
+3. **Radius (km)** is how far to look, 1 to 25, default 5. The stations are
+   those within that circle around the place, not a square.
+4. **Fuel** is Euro 95 / E10 (the default), Euro 98, Diesel, LPG or CNG.
+5. **Items** is how many stations to show at most, 1 to 10, default 5. The
+   widget only shows the rows that fit, so no row is cut off.
+
+Each row shows the price, such as `€2.469`, the station with its town and
+how far away it is. The cheapest station comes first, in the accent colour,
+with how much it saves per litre against the most expensive station in the
+list, such as `save €0.26/l`. Stations at the same price are sorted by
+distance. CNG is priced per kilogram.
+
+Good to know:
+
+- **The prices are the ANWB's data and may lag a station's own sign.** Prices
+  change during the day and reach the ANWB with a delay, so check the pump
+  before you drive across town for a few cents. Stations without a price for
+  the chosen fuel, or with a price below 10 cents, are left out.
+- GDash asks the ANWB once every 15 minutes, once for each different place
+  and radius that your dashboards show, at most ten. When the ANWB cannot be
+  reached, the last prices stay on screen and the title turns to the warning
+  colour once they are more than a quarter of an hour and a minute old.
+- Only the place you choose in a widget, rounded to about 100 m, is sent to
+  the ANWB, together with GDash's name and version. A widget without a place
+  sends the weather location, as that is rounded already.
+- The place search is the one the weather location uses (Open-Meteo, with
+  data from GeoNames).
 
 ## Announcements from Home Assistant or any automation
 

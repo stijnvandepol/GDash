@@ -41,6 +41,18 @@ the format follows [Keep a Changelog](https://keepachangelog.com).
   asks OVapi once every 30 seconds, only for stops a dashboard shows, and the
   screen marks the times as stale when OVapi cannot be reached. Trains are not
   in OVapi's data; see [docs/guide.md](docs/guide.md#departures).
+- A **Fuel prices** widget: the cheapest petrol stations within 1 to 25 km of a
+  place, for Euro 95 / E10, Euro 98, diesel, LPG or CNG, from the public price
+  data of the ANWB, without an API key. Each row shows the price with three
+  decimals, the station and its distance; the cheapest is marked with what it
+  saves per litre against the dearest in the list. Choose the place with the
+  place search in the dashboard editor, or leave it empty to use the weather
+  location. GDash asks the ANWB every 15 minutes, once per place and radius a
+  dashboard shows, and the screen marks the prices as stale when the ANWB cannot
+  be reached. The prices may lag a station's own sign; see
+  [docs/guide.md](docs/guide.md#fuel-prices).
+- `place` and `choice` kinds for widget settings, with a place picker in the
+  dashboard editor.
 
 ### Fixed
 

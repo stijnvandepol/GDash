@@ -27,6 +27,9 @@ Google TV you already own. No extra hardware, no subscription, no cloud.
 - **Departures**: the next buses, trams, metros and ferries at a stop in the
   Netherlands, live from [OVapi](https://v0.ovapi.nl) (no API key), with
   delays and cancellations. Trains are not included.
+- **Fuel prices**: the cheapest petrol stations near a place you choose (or
+  the weather location), for Euro 95, Euro 98, diesel, LPG or CNG, from the
+  public price data of the ANWB (no API key).
 - **Announcements**: an automation, such as a Home Assistant rest_command,
   posts "The washing machine is done" with an API token and every TV, or the
   ones you choose, shows it over the dashboard for a while.

@@ -199,11 +199,18 @@ certificate for another domain, so the requests are plain HTTP; they carry no se
 data. The stop search loads `/stopareacode`, all 4600 stop areas, on first use and then once a day, and searches it in
 memory; when a refresh fails it keeps using the previous list.
 
+Fuel prices come from the ANWB points-of-interest service (`api.anwb.nl/routing/points-of-interest/v3/all`), which needs
+no key. Every 15 minutes the server asks once per distinct place and radius that dashboards show, at most ten, with
+`type-filter=FUEL_STATION` and a `bounding-box-filter` around the place, sends a `User-Agent` that names GDash and its
+version, reads at most 8 MB, and cuts the circle out of the box itself (haversine distance). A price below 0.10 euro is
+ignored, as the service sends 0 for a fuel a station does not sell. When a request fails the last complete answer
+stays and the entry is marked `failing`. The data is the ANWB's and can lag a station's own sign.
+
 Changes apply at once: a changed source is fetched again, a removed one
 disappears from the displays. `status` has an entry per configured source by
 data key (`weather.current`, `airquality.current`, `news.default`,
-`calendar.default`, `homeassistant.default`, `departures.default`). The waste and energy price sources
-(`waste.default`, `energyprice.nl`) exist only while a dashboard has a widget for them.
+`calendar.default`, `homeassistant.default`, `departures.default`). The waste, energy price and fuel sources
+(`waste.default`, `energyprice.nl`, `fuel.default`) exist only while a dashboard has a widget for them.
 
 Place search sends the typed name to Open-Meteo's geocoding service, which
 uses GeoNames data; the coordinates can also be entered by hand.
@@ -275,9 +282,13 @@ allows, overlaps another, lacks a required setting, or has a setting its type do
 | `countdown` | 4x4 | none | `label`: 1 to 60 characters, `date`: `YYYY-MM-DD` (both required) |
 | `homeassistant` | 4x3 | `homeassistant.default` | `entities`: 1 to 8 entity IDs such as `sensor.living_room_temperature` (required) |
 | `departures` | 6x4 | `departures.default` | `stop`: a stop area code such as `utrcsw`, from the stop search (required), `stopName`: 1 to 100 characters, shown as the title, `maxItems`: 1 to 20 |
+| `fuel` | 6x4 | `fuel.default` | `place`: a place with `name`, `latitude` and `longitude`, default the weather location, `radius`: 1 to 25 km, default 5, `fuel`: `EURO95` (default), `EURO98`, `DIESEL`, `AUTOGAS` or `CNG`, `maxItems`: 1 to 10, default 5 |
 
-A setting's `kind` is `integer`, `text`, `date`, `calendar`, `entities` or `stop`; `min` and `max` bound an integer, a
-text's length in characters, or the number of entities. A `calendar` setting is a whole number from 1 up, the `id` of a
+A setting's `kind` is `integer`, `text`, `date`, `calendar`, `entities`, `stop`, `place` or `choice`; `min` and `max`
+bound an integer, a text's length in characters, or the number of entities. A `choice` is one of the strings in the
+setting's `options`. A `place` is exactly `{"name": "Oss", "latitude": 51.765, "longitude": 5.518}`: a name of 1 to 100
+characters, a latitude from -90 to 90 and a longitude from -180 to 180 as numbers, and no other field; it is what
+`GET /api/places` returns for a result, without `region`. A `calendar` setting is a whole number from 1 up, the `id` of a
 calendar; the server does not check that the calendar exists when a dashboard is saved, so a widget whose calendar is
 deleted later says on the screen that it cannot find it. A `stop` is one code of 1 to 16 letters and digits.
 Text settings are shown as plain text on the screen, never as HTML.
@@ -323,6 +334,15 @@ without `id`; an entity Home Assistant does not know is left out.
 
 **stop:** `{"code": "utrcsw", "name": "Utrecht, CS Jaarbeurszijde"}`, a stop area of OVapi. The name includes the town.
 Codes that are not letters and digits only are not listed.
+
+**fuel data (`fuel.default`):** maps the keys of the lists that a screen's own widgets show to the cheapest stations
+within the radius, cheapest first, then nearest, at most 10:
+`{"51.765,5.518,5,EURO95": [{"name": "Argos, Heesch", "price": 2.369, "distanceKm": 2.9}]}`. A key is the place rounded to
+three decimals, the radius and the fuel, joined by commas; a widget without a place has the key `here,<radius>,<fuel>`
+and follows the weather location, so no key holds its coordinates. `name` is the station's name with its town unless the
+name holds it already, `price` is euro per litre (per kilogram for `CNG`) and `distanceKm` is the straight-line distance
+with one decimal. A place without a station that sells the fuel has an empty list. Without a place and without a weather
+location there is no `fuel.default` entry at all.
 
 **departures data (`departures.default`):** maps the stop codes that a screen's own widgets show to their next
 departures, soonest first and at most 20:
