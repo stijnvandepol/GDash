@@ -16,12 +16,7 @@ func dataFor(dashboards []Dashboard, data map[string]datahub.Entry) map[string]d
 			}
 		}
 	}
-	if entry, ok := used[HomeAssistantSource]; ok {
-		used[HomeAssistantSource] = onlyKeys(entry, EntityIDs(dashboards))
-	}
-	if entry, ok := used[WasteSource]; ok {
-		used[WasteSource] = onlyCalendars(entry, WasteCalendarIDs(dashboards))
-	}
+	narrowShared(used, dashboards)
 	return used
 }
 
@@ -54,4 +49,15 @@ func onlyKeys(entry datahub.Entry, ids []string) datahub.Entry {
 	}
 	entry.Value = value
 	return entry
+}
+
+// narrowShared cuts the entries that hold the data of every dashboard down
+// to what the dashboards of one screen show.
+func narrowShared(used map[string]datahub.Entry, dashboards []Dashboard) {
+	if entry, ok := used[HomeAssistantSource]; ok {
+		used[HomeAssistantSource] = onlyKeys(entry, EntityIDs(dashboards))
+	}
+	if entry, ok := used[WasteSource]; ok {
+		used[WasteSource] = onlyCalendars(entry, WasteCalendarIDs(dashboards))
+	}
 }
