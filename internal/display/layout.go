@@ -38,6 +38,9 @@ const (
 	// SettingEntities is a list of Home Assistant entity IDs; Min and Max
 	// bound how many.
 	SettingEntities = "entities"
+	// SettingStop is the code of a public transport stop area, chosen with
+	// the stop search.
+	SettingStop = "stop"
 )
 
 // Setting is one setting a widget type takes.
@@ -83,6 +86,7 @@ var WidgetTypes = map[string]WidgetType{
 	"homeassistant": {Source: HomeAssistantSource, MinW: 4, MinH: 3, Settings: map[string]Setting{
 		"entities": {Kind: SettingEntities, Min: 1, Max: MaxEntitiesPerWidget, Required: true},
 	}},
+	"departures": departuresWidget,
 }
 
 // AirQualitySource is the data key of the air quality and pollen at the
@@ -201,11 +205,14 @@ func settingsProblem(w Widget, kind WidgetType) string {
 	}
 	for _, key := range slices.Sorted(maps.Keys(kind.Settings)) {
 		rule := kind.Settings[key]
-		if _, set := w.Settings[key]; rule.Required && !set && rule.Kind == SettingEntities {
-			return valueProblem(key, nil, rule)
-		} else if rule.Required && !set {
-			return fmt.Sprintf("a %s widget needs a %s", w.Type, key)
+		if _, set := w.Settings[key]; !rule.Required || set {
+			continue
 		}
+		// These kinds have a message that says how to choose one.
+		if rule.Kind == SettingEntities || rule.Kind == SettingStop {
+			return valueProblem(key, nil, rule)
+		}
+		return fmt.Sprintf("a %s widget needs a %s", w.Type, key)
 	}
 	return ""
 }
@@ -236,6 +243,8 @@ func valueProblem(key string, value any, rule Setting) string {
 		if ids, ok := entityIDs(value, rule.Max); !ok || len(ids) < rule.Min {
 			return fmt.Sprintf("choose %d to %d Home Assistant entities", rule.Min, rule.Max)
 		}
+	case SettingStop:
+		return stopProblem(key, value)
 	}
 	return ""
 }

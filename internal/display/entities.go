@@ -21,8 +21,9 @@ func dataFor(dashboards []Dashboard, data map[string]datahub.Entry) map[string]d
 }
 
 // onlyKeys narrows an entry that holds an object to the keys in ids: the
-// Home Assistant entities, or the calendars of waste collection widgets.
-// The server fetches those of every dashboard in one entry, but a
+// Home Assistant entities, the transit stops, or the calendars of waste
+// collection widgets. The server fetches those of every dashboard in one
+// entry each, but a
 // display may only receive what its own widgets show: a hall screen with a
 // temperature must not get the door locks of the living room dashboard.
 // An entry that cannot be read is replaced by one without a value, so the
@@ -59,5 +60,8 @@ func narrowShared(used map[string]datahub.Entry, dashboards []Dashboard) {
 	}
 	if entry, ok := used[WasteSource]; ok {
 		used[WasteSource] = onlyCalendars(entry, WasteCalendarIDs(dashboards))
+	}
+	if entry, ok := used[DeparturesSource]; ok {
+		used[DeparturesSource] = onlyKeys(entry, StopCodes(dashboards))
 	}
 }
