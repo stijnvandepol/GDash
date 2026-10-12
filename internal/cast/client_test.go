@@ -5,12 +5,20 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"os"
 	"sync"
 	"testing"
 	"time"
 )
 
 const testTimeout = 5 * time.Second
+
+func TestMain(m *testing.M) {
+	// A receiver page on a TV needs seconds to load; the fake device's
+	// receivers take messages at once. Set before any keeper runs.
+	startupResends = []time.Duration{20 * time.Millisecond, 50 * time.Millisecond}
+	os.Exit(m.Run())
+}
 
 func testContext(t *testing.T) context.Context {
 	t.Helper()
@@ -234,14 +242,7 @@ func TestKeeperDoesNotWakeATVInStandby(t *testing.T) {
 	}
 
 	// Someone switches the TV on; the device reports its new state.
-	device.mu.Lock()
-	device.standby = false
-	device.mu.Unlock()
-	update := Message{SourceID: receiverID, DestinationID: senderID, Namespace: nsReceiver,
-		Payload: `{"type":"RECEIVER_STATUS","requestId":0,"status":{"applications":[]}}`}
-	if err := writeFrame(<-device.conns, update); err != nil {
-		t.Fatal(err)
-	}
+	device.setStandby(false, false)
 	waitForLaunches(t, device, 1)
 }
 
@@ -288,13 +289,22 @@ func newLaunchingKeeper(device *fakeDevice, launches *launchCounter, refresh tim
 	}
 }
 
-func TestKeeperRestartsLaunchMessageReceiverFoundRunning(t *testing.T) {
+func TestKeeperReplacesALeftoverReceiverAfterStandby(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), testTimeout)
 	defer cancel()
+	// After a server restart at night: DashCast still runs, the TV sleeps.
 	device := newFakeDevice(t, Application{AppID: DashCastAppID, SessionID: "old", TransportID: "web-0"})
+	device.standby = true
 	launches := &launchCounter{}
-	go newLaunchingKeeper(device, launches, 0).Run(ctx)
+	keeper := newLaunchingKeeper(device, launches, 0)
+	rec := &stateRecorder{}
+	keeper.Status = rec.record
+	go keeper.Run(ctx)
+	rec.waitFor(t, StateStandby)
 
+	// In the morning someone switches the TV on: nobody watches the
+	// leftover receiver, which would ignore a new page, so it is replaced.
+	device.setStandby(false, false)
 	waitForLaunches(t, device, 1)
 	select {
 	case m := <-device.appMessages:
@@ -303,6 +313,9 @@ func TestKeeperRestartsLaunchMessageReceiverFoundRunning(t *testing.T) {
 		}
 	case <-ctx.Done():
 		t.Fatal("relaunched receiver never got the message")
+	}
+	if stops := device.stopped(); len(stops) != 1 || stops[0] != "old" {
+		t.Fatalf("stops = %v, want the leftover session stopped once", stops)
 	}
 	launches.mu.Lock()
 	defer launches.mu.Unlock()
@@ -339,11 +352,7 @@ func TestKeeperIgnoresStaleStatusUpdate(t *testing.T) {
 
 	// The device reports "no apps" on its own while the app still runs,
 	// as a late update after a STOP does.
-	stale := Message{SourceID: receiverID, DestinationID: senderID, Namespace: nsReceiver,
-		Payload: `{"type":"RECEIVER_STATUS","requestId":0,"status":{"applications":[]}}`}
-	if err := writeFrame(<-device.conns, stale); err != nil {
-		t.Fatal(err)
-	}
+	device.push(`{"type":"RECEIVER_STATUS","requestId":0,"status":{"applications":[]}}`)
 	time.Sleep(300 * time.Millisecond)
 	if n := device.launchCount(); n != 1 {
 		t.Fatalf("launches = %d after a stale update, want 1", n)
@@ -379,6 +388,7 @@ func TestKeeperRestsOutsideActiveHours(t *testing.T) {
 }
 
 func TestShouldRelaunch(t *testing.T) {
+	yes, no := true, false
 	tests := []struct {
 		name   string
 		status ReceiverStatus
@@ -387,6 +397,8 @@ func TestShouldRelaunch(t *testing.T) {
 		{"nothing running", ReceiverStatus{}, true},
 		{"only the idle screen", ReceiverStatus{Applications: []Application{{AppID: "E8C28D3C", IsIdleScreen: true}}}, true},
 		{"someone is casting", ReceiverStatus{Applications: []Application{{AppID: "233637DE", DisplayName: "YouTube"}}}, false},
+		{"the TV shows another input", ReceiverStatus{IsActiveInput: &no}, false},
+		{"the TV shows the Cast device", ReceiverStatus{IsActiveInput: &yes}, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

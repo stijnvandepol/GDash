@@ -46,7 +46,7 @@ func status(ctx context.Context, device string) error {
 	if err != nil {
 		return err
 	}
-	fmt.Printf("standby: %v  active input: %v  gdash may launch: %v\n", st.IsStandBy, st.IsActiveInput, cast.ShouldRelaunch(st))
+	fmt.Printf("standby: %s  active input: %s  gdash may launch: %v\n", reported(st.IsStandBy), reported(st.IsActiveInput), cast.ShouldRelaunch(st))
 	if len(st.Applications) == 0 {
 		fmt.Println("no apps running")
 		return nil
@@ -57,6 +57,15 @@ func status(ctx context.Context, device string) error {
 		fmt.Fprintf(w, "%s\t%s\t%v\n", app.AppID, app.DisplayName, app.IsIdleScreen)
 	}
 	return w.Flush()
+}
+
+// reported shows an HDMI-CEC value of a device, which only some devices
+// report.
+func reported(value *bool) string {
+	if value == nil {
+		return "not reported"
+	}
+	return fmt.Sprint(*value)
 }
 
 // healthTimeout bounds the check: a server that does not answer is not healthy.

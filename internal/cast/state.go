@@ -14,9 +14,14 @@ const (
 	StateShowing State = "showing"
 	// StateStandby: the receiver runs, but the TV reports standby.
 	StateStandby State = "standby"
-	// StateOtherApp: another app is on screen, which the keeper leaves
-	// alone (see ShouldRelaunch).
+	// StateOtherApp: another app is on screen, or the TV shows another
+	// input; the keeper launches when the screen is free (see
+	// ShouldRelaunch).
 	StateOtherApp State = "other_app"
+	// StateYielded: someone took the TV from GDash, or used it when GDash
+	// started. The keeper launches nothing until the TV has been in
+	// standby, or an admin takes the TV back.
+	StateYielded State = "yielded"
 	// StateResting: outside the display's active hours.
 	StateResting State = "resting"
 )

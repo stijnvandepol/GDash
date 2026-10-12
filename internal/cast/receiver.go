@@ -16,11 +16,34 @@ type Application struct {
 }
 
 // ReceiverStatus is the state of a Cast device. IsActiveInput and IsStandBy
-// are only meaningful when the TV supports HDMI-CEC.
+// come from HDMI-CEC; they are nil when the device does not report them,
+// which is not the same as false.
 type ReceiverStatus struct {
 	Applications  []Application `json:"applications"`
-	IsActiveInput bool          `json:"isActiveInput"`
-	IsStandBy     bool          `json:"isStandBy"`
+	IsActiveInput *bool         `json:"isActiveInput"`
+	IsStandBy     *bool         `json:"isStandBy"`
+}
+
+// InStandby reports whether the TV says it is in standby. A device that
+// does not say counts as awake.
+func (s ReceiverStatus) InStandby() bool { return s.IsStandBy != nil && *s.IsStandBy }
+
+// OnThisInput reports whether the TV says it shows the Cast device's input.
+func (s ReceiverStatus) OnThisInput() bool { return s.IsActiveInput != nil && *s.IsActiveInput }
+
+// OnOtherInput reports whether the TV says it shows another input, such as
+// a game console. A device that does not say is not on another input.
+func (s ReceiverStatus) OnOtherInput() bool { return s.IsActiveInput != nil && !*s.IsActiveInput }
+
+// hasOtherApp reports whether an app other than appID, and other than the
+// device's idle screen, is running.
+func (s ReceiverStatus) hasOtherApp(appID string) bool {
+	for _, app := range s.Applications {
+		if app.AppID != appID && !app.IsIdleScreen {
+			return true
+		}
+	}
+	return false
 }
 
 // App returns the running application with the given app ID, if any.

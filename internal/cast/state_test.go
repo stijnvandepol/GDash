@@ -45,17 +45,20 @@ func (r *stateRecorder) waitFor(t *testing.T, want State) error {
 }
 
 func TestKeeperReportsState(t *testing.T) {
+	otherInput := false
 	tests := []struct {
 		name    string
 		apps    []Application
 		standby bool
+		input   *bool
 		active  bool
 		want    State
 	}{
-		{"idle device gets the dashboard", []Application{{AppID: "E8C28D3C", IsIdleScreen: true}}, false, true, StateShowing},
-		{"TV in standby", nil, true, true, StateStandby},
-		{"someone casts YouTube", []Application{{AppID: "233637DE", DisplayName: "YouTube", SessionID: "yt", TransportID: "yt"}}, false, true, StateOtherApp},
-		{"outside active hours", nil, false, false, StateResting},
+		{"idle device gets the dashboard", []Application{{AppID: "E8C28D3C", IsIdleScreen: true}}, false, nil, true, StateShowing},
+		{"TV in standby", nil, true, nil, true, StateStandby},
+		{"someone casts YouTube when GDash starts", []Application{{AppID: "233637DE", DisplayName: "YouTube", SessionID: "yt", TransportID: "yt"}}, false, nil, true, StateYielded},
+		{"TV on another input", nil, false, &otherInput, true, StateOtherApp},
+		{"outside active hours", nil, false, nil, false, StateResting},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -63,6 +66,7 @@ func TestKeeperReportsState(t *testing.T) {
 			defer cancel()
 			device := newFakeDevice(t, tt.apps...)
 			device.standby = tt.standby
+			device.activeInput = tt.input
 			rec := &stateRecorder{}
 			keeper := newRefreshingKeeper(device, 0)
 			keeper.Active = func() bool { return tt.active }

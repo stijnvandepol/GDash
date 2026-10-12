@@ -20,8 +20,9 @@ const (
 )
 
 // Keeper keeps a receiver app on screen on one Cast device and sends it
-// messages. It reconnects with backoff and relaunches the app when it
-// disappears, within the limits of ShouldRelaunch.
+// messages. It reconnects with backoff and launches the app on a free
+// screen (see ShouldRelaunch). When someone takes the TV from it, it waits
+// until the TV has been in standby (see claim).
 type Keeper struct {
 	// Resolve finds the device. Looking it up for every session survives an
 	// IP change after a router restart.
@@ -53,7 +54,14 @@ type Keeper struct {
 	// Status, if set, receives every state the keeper finds, for the web
 	// interface. It must not block.
 	Status func(State, error)
-	Logger *slog.Logger
+	// TakeOver, if set, delivers an admin's request to show the receiver
+	// now: it ends a yield and launches over whatever is on the TV, unless
+	// the TV is in standby or the display is outside its active hours.
+	TakeOver <-chan struct{}
+	Logger   *slog.Logger
+
+	// claim is who controls the screen. Only the Run goroutine uses it.
+	claim claim
 }
 
 // Run keeps the receiver alive until ctx is cancelled.
@@ -131,21 +139,23 @@ func (k *Keeper) refreshInterval(d Device) time.Duration {
 	return k.Refresh(d)
 }
 
-// ShouldRelaunch decides whether the keeper may start GDash on a device
-// that is not showing it. Starting an app on a Cast device takes over the
-// screen, and through HDMI-CEC it can also switch the TV on.
+// ShouldRelaunch decides whether the screen of a device that is not showing
+// GDash is free: only its idle screen runs, and the TV does not report
+// another input, such as a game console. Starting an app on a Cast device
+// takes over the screen, and through HDMI-CEC it can switch the TV on or
+// to the Cast device's input.
 //
-// Current policy: only take over when nothing else is on screen, so the
-// keeper never interrupts someone who casts YouTube to the kitchen TV.
-// Known gap: Google TV devices report no apps while a native app such as
-// Netflix runs, so the keeper would start over it.
+// Known gap: Google TV reports no apps while a native app such as Netflix
+// runs, so a Google TV that is free here may be in use. The keeper only
+// avoids that while it holds the screen: when its own app disappears, it
+// waits until the TV has been in standby (see claim).
 func ShouldRelaunch(status ReceiverStatus) bool {
 	for _, app := range status.Applications {
 		if !app.IsIdleScreen {
 			return false
 		}
 	}
-	return true
+	return !status.OnOtherInput()
 }
 
 func isReadySignal(payload string) bool {
