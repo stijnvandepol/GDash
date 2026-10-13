@@ -149,6 +149,7 @@ type testEnv struct {
 	store           *store.Store
 	sources         *fakeSources
 	stops           *fakeStops
+	artwork         *fakeArtwork
 	board           *announcement.Board
 	// announced counts AnnouncementsChanged calls.
 	announced *atomic.Int32
@@ -192,6 +193,7 @@ func newTestEnv(t *testing.T, discover func(context.Context) ([]cast.Device, err
 	}
 	sources := &fakeSources{now: now}
 	stops := &fakeStops{}
+	artwork := &fakeArtwork{}
 	board := announcement.NewBoard(now)
 	album, err := photos.NewStore(filepath.Join(t.TempDir(), "photos"))
 	if err != nil {
@@ -248,6 +250,8 @@ func newTestEnv(t *testing.T, discover func(context.Context) ([]cast.Device, err
 		Photos:               album,
 		Backup:               fakeBackup{},
 		PhotosChanged:        func() { changes.Add(1) },
+		Artwork:              artwork,
+		SentData:             artwork.sentData,
 		PingInterval:         50 * time.Millisecond,
 		Now:                  now,
 		Logger:               logger,
@@ -260,7 +264,7 @@ func newTestEnv(t *testing.T, discover func(context.Context) ([]cast.Device, err
 	jar, _ := cookiejar.New(nil)
 	return &testEnv{
 		srv: srv, client: &http.Client{Jar: jar}, changes: changes, settingsChanges: settingsChanges,
-		pairing: pairingService, store: st, sources: sources, stops: stops, board: board, announced: announced, logs: logs,
+		pairing: pairingService, store: st, sources: sources, stops: stops, artwork: artwork, board: board, announced: announced, logs: logs,
 		updates: updates, elapsed: elapsed, cameraClock: cameraClock,
 	}
 }

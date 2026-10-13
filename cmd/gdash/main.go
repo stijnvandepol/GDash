@@ -218,6 +218,9 @@ func serve(ctx context.Context, logger *slog.Logger) error {
 		DisplaysChanged: func() {
 			publisher.Refresh(ctx)
 			castManager.Changed()
+			if err := sources.displaysChanged(ctx); err != nil {
+				logger.Error("could not follow the display change for Now playing; restart GDash", "error", err)
+			}
 		},
 		DashboardsChanged: func() {
 			// A dashboard can start or stop showing a Home Assistant entity,
@@ -245,6 +248,8 @@ func serve(ctx context.Context, logger *slog.Logger) error {
 		Photos:        album,
 		Backup:        backup.Archive{DataDir: cfg.dataDir, DatabaseName: databaseName, Write: db.WriteCopy},
 		PhotosChanged: func() { publisher.Refresh(ctx) },
+		Artwork:       sources.nowPlaying.Artwork,
+		SentData:      snapshots.Sent,
 		Now:           time.Now,
 		Logger:        logger,
 	}).Handler()

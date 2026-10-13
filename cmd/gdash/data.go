@@ -17,6 +17,7 @@ import (
 	"github.com/stijnvandepol/gdash/internal/datahub"
 	"github.com/stijnvandepol/gdash/internal/departures"
 	"github.com/stijnvandepol/gdash/internal/display"
+	"github.com/stijnvandepol/gdash/internal/displays"
 	"github.com/stijnvandepol/gdash/internal/energyprice"
 	"github.com/stijnvandepol/gdash/internal/fuel"
 	"github.com/stijnvandepol/gdash/internal/holidays"
@@ -24,6 +25,7 @@ import (
 	"github.com/stijnvandepol/gdash/internal/homey"
 	"github.com/stijnvandepol/gdash/internal/immich"
 	"github.com/stijnvandepol/gdash/internal/news"
+	"github.com/stijnvandepol/gdash/internal/nowplaying"
 	"github.com/stijnvandepol/gdash/internal/outbound"
 	"github.com/stijnvandepol/gdash/internal/photos"
 	"github.com/stijnvandepol/gdash/internal/rain"
@@ -58,6 +60,12 @@ type dataSources struct {
 	// dashboards lists every dashboard, for the Home Assistant entities,
 	// transit stops and custom sources their widgets show.
 	dashboards func(ctx context.Context) ([]display.Dashboard, error)
+	// displays lists every display, for the TVs the Now playing watcher
+	// must leave alone.
+	displays func(ctx context.Context) ([]displays.Display, error)
+	// nowPlaying follows what plays on the Cast devices that Now playing
+	// widgets show.
+	nowPlaying *nowplaying.Watcher
 	logger     *slog.Logger
 
 	// mu makes syncs run one at a time, so an older read of the settings
@@ -144,6 +152,7 @@ func startData(ctx context.Context, cfg config, db *store.Store, svc *settings.S
 		custom:     &custom.Fetcher{HTTP: outbound.NewClient(upstreamTimeout), UserAgent: userAgent},
 		stops:      &departures.Directory{Source: transit, Now: time.Now, Logger: logger},
 		dashboards: db.Dashboards,
+		displays:   db.Displays,
 		logger:     logger,
 		energy:     energyprice.Client{BaseURL: energyprice.DefaultBaseURL, HTTP: outbound.NewClient(upstreamTimeout), Location: dutch, Now: time.Now},
 		holidays: holidays.Client{
@@ -161,6 +170,7 @@ func startData(ctx context.Context, cfg config, db *store.Store, svc *settings.S
 		sources.rain.OpenMeteoURL = cfg.testUpstream + testOpenMeteoPath
 		sources.warnings.BaseURL = cfg.testUpstream + testMeteoAlarmPath
 	}
+	sources.nowPlaying = newNowPlaying(hub, sources)
 	if err := sources.sync(ctx); err != nil {
 		return nil, nil, nil, err
 	}
@@ -212,8 +222,10 @@ func (d *dataSources) sync(ctx context.Context) error {
 	sources = append(sources, d.dashboardSources(cfg, dashboards)...)
 	sources = append(sources, d.homeySources(cfg, dashboards)...)
 	sources = append(sources, d.albumSources(cfg, dashboards)...)
+	sources = append(sources, nowPlayingSource(dashboards)...)
 	d.hub.Configure(ctx, append(sources, d.customSources(customs, display.CustomSourceIDs(dashboards))...))
-	return nil
+	// After the hub has the source, so the watcher's first value lands.
+	return d.followNowPlaying(ctx, dashboards)
 }
 
 // build turns settings into hub sources. A source that has nothing to fetch

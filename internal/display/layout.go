@@ -107,6 +107,7 @@ var WidgetTypes = map[string]WidgetType{
 	HomeyPresenceWidget: homeyPresenceWidget,
 	CustomWidget:        customWidget,
 	CameraWidget:        cameraWidget,
+	NowPlayingWidget:    nowPlayingWidget,
 }
 
 // AirQualitySource is the data key of the air quality and pollen at the
@@ -321,6 +322,8 @@ func valueProblem(key string, value any, rule Setting) string {
 		if _, ok := value.(bool); !ok {
 			return fmt.Sprintf("%s must be true or false", key)
 		}
+	case SettingCastDevices:
+		return castDevicesProblem(key, value)
 	}
 	return ""
 }

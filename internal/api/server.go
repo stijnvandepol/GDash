@@ -114,6 +114,11 @@ type Server struct {
 	// PhotosChanged is called after a photo is added or removed, so photo
 	// widgets update.
 	PhotosChanged func()
+	// Artwork serves the cover art of what plays on Cast devices.
+	Artwork ArtworkSource
+	// SentData returns the data entry with a key that a display's screens
+	// were last sent, which decides the covers they may load.
+	SentData func(displayID, key string) (datahub.Entry, bool)
 	// PingInterval is how often an open display stream sends a keep-alive
 	// and re-checks that it may still show the display. Zero means 20
 	// seconds.
@@ -201,6 +206,7 @@ func (s *Server) Handler() http.Handler {
 	s.handleImmich(mux)
 	s.handleSynology(mux)
 	s.handleCameras(mux)
+	mux.HandleFunc("GET /api/now-playing/artwork/{id}", s.getNowPlayingArtwork)
 
 	mux.Handle("GET /api/cast-devices", s.requireUser(s.castDevices))
 	mux.Handle("GET /api/displays", s.requireUser(s.listDisplays))

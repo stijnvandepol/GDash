@@ -159,6 +159,9 @@ type Broadcaster struct {
 	version     int64
 	latest      map[string][]byte
 	subscribers map[string]map[chan []byte]struct{}
+
+	// sent is the data in each display's latest snapshot.
+	sent map[string]map[string]datahub.Entry
 }
 
 // NewBroadcaster creates an empty broadcaster.
@@ -176,6 +179,7 @@ func (b *Broadcaster) Publish(now time.Time, views map[string]View, data map[str
 	defer b.mu.Unlock()
 	b.version++
 	latest := make(map[string][]byte, len(views))
+	sent := make(map[string]map[string]datahub.Entry, len(views))
 	night := IsNight(now, data)
 	for displayID, view := range views {
 		active := view.Hours.Contains(now)
@@ -200,12 +204,23 @@ func (b *Broadcaster) Publish(now time.Time, views map[string]View, data map[str
 			return fmt.Errorf("encode snapshot for display %s: %w", displayID, err)
 		}
 		latest[displayID] = msg
+		sent[displayID] = used
 		for ch := range b.subscribers[displayID] {
 			replaceLatest(ch, msg)
 		}
 	}
-	b.latest = latest
+	b.latest, b.sent = latest, sent
 	return nil
+}
+
+// Sent returns the data entry with key that the display was last sent,
+// for checking what its screens may load, such as the cover art of what
+// it shows playing.
+func (b *Broadcaster) Sent(displayID, key string) (datahub.Entry, bool) {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	entry, ok := b.sent[displayID][key]
+	return entry, ok
 }
 
 // Subscribe returns a channel that first receives the display's current
