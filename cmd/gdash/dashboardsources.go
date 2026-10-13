@@ -100,6 +100,10 @@ func (d *dataSources) dashboardSources(cfg settings.Sources, dashboards []displa
 	if source, ok := d.warningsSource(cfg.Location, display.WarningsQueries(dashboards)); ok {
 		sources = append(sources, source)
 	}
+	sources = append(sources, d.trafficSources(cfg, dashboards)...)
+	if source, ok := d.knmiSource(cfg, dashboards); ok {
+		sources = append(sources, source)
+	}
 	return sources
 }
 

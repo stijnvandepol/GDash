@@ -79,7 +79,11 @@ type Server struct {
 	Immich               ImmichReader
 	Synology             SynologyReader
 	Stops                StopSearcher
-	CustomFetcher        CustomFetcher
+	// Traffic guards the requests to the ANWB's traffic info.
+	Traffic TrafficGuard
+	// KNMI tries a KNMI key before it is stored.
+	KNMI          KNMIChecker
+	CustomFetcher CustomFetcher
 	// WebPageChecker fetches a web page for the Check button under Settings.
 	WebPageChecker WebPageChecker
 	// ReceiveCustom stores the answer that a pushed custom source sent; it
@@ -201,6 +205,11 @@ func (s *Server) Handler() http.Handler {
 	mux.Handle("GET /api/homey/users", s.requireUser(s.getHomeyUsers))
 	mux.Handle("PUT /api/homey/snapshot", s.requireUserOrToken(s.putHomeySnapshot))
 	mux.Handle("GET /api/departures/stops", s.requireUser(s.getDepartureStops))
+	mux.Handle("GET /api/traffic", s.requireUser(s.getTraffic))
+	mux.Handle("PUT /api/traffic", s.requireUser(s.putTraffic))
+	mux.Handle("GET /api/knmi", s.requireUser(s.getKNMI))
+	mux.Handle("PUT /api/knmi", s.requireUser(s.putKNMI))
+	mux.Handle("DELETE /api/knmi", s.requireUser(s.deleteKNMI))
 	s.handleCustomSources(mux)
 	s.handleWebPages(mux)
 

@@ -24,6 +24,7 @@ import (
 	"github.com/stijnvandepol/gdash/internal/homeassistant"
 	"github.com/stijnvandepol/gdash/internal/homey"
 	"github.com/stijnvandepol/gdash/internal/immich"
+	"github.com/stijnvandepol/gdash/internal/knmi"
 	"github.com/stijnvandepol/gdash/internal/news"
 	"github.com/stijnvandepol/gdash/internal/nowplaying"
 	"github.com/stijnvandepol/gdash/internal/outbound"
@@ -31,8 +32,10 @@ import (
 	"github.com/stijnvandepol/gdash/internal/rain"
 	"github.com/stijnvandepol/gdash/internal/settings"
 	"github.com/stijnvandepol/gdash/internal/solar"
+	"github.com/stijnvandepol/gdash/internal/speedcameras"
 	"github.com/stijnvandepol/gdash/internal/store"
 	"github.com/stijnvandepol/gdash/internal/synology"
+	"github.com/stijnvandepol/gdash/internal/traffic"
 	"github.com/stijnvandepol/gdash/internal/warnings"
 	"github.com/stijnvandepol/gdash/internal/weather"
 	"github.com/stijnvandepol/gdash/internal/webpage"
@@ -57,7 +60,12 @@ type dataSources struct {
 	holidays   holidays.Client
 	rain       *rain.Client
 	warnings   *warnings.Client
-	custom     *custom.Fetcher
+	// traffic guards the requests to the ANWB; cameras keeps the fixed
+	// camera list; knmi reads measured weather.
+	traffic *traffic.Guard
+	cameras *speedcameras.Store
+	knmi    *knmi.Client
+	custom  *custom.Fetcher
 	// stops searches the stop areas for the widget editor.
 	stops *departures.Directory
 	// dashboards lists every dashboard, for the Home Assistant entities,
@@ -143,6 +151,10 @@ func startData(ctx context.Context, cfg config, db *store.Store, svc *settings.S
 		UserAgent: userAgent,
 		Now:       time.Now,
 	}
+	anwbURL, overpassURL, knmiURL := traffic.DefaultBaseURL, speedcameras.DefaultBaseURL, knmi.DefaultBaseURL
+	if cfg.testUpstream != "" {
+		anwbURL, overpassURL, knmiURL = cfg.testUpstream+testANWBTrafficPath, cfg.testUpstream+testOverpassPath, cfg.testUpstream+testKNMIPath
+	}
 	sources := &dataSources{
 		hub:        hub,
 		settings:   svc,
@@ -157,6 +169,17 @@ func startData(ctx context.Context, cfg config, db *store.Store, svc *settings.S
 		synology:   &synology.Client{},
 		departures: transit,
 		fuel:       &fuel.Client{BaseURL: fuel.DefaultBaseURL, HTTP: outbound.NewClient(upstreamTimeout), UserAgent: userAgent},
+		traffic: &traffic.Guard{
+			Client: traffic.Client{BaseURL: anwbURL, HTTP: outbound.NewClient(upstreamTimeout), UserAgent: userAgent},
+			Now:    time.Now,
+		},
+		cameras: &speedcameras.Store{
+			Client: speedcameras.Client{BaseURL: overpassURL, HTTP: outbound.NewClient(overpassHTTP), UserAgent: userAgent},
+			Path:   filepath.Join(cfg.dataDir, "speedcameras.json"),
+			Now:    time.Now,
+			Logger: logger,
+		},
+		knmi:       &knmi.Client{BaseURL: knmiURL, HTTP: outbound.NewClient(upstreamTimeout), UserAgent: userAgent, Now: time.Now},
 		custom:     &custom.Fetcher{HTTP: outbound.NewClient(upstreamTimeout), UserAgent: userAgent},
 		stops:      &departures.Directory{Source: transit, Now: time.Now, Logger: logger},
 		dashboards: db.Dashboards,
@@ -178,7 +201,7 @@ func startData(ctx context.Context, cfg config, db *store.Store, svc *settings.S
 		},
 	}
 	if cfg.testUpstream != "" {
-		logger.Warn("GDASH_TEST_UPSTREAM is set: rain, weather warnings and the solar forecast come from a stand-in, not from Buienradar, Open-Meteo or MeteoAlarm", "address", cfg.testUpstream)
+		logger.Warn("GDASH_TEST_UPSTREAM is set: rain, weather warnings, the solar forecast, traffic, fixed cameras and KNMI measurements come from a stand-in, not from Buienradar, Open-Meteo, MeteoAlarm, the ANWB, Overpass or the KNMI", "address", cfg.testUpstream)
 		sources.rain.BuienradarURL = cfg.testUpstream + testBuienradarPath
 		sources.rain.OpenMeteoURL = cfg.testUpstream + testOpenMeteoPath
 		sources.warnings.BaseURL = cfg.testUpstream + testMeteoAlarmPath

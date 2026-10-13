@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/stijnvandepol/gdash/internal/datahub"
 	"github.com/stijnvandepol/gdash/internal/settings"
 	"github.com/stijnvandepol/gdash/internal/store"
 	"github.com/stijnvandepol/gdash/internal/validation"
@@ -25,6 +26,15 @@ type sourceStatus struct {
 	Failing   bool       `json:"failing"`
 }
 
+// entryStatus is whether a data hub entry works, for the Settings page.
+func entryStatus(entry datahub.Entry) sourceStatus {
+	st := sourceStatus{Failing: entry.Failing}
+	if !entry.FetchedAt.IsZero() {
+		st.UpdatedAt = &entry.FetchedAt
+	}
+	return st
+}
+
 // getSettings handles GET /api/settings: the settings and, per configured
 // data source, whether it works.
 func (s *Server) getSettings(w http.ResponseWriter, r *http.Request) {
@@ -35,11 +45,7 @@ func (s *Server) getSettings(w http.ResponseWriter, r *http.Request) {
 	}
 	status := map[string]sourceStatus{}
 	for key, entry := range s.SourceStatus() {
-		st := sourceStatus{Failing: entry.Failing}
-		if !entry.FetchedAt.IsZero() {
-			st.UpdatedAt = &entry.FetchedAt
-		}
-		status[key] = st
+		status[key] = entryStatus(entry)
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"settings": current, "status": status})
 }

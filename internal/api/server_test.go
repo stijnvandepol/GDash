@@ -163,6 +163,8 @@ type testEnv struct {
 	elapsed *atomic.Int64
 	// cameraClock is the clock of the camera keeper, which tests move.
 	cameraClock *movableClock
+	// traffic stands in for the ANWB request guard.
+	traffic *fakeTrafficGuard
 }
 
 // advance moves the server's clock on by d.
@@ -195,6 +197,7 @@ func newTestEnv(t *testing.T, discover func(context.Context) ([]cast.Device, err
 	sources := &fakeSources{now: now}
 	stops := &fakeStops{}
 	artwork := &fakeArtwork{}
+	trafficGuard := &fakeTrafficGuard{}
 	board := announcement.NewBoard(now)
 	album, err := photos.NewStore(filepath.Join(t.TempDir(), "photos"))
 	if err != nil {
@@ -229,6 +232,8 @@ func newTestEnv(t *testing.T, discover func(context.Context) ([]cast.Device, err
 		Settings:          settingsService,
 		Places:            sources,
 		Stops:             stops,
+		Traffic:           trafficGuard,
+		KNMI:              fakeKNMI{},
 		CustomFetcher:     &custom.Fetcher{HTTP: outbound.NewClient(5 * time.Second)},
 		WebPageChecker:    &webpage.Checker{HTTP: outbound.NewClient(5 * time.Second)},
 		ReceiveCustom:     sources.receiveCustom,
@@ -267,7 +272,7 @@ func newTestEnv(t *testing.T, discover func(context.Context) ([]cast.Device, err
 	return &testEnv{
 		srv: srv, client: &http.Client{Jar: jar}, changes: changes, settingsChanges: settingsChanges,
 		pairing: pairingService, store: st, sources: sources, stops: stops, artwork: artwork, board: board, announced: announced, logs: logs,
-		updates: updates, elapsed: elapsed, cameraClock: cameraClock,
+		updates: updates, elapsed: elapsed, cameraClock: cameraClock, traffic: trafficGuard,
 	}
 }
 

@@ -214,6 +214,8 @@ func serve(ctx context.Context, logger *slog.Logger) error {
 			Now:     time.Now, Logger: logger,
 		},
 		Stops:          sources.stops,
+		Traffic:        sources.traffic,
+		KNMI:           sources.knmi,
 		CustomFetcher:  sources.custom,
 		WebPageChecker: &webpage.Checker{HTTP: outbound.NewClient(webPageCheckTimeout), UserAgent: userAgent()},
 		ReceiveCustom:  sources.receiveCustom,
