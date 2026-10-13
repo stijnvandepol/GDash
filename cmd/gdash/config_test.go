@@ -7,6 +7,8 @@ import (
 	"runtime"
 	"strings"
 	"testing"
+
+	"github.com/stijnvandepol/gdash/internal/holidays"
 )
 
 func env(values map[string]string) func(string) string {
@@ -67,6 +69,17 @@ func TestLoadConfigUpdateCheck(t *testing.T) {
 	}
 }
 
+func TestLoadConfigSchoolHolidaysURL(t *testing.T) {
+	cfg, err := loadConfig(env(map[string]string{}))
+	if err != nil || cfg.schoolHolidaysURL != holidays.DefaultSchoolURL {
+		t.Fatalf("school holidays URL = %q, %v; want the government's open data", cfg.schoolHolidaysURL, err)
+	}
+	cfg, err = loadConfig(env(map[string]string{"GDASH_SCHOOL_HOLIDAYS_URL": "http://127.0.0.1:9999/school.json"}))
+	if err != nil || cfg.schoolHolidaysURL != "http://127.0.0.1:9999/school.json" {
+		t.Fatalf("school holidays URL = %q, %v; want the stand-in", cfg.schoolHolidaysURL, err)
+	}
+}
+
 func TestWithDefaultPort(t *testing.T) {
 	if got := withDefaultPort("192.168.1.40"); got != "192.168.1.40:8009" {
 		t.Errorf("withDefaultPort(ip) = %q", got)
@@ -100,6 +113,7 @@ func TestLoadConfigErrors(t *testing.T) {
 		{"calendar not a URL", map[string]string{"GDASH_LATITUDE": "51", "GDASH_LONGITUDE": "5", "GDASH_CALENDAR_URLS": "ftp://x/y.ics"}, "GDASH_CALENDAR_URLS"},
 		{"bad trusted proxy", map[string]string{"GDASH_TRUSTED_PROXIES": "10.0.0.1, proxy.local"}, "GDASH_TRUSTED_PROXIES"},
 		{"malformed app id", map[string]string{"GDASH_LATITUDE": "51", "GDASH_LONGITUDE": "5", "GDASH_CAST_APP_ID": "dashcast"}, "8-character"},
+		{"school holidays not http", map[string]string{"GDASH_SCHOOL_HOLIDAYS_URL": "file:///etc/passwd"}, "GDASH_SCHOOL_HOLIDAYS_URL"},
 		{"update check neither on nor off", map[string]string{"GDASH_UPDATE_CHECK": "false"}, "GDASH_UPDATE_CHECK"},
 	}
 	for _, tt := range tests {

@@ -19,6 +19,7 @@ import (
 	"github.com/stijnvandepol/gdash/internal/display"
 	"github.com/stijnvandepol/gdash/internal/energyprice"
 	"github.com/stijnvandepol/gdash/internal/fuel"
+	"github.com/stijnvandepol/gdash/internal/holidays"
 	"github.com/stijnvandepol/gdash/internal/homeassistant"
 	"github.com/stijnvandepol/gdash/internal/homey"
 	"github.com/stijnvandepol/gdash/internal/news"
@@ -42,6 +43,7 @@ type dataSources struct {
 	energy     energyprice.Client
 	departures *departures.Client
 	fuel       *fuel.Client
+	holidays   holidays.Client
 	custom     *custom.Fetcher
 	// stops searches the stop areas for the widget editor.
 	stops *departures.Directory
@@ -121,6 +123,9 @@ func startData(ctx context.Context, cfg config, db *store.Store, svc *settings.S
 		dashboards: db.Dashboards,
 		logger:     logger,
 		energy:     energyprice.Client{BaseURL: energyprice.DefaultBaseURL, HTTP: outbound.NewClient(upstreamTimeout), Location: dutch, Now: time.Now},
+		holidays: holidays.Client{
+			SchoolURL: cfg.schoolHolidaysURL, HTTP: outbound.NewClient(upstreamTimeout), UserAgent: userAgent, Location: dutch, Now: time.Now,
+		},
 	}
 	if err := sources.sync(ctx); err != nil {
 		return nil, nil, nil, err

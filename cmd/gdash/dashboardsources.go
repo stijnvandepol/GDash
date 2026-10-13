@@ -12,6 +12,7 @@ import (
 	"github.com/stijnvandepol/gdash/internal/datahub"
 	"github.com/stijnvandepol/gdash/internal/display"
 	"github.com/stijnvandepol/gdash/internal/fuel"
+	"github.com/stijnvandepol/gdash/internal/holidays"
 	"github.com/stijnvandepol/gdash/internal/settings"
 	"github.com/stijnvandepol/gdash/internal/waste"
 	"github.com/stijnvandepol/gdash/internal/weather"
@@ -39,6 +40,9 @@ const (
 	fuelTimeout = 2 * time.Minute
 	// maxFuelQueries bounds those requests for a screen full of widgets.
 	maxFuelQueries = 10
+	// The school holidays are set years ahead and change a few times a
+	// year at most; the public holidays only need a new day to start.
+	holidaysInterval = 24 * time.Hour
 )
 
 // dashboardSources returns the sources that exist because a dashboard has
@@ -60,7 +64,23 @@ func (d *dataSources) dashboardSources(cfg settings.Sources, dashboards []displa
 	if source, ok := d.fuelSource(cfg.Location, display.FuelQueries(dashboards)); ok {
 		sources = append(sources, source)
 	}
+	if keys := display.HolidayKeys(dashboards); len(keys) > 0 {
+		sources = append(sources, d.holidaysSource(keys))
+	}
 	return sources
+}
+
+// holidaysSource computes the public holidays, and reads the school
+// holidays only when a widget shows them: a dashboard with public holidays
+// alone needs no network for them.
+func (d *dataSources) holidaysSource(keys []string) datahub.Source {
+	withSchool := slices.ContainsFunc(keys, func(key string) bool { return key != holidays.PublicKey })
+	return datahub.Source{
+		Key:      display.HolidaysSource,
+		Interval: holidaysInterval,
+		Version:  fmt.Sprintf("school=%t", withSchool),
+		Fetch:    func(ctx context.Context) (any, error) { return d.holidays.Report(ctx, withSchool) },
+	}
 }
 
 // fuelSource fetches the cheapest stations for the places that Fuel widgets

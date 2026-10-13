@@ -13,6 +13,7 @@ import (
 	"strings"
 
 	"github.com/stijnvandepol/gdash/internal/calendar"
+	"github.com/stijnvandepol/gdash/internal/holidays"
 	"github.com/stijnvandepol/gdash/internal/settings"
 	"github.com/stijnvandepol/gdash/internal/weather"
 )
@@ -39,6 +40,9 @@ type config struct {
 	// updateCheckOff is set by GDASH_UPDATE_CHECK=off: GDash never asks
 	// for the latest release, whatever the setting in the web interface.
 	updateCheckOff bool
+	// schoolHolidaysURL is where the school holidays are read. Only the
+	// end-to-end tests set GDASH_SCHOOL_HOLIDAYS_URL, to a stand-in.
+	schoolHolidaysURL string
 }
 
 // defaultNewsFeed is the general news feed of the NOS, the Dutch public
@@ -69,6 +73,11 @@ func loadConfig(getenv func(string) string) (config, error) {
 		cfg.updateCheckOff = true
 	default:
 		return config{}, fmt.Errorf("GDASH_UPDATE_CHECK %q is neither on nor off", getenv("GDASH_UPDATE_CHECK"))
+	}
+
+	cfg.schoolHolidaysURL = valueOr(getenv("GDASH_SCHOOL_HOLIDAYS_URL"), holidays.DefaultSchoolURL)
+	if !isHTTPURL(cfg.schoolHolidaysURL) {
+		return config{}, fmt.Errorf("GDASH_SCHOOL_HOLIDAYS_URL %q is not an http(s) URL", cfg.schoolHolidaysURL)
 	}
 
 	cfg.castAppID = getenv("GDASH_CAST_APP_ID")
@@ -170,10 +179,10 @@ func loadSeed(getenv func(string) string) (settings.Seed, error) {
 	}
 
 	feed := valueOr(getenv("GDASH_NEWS_FEED"), defaultNewsFeed)
-	u, err := url.Parse(feed)
-	if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
+	if !isHTTPURL(feed) {
 		return settings.Seed{}, fmt.Errorf("GDASH_NEWS_FEED %q is not an http(s) URL", feed)
 	}
+	u, _ := url.Parse(feed)
 	seed.NewsFeeds = []settings.NewsFeed{{Name: feedName(u.Hostname()), URL: feed}}
 
 	calendars, err := calendar.ParseSources(getenv("GDASH_CALENDAR_URLS"))
@@ -194,6 +203,12 @@ func feedName(host string) string {
 		return string(r[:maxRunes])
 	}
 	return host
+}
+
+// isHTTPURL reports whether text is an absolute http or https address.
+func isHTTPURL(text string) bool {
+	u, err := url.Parse(text)
+	return err == nil && (u.Scheme == "http" || u.Scheme == "https") && u.Host != ""
 }
 
 func valueOr(value, fallback string) string {

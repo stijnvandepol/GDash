@@ -78,6 +78,7 @@ var WidgetTypes = map[string]WidgetType{
 	"weather":     {Source: WeatherSource, MinW: 4, MinH: 4},
 	"forecast":    {Source: WeatherSource, MinW: 6, MinH: 4, Settings: map[string]Setting{"days": {Kind: SettingInteger, Min: 1, Max: 7}}},
 	"sun":         {Source: WeatherSource, MinW: 5, MinH: 4},
+	"moon":        {MinW: 4, MinH: 4},
 	"airquality":  {Source: AirQualitySource, MinW: 5, MinH: 4},
 	"waste":       {Source: WasteSource, MinW: 6, MinH: 4, Settings: wasteSettings},
 	"energyprice": {Source: EnergyPriceSource, MinW: 6, MinH: 4},
@@ -92,6 +93,7 @@ var WidgetTypes = map[string]WidgetType{
 	"homeassistant": {Source: HomeAssistantSource, MinW: 4, MinH: 3, Settings: map[string]Setting{
 		"entities": {Kind: SettingEntities, Min: 1, Max: MaxEntitiesPerWidget, Required: true},
 	}},
+	"holidays":          holidaysWidget,
 	"departures":        departuresWidget,
 	"fuel":              fuelWidget,
 	"homey":             homeyWidget,

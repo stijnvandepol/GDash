@@ -1,0 +1,226 @@
+[
+    {
+        "id": "94f2a45a-eefe-44a4-b4bb-33be9c260047",
+        "type": "schoolvakanties",
+        "canonical": "https://www.rijksoverheid.nl/onderwerpen/schoolvakanties/overzicht-schoolvakanties-per-schooljaar/overzicht-schoolvakanties-2025-2026",
+        "content": [
+            {
+                "title": "Overzicht schoolvakanties schooljaar 2025-2026",
+                "schoolyear": "\n              2025-2026 \n            ",
+                "vacations": [
+                    {
+                        "type": "\n                         Herfstvakantie \n                    ",
+                        "compulsorydates": "false",
+                        "regions": [
+                            {
+                                "region": "noord",
+                                "startdate": "2025-10-18T00:00:00.000Z",
+                                "enddate": "2025-10-26T22:59:00.000Z"
+                            },
+                            {
+                                "region": "midden",
+                                "startdate": "2025-10-18T00:00:00.000Z",
+                                "enddate": "2025-10-26T22:59:00.000Z"
+                            },
+                            {
+                                "region": "zuid",
+                                "startdate": "2025-10-11T00:00:00.000Z",
+                                "enddate": "2025-10-19T21:59:00.000Z"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "\n                         Kerstvakantie \n                    ",
+                        "compulsorydates": "true",
+                        "regions": [
+                            {
+                                "region": "heel Nederland",
+                                "startdate": "2025-12-20T00:00:00.000Z",
+                                "enddate": "2026-01-04T22:59:00.000Z"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "\n                         Voorjaarsvakantie \n                    ",
+                        "compulsorydates": "false",
+                        "regions": [
+                            {
+                                "region": "noord",
+                                "startdate": "2026-02-21T00:00:00.000Z",
+                                "enddate": "2026-03-01T22:59:00.000Z"
+                            },
+                            {
+                                "region": "midden",
+                                "startdate": "2026-02-14T00:00:00.000Z",
+                                "enddate": "2026-02-22T22:59:00.000Z"
+                            },
+                            {
+                                "region": "zuid",
+                                "startdate": "2026-02-14T00:00:00.000Z",
+                                "enddate": "2026-02-22T22:59:00.000Z"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "\n                         Meivakantie \n                    ",
+                        "compulsorydates": "false",
+                        "regions": [
+                            {
+                                "region": "heel Nederland",
+                                "startdate": "2026-04-25T00:00:00.000Z",
+                                "enddate": "2026-05-03T21:59:00.000Z"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "\n                         Zomervakantie \n                    ",
+                        "compulsorydates": "true",
+                        "regions": [
+                            {
+                                "region": "noord",
+                                "startdate": "2026-07-04T00:00:00.000Z",
+                                "enddate": "2026-08-16T21:59:00.000Z"
+                            },
+                            {
+                                "region": "midden",
+                                "startdate": "2026-07-18T00:00:00.000Z",
+                                "enddate": "2026-08-30T21:59:00.000Z"
+                            },
+                            {
+                                "region": "zuid",
+                                "startdate": "2026-07-11T00:00:00.000Z",
+                                "enddate": "2026-08-23T21:59:00.000Z"
+                            }
+                        ]
+                    }
+                ]
+            }
+        ],
+        "notice": "\n        \n            &sup1; Voor deze vakantie geeft het ministerie van OCW alleen adviesdata. Scholen mogen hier dus van afwijken. Het ministerie adviseert om bij de school na te vragen op welke dagen deze gesloten is in verband met vakantie.\n         \n    ",
+        "authorities": [
+            "\n            Ministerie van Onderwijs, Cultuur en Wetenschap\n        "
+        ],
+        "creators": [
+            "\n            Ministerie van Onderwijs, Cultuur en Wetenschap\n        "
+        ],
+        "license": "CC0 1.0 Universal",
+        "rightsholders": [
+            "Ministerie van Algemene Zaken"
+        ],
+        "language": "nl-NL",
+        "location": "Nederland",
+        "lastmodified": "2025-05-07T06:58:41.060Z"
+    },
+    {
+        "id": "623a186a-32f5-4fcc-bf3d-3406930dafe8",
+        "type": "schoolvakanties",
+        "canonical": "https://www.rijksoverheid.nl/onderwerpen/schoolvakanties/overzicht-schoolvakanties-per-schooljaar/overzicht-schoolvakanties-2026-2027",
+        "content": [
+            {
+                "title": "Overzicht schoolvakanties schooljaar 2026-2027",
+                "schoolyear": "\n              2026-2027 \n            ",
+                "vacations": [
+                    {
+                        "type": "\n                         Herfstvakantie \n                    ",
+                        "compulsorydates": "false",
+                        "regions": [
+                            {
+                                "region": "noord",
+                                "startdate": "2026-10-10T00:00:00.000Z",
+                                "enddate": "2026-10-18T21:59:00.000Z"
+                            },
+                            {
+                                "region": "midden",
+                                "startdate": "2026-10-17T00:00:00.000Z",
+                                "enddate": "2026-10-25T22:59:00.000Z"
+                            },
+                            {
+                                "region": "zuid",
+                                "startdate": "2026-10-17T00:00:00.000Z",
+                                "enddate": "2026-10-25T22:59:00.000Z"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "\n                         Kerstvakantie \n                    ",
+                        "compulsorydates": "true",
+                        "regions": [
+                            {
+                                "region": "heel Nederland",
+                                "startdate": "2026-12-19T00:00:00.000Z",
+                                "enddate": "2027-01-03T22:59:00.000Z"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "\n                         Voorjaarsvakantie \n                    ",
+                        "compulsorydates": "false",
+                        "regions": [
+                            {
+                                "region": "noord",
+                                "startdate": "2027-02-20T00:00:00.000Z",
+                                "enddate": "2027-02-28T22:59:00.000Z"
+                            },
+                            {
+                                "region": "midden",
+                                "startdate": "2027-02-20T00:00:00.000Z",
+                                "enddate": "2027-02-28T22:59:00.000Z"
+                            },
+                            {
+                                "region": "zuid",
+                                "startdate": "2027-02-13T00:00:00.000Z",
+                                "enddate": "2027-02-21T22:59:00.000Z"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "\n                         Meivakantie \n                    ",
+                        "compulsorydates": "false",
+                        "regions": [
+                            {
+                                "region": "heel Nederland",
+                                "startdate": "2027-04-24T00:00:00.000Z",
+                                "enddate": "2027-05-02T21:59:00.000Z"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "\n                         Zomervakantie \n                    ",
+                        "compulsorydates": "true",
+                        "regions": [
+                            {
+                                "region": "noord",
+                                "startdate": "2027-07-10T00:00:00.000Z",
+                                "enddate": "2027-08-22T21:59:00.000Z"
+                            },
+                            {
+                                "region": "midden",
+                                "startdate": "2027-07-17T00:00:00.000Z",
+                                "enddate": "2027-08-29T21:59:00.000Z"
+                            },
+                            {
+                                "region": "zuid",
+                                "startdate": "2027-07-24T00:00:00.000Z",
+                                "enddate": "2027-09-05T21:59:00.000Z"
+                            }
+                        ]
+                    }
+                ]
+            }
+        ],
+        "notice": "\n        \n            &sup1; Voor de herfst- en voorjaarsvakanties en de extra week meivakantie geeft het ministerie van OCW alleen adviesdata. Scholen mogen hier dus van afwijken. Het ministerie adviseert om bij de school na te vragen op welke dagen deze gesloten is in verband met vakantie.\n         \n    ",
+        "authorities": [
+            "\n            Ministerie van Onderwijs, Cultuur en Wetenschap\n        "
+        ],
+        "creators": [
+            "\n            Ministerie van Onderwijs, Cultuur en Wetenschap\n        "
+        ],
+        "license": "CC0 1.0 Universal",
+        "rightsholders": [
+            "Ministerie van Algemene Zaken"
+        ],
+        "language": "nl-NL",
+        "location": "Nederland",
+        "lastmodified": "2025-05-07T06:58:41.060Z"
+    }
+]

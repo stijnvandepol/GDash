@@ -65,6 +65,23 @@ func TestEnergyPriceIsFetchedOnlyWhenShown(t *testing.T) {
 	}
 }
 
+func TestHolidaysReadTheSchoolFeedOnlyWhenShown(t *testing.T) {
+	if got := widgetSources(t, settings.Sources{}); got[display.HolidaysSource].Key != "" {
+		t.Fatalf("sources without Holidays widgets = %v, want none", got)
+	}
+	public := widgetSources(t, settings.Sources{}, display.Widget{Type: "holidays", Settings: map[string]any{"show": "public"}})[display.HolidaysSource]
+	both := widgetSources(t, settings.Sources{}, display.Widget{Type: "holidays"})[display.HolidaysSource]
+	south := widgetSources(t, settings.Sources{}, display.Widget{Type: "holidays", Settings: map[string]any{"region": "south"}})[display.HolidaysSource]
+	if public.Interval != 24*time.Hour || public.Fetch == nil || both.Interval != 24*time.Hour {
+		t.Fatalf("sources = %+v and %+v, want daily ones", public, both)
+	}
+	// The feed holds every region: another region needs no new fetch, but
+	// the school holidays do.
+	if public.Version == both.Version || both.Version != south.Version {
+		t.Fatalf("versions = %q, %q and %q", public.Version, both.Version, south.Version)
+	}
+}
+
 func fuelOn(settings map[string]any) display.Widget {
 	return display.Widget{ID: "fuel", Type: "fuel", Settings: settings}
 }
