@@ -328,16 +328,11 @@ headline as the message (Dutch on a Dutch screen, else English). Warnings alread
 when a region is first announced, are not posted. Each one is in the audit log as `weather_warning_announced`, by the
 actor `weather warning`.
 
-`GDASH_TEST_UPSTREAM`, for the end-to-end tests only, points Buienradar, Open-Meteo's rain and solar forecasts and MeteoAlarm at
-`<address>/buienradar/data/raintext`, `<address>/open-meteo/v1/forecast`, `<address>/open-meteo-solar/v1/forecast` and
-`<address>/meteoalarm/api/v1/warnings/feeds-netherlands`; the server refuses an address that is not on the loopback
-address.
-
-`GDASH_TEST_UPSTREAM`, for the end-to-end tests only, points Buienradar, Open-Meteo's rain forecast and MeteoAlarm at
-`<address>/buienradar/data/raintext`, `<address>/open-meteo/v1/forecast` and
-`<address>/meteoalarm/api/v1/warnings/feeds-netherlands`, and the ANWB, Overpass and the KNMI at `<address>/anwb/traffic`,
-`<address>/overpass/api/interpreter` and `<address>/knmi/edr`; the server refuses an address that is not on the
-loopback address.
+`GDASH_TEST_UPSTREAM`, for the end-to-end tests only, points Buienradar, Open-Meteo's rain and solar forecasts and
+MeteoAlarm at `<address>/buienradar/data/raintext`, `<address>/open-meteo/v1/forecast`,
+`<address>/open-meteo-solar/v1/forecast` and `<address>/meteoalarm/api/v1/warnings/feeds-netherlands`, and the ANWB,
+Overpass and the KNMI at `<address>/anwb/traffic`, `<address>/overpass/api/interpreter` and `<address>/knmi/edr`; the
+server refuses an address that is not on the loopback address.
 
 Traffic info comes from the ANWB's undocumented traffic list
 (`api.anwb.nl/traffic/traffic-info/v1/incidents/incidents-desktop`), unofficially: the ANWB forbids reusing its
