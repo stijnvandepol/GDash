@@ -1,0 +1,57 @@
+{
+  "version": 0.6,
+  "generator": "Overpass API (hand-written test answer in the shape of a real one)",
+  "osm3s": {
+    "timestamp_osm_base": "2026-10-13T08:00:00Z",
+    "timestamp_areas_base": "2026-10-13T07:00:00Z",
+    "copyright": "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL."
+  },
+  "elements": [
+    {
+      "type": "node",
+      "id": 1001,
+      "lat": 51.0221,
+      "lon": 5.8059,
+      "tags": { "highway": "speed_camera", "maxspeed": "100", "name": "Flitspaal A2 hm 236,4" }
+    },
+    { "type": "road", "id": 2001, "tags": { "ref": "A2;E25" } },
+    { "type": "road", "id": 2002, "tags": { "ref": "A2;E25" } },
+    {
+      "type": "node",
+      "id": 1002,
+      "lat": 51.7203,
+      "lon": 5.5741,
+      "tags": { "highway": "speed_camera" }
+    },
+    { "type": "road", "id": 2003, "tags": { "ref": "N279" } },
+    {
+      "type": "node",
+      "id": 1003,
+      "lat": 52.0907,
+      "lon": 5.1214,
+      "tags": { "highway": "speed_camera", "maxspeed": "signals" }
+    },
+    {
+      "type": "relation",
+      "id": 3001,
+      "center": { "lat": 51.6505, "lon": 5.2902 },
+      "tags": { "type": "enforcement", "enforcement": "average_speed", "maxspeed": "100", "name": "Trajectcontrole A2 Vught - Den Bosch" }
+    },
+    { "type": "road", "id": 2004, "tags": { "ref": "A2;E25" } },
+    { "type": "road", "id": 2005, "tags": { "ref": "N65" } },
+    {
+      "type": "relation",
+      "id": 3002,
+      "center": { "lat": 51.72035, "lon": 5.57415 },
+      "tags": { "type": "enforcement", "enforcement": "maxspeed", "name": "Flitspaal Oss" }
+    },
+    { "type": "road", "id": 2006, "tags": { "ref": "N279" } },
+    {
+      "type": "node",
+      "id": 1004,
+      "tags": { "highway": "speed_camera" }
+    },
+    { "type": "road", "id": 2007, "tags": { "ref": "A12" } },
+    { "type": "way", "id": 4001, "tags": { "highway": "primary" } }
+  ]
+}
