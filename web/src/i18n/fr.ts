@@ -211,4 +211,9 @@ export const fr: Record<TextKey, string> = {
   moonLastQuarter: 'Dernier quartier',
   moonWaningCrescent: 'Dernier croissant',
   moonLit: 'Éclairée à {percent} %',
+  nowPlayingLoading: 'Recherche de ce qui est en lecture…',
+  nowPlayingNothing: 'Rien en lecture',
+  nowPlayingPaused: 'En pause',
+  nowPlayingLive: 'En direct',
+  nowPlayingOn: '{app} sur {device}',
 };

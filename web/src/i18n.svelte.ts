@@ -220,6 +220,11 @@ const en = {
   moonLastQuarter: 'Last quarter',
   moonWaningCrescent: 'Waning crescent',
   moonLit: '{percent}% lit',
+  nowPlayingLoading: 'Looking for what plays…',
+  nowPlayingNothing: 'Nothing playing',
+  nowPlayingPaused: 'Paused',
+  nowPlayingLive: 'Live',
+  nowPlayingOn: '{app} on {device}',
 };
 
 export type TextKey = keyof typeof en;
@@ -435,6 +440,11 @@ export const TEXTS: Record<Language, Record<TextKey, string>> = {
     moonLastQuarter: 'Laatste kwartier',
     moonWaningCrescent: 'Afnemende sikkel',
     moonLit: '{percent}% verlicht',
+    nowPlayingLoading: 'Kijken wat er speelt…',
+    nowPlayingNothing: 'Er speelt niets',
+    nowPlayingPaused: 'Gepauzeerd',
+    nowPlayingLive: 'Live',
+    nowPlayingOn: '{app} op {device}',
   },
   de,
   fr,

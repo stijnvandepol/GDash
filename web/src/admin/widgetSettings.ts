@@ -51,6 +51,7 @@ export const WIDGETS: Record<string, WidgetInfo> = {
   fuel: { label: 'Fuel prices', category: 'travel', description: 'The cheapest fuel nearby', icon: 'fuel' },
   news: { label: 'News', category: 'media', description: 'Headlines from your feeds', icon: 'news' },
   photos: { label: 'Photos', category: 'media', description: 'A slideshow of your photos', icon: 'photo' },
+  nowplaying: { label: 'Now playing', category: 'media', description: 'What plays on your Cast speakers', icon: 'music' },
 };
 
 /** Names of the widget types; unknown types show their id. */

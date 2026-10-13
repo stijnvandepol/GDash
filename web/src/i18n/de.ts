@@ -210,4 +210,9 @@ export const de: Record<TextKey, string> = {
   moonLastQuarter: 'Letztes Viertel',
   moonWaningCrescent: 'Abnehmende Sichel',
   moonLit: '{percent} % beleuchtet',
+  nowPlayingLoading: 'Suche, was gerade läuft…',
+  nowPlayingNothing: 'Gerade läuft nichts',
+  nowPlayingPaused: 'Pausiert',
+  nowPlayingLive: 'Live',
+  nowPlayingOn: '{app} auf {device}',
 };

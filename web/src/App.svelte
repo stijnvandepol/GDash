@@ -36,6 +36,7 @@
   import Custom from './widgets/Custom.svelte';
   import Calendar from './widgets/Calendar.svelte';
   import Camera from './widgets/Camera.svelte';
+  import NowPlaying from './widgets/NowPlaying.svelte';
 
   // Dashboards are designed on a fixed 1920x1080 stage and scaled to the
   // screen, so a layout looks the same on a 720p Chromecast and a 4K TV.
@@ -182,6 +183,8 @@
             <Camera settings={widget.settings} />
           {:else if widget.type === 'custom'}
             <Custom entry={widget.source ? display.snapshot?.data[widget.source] : undefined} key="{dashboard.id}/{widget.id}" />
+          {:else if widget.type === 'nowplaying'}
+            <NowPlaying entry={widget.source ? display.snapshot?.data[widget.source] : undefined} settings={widget.settings} />
           {:else}
             <p class="muted">{t('unknownWidget', { type: widget.type })}</p>
           {/if}

@@ -106,6 +106,7 @@ export interface SettingRule {
     | 'entities'
     | 'homeyCapabilities'
     | 'homeyUsers'
+    | 'castDevices'
     | 'stop'
     | 'place'
     | 'customSource'

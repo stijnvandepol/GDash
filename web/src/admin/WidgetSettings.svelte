@@ -9,6 +9,7 @@
   import CameraPicker from './CameraPicker.svelte';
   import StopPicker from './StopPicker.svelte';
   import PlacePicker from './PlacePicker.svelte';
+  import CastDevicePicker from './CastDevicePicker.svelte';
   import CustomWidgetSettings from './CustomWidgetSettings.svelte';
 
   // Texts up to this length get a single-line field, longer ones a text area.
@@ -101,6 +102,9 @@
       <input type="checkbox" checked={settings[key] === true} onchange={(e) => set(key, (e.target as HTMLInputElement).checked)} />
       {settingLabel(widgetType, key)}
     </label>
+  {:else if rule.kind === 'castDevices'}
+    <!-- No devices means any device, which the server stores as no setting. -->
+    <CastDevicePicker selected={list(key)} max={rule.max ?? 1} onchange={(ids) => set(key, ids.length > 0 ? ids : undefined)} />
   {:else}
   <label class="inline-label">
     {settingLabel(widgetType, key)}
