@@ -3,8 +3,9 @@
 All endpoints are under `/api` and exchange JSON. Routes marked "admin" need
 the session cookie (`gdash_session`) that `POST /api/setup` and
 `POST /api/sessions` set. Display streams need a paired screen's cookie
-(`gdash_display`) or an admin session. `POST /api/announcements` also takes
-an API token, see [Announcements](#announcements).
+(`gdash_display`) or an admin session. `POST /api/announcements` and
+`PUT /api/custom-sources/{id}/data` also take an API token, see
+[Announcements](#announcements).
 The handlers in `internal/api` document each endpoint where it is defined;
 this page is the overview.
 
@@ -174,7 +175,9 @@ as the screens get it: `{"title": "Laundry", "message": "…", "expiresAt": "…
 `POST /api/api-tokens`) and send it as `Authorization: Bearer gdk_…`. Only the
 token's SHA-256 hash is stored, so the token is shown once. There are at most 10
 tokens, and `lastUsedAt` shows when each was last used. A token is valid for this
-route only: every other route answers `401` to it. Revoking a token takes effect
+route and for sending the data of a pushed custom source
+(`PUT /api/custom-sources/{id}/data`, see [Custom APIs](#custom-apis)) only: every
+other route answers `401` to it. Every token can do both; there are no narrower ones. Revoking a token takes effect
 at once. A request with an `Authorization` header is judged on that header alone,
 so a session cookie sent along never rescues a wrong token. Without the header an
 admin session works as well, which is how the web interface sends its test
@@ -256,7 +259,8 @@ disappears from the displays. `status` has an entry per configured source by
 data key (`weather.current`, `airquality.current`, `news.default`,
 `calendar.default`, `homeassistant.default`, `departures.default`). The waste, energy price and fuel sources
 (`waste.default`, `energyprice.nl`, `fuel.default`), the Homey sources (`homey.default` for values, `homey.users` for
-who is home) and custom sources (`custom.source.<id>`) exist only while a dashboard has a widget for them.
+who is home) and custom sources (`custom.source.<id>`) exist only while a dashboard has a widget for them; a pushed
+custom source is there from the start, as it is never fetched.
 
 Place search sends the typed name to Open-Meteo's geocoding service, which
 uses GeoNames data; the coordinates can also be entered by hand.
@@ -266,20 +270,23 @@ uses GeoNames data; the coordinates can also be entered by hand.
 A custom source is any JSON HTTP API set up under Settings. Its secret values never leave the server: they are sealed
 with `secret.key` like calendar addresses, never returned, logged or put in an error or the audit log.
 
-**custom source:** `{"id": 1, "name": "Weather in Oss", "url": "https://api.open-meteo.com/v1/forecast?…", "method": "GET", "body": "", "auth": {"kind": "header", "name": "X-API-Key", "secretSet": true}, "headers": [{"name": "X-Tenant", "value": "", "secret": true}], "intervalSeconds": 900, "sample": {…} | null, "values": [named value], "lists": [named list], "unreadable": false, "createdAt": "…", "updatedAt": "…"}`.
+**custom source:** `{"id": 1, "name": "Weather in Oss", "mode": "fetch", "url": "https://api.open-meteo.com/v1/forecast?…", "method": "GET", "body": "", "auth": {"kind": "header", "name": "X-API-Key", "secretSet": true}, "headers": [{"name": "X-Tenant", "value": "", "secret": true}], "intervalSeconds": 900, "sample": {…} | null, "values": [named value], "lists": [named list], "unreadable": false, "createdAt": "…", "updatedAt": "…"}`.
 A request body has the same fields, with `auth.secret` instead of `auth.secretSet` and `sample` as any JSON value,
 and without `values` and `lists`, which change on their own (below) and are kept by a `PUT` of the source:
 
 | Field | Rule |
 |---|---|
 | `name` | 1 to 60 characters, no leading or trailing spaces |
+| `mode` | `fetch` (GDash fetches `url`; also when absent) or `push` (the household's system sends the answer, see Pushing below). A pushed source has no request: `url`, `body` and `auth.name` empty, `method` empty or `GET`, `auth.kind` empty or `none`, no `headers`, else a `422` on that field. Switching to `push` drops a fetched source's secrets |
 | `url` | `http` or `https`, at most 2048 characters, without a user name, password or `#` |
 | `method` | `GET`, or `POST` with an optional `body` of valid JSON up to 8 KB (sent as `application/json`) |
 | `auth.kind` | `none`, `bearer` (`Authorization: Bearer <secret>`), `header` (`<name>: <secret>`), `query` (`?<name>=<secret>`, added when fetching, never stored in `url`; the parameter may not be in `url` already) or `basic` (`name` is the user name) |
 | `auth.secret` | up to 2048 characters on one line; a bearer token has no spaces. Empty keeps the stored secret, if the kind is the same |
 | `headers` | up to 10 `{name, value, secret}`; not `Host`, `Authorization`, `Content-Type`, `Content-Length` or another header that the request sets itself, no name twice. An empty `value` of a `secret` header keeps the stored one with that name |
-| `intervalSeconds` | 30 to 86400 |
+| `intervalSeconds` | 30 to 86400: how often it is fetched, or for a pushed source how often an answer is expected |
 | `sample` | an answer to design against, up to 48 KB of JSON, or `null` |
+
+The list adds `lastPushAt` to a pushed source once it sent an answer: when the last one arrived.
 
 `unreadable` is true when the secrets cannot be decrypted (the database was moved without its key); such a source is
 not fetched until its secrets are entered again. At most 20 sources exist.
@@ -300,7 +307,8 @@ follow the syntax below. At most 40 values and 10 lists per source.
 | `PUT /api/custom-sources/{id}` | admin | `200` custom source | `401`, `404`, `422` |
 | `PUT /api/custom-sources/{id}/values` `{values, lists}` | admin | `200` custom source | `401`, `404`, `422` naming each field, such as `values[1].path` or `lists[0].columns[2].name` |
 | `DELETE /api/custom-sources/{id}` | admin | `204`; its widgets say it is not available | `401`, `404` |
-| `POST /api/custom-sources/{id}/tests` | admin | `200 {"data", "truncated", "bytes"}`: one fresh answer, cut down for the editor (25 items per list, 200 characters per text, 12 levels, 2000 values) | `401`, `404`, `502 fetch_failed` with what went wrong, such as the status the API answered |
+| `POST /api/custom-sources/{id}/tests` | admin | `200 {"data", "truncated", "bytes"}`: one fresh answer, cut down for the editor (25 items per list, 200 characters per text, 12 levels, 2000 values); for a pushed source the last answer it sent, with `receivedAt` | `401`, `404`, `502 fetch_failed` with what went wrong, such as the status the API answered; `409 nothing_received` for a pushed source that sent nothing yet |
+| `PUT /api/custom-sources/{id}/data` with the answer as the body | admin or API token | `204` | `401`, `403` cross-site, `404`, `409 not_pushed` for a source that GDash fetches, `413 too_large` over 1 MB, `415` without `Content-Type: application/json`, `422 invalid_json`, `429 rate_limited` within 5 seconds of its last accepted answer, with `Retry-After: 5` |
 | `POST /api/custom-rule-checks` `{when, data, value?, row?}` | admin | `200 {"result"}`, or `{"error"}` when the condition does not apply to `data` | `401`, `422` naming `when` |
 
 **Fetching.** Only sources that a stored dashboard's Custom widget names are fetched, each on its own interval, through
@@ -310,6 +318,24 @@ sent. A redirect is followed only to the same host (at most 3, never from https 
 header would otherwise go along. The answer must be a 2xx with at most 1 MB of JSON (`application/json`, `*+json`,
 `text/json`, `text/plain` or no type). The last good answer is kept on failure and on disk, like other sources; the
 status is under `custom.source.<id>` in `GET /api/settings`. The raw answer stays on the server.
+
+**Pushing.** A system that cannot answer requests, such as a Homey Pro (Early 2019) running HomeyScript, Node-RED or a
+Home Assistant `rest_command`, sends the answer of a `push` source itself:
+
+```sh
+curl -X PUT http://gdash.local:8420/api/custom-sources/3/data \
+  -H "Authorization: Bearer $GDASH_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"outside": 12.5, "home": {"Anna": true}}'
+```
+
+The body is held to the same rules as a fetched answer (at most 1 MB of JSON) and is then handled exactly like one: it
+is the source's latest answer, kept on disk as the last known good one, its named values, rules and announcing rules
+apply, and screens still get only what their widgets show. It takes an API token or an admin session, like
+announcements, with the same cross-site protection. One answer per source per 5 seconds is accepted; a refused one
+(wrong type, too large, not JSON) does not count. An answer counts as current for two intervals and 30 seconds, so one
+late push does not show; after that the widget's title turns to the warning colour, as for a failing fetch, and keeps
+the last values. Pushes are not in the audit log, as a script sends one every minute.
 
 **Data on a screen (`custom.default`).** No source fetches this key: for each screen the server builds, per Custom
 widget of that screen's own dashboards, keyed `<dashboardId>/<widgetId>`, only what the widget shows:

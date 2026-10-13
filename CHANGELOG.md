@@ -5,16 +5,27 @@ the format follows [Keep a Changelog](https://keepachangelog.com).
 
 ## Unreleased
 
-### Fixed
+### Added
 
-- After an update or restart GDash no longer says "Someone is using the TV"
-  about its own dashboard: it remembers the cast it started and keeps it,
-  with the restarts against the screensaver.
+- A custom API can be sent to GDash instead of fetched, for a system that
+  cannot answer requests, such as a Homey Pro (Early 2019) with HomeyScript,
+  Node-RED or a Home Assistant automation. Choose "Your system sends it to
+  GDash" and GDash shows the address, makes an API token and gives curl,
+  HomeyScript and Home Assistant examples. The system sends its JSON with
+  `PUT /api/custom-sources/{id}/data` and an API token; it is handled like a
+  fetched answer and marked as old after two intervals and 30 seconds
+  without data. API tokens can now also send this data.
 
 ### Changed
 
 - The editor names each count after what the widget shows: "Headlines at
   most" instead of "Items", and "Days ahead" for the forecast.
+
+### Fixed
+
+- After an update or restart GDash no longer says "Someone is using the TV"
+  about its own dashboard: it remembers the cast it started and keeps it,
+  with the restarts against the screensaver.
 
 ## 0.8.0 – 2026-10-12
 

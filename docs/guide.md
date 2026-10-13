@@ -229,7 +229,9 @@ GDash can show what a Homey Pro knows, such as the temperature in the
 kitchen or whether the back door is open, and who is home. It only reads;
 it never switches anything. It works with a Homey Pro (2023 or later) and
 with Homey Self-Hosted Server on your own network. A Homey Cloud or Homey
-Bridge has no local API and cannot be connected.
+Bridge has no local API and cannot be connected. A Homey Pro (Early 2019)
+has no API keys: let it send its data with HomeyScript instead, see
+[Send data to GDash](#send-data-to-gdash-push).
 
 1. Open the Homey web app at [my.homey.app](https://my.homey.app), choose
    your Homey, then **Settings**, **API Keys**, **New API Key**.
@@ -369,6 +371,68 @@ never shown again: the form says "Stored" and keeps them when you leave the
 field empty. **Test** fetches the API once and shows the answer as a tree;
 click a value to see its path. GDash only fetches an API while a dashboard
 shows it.
+
+### Send data to GDash (push)
+
+Some systems cannot answer requests, but can send data out on a schedule: a
+Homey Pro (Early 2019) with HomeyScript, Node-RED, a Home Assistant
+automation or a shell script on a timer. Let them send their JSON to GDash:
+
+1. Under **Settings, Data sources, Custom APIs**, choose **Add a custom
+   API**, and under **How does GDash get the data?** choose **Your system
+   sends it to GDash**. There is no address or authentication to fill in.
+2. Choose **Expected every**: how often your system sends, such as every
+   minute. When nothing arrives for twice that and 30 seconds, the widget's
+   title turns to the warning colour and it keeps the last values.
+3. Save. GDash shows the address to send to, such as
+   `http://192.168.1.2:8420/api/custom-sources/3/data`, and examples for
+   curl, HomeyScript and Home Assistant. Choose **Make an API token**: it is
+   filled into the examples and shown once, so copy the example now. You
+   can also make one under Settings, Automations, API tokens.
+4. Let your system send the JSON with `PUT`, the header
+   `Authorization: Bearer <API token>` and `Content-Type: application/json`.
+   GDash answers `204` when it has it. **How to send** shows the steps
+   again later, and the list says when the last data arrived.
+5. **Last data received** shows what your system sent as a tree; name its
+   values and use them in a widget as with any other API.
+
+The data may be any JSON of up to 1 MB, and GDash takes at most one per
+source every 5 seconds; once a minute is plenty for a TV. What arrives is
+handled exactly like a fetched answer: it is kept on disk, rules and
+announcing rules apply to it, and the screens only get what their widgets
+show.
+
+**Homey Pro (Early 2019).** This Homey has no API keys, so GDash cannot ask
+it; HomeyScript can send instead.
+
+1. Install **HomeyScript** from the Homey App Store.
+2. In GDash, add a custom API that your system sends, as above, and make an
+   API token. Copy the HomeyScript example: it sends every device's values
+   by device name, with its zone, and who is home by user name, such as
+   `{"devices": {"Thermostat": {"zone": "Living room", "measure_temperature": 20.5}}, "home": {"Anna": true}}`.
+3. At [my.homey.app](https://my.homey.app), open **HomeyScript**, make a new
+   script, paste the example and save it.
+4. Make a Flow: When **Every 1 minute** (Date & time), Then **Run a script**
+   (HomeyScript) with that script.
+
+Not every Homey version lets a script read who is home
+(`Homey.users.getUsers()`); the example then sends the devices only.
+Presence can also come from a Logic variable or a Flow tag that you add to
+the script. HomeyScript can do anything on your Homey, and the token sits
+in the script: use a token for this script alone, so you can revoke it
+without touching anything else.
+
+**Node-RED.** An **inject** node that repeats every minute, a **function** or
+**change** node that builds `msg.payload` as an object, and an **http
+request** node with method PUT, the address from GDash, and under headers
+`Authorization` set to `Bearer <API token>`. Node-RED sends an object as
+JSON with the right content type.
+
+**Home Assistant.** A `rest_command` with `method: put`, the address, the
+`Authorization` header and `content_type: "application/json"`, and an
+automation with a `time_pattern` trigger that runs it every minute; GDash
+shows the full example. Keep the token in `secrets.yaml`, as in the
+[announcements example](#home-assistant-example).
 
 ### Name its values
 
@@ -541,7 +605,9 @@ finishes quickly. The TVs only get the finished values, as text.
 Home Assistant, a script or any other automation can put a short message on
 the TVs, such as "The washing machine is done". It appears in a card over the
 dashboard, in the colours of the display's theme, and goes away after the
-time you choose. Nothing else in GDash can be changed with it.
+time you choose. The same API token can also send the data of a custom API
+that your system sends to GDash (see [Send data to GDash](#send-data-to-gdash-push));
+nothing else in GDash can be changed with it.
 
 1. In GDash, under Settings, Automations, **API tokens**, make a token with the name of
    the automation, for example "Home Assistant". Copy it now: it is shown once,
