@@ -85,6 +85,7 @@ come from another site (cross-site request forgery protection).
 | `GET /api/homey/users` | admin | `200 {"users": [{id, name}]}`, sorted by name, without whether they are home | `401`, `409 not_connected` or `nothing_received`, `502 upstream_unavailable` (also when the key lacks View users) |
 | `GET /api/departures/stops?q=utrecht+cs` | admin | `200 {"stops": [stop]}`, at most 20, best matches first | `401`, `422` naming `q` (2 to 100 characters), `502 upstream_unavailable` |
 | `GET /api/custom-sources` and the other custom API routes | admin | see [Custom APIs](#custom-apis) | |
+| `GET /api/web-pages` and the other web page routes | admin | see [Web pages](#web-pages) | |
 | `GET /api/photos` | admin | `200 {"photos": [{name, size, addedAt}]}`, oldest first | `401` |
 | `POST /api/photos` multipart, field `photo` | admin | `201` photo | `401`, `409` at 50 photos, `422` for another kind of file or one over 8 MB |
 | `DELETE /api/photos/{name}` | admin | `204` | `401`, `404` |
@@ -463,6 +464,38 @@ rule. The first evaluation after a start, or after the rule is edited, only reco
 every data change and every minute; each announcement is in the audit log as `custom_rule_announced`, by the actor
 `rule`, with the dashboard and widget and the message.
 
+## Web pages
+
+A web page is a page that a Web page widget shows in a frame on the TV, set up under Integrations. The editor picks one by
+its `id`; a dashboard never holds an address.
+
+**web page:** `{"id": 1, "name": "Energy in Grafana", "url": "http://192.168.1.10:3000/d/energy?orgId=1&kiosk", "refreshMinutes": 0, "zoom": 80, "allowScripts": true, "createdAt": "…", "updatedAt": "…"}`.
+A request body has the fields `name`, `url`, `refreshMinutes`, `zoom` and `allowScripts`:
+
+| Field | Rule |
+|---|---|
+| `name` | 1 to 60 characters on one line; leading and trailing spaces are removed |
+| `url` | `http` or `https`, at most 2048 characters, without spaces, a user name or a password, on a host name or IPv4 address (a Content-Security-Policy cannot name an IPv6 address), and not on the origin the request reached GDash on |
+| `refreshMinutes` | 0 (never, also when absent) or 1 to 1440: the TV reloads the page that often |
+| `zoom` | 50 to 200 percent; 0 or absent is 100 |
+| `allowScripts` | whether the page may run scripts; absent is `true` |
+
+| Method and path | Needs | Success | Errors |
+|---|---|---|---|
+| `GET /api/web-pages` | admin | `200 {"pages": [web page]}`, oldest first | `401` |
+| `POST /api/web-pages` | admin | `201` web page; audited as `web_page_added` with its name and host | `401`, `409` at 20 pages, `422` naming each field |
+| `PUT /api/web-pages/{id}` | admin | `200` web page; audited as `web_page_changed` | `401`, `404`, `422` |
+| `DELETE /api/web-pages/{id}` | admin | `204`; its widgets show that the page is not available; audited as `web_page_removed` | `401`, `404` |
+| `POST /api/web-pages/{id}/checks` | admin | `200 {"status": 200, "blocked"?: "x-frame-options" \| "frame-ancestors", "header"?: "DENY"}`: GDash fetched the page once, through the same client as feeds (LAN allowed, link-local and metadata addresses refused, 10 seconds, redirects followed), and read the headers of the answer. `blocked` names the header that forbids a frame on GDash's origin as this request reached it: `X-Frame-Options` `DENY` or `SAMEORIGIN` (ignored when a `frame-ancestors` directive is present, as browsers do), or a `frame-ancestors` that does not list it; `header` is that header, up to 300 characters. The body is never read | `401`, `404`, `502 fetch_failed` naming the host, never the path or query |
+
+**On the screens.** The `webpage` widget's data key `webpage.default` holds the pages by `id` as text, `{"1": {"name",
+"url", "refreshMinutes", "zoom", "allowScripts"}}`, and a screen only receives the pages its own widgets show. The
+display page `/d/{id}` answers with `frame-src` listing exactly the origins of the pages on every dashboard that
+display shows (its own, its rotation and its schedule), and only to a screen paired with it or an admin; otherwise,
+and for a display without web pages, `frame-src 'none'`. The preview page `/preview/{id}` lists the origins of every
+page under Integrations for an admin, because an unsaved layout may use any of them, and `'none'` for anyone else. A page
+on the origin of the request is never listed. The web interface keeps its own policy.
+
 ## Objects
 
 **user:** `{"id": 1, "username": "stijn"}`
@@ -544,10 +577,11 @@ allows, overlaps another, lacks a required setting, or has a setting its type do
 | `fuel` | 6x4 | `fuel.default` | `place`: a place with `name`, `latitude` and `longitude`, default the weather location, `radius`: 1 to 25 km, default 5, `fuel`: `EURO95` (default), `EURO98`, `DIESEL`, `AUTOGAS` or `CNG`, `maxItems`: 1 to 10, default 5 |
 | `camera` | 4x3 | none: the screen loads `GET /api/cameras/{id}/image` | `camera`: the `id` of a camera (required), `seconds`: 5 to 300 between images, default 10, `fit`: `contain` (default, the whole image) or `cover` (fills the tile) |
 | `nowplaying` | 6x4 | `nowplaying.default` | `devices`: up to 8 Cast device IDs (the 32 hex characters of `GET /api/cast-devices`); absent or empty follows any device. A TV that a display is linked to is never followed. Screens receive only the devices their widgets follow |
+| `webpage` | 4x3 | `webpage.default` | `page`: the `id` of a web page under Integrations (required), `zoom`: 50 to 200 percent, default the page's own |
 | `custom` | 4x3 | `custom.default` | `source`: the `id` of a custom source (required), `mode`: `value`, `list`, `keyValues` or `badges` (required), `title`: up to 60 characters; value mode: `path` (required), `label` (up to 40), `unit` (up to 12), `decimals` 0 to 6; list mode: `path` of the list and `fields`, 1 to 3 paths read from each item (both required); key-values and badges mode: `pairs`, 1 to 8 `{label, path}` (required); a badge is on when its value is `true`, a number other than 0, or the text `on`, `home`, `yes`, `open` or `true` in any case, and a screen only receives the labels of the badges that are on, as `badges`; `rules`: up to 6, see [Custom APIs](#custom-apis) |
 
 A setting's `kind` is `integer`, `text`, `date`, `calendar`, `camera`, `entities`, `homeyCapabilities`, `homeyUsers`,
-`castDevices`, `stop`, `place`, `choice` or `boolean`, or for the Custom widget `customSource`, `path`, `paths`, `pairs` and `rules`;
+`castDevices`, `stop`, `place`, `webPage`, `choice` or `boolean`, or for the Custom widget `customSource`, `path`, `paths`, `pairs` and `rules`;
 `min` and `max` bound an integer, a text's length in characters, or the number of entities or items. A `choice` is one
 of the strings in the setting's `options`; a `boolean` is `true` or `false`. A
 `place` is exactly `{"name": "Oss", "latitude": 51.765, "longitude": 5.518}`: a name of 1 to 100 characters, a latitude

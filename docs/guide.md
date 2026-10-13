@@ -169,6 +169,7 @@ add calendars and feeds under Integrations, and the photos once you add photos.
 | Fuel prices | The cheapest petrol stations near a place, for one kind of fuel (Netherlands) |
 | Custom API | A value, a list or labelled values from any JSON API you add, with rules; see [Custom APIs](#custom-apis) |
 | Camera | A still image of a camera at home, refreshed every few seconds; see [Cameras](#cameras) |
+| Web page | A page you add under Integrations, such as a Grafana panel or a Home Assistant dashboard, filling the tile; see [Web page](#web-page) |
 
 **Photos** are added under Integrations, Photos: JPEG, PNG or WebP, up to 8 MB
 each and 50 in total. They stay on your server and only go to paired
@@ -1003,6 +1004,66 @@ finishes quickly. The TVs only get the finished values, as text.
   each Custom widget; until then the widget says its API is not available.
   If that GDash has a different API with the same number, the widget shows
   that one: check the widgets after an import.
+
+## Web page
+
+The Web page widget shows a page in a tile: a Grafana panel, a Home
+Assistant dashboard in kiosk mode, a weather radar such as Windy or
+Buienradar, an Uptime Kuma status page or any page on your network. The page
+fills the tile up to its rounded corners and nobody can click it on the TV.
+
+1. Under **Integrations**, set up **Web pages** (under Your own data),
+   choose **Add a web page** and
+   give it a name and its address. Optionally reload it every 1 to 1440
+   minutes (pages such as Grafana and Home Assistant update themselves and
+   need no reload) and zoom it from 50 to 200 %: below 100 fits more of the
+   page in a tile.
+2. Press **Check**. GDash fetches the page once and says whether it may be
+   shown in a frame. Many sites forbid it, and a TV cannot tell you: the
+   tile then shows an empty page or the browser's own error.
+3. Add a **Web page** widget to a dashboard and choose the page by its name.
+   The editor never takes an address, and can set its own zoom.
+
+If a page does not load within 20 seconds, the tile says **Web page not
+available**; so does a widget whose page was removed under Integrations.
+
+**When Check says the page forbids frames:**
+
+- **Home Assistant** sends `X-Frame-Options: SAMEORIGIN`. Turn it off in
+  `configuration.yaml` and restart Home Assistant:
+
+  ```yaml
+  http:
+    use_x_frame_options: false
+  ```
+
+- **Grafana** forbids frames until you set `allow_embedding = true` under
+  `[security]` in `grafana.ini` (or `GF_SECURITY_ALLOW_EMBEDDING=true`).
+  Use a dashboard or panel link with `&kiosk` for a clean tile.
+- Other sites may offer a share or embed link that allows it, such as
+  Windy's and Buienradar's embed widgets.
+
+**Logins.** The TV's browser opens the page as itself: a page that needs a
+login only shows when that browser has a session there, which a TV through
+Cast never has. Prefer a kiosk or share link with its own token in the
+address. That address is shown to every admin under Integrations (anyone who can
+read the dashboard configuration can use it), and it only goes to the screens
+whose dashboards show that page, never to other screens.
+
+**Scripts.** Most pages need scripts, so "Let the page run scripts" is on by
+default. The page is still sandboxed: it can never open windows or dialogs,
+take over the TV's page or download files, and it gets no camera,
+microphone or location. Without scripts the page is shown as plain HTML,
+fully sandboxed. A page of GDash itself cannot be added: in a frame with
+scripts it could reach out of the sandbox.
+
+**On the TV.** A display page only lets in frames from the pages its own
+dashboards show (see [SECURITY.md](../SECURITY.md)). When you add a Web page
+widget to a dashboard that a TV already shows, the TV loads its page again
+once to let the new page in. DashCast shows web pages like a browser does;
+GDash's own Cast receiver does not show them at all. Heavy pages, such as a
+Grafana dashboard with many panels, can be slow on a Chromecast HD or Nest
+Hub: keep the page small, or reload it less often.
 
 ## Announcements from Home Assistant or any automation
 

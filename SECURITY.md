@@ -112,7 +112,8 @@ fully trust, such as a guest's phone.
   MB, JPEG, PNG or WebP by content, 10 seconds, redirects only to the same
   host. The web interface and display pages allow `blob:` images, which the
   Camera widget makes from what it fetched from GDash.
-- **Outgoing requests:** feeds, calendars, Home Assistant, Homey, Immich, Synology Photos, cameras and custom APIs are
+- **Outgoing requests:** feeds, calendars, Home Assistant, Homey, Immich, Synology Photos, cameras, custom APIs and
+  the Check of a web page are
   fetched with a client that refuses link-local addresses, where cloud hosts
   serve instance metadata. Departures are fetched from OVapi over plain HTTP, because its
   HTTPS certificate belongs to another domain; the request carries no secret
@@ -148,6 +149,31 @@ fully trust, such as a guest's phone.
   the answer, bounded in length and nesting, and fuzz tested, so neither
   the server nor a TV ever runs code from the web interface. An announcing
   rule posts at most once every 10 minutes and is in the audit log.
+- **Web pages:** only an admin sets up the pages that Web page widgets
+  show, under Integrations: an http or https address, never `javascript:`,
+  `data:` or `file:`, and never on GDash's own origin. The editor picks a
+  page by name and cannot give an address. A TV frames the page with
+  `sandbox="allow-scripts allow-same-origin allow-forms"` (or an empty
+  sandbox when scripts are off): never top navigation, popups, modal dialogs
+  or downloads, with `referrerpolicy="no-referrer"`, an empty `allow` (no
+  camera, microphone, location or full screen) and no clicks. Because a
+  frame with both `allow-scripts` and `allow-same-origin` can lift its own
+  sandbox when it shares the embedding page's origin, a page on the origin
+  GDash is reached on is refused when it is saved, left out of the policy
+  below and not framed by the TV. The display page's Content-Security-Policy
+  has a `frame-src` with exactly the origins of the pages on the dashboards
+  of that display, computed for every response and only for a screen paired
+  with it or an admin; every other page, and every other request, gets
+  `frame-src 'none'`. So a changed dashboard cannot embed another origin,
+  and a device that may not show the display does not learn its pages. The
+  preview lists the origins of all pages, for an admin only. A screen only
+  receives the addresses of the pages its own widgets show. An address can
+  hold a kiosk or share token: every admin can read it under Integrations, and
+  it reaches only the screens that show that page; the audit log names the
+  host only. GDash's own Cast receiver never frames a page, because any
+  device on the network can send it a dashboard. Check fetches a page once
+  through the outgoing client below, for at most 10 seconds, and reads only
+  its headers.
 - **Web interface:** a strict Content-Security-Policy without inline scripts,
   cross-site request forgery protection, and no third-party scripts except
   Google's Cast framework on the receiver page.

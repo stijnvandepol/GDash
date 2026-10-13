@@ -68,6 +68,7 @@ survive the internet dropping out. GDash is made for exactly that.
 | Holidays | The coming school holidays of your region and the public holidays (Netherlands) | [Rijksoverheid open data](https://opendata.rijksoverheid.nl), no key; public holidays computed |
 | Custom API | A value, a list or labelled values from any JSON API, with rules | Any API you add: open, or with a key, token or password |
 | Camera | A still image of a camera at home, refreshed every few seconds | Any snapshot address (Frigate, Reolink, Hikvision, Home Assistant), through GDash |
+| Web page | A page such as a Grafana panel or a Home Assistant dashboard, filling the tile | A page you add under Integrations, in a sandboxed frame |
 
 The last good value of every source is kept when the internet drops, and a
 screen marks data that has gone stale.

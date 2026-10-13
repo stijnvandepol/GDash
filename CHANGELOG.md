@@ -85,6 +85,14 @@ the format follows [Keep a Changelog](https://keepachangelog.com).
 - A **Moon** widget draws the moon in its current phase in the colours of
   the theme, with the phase's name, how much is lit and the next full and
   new moon. It is computed on the screen, without network.
+- A Web page widget shows a page in a tile, such as a Grafana panel, a Home
+  Assistant dashboard in kiosk mode, a weather radar or a status page on
+  your network. Admins add pages under Integrations, Web pages,
+  with a reload interval, a zoom and whether scripts may run, and **Check**
+  says whether the page allows being shown in a frame (with the fix for Home
+  Assistant and Grafana). The editor picks a page by name. The page is
+  sandboxed, and a TV's page only lets in frames from the pages its own
+  dashboards show. See the guide, "Web page".
 - A custom API can be sent to GDash instead of fetched, for a system that
   cannot answer requests, such as a Homey Pro (Early 2019) with HomeyScript,
   Node-RED or a Home Assistant automation. Choose "Your system sends it to
