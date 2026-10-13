@@ -28,15 +28,6 @@ const (
 	maxHeaderValue = 1024
 )
 
-// Authentication kinds.
-const (
-	AuthNone   = "none"
-	AuthBearer = "bearer"
-	AuthHeader = "header"
-	AuthQuery  = "query"
-	AuthBasic  = "basic"
-)
-
 // How GDash gets the answer of a source.
 const (
 	// ModeFetch asks the source's address every interval.
@@ -157,13 +148,18 @@ func checkRequest(errs *validation.Collector, in Input, old *Source, src *Source
 	src.Method, src.Auth = strings.ToUpper(strings.TrimSpace(in.Method)), in.Auth.Kind
 	src.URL = checkURL(errs, in.URL)
 	src.Body = checkBody(errs, src.Method, in.Body)
-	checkAuth(errs, in, old, src)
-	src.Headers = checkHeaders(errs, in.Headers, old)
-	if src.Auth == AuthQuery && src.URL != "" && src.AuthName != "" {
-		if u, err := url.Parse(src.URL); err == nil && u.Query().Has(src.AuthName) {
-			errs.Add("auth.name", "the address already has this parameter; remove it from the address")
-		}
+	var oldAuth Auth
+	if old != nil {
+		oldAuth = old.auth()
 	}
+	auth := CheckAuth(errs, Auth{Kind: in.Auth.Kind, Name: in.Auth.Name, Secret: in.Auth.Secret}, oldAuth, src.URL)
+	src.AuthName, src.AuthSecret = auth.Name, auth.Secret
+	src.Headers = checkHeaders(errs, in.Headers, old)
+}
+
+// auth is the source's authentication.
+func (s Source) auth() Auth {
+	return Auth{Kind: s.Auth, Name: s.AuthName, Secret: s.AuthSecret}
 }
 
 // checkPushed refuses a request for a source that is sent to GDash, rather
@@ -231,60 +227,6 @@ func checkBody(errs *validation.Collector, method, body string) string {
 		errs.Add("method", "choose GET or POST")
 	}
 	return body
-}
-
-func checkAuth(errs *validation.Collector, in Input, old *Source, src *Source) {
-	secret := in.Auth.Secret
-	// An empty secret keeps the stored one, but only for the same kind of
-	// authentication: a bearer token must not become a query parameter.
-	if secret == "" && old != nil && old.Auth == in.Auth.Kind {
-		secret = old.AuthSecret
-	}
-	switch in.Auth.Kind {
-	case AuthNone:
-		return
-	case AuthBearer:
-		if !plainSecret(secret, false) {
-			errs.Add("auth.secret", "paste the token, without spaces")
-		}
-	case AuthHeader:
-		if !headerName.MatchString(in.Auth.Name) || reservedHeaders[strings.ToLower(in.Auth.Name)] && !strings.EqualFold(in.Auth.Name, "authorization") {
-			errs.Add("auth.name", "use a header name such as X-API-Key")
-		}
-		if !plainSecret(secret, true) {
-			errs.Add("auth.secret", "paste the API key")
-		}
-	case AuthQuery:
-		if !paramName.MatchString(in.Auth.Name) {
-			errs.Add("auth.name", "use a parameter name such as appid or api_key")
-		}
-		if !plainSecret(secret, true) {
-			errs.Add("auth.secret", "paste the API key")
-		}
-	case AuthBasic:
-		if in.Auth.Name == "" || len(in.Auth.Name) > 128 || strings.Contains(in.Auth.Name, ":") || validation.HasControlCharacter(in.Auth.Name) {
-			errs.Add("auth.name", "use a user name of at most 128 characters without a colon")
-		}
-		if !plainSecret(secret, true) {
-			errs.Add("auth.secret", "enter the password")
-		}
-	default:
-		errs.Add("auth.kind", "choose none, bearer, header, query or basic")
-		return
-	}
-	src.AuthName = in.Auth.Name
-	if in.Auth.Kind == AuthBearer {
-		src.AuthName = ""
-	}
-	src.AuthSecret = secret
-}
-
-// plainSecret reports whether s can be sent in a header or query: not
-// empty, not too long and without control characters (a line break would
-// add a header). Tokens also may not hold spaces.
-func plainSecret(s string, spaces bool) bool {
-	return s != "" && len(s) <= maxSecretBytes && !validation.HasControlCharacter(s) &&
-		(spaces || !strings.ContainsAny(s, " "))
 }
 
 func checkHeaders(errs *validation.Collector, headers []Header, old *Source) []Header {
