@@ -229,9 +229,9 @@ GDash can show what a Homey Pro knows, such as the temperature in the
 kitchen or whether the back door is open, and who is home. It only reads;
 it never switches anything. It works with a Homey Pro (2023 or later) and
 with Homey Self-Hosted Server on your own network. A Homey Cloud or Homey
-Bridge has no local API and cannot be connected. A Homey Pro (Early 2019)
-has no API keys: let it send its data with HomeyScript instead, see
-[Send data to GDash](#send-data-to-gdash-push).
+Bridge has no local API and cannot be connected. A Homey Pro (2016–2019)
+has no API keys: it sends its data itself with HomeyScript, see
+[Homey Pro (2016–2019)](#homey-pro-20162019) below.
 
 1. Open the Homey web app at [my.homey.app](https://my.homey.app), choose
    your Homey, then **Settings**, **API Keys**, **New API Key**.
@@ -267,6 +267,42 @@ it to anything of up to 12 characters, such as a nickname. When nobody is
 home it says so. Homey decides who is home, from the location of each
 user's phone. The screens only receive the labels of the people who are
 home: a TV never learns who is away, not even whom the widget looks for.
+
+### Homey Pro (2016–2019)
+
+A Homey Pro from before 2023, such as the Homey Pro (Early 2019), has no API
+keys, so GDash cannot ask it for anything. HomeyScript can send its data to
+GDash instead, every minute; the Homey and Who's home widgets then work as
+with a newer Homey.
+
+1. On your Homey, install **HomeyScript** from the Homey App Store.
+2. In GDash, under Settings, Data sources, Homey, choose **Homey Pro
+   (2016–2019): your Homey sends its data (HomeyScript)** and **Use
+   HomeyScript**. GDash shows the steps and the script.
+3. Choose **Make an API token**. GDash fills it into the script; copy the
+   script now, as the token is shown once. (You can also make one under
+   Settings, Automations, API tokens.)
+4. At [my.homey.app](https://my.homey.app), open **HomeyScript**, make a new
+   script, paste the script and save it.
+5. Make a Flow: When **Every 1 minute** (Date & time), Then **Run a script**
+   (HomeyScript) with that script.
+
+The Homey card then says when the last data arrived. The script sends every
+device with its values and zone, and every user with whether they are home,
+to `PUT /api/homey/snapshot`; the widget editor finds values and people in
+the last one. When nothing arrives for three minutes, the Homey widgets mark
+their values as old and keep the last ones; after a restart GDash shows the
+last data it received until the next one arrives. Not every Homey version
+lets a script read its users; the script then sends the devices only, and
+Who's home has nobody to choose.
+
+HomeyScript can do anything on your Homey, and the API token sits in the
+script. Use a token for this script alone, so you can revoke it without
+touching anything else; whoever has it can send GDash other values or
+announcements, but cannot read or change anything else. With this setup
+GDash keeps the whole last snapshot on disk, not only the values the screens
+show, so the editor can list them; the screens still get only their own
+widgets' values and the labels of the people who are home.
 
 ## Departures
 
@@ -403,7 +439,10 @@ announcing rules apply to it, and the screens only get what their widgets
 show.
 
 **Homey Pro (Early 2019).** This Homey has no API keys, so GDash cannot ask
-it; HomeyScript can send instead.
+it; HomeyScript can send instead. For the Homey and Who's home widgets, set
+it up under Homey instead, see [Homey Pro (2016–2019)](#homey-pro-20162019);
+a custom API suits a shape of your own, such as Logic variables, for the
+Custom widget and its rules.
 
 1. Install **HomeyScript** from the Homey App Store.
 2. In GDash, add a custom API that your system sends, as above, and make an
@@ -606,7 +645,8 @@ Home Assistant, a script or any other automation can put a short message on
 the TVs, such as "The washing machine is done". It appears in a card over the
 dashboard, in the colours of the display's theme, and goes away after the
 time you choose. The same API token can also send the data of a custom API
-that your system sends to GDash (see [Send data to GDash](#send-data-to-gdash-push));
+that your system sends to GDash (see [Send data to GDash](#send-data-to-gdash-push))
+and a Homey's snapshot ([Homey Pro (2016–2019)](#homey-pro-20162019));
 nothing else in GDash can be changed with it.
 
 1. In GDash, under Settings, Automations, **API tokens**, make a token with the name of

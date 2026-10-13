@@ -3,9 +3,9 @@
 All endpoints are under `/api` and exchange JSON. Routes marked "admin" need
 the session cookie (`gdash_session`) that `POST /api/setup` and
 `POST /api/sessions` set. Display streams need a paired screen's cookie
-(`gdash_display`) or an admin session. `POST /api/announcements` and
-`PUT /api/custom-sources/{id}/data` also take an API token, see
-[Announcements](#announcements).
+(`gdash_display`) or an admin session. `POST /api/announcements`,
+`PUT /api/custom-sources/{id}/data` and `PUT /api/homey/snapshot` also take an
+API token, see [Announcements](#announcements).
 The handlers in `internal/api` document each endpoint where it is defined;
 this page is the overview.
 
@@ -76,10 +76,11 @@ come from another site (cross-site request forgery protection).
 | `PUT /api/homeassistant` `{url, token}` | admin | `200 {"url": …}` after Home Assistant accepted the token | `401`, `422` naming `url` or `token` |
 | `DELETE /api/homeassistant` | admin | `204`; Home Assistant widgets show that it is not connected | `401` |
 | `GET /api/homeassistant/entities` | admin | `200 {"entities": [entity]}`, sorted by ID | `401`, `409 not_connected`, `502 upstream_unavailable` |
-| `PUT /api/homey` `{url, key}` | admin | `200 {"url": …}` after Homey accepted the API key | `401`, `422` naming `url` or `key` |
+| `PUT /api/homey` `{url, key}` or `{"mode": "push"}` | admin | `200 {"mode": "local", "url": …}` after Homey accepted the API key, or `200 {"mode": "push", "url": ""}` | `401`, `422` naming `mode`, `url` or `key` |
+| `PUT /api/homey/snapshot` with a snapshot | admin or API token | `204` | see Settings below |
 | `DELETE /api/homey` | admin | `204`; Homey widgets show that it is not connected | `401` |
-| `GET /api/homey/capabilities` | admin | `200 {"capabilities": [capability]}`, every readable value of every device, sorted by zone, device and title | `401`, `409 not_connected`, `502 upstream_unavailable` |
-| `GET /api/homey/users` | admin | `200 {"users": [{id, name}]}`, sorted by name, without whether they are home | `401`, `409 not_connected`, `502 upstream_unavailable` (also when the key lacks View users) |
+| `GET /api/homey/capabilities` | admin | `200 {"capabilities": [capability]}`, every readable value of every device, sorted by zone, device and title | `401`, `409 not_connected` or `nothing_received`, `502 upstream_unavailable` |
+| `GET /api/homey/users` | admin | `200 {"users": [{id, name}]}`, sorted by name, without whether they are home | `401`, `409 not_connected` or `nothing_received`, `502 upstream_unavailable` (also when the key lacks View users) |
 | `GET /api/departures/stops?q=utrecht+cs` | admin | `200 {"stops": [stop]}`, at most 20, best matches first | `401`, `422` naming `q` (2 to 100 characters), `502 upstream_unavailable` |
 | `GET /api/custom-sources` and the other custom API routes | admin | see [Custom APIs](#custom-apis) | |
 | `GET /api/photos` | admin | `200 {"photos": [{name, size, addedAt}]}`, oldest first | `401` |
@@ -176,9 +177,10 @@ as the screens get it: `{"title": "Laundry", "message": "…", "expiresAt": "…
 token's SHA-256 hash is stored, so the token is shown once. There are at most 10
 tokens, and `lastUsedAt` shows when each was last used. A token is valid for this
 route and for sending the data of a pushed custom source
-(`PUT /api/custom-sources/{id}/data`, see [Custom APIs](#custom-apis)) only: every
-other route answers `401` to it. Every token can do both; there are no narrower ones. Revoking a token takes effect
-at once. A request with an `Authorization` header is judged on that header alone,
+(`PUT /api/custom-sources/{id}/data`, see [Custom APIs](#custom-apis)) or a
+Homey snapshot (`PUT /api/homey/snapshot`, see [Settings](#settings)) only:
+every other route answers `401` to it. Every token can do all three; there are
+no narrower ones. Revoking a token takes effect at once. A request with an `Authorization` header is judged on that header alone,
 so a session cookie sent along never rescues a wrong token. Without the header an
 admin session works as well, which is how the web interface sends its test
 announcement. Twenty wrong tokens from one address block that address for 15
@@ -239,6 +241,33 @@ key, sends it as `Authorization: Bearer`, and follows no redirects. It only read
 `/api/manager/devices/device` when a Homey widget shows a value and `/api/manager/users/user` when a Who's home widget
 looks for someone, one request each, and keeps only what the widgets show, at most 40 values and 20 users. Homey
 Cloud and Homey Bridge, which only offer OAuth through Athom's cloud, are not supported.
+
+A Homey without API keys, such as a Homey Pro (Early 2019), sends its data instead: `PUT /api/homey` with
+`{"mode": "push"}` (no `url` or `key`, else `422`) drops any connection and makes GDash wait for snapshots, which
+the HomeyScript shown under Settings sends every minute from a Flow:
+
+```sh
+curl -X PUT http://gdash.local:8420/api/homey/snapshot \
+  -H "Authorization: Bearer $GDASH_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"at": "2026-10-13T08:00:00Z",
+       "devices": [{"id": "5f2c…", "name": "Thermostat", "zone": "Kitchen", "available": true,
+                    "caps": {"measure_temperature": {"title": "Temperature", "value": 21.5, "units": "°C"}}}],
+       "users": [{"id": "9a1b…", "name": "Anna", "present": true, "asleep": false}]}'
+```
+
+It takes an API token or an admin session, like announcements (with the same cross-site protection), and answers
+`204`; `409 not_pushed` when Homey is not set up to send, `413` over 1 MB, `415` without
+`Content-Type: application/json`, `422 invalid_json` or `422 not_a_snapshot` without a list of `devices`, `429`
+within 5 seconds of the last accepted snapshot (a refused one does not count). The shape is read leniently: a
+device or user with an ID that is not letters, digits and dashes (at most 64), or repeated, is left out, as is a
+capability whose ID is not one Homey uses; texts are cut to 200 characters, a value that is not a number, boolean
+or text becomes `null`, a device that is not `available` shows no values, and only the first 500 devices, 64
+capabilities per device (by ID) and 50 users are kept; `at` is ignored. The last snapshot is kept whole, also on
+disk, so a restart shows it until the next one; `GET /api/homey/capabilities` and `/users` answer from it
+(`409 nothing_received` before the first), and screens get `homey.default` and `homey.presence` from it in the
+same form and narrowed the same way as with a connection. Its entries count as current for three minutes.
+Snapshots are not audited.
 
 Departures come from OVapi (`v0.ovapi.nl`, the KV78Turbo feed of buses, trams, metros and ferries; no trains), which
 needs no key. The server asks `/stopareacode/<code>,<code>` once every 30 seconds, one request for all stops that
@@ -487,7 +516,7 @@ an empty `title`, which the screen fills in in its own language.
 
 **settings.homeAssistant:** `{"url": "http://192.168.1.10:8123", "unreadable": false}`, or `null` when not connected.
 
-**settings.homey:** `{"url": "http://192.168.1.20", "unreadable": false}`, or `null` when not connected.
+**settings.homey:** `{"mode": "local", "url": "http://192.168.1.20", "unreadable": false}`, `{"mode": "push", "url": "", "unreadable": false}` for a Homey that sends its data, or `null` when not connected.
 
 **weather data (`weather.current`):** the current values, `days` for the forecast and `sun`, the sunrise and sunset
 of yesterday and the coming days as local times, `{"date": "2026-10-09", "sunrise": "2026-10-09T07:50", "sunset": "2026-10-09T18:56"}`.

@@ -15,6 +15,13 @@ the format follows [Keep a Changelog](https://keepachangelog.com).
   `PUT /api/custom-sources/{id}/data` and an API token; it is handled like a
   fetched answer and marked as old after two intervals and 30 seconds
   without data. API tokens can now also send this data.
+- Homey Pro (2016–2019) support. This Homey has no API keys, so under
+  Settings, Homey, choose that your Homey sends its data: GDash shows a
+  HomeyScript, with an API token filled in, that a Flow runs every minute.
+  It sends every device and user to `PUT /api/homey/snapshot`; the Homey and
+  Who's home widgets and the editor's pickers work from the last snapshot,
+  which survives a restart, and mark values as old after three minutes
+  without one.
 
 ### Changed
 

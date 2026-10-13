@@ -62,18 +62,20 @@ fully trust, such as a guest's phone.
 - **API tokens:** automations such as Home Assistant post announcements with
   a token made under Settings. Only its SHA-256 hash is stored, it is shown
   once, there are at most 10, and revoking one works at once. A token opens
-  two routes only: announcements, and the data of a custom API that the
-  household's system sends to GDash (push). Tokens are all-or-nothing: every
-  token can do both, for every pushed source, so whoever holds one can put a
-  message on the TVs and replace what a pushed source shows (never what a
-  fetched source shows, and never a setting). Make one per automation, so
-  one can be revoked alone. Wrong tokens block the sending address for 15
+  three routes only: announcements, the data of a custom API that the
+  household's system sends to GDash (push), and the snapshot of a Homey that
+  sends its own data. Tokens are all-or-nothing: every token can do all
+  three, for every pushed source, so whoever holds one can put a message on
+  the TVs and replace what a pushed source or such a Homey shows (never what
+  a fetched source shows, and never a setting). A HomeyScript holds its token
+  in plain text in the script on the Homey. Make one per automation, so one
+  can be revoked alone. Wrong tokens block the sending address for 15
   minutes, each token is limited to 30 announcements a minute, a pushed
-  source takes one answer per 5 seconds of at most 1 MB, and tokens,
+  source and the Homey take one answer per 5 seconds of at most 1 MB, and tokens,
   messages and pushed data are never logged. Announcements are plain text,
   kept in memory and removed from the screen on time; pushed data reaches a
   screen only as the values its widgets show, like fetched data. Tokens keep
-  working when two-step login is turned on: they only reach those two
+  working when two-step login is turned on: they only reach those three
   routes, never the web interface or the rest of the API.
 - **Photos:** only served to logged-in admins and paired screens; an
   upload is accepted by its content (JPEG, PNG or WebP), not by its name.
