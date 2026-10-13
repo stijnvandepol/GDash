@@ -15,6 +15,12 @@ describe('coordinate', () => {
     expect(Object.is(roundCoordinate(-0.0004), 0)).toBe(true);
   });
 
+  it('rounds to two decimals for rain, as internal/rain.Round does', () => {
+    expect(coordinate(51.765, 2)).toBe('51.77');
+    expect(coordinate(5.514, 2)).toBe('5.51');
+    expect(coordinate(-0.001, 2)).toBe('0');
+  });
+
   it('leaves a value that is already rounded alone', () => {
     expect(roundCoordinate(51.77)).toBe(51.77);
     expect(roundCoordinate(-33.869)).toBe(-33.869);

@@ -31,6 +31,8 @@
   import HomeyPresence from './widgets/HomeyPresence.svelte';
   import Departures from './widgets/Departures.svelte';
   import Fuel from './widgets/Fuel.svelte';
+  import Rain from './widgets/Rain.svelte';
+  import Warnings from './widgets/Warnings.svelte';
   import Custom from './widgets/Custom.svelte';
   import Calendar from './widgets/Calendar.svelte';
 
@@ -171,6 +173,10 @@
             <Departures entry={widget.source ? display.snapshot?.data[widget.source] : undefined} settings={widget.settings} />
           {:else if widget.type === 'fuel'}
             <Fuel entry={widget.source ? display.snapshot?.data[widget.source] : undefined} settings={widget.settings} />
+          {:else if widget.type === 'rain'}
+            <Rain entry={widget.source ? display.snapshot?.data[widget.source] : undefined} settings={widget.settings} />
+          {:else if widget.type === 'warnings'}
+            <Warnings entry={widget.source ? display.snapshot?.data[widget.source] : undefined} settings={widget.settings} />
           {:else if widget.type === 'custom'}
             <Custom entry={widget.source ? display.snapshot?.data[widget.source] : undefined} key="{dashboard.id}/{widget.id}" />
           {:else}

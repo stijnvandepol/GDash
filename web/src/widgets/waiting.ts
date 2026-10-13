@@ -16,7 +16,9 @@ export type Source =
   | 'homey'
   | 'homeypresence'
   | 'departures'
-  | 'fuel';
+  | 'fuel'
+  | 'rain'
+  | 'warnings';
 
 const TEXTS: Record<Source, { notSetUp: TextKey; failed: TextKey; loading: TextKey }> = {
   weather: { notSetUp: 'weatherNotSetUp', failed: 'weatherFailed', loading: 'weatherLoading' },
@@ -42,6 +44,11 @@ const TEXTS: Record<Source, { notSetUp: TextKey; failed: TextKey; loading: TextK
   // Without a place the widget follows the weather location, and without
   // that the server sends no entry.
   fuel: { notSetUp: 'fuelNotSetUp', failed: 'fuelFailed', loading: 'fuelLoading' },
+  // Rain follows the weather location like fuel.
+  rain: { notSetUp: 'rainNotSetUp', failed: 'rainFailed', loading: 'rainLoading' },
+  // Without a province the widget takes the weather location's, which
+  // must be in the Netherlands.
+  warnings: { notSetUp: 'warningsNotSetUp', failed: 'warningsFailed', loading: 'warningsLoading' },
 };
 
 /**

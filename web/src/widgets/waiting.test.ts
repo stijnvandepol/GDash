@@ -31,6 +31,10 @@ describe('waitingText', () => {
     expect(waitingText(undefined, 'energyprice')).toBe('Loading the electricity price…');
     expect(waitingText(undefined, 'holidays')).toBe('Loading holidays…');
     expect(waitingText(undefined, 'fuel')).toBe('Set a weather location under Settings, or choose a place for this widget.');
+    expect(waitingText(undefined, 'rain')).toBe('Set a weather location under Settings, or choose a place for this widget.');
+    expect(waitingText(undefined, 'warnings')).toBe(
+      'Choose a province for this widget, or set a weather location in the Netherlands under Settings.',
+    );
   });
 
   it('says loading while the first fetch runs', () => {
@@ -44,6 +48,8 @@ describe('waitingText', () => {
     expect(waitingText({ ...entry, failing: true }, 'waste')).toBe('Could not load the waste collection');
     expect(waitingText({ ...entry, failing: true }, 'energyprice')).toBe('Could not load the electricity price');
     expect(waitingText({ ...entry, failing: true }, 'fuel')).toBe('Could not load the fuel prices');
+    expect(waitingText({ ...entry, failing: true }, 'rain')).toBe('Could not load the rain forecast');
+    expect(waitingText({ ...entry, failing: true }, 'warnings')).toBe('Could not load the weather warnings');
   });
 
   it('speaks the household language', () => {
