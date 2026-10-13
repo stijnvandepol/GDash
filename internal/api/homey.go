@@ -123,7 +123,7 @@ func (s *Server) homeySetup(w http.ResponseWriter, r *http.Request) (settings.Ho
 		return settings.HomeySetup{}, false
 	}
 	if !ok {
-		writeError(w, http.StatusConflict, "not_connected", "Connect Homey under Settings first.")
+		writeError(w, http.StatusConflict, "not_connected", "Connect Homey under Integrations first.")
 	}
 	return setup, ok
 }
@@ -133,7 +133,7 @@ func (s *Server) homeySetup(w http.ResponseWriter, r *http.Request) (settings.Ho
 func (s *Server) lastHomeySnapshot(w http.ResponseWriter) (homey.Snapshot, bool) {
 	entry := s.SourceStatus()[display.HomeySnapshotSource]
 	if len(entry.Value) == 0 {
-		writeError(w, http.StatusConflict, "nothing_received", "Your Homey has not sent its data yet. Check the HomeyScript and its Flow under Settings.")
+		writeError(w, http.StatusConflict, "nothing_received", "Your Homey has not sent its data yet. Check the HomeyScript and its Flow under Integrations, Homey.")
 		return homey.Snapshot{}, false
 	}
 	snapshot, err := homey.ParseSnapshot(entry.Value)
@@ -165,7 +165,7 @@ func (s *Server) getHomeyCapabilities(w http.ResponseWriter, r *http.Request) {
 		var err error
 		if list, err = s.Homey.Capabilities(r.Context(), setup.Connection); err != nil {
 			s.Logger.Warn("listing homey capabilities failed", "url", setup.Connection.URL, "error", err)
-			writeError(w, http.StatusBadGateway, "upstream_unavailable", "Homey did not answer. Check the connection under Settings.")
+			writeError(w, http.StatusBadGateway, "upstream_unavailable", "Homey did not answer. Check the connection under Integrations.")
 			return
 		}
 	}
@@ -202,7 +202,7 @@ func (s *Server) getHomeyUsers(w http.ResponseWriter, r *http.Request) {
 		var err error
 		if users, err = s.Homey.Users(r.Context(), setup.Connection); err != nil {
 			s.Logger.Warn("listing homey users failed", "url", setup.Connection.URL, "error", err)
-			message := "Homey did not answer. Check the connection under Settings."
+			message := "Homey did not answer. Check the connection under Integrations."
 			if errors.Is(err, homey.ErrUnauthorized) {
 				message = "Homey did not list its users. Connect again with an API key that has View users."
 			}

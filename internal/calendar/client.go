@@ -29,7 +29,7 @@ const (
 // Google, Outlook or iCloud calendar gives read access to everyone who has
 // it, so it must never appear in logs or error messages.
 type Source struct {
-	// ID is the calendar's number under Settings; widgets that read one
+	// ID is the calendar's number under Integrations; widgets that read one
 	// calendar, such as waste collection, name it by this.
 	ID   int64
 	Name string

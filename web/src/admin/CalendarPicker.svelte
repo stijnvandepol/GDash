@@ -51,7 +51,7 @@
   {#if loadError}
     <p class="error">{loadError}</p>
   {:else if loaded && calendars.length === 0}
-    <p class="field-error">There is no calendar yet. Add the iCal link of your waste collection under Settings, then choose it here.</p>
+    <p class="field-error">There is no calendar yet. Add the iCal link of your waste collection under Integrations, Calendars, then choose it here.</p>
   {:else if missing}
     <p class="field-error">This calendar was removed. Choose another.</p>
   {:else if selected === undefined}

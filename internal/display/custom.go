@@ -21,7 +21,7 @@ const CustomWidget = "custom"
 // Kinds of the Custom widget's settings, for the editor; the custom
 // package validates them.
 const (
-	// SettingCustomSource is the ID of a custom source under Settings.
+	// SettingCustomSource is the ID of a custom source under Integrations.
 	SettingCustomSource = "customSource"
 	// SettingPath is a path into an answer, such as data.items[0].name.
 	SettingPath = "path"

@@ -97,7 +97,7 @@ func ParseWidget(settings map[string]any) (Widget, error) {
 	if id, ok := wholeNumber(settings["source"], 1, math.MaxInt32); ok {
 		w.Source = int64(id)
 	} else {
-		errs.Add("source", "choose an API under Settings, Data sources, Custom APIs")
+		errs.Add("source", "choose an API under Integrations, Custom APIs")
 	}
 	w.Mode, _ = settings["mode"].(string)
 	if !slices.Contains(Modes, w.Mode) {

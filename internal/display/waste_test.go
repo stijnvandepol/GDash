@@ -28,7 +28,7 @@ func TestValidateWasteAndEnergyPriceWidgets(t *testing.T) {
 		{"waste", wasteWidget("waste", float64(3)), ""},
 		{"waste with an int from Go code", wasteWidget("waste", 3), ""},
 		{"waste without a calendar", wasteWidget("waste", nil), "widgets[2]: a waste widget needs a calendar"},
-		{"waste calendar zero", wasteWidget("waste", float64(0)), "widgets[2]: calendar must be the number of a calendar added under Settings"},
+		{"waste calendar zero", wasteWidget("waste", float64(0)), "widgets[2]: calendar must be the number of a calendar added under Integrations"},
 		{"waste calendar negative", wasteWidget("waste", float64(-1)), "widgets[2]: calendar must be the number of a calendar"},
 		{"waste calendar fraction", wasteWidget("waste", 1.5), "widgets[2]: calendar must be the number of a calendar"},
 		{"waste calendar as text", wasteWidget("waste", "3"), "widgets[2]: calendar must be the number of a calendar"},

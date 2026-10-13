@@ -233,7 +233,7 @@ export interface CustomHeader {
   secret: boolean;
 }
 
-/** A JSON API set up under Settings; its secrets never leave the server. */
+/** A JSON API set up under Integrations; its secrets never leave the server. */
 /** How GDash gets a custom API's answer: it fetches it, or the household's system sends it. */
 export type CustomMode = 'fetch' | 'push';
 
@@ -250,7 +250,7 @@ export interface CustomSource {
   intervalSeconds: number;
   /** A pasted answer to design widgets against, or null. */
   sample: unknown;
-  /** The values named under Settings, which the dashboard editor offers by name. */
+  /** The values named under Integrations, which the dashboard editor offers by name. */
   values: NamedValue[];
   lists: NamedList[];
   /** True when the secrets cannot be decrypted with this server's key. */

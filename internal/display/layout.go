@@ -256,7 +256,7 @@ func valueProblem(key string, value any, rule Setting) string {
 		}
 	case SettingCalendar:
 		if _, ok := calendarID(value); !ok {
-			return fmt.Sprintf("%s must be the number of a calendar added under Settings", key)
+			return fmt.Sprintf("%s must be the number of a calendar added under Integrations", key)
 		}
 	case SettingEntities:
 		if ids, ok := entityIDs(value, rule.Max); !ok || len(ids) < rule.Min {

@@ -19,7 +19,7 @@
   let busy = $state(false);
   let error = $state('');
 
-  // The same search as the weather location under Settings.
+  // The same search as the weather location under Integrations.
   const search = typeAheadSearch((q: string) => api.places(q), {
     onIdle: () => {
       results = null;
@@ -57,7 +57,7 @@
       <button type="button" class="link" onclick={onclear}>Use the weather location</button>
     </p>
   {:else}
-    <p class="muted small">The weather location from Settings.</p>
+    <p class="muted small">The weather location from Integrations.</p>
   {/if}
   <input
     bind:value={query}

@@ -83,7 +83,7 @@
     font-family: var(--mono);
     font-size: var(--fs-sm);
   }
-  /* A tree inside a list row (Settings) must not take that list's rules
+  /* A tree inside a list row (Custom APIs) must not take that list's rules
      and padding. */
   .tree li {
     display: block;

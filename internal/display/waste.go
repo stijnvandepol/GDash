@@ -8,7 +8,7 @@ import (
 	"github.com/stijnvandepol/gdash/internal/datahub"
 )
 
-// SettingCalendar is the ID of one of the calendars under Settings.
+// SettingCalendar is the ID of one of the calendars under Integrations.
 const SettingCalendar = "calendar"
 
 // WasteSource is the data key of the pickups of the calendars that waste

@@ -15,7 +15,7 @@ const (
 	maxValueName   = 40
 )
 
-// Values are the values of a source that an admin named under Settings, so
+// Values are the values of a source that an admin named under Integrations, so
 // the dashboard editor offers them by name instead of by path. A widget
 // still stores the path, so a renamed or removed value never breaks it.
 type Values struct {

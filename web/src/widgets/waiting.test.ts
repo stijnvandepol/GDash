@@ -22,18 +22,18 @@ afterEach(() => {
 
 describe('waitingText', () => {
   it('says what to set up when the server sends no entry', () => {
-    expect(waitingText(undefined, 'weather')).toBe('No location set. Choose one under Settings.');
-    expect(waitingText(undefined, 'forecast')).toBe('No location set. Choose one under Settings.');
-    expect(waitingText(undefined, 'calendar')).toBe('No calendar. Add one under Settings.');
-    expect(waitingText(undefined, 'sun')).toBe('No location set. Choose one under Settings.');
-    expect(waitingText(undefined, 'airquality')).toBe('No location set. Choose one under Settings.');
-    expect(waitingText(undefined, 'waste')).toBe('No calendar. Add one under Settings.');
+    expect(waitingText(undefined, 'weather')).toBe('No location set. Choose one under Integrations.');
+    expect(waitingText(undefined, 'forecast')).toBe('No location set. Choose one under Integrations.');
+    expect(waitingText(undefined, 'calendar')).toBe('No calendar. Add one under Integrations.');
+    expect(waitingText(undefined, 'sun')).toBe('No location set. Choose one under Integrations.');
+    expect(waitingText(undefined, 'airquality')).toBe('No location set. Choose one under Integrations.');
+    expect(waitingText(undefined, 'waste')).toBe('No calendar. Add one under Integrations.');
     expect(waitingText(undefined, 'energyprice')).toBe('Loading the electricity price…');
     expect(waitingText(undefined, 'holidays')).toBe('Loading holidays…');
-    expect(waitingText(undefined, 'fuel')).toBe('Set a weather location under Settings, or choose a place for this widget.');
-    expect(waitingText(undefined, 'rain')).toBe('Set a weather location under Settings, or choose a place for this widget.');
+    expect(waitingText(undefined, 'fuel')).toBe('Set a weather location under Integrations, or choose a place for this widget.');
+    expect(waitingText(undefined, 'rain')).toBe('Set a weather location under Integrations, or choose a place for this widget.');
     expect(waitingText(undefined, 'warnings')).toBe(
-      'Choose a province for this widget, or set a weather location in the Netherlands under Settings.',
+      'Choose a province for this widget, or set a weather location in the Netherlands under Integrations.',
     );
   });
 
@@ -60,6 +60,6 @@ describe('waitingText', () => {
     expect(waitingText(entry, 'waste')).toBe('Afvalkalender laden…');
     expect(waitingText(entry, 'energyprice')).toBe('Stroomprijs laden…');
     expect(waitingText(entry, 'fuel')).toBe('Brandstofprijzen laden…');
-    expect(waitingText(undefined, 'news')).toBe('Geen nieuwsfeed. Voeg er een toe onder Settings.');
+    expect(waitingText(undefined, 'news')).toBe('Geen nieuwsfeed. Voeg er een toe onder Integrations.');
   });
 });

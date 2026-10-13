@@ -258,7 +258,7 @@ func newSettingsService(ctx context.Context, cfg config, db *store.Store, box *s
 		return nil, err
 	}
 	if seeded {
-		logger.Info("data sources copied from the environment; from now on, change them under Settings in the web interface")
+		logger.Info("data sources copied from the environment; from now on, change them under Integrations in the web interface")
 	}
 	current, err := svc.Get(ctx)
 	if err != nil {

@@ -92,7 +92,7 @@ func (s *Server) putCustomSourceData(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if src.Mode != custom.ModePush {
-		writeError(w, http.StatusConflict, "not_pushed", "GDash fetches this source from its address. Edit it under Settings and choose that your system sends the data.")
+		writeError(w, http.StatusConflict, "not_pushed", "GDash fetches this source from its address. Edit it under Integrations, Custom APIs, and choose that your system sends the data.")
 		return
 	}
 	if mediaType, _, err := mime.ParseMediaType(r.Header.Get("Content-Type")); err != nil || mediaType != "application/json" {
@@ -259,7 +259,7 @@ func (s *Server) postCustomSourceTest(w http.ResponseWriter, r *http.Request) {
 func (s *Server) writeLastPushed(w http.ResponseWriter, id int64) {
 	entry := s.SourceStatus()[custom.SourceKey(id)]
 	if len(entry.Value) == 0 {
-		writeError(w, http.StatusConflict, "nothing_received", "Nothing has been received yet. Send data to this source first; Settings shows how.")
+		writeError(w, http.StatusConflict, "nothing_received", "Nothing has been received yet. Send data to this source first; Integrations, Custom APIs shows how.")
 		return
 	}
 	s.writeAnswer(w, entry.Value, &entry.FetchedAt)

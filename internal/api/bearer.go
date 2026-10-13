@@ -56,7 +56,7 @@ func (s *Server) requireUserOrToken(next http.HandlerFunc) http.Handler {
 		case errors.Is(err, apitoken.ErrInvalidToken):
 			// Anonymous: the token names no one, and it is never logged.
 			s.audit(r, "", auditAPITokenRejected, "")
-			writeBearerError(w, "invalid_token", "This API token is not valid, or it was revoked. Make a new one under Settings.")
+			writeBearerError(w, "invalid_token", "This API token is not valid, or it was revoked. Make a new one under Integrations, API tokens.")
 			return
 		case err != nil:
 			s.internalError(w, "authenticate api token", err)

@@ -81,13 +81,13 @@ func (s *Server) getHomeAssistantEntities(w http.ResponseWriter, r *http.Request
 		return
 	}
 	if !ok {
-		writeError(w, http.StatusConflict, "not_connected", "Connect Home Assistant under Settings first.")
+		writeError(w, http.StatusConflict, "not_connected", "Connect Home Assistant under Integrations first.")
 		return
 	}
 	list, err := s.HomeAssistant.Entities(r.Context(), conn)
 	if err != nil {
 		s.Logger.Warn("listing home assistant entities failed", "url", conn.URL, "error", err)
-		writeError(w, http.StatusBadGateway, "upstream_unavailable", "Home Assistant did not answer. Check the connection under Settings.")
+		writeError(w, http.StatusBadGateway, "upstream_unavailable", "Home Assistant did not answer. Check the connection under Integrations.")
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"entities": list})

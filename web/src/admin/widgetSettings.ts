@@ -40,7 +40,7 @@ export const WIDGETS: Record<string, WidgetInfo> = {
   warnings: { label: 'Weather warnings', category: 'weather', description: 'KNMI warnings for your province', icon: 'alert' },
   homeassistant: { label: 'Home Assistant', category: 'home', description: 'Sensors and switches at home', icon: 'house' },
   energyprice: { label: 'Energy price', category: 'home', description: "Today's electricity price", icon: 'bolt' },
-  custom: { label: 'Custom API', category: 'home', description: 'Values from an API in Settings', icon: 'braces' },
+  custom: { label: 'Custom API', category: 'home', description: 'Values from an API under Integrations', icon: 'braces' },
   homey: { label: 'Homey', category: 'home', description: 'Device values from your Homey', icon: 'house' },
   homeypresence: { label: 'Who’s home (Homey)', category: 'home', description: 'Who is home, from your Homey', icon: 'people' },
   calendar: { label: 'Calendar', category: 'agenda', description: 'Your next appointments', icon: 'calendar' },

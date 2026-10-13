@@ -116,7 +116,7 @@
       </select>
     </div>
     <p id="night-hint" class="muted small">
-      Follows sunset and sunrise at the weather location, with the same typeface. Without a location in Settings the style never changes.
+      Follows sunset and sunrise at the weather location, with the same typeface. Without a weather location under Integrations the style never changes.
     </p>
   </fieldset>
 </dialog>

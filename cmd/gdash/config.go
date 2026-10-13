@@ -51,7 +51,7 @@ type config struct {
 
 // defaultNewsFeed is the general news feed of the NOS, the Dutch public
 // broadcaster. GDash starts in the Netherlands; any RSS or Atom URL works,
-// and the feed can be removed in Settings.
+// and the feed can be removed under Integrations.
 const defaultNewsFeed = "https://feeds.nos.nl/nosnieuwsalgemeen"
 
 // loadConfig reads the configuration from environment variables. Only the
@@ -186,7 +186,7 @@ func loadSeed(getenv func(string) string) (settings.Seed, error) {
 	var seed settings.Seed
 	latText, lonText := getenv("GDASH_LATITUDE"), getenv("GDASH_LONGITUDE")
 	if (latText == "") != (lonText == "") {
-		return settings.Seed{}, errors.New("set both GDASH_LATITUDE and GDASH_LONGITUDE, or neither and choose the location in Settings")
+		return settings.Seed{}, errors.New("set both GDASH_LATITUDE and GDASH_LONGITUDE, or neither and choose the location under Integrations")
 	}
 	if latText != "" {
 		lat, err := strconv.ParseFloat(latText, 64)

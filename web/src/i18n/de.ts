@@ -1,6 +1,6 @@
 import type { TextKey } from '../i18n.svelte';
 
-// German TV texts, informal ("du") like the Dutch ones. "Settings" and
+// German TV texts, informal ("du") like the Dutch ones. "Integrations" and
 // "Displays" stay in English: they are names in the English web interface.
 export const de: Record<TextKey, string> = {
   today: 'Heute',
@@ -27,7 +27,7 @@ export const de: Record<TextKey, string> = {
   unknownWeather: 'Unbekanntes Wetter',
   weatherLoading: 'Wetter wird geladen…',
   weatherFailed: 'Das Wetter konnte nicht geladen werden',
-  weatherNotSetUp: 'Kein Standort festgelegt. Wähle unter Settings einen aus.',
+  weatherNotSetUp: 'Kein Standort festgelegt. Wähle unter Integrations einen aus.',
   forecastLoading: 'Vorhersage wird geladen…',
   forecastFailed: 'Die Vorhersage konnte nicht geladen werden',
   sunLoading: 'Sonnenzeiten werden geladen…',
@@ -62,14 +62,14 @@ export const de: Record<TextKey, string> = {
   pollenVeryHigh: 'Sehr hoch',
   newsLoading: 'Nachrichten werden geladen…',
   newsFailed: 'Die Nachrichten konnten nicht geladen werden',
-  newsNotSetUp: 'Kein News-Feed. Füge unter Settings einen hinzu.',
+  newsNotSetUp: 'Kein News-Feed. Füge unter Integrations einen hinzu.',
   calendarLoading: 'Kalender wird geladen…',
   calendarFailed: 'Der Kalender konnte nicht geladen werden',
-  calendarNotSetUp: 'Kein Kalender. Füge unter Settings einen hinzu.',
-  photosNone: 'Noch keine Fotos. Füge sie unter Settings hinzu.',
+  calendarNotSetUp: 'Kein Kalender. Füge unter Integrations einen hinzu.',
+  photosNone: 'Noch keine Fotos. Füge sie unter Integrations hinzu.',
   haLoading: 'Home Assistant wird geladen…',
   haFailed: 'Home Assistant ist nicht erreichbar',
-  haNotSetUp: 'Home Assistant ist nicht verbunden. Verbinde es unter Settings.',
+  haNotSetUp: 'Home Assistant ist nicht verbunden. Verbinde es unter Integrations.',
   haMissing: 'In Home Assistant nicht gefunden',
   haOn: 'An',
   haOff: 'Aus',
@@ -85,7 +85,7 @@ export const de: Record<TextKey, string> = {
   haAway: 'Abwesend',
   homeyLoading: 'Homey wird geladen…',
   homeyFailed: 'Homey ist nicht erreichbar',
-  homeyNotSetUp: 'Homey ist nicht verbunden. Verbinde es unter Settings.',
+  homeyNotSetUp: 'Homey ist nicht verbunden. Verbinde es unter Integrations.',
   homeyMissing: 'In Homey nicht gefunden',
   homeyPresenceFailed: 'Homey konnte nicht sagen, wer zu Hause ist',
   homeyNobodyHome: 'Niemand zu Hause',
@@ -120,7 +120,7 @@ export const de: Record<TextKey, string> = {
   fuelTitle: 'Kraftstoff',
   fuelLoading: 'Kraftstoffpreise werden geladen…',
   fuelFailed: 'Kraftstoffpreise konnten nicht geladen werden',
-  fuelNotSetUp: 'Lege unter Settings einen Wetterstandort fest oder wähle einen Ort für dieses Widget.',
+  fuelNotSetUp: 'Lege unter Integrations einen Wetterstandort fest oder wähle einen Ort für dieses Widget.',
   fuelNone: 'Keine Tankstellen mit Preis im Umkreis von {km} km',
   fuelDistance: '{km} km',
   fuelSave: 'spare {amount}{unit}',

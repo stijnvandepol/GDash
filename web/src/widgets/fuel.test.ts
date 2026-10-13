@@ -145,7 +145,7 @@ describe('texts', () => {
 
 describe('fuelWaitingText', () => {
   it('says what to set up when the server sends no entry', () => {
-    expect(fuelWaitingText(undefined, {})).toBe('Set a weather location under Settings, or choose a place for this widget.');
+    expect(fuelWaitingText(undefined, {})).toBe('Set a weather location under Integrations, or choose a place for this widget.');
   });
 
   it('says loading while the first fetch runs, and that it failed', () => {
@@ -155,7 +155,7 @@ describe('fuelWaitingText', () => {
 
   it('tells a widget without a place that there is no weather location when others have lists', () => {
     const others = { ...entry, value: { '51.77,5.52,5,EURO95': stations } };
-    expect(fuelWaitingText(others, {})).toBe('Set a weather location under Settings, or choose a place for this widget.');
+    expect(fuelWaitingText(others, {})).toBe('Set a weather location under Integrations, or choose a place for this widget.');
     expect(fuelWaitingText(others, { place: { name: 'Oss', latitude: 51.7, longitude: 5.5 } })).toBe('Loading fuel prices…');
   });
 });

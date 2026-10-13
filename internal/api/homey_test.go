@@ -124,7 +124,7 @@ func TestHomeyNeedsLogin(t *testing.T) {
 	}
 }
 
-// homeySnapshot is what the HomeyScript under Settings sends.
+// homeySnapshot is what the HomeyScript from Integrations, Homey sends.
 const homeySnapshot = `{"at": "2026-10-08T17:00:00.000Z",
 	"devices": [
 		{"id": "d1", "name": "Thermostat", "zone": "Kitchen", "available": true,

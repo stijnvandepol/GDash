@@ -105,9 +105,9 @@
 </label>
 {#if loadError}<p class="error small">{loadError}</p>{/if}
 {#if loaded && sources.length === 0 && !loadError}
-  <p class="small muted">Add an API under Settings, Data sources, Custom APIs first.</p>
+  <p class="small muted">Add an API under Integrations, Custom APIs first.</p>
 {:else if source && values.length + lists.length === 0}
-  <p class="small muted">Name the values of {source.name} under Settings, Data sources, Custom APIs, Values; they are listed here.</p>
+  <p class="small muted">Name the values of {source.name} under Integrations, Custom APIs, Values; they are listed here.</p>
 {/if}
 <label>
   Show

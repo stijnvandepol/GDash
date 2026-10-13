@@ -60,7 +60,7 @@ type Area struct {
 
 // Query is what one Fuel widget shows.
 type Query struct {
-	// Here means the widget follows the weather location under Settings.
+	// Here means the widget follows the weather location under Integrations.
 	// The caller fills in Area from it; Key ignores the place then, so the
 	// key is the same before and after the location changes.
 	Here bool

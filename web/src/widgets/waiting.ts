@@ -28,7 +28,7 @@ const TEXTS: Record<Source, { notSetUp: TextKey; failed: TextKey; loading: TextK
   sun: { notSetUp: 'weatherNotSetUp', failed: 'sunFailed', loading: 'sunLoading' },
   // The air quality is fetched for the weather location.
   airquality: { notSetUp: 'weatherNotSetUp', failed: 'airQualityFailed', loading: 'airQualityLoading' },
-  // Waste pickups come from a calendar under Settings.
+  // Waste pickups come from a calendar under Integrations.
   waste: { notSetUp: 'calendarNotSetUp', failed: 'wasteFailed', loading: 'wasteLoading' },
   // The holidays need no setup: until the server has read them, they are loading.
   holidays: { notSetUp: 'holidaysLoading', failed: 'holidaysFailed', loading: 'holidaysLoading' },
