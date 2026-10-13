@@ -21,6 +21,7 @@ import ImmichSetting from './ImmichSetting.svelte';
 import LocationSetting from './LocationSetting.svelte';
 import PhotoSetting from './PhotoSetting.svelte';
 import PresetSetup from './PresetSetup.svelte';
+import SolarSetting from './SolarSetting.svelte';
 import SourceList from './SourceList.svelte';
 import SynologySetting from './SynologySetting.svelte';
 
@@ -77,6 +78,33 @@ const SERVICES: Integration[] = [
     },
     panel: (ctx) =>
       view(LocationSetting, { location: ctx.settings.location, status: ctx.status['weather.current'], onchanged: ctx.onchanged, onerror: ctx.onerror }),
+  },
+  {
+    id: 'solar',
+    name: 'Solar panels',
+    description: 'What your solar panels are expected to produce today and tomorrow',
+    keywords: 'pv zonnepanelen forecast.solar open-meteo kwp production estimate',
+    category: 'energy',
+    icon: 'solar',
+    tags: ['no-key'],
+    kind: 'service',
+    requires: { widget: 'solar' },
+    state: ({ settings, status }) => {
+      const panels = settings.solar;
+      if (!panels) return NOT_SET_UP;
+      if (!panels.location && !settings.location) return { kind: 'problem', detail: 'Needs the weather location, or a place for the panels.' };
+      const kwp = panels.arrays.reduce((sum, a) => sum + a.kwp, 0);
+      const st = sourceState(status['solar.default'], NOT_FETCHED);
+      return { ...st, detail: `${Math.round(kwp * 100) / 100} kWp. ${st.detail}` };
+    },
+    panel: (ctx) =>
+      view(SolarSetting, {
+        panels: ctx.settings.solar,
+        weatherLocation: ctx.settings.location,
+        status: ctx.status['solar.default'],
+        onchanged: ctx.onchanged,
+        onerror: ctx.onerror,
+      }),
   },
   {
     id: 'news',

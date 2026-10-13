@@ -22,6 +22,7 @@
   import AirQuality from './widgets/AirQuality.svelte';
   import Waste from './widgets/Waste.svelte';
   import EnergyPrice from './widgets/EnergyPrice.svelte';
+  import Solar from './widgets/Solar.svelte';
   import Note from './widgets/Note.svelte';
   import Countdown from './widgets/Countdown.svelte';
   import Holidays from './widgets/Holidays.svelte';
@@ -157,6 +158,8 @@
             <Waste entry={widget.source ? display.snapshot?.data[widget.source] : undefined} settings={widget.settings} />
           {:else if widget.type === 'energyprice'}
             <EnergyPrice entry={widget.source ? display.snapshot?.data[widget.source] : undefined} />
+          {:else if widget.type === 'solar'}
+            <Solar entry={widget.source ? display.snapshot?.data[widget.source] : undefined} />
           {:else if widget.type === 'text'}
             <Note settings={widget.settings} />
           {:else if widget.type === 'countdown'}

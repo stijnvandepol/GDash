@@ -163,6 +163,27 @@ export interface Settings {
   synologyPhotos: Synology | null;
   /** Whether GDash asks GitHub once a day for the latest release. */
   updateCheck: boolean;
+  /** Null until the solar panels are set up. */
+  solar: Solar | null;
+}
+
+/** A group of panels that face the same way (internal/solar). */
+export interface SolarArray {
+  /** Degrees from 0 (flat) to 90 (upright). */
+  tilt: number;
+  /** Degrees from -180 to 180: 0 south, -90 east, 90 west. */
+  azimuth: number;
+  kwp: number;
+}
+
+/** The household's solar panels, for the solar forecast widget. */
+export interface Solar {
+  /** Where the panels are, or null for the weather location. */
+  location: Location | null;
+  arrays: SolarArray[];
+  /** 0.5 to 1.0; only the Open-Meteo estimate uses it. */
+  performanceRatio: number;
+  source: 'open-meteo' | 'forecast.solar';
 }
 
 export interface Immich {

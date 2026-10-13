@@ -24,6 +24,7 @@
     forecast: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16M15 4v16"/>',
     sun: '<path d="M3 18h18M7 18a5 5 0 0 1 10 0M12 6v3M5.6 10.6 7 12M18.4 10.6 17 12M8 21h8"/>',
     moon: '<path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5z"/>',
+    solar: '<circle cx="18" cy="5" r="2"/><path d="M5 9h12l2 8H3z"/><path d="M4 13h14M11 9v8M11 17v3M8 20h6"/>',
     air: '<path d="M3 8h10a3 3 0 1 0-3-3M3 12h15a3 3 0 1 1-3 3M3 16h7"/>',
     rain: '<path d="M7.5 14h9a4 4 0 0 0 .6-7.96A5.5 5.5 0 0 0 6.6 7.1 3.5 3.5 0 0 0 7.5 14zM8 17l-1 3M12 17l-1 3M16 17l-1 3"/>',
     house: '<path d="M4 11 12 4l8 7v9H4z"/><path d="M10 20v-5h4v5"/>',

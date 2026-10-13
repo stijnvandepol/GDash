@@ -10,6 +10,7 @@ export type Source =
   | 'waste'
   | 'holidays'
   | 'energyprice'
+  | 'solar'
   | 'news'
   | 'calendar'
   | 'homeassistant'
@@ -34,6 +35,8 @@ const TEXTS: Record<Source, { notSetUp: TextKey; failed: TextKey; loading: TextK
   holidays: { notSetUp: 'holidaysLoading', failed: 'holidaysFailed', loading: 'holidaysLoading' },
   // The price needs no setup: until the server has fetched it, it is loading.
   energyprice: { notSetUp: 'energyPriceLoading', failed: 'energyPriceFailed', loading: 'energyPriceLoading' },
+  // The server sends no entry until the panels and a location are set up.
+  solar: { notSetUp: 'solarNotSetUp', failed: 'solarFailed', loading: 'solarLoading' },
   news: { notSetUp: 'newsNotSetUp', failed: 'newsFailed', loading: 'newsLoading' },
   calendar: { notSetUp: 'calendarNotSetUp', failed: 'calendarFailed', loading: 'calendarLoading' },
   homeassistant: { notSetUp: 'haNotSetUp', failed: 'haFailed', loading: 'haLoading' },

@@ -71,6 +71,8 @@ export default async function globalSetup(): Promise<() => Promise<void>> {
   const dataDir = await mkdtemp(path.join(tmpdir(), 'gdash-e2e-'));
   const schoolHolidays = await startSchoolHolidays();
   const upstream = await startUpstream();
+  // The workers read it to see what the server asked the stand-in.
+  process.env.GDASH_E2E_UPSTREAM = upstream.url;
   const server = spawn(findBinary(), [], { env: serverEnvironment(dataDir, schoolHolidays.url, upstream.url), stdio: ['ignore', 'ignore', 'pipe'] });
 
   let log = '';

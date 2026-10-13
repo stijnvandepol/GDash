@@ -55,6 +55,7 @@ import type {
   Place,
   Settings,
   Slot,
+  Solar,
   SourceStatus,
   Synology,
   SystemInfo,
@@ -160,6 +161,8 @@ export const api = {
   settings: () => request<{ settings: Settings; status: Record<string, SourceStatus> }>('GET', '/api/settings'),
   setLocation: (loc: Location) => request<Location>('PUT', '/api/settings/location', loc),
   clearLocation: () => request<void>('DELETE', '/api/settings/location'),
+  setSolar: (panels: Solar) => request<Solar>('PUT', '/api/settings/solar', panels),
+  clearSolar: () => request<void>('DELETE', '/api/settings/solar'),
   setLanguage: (language: string) => request<{ language: string }>('PUT', '/api/settings/language', { language }),
   setUpdateCheck: (enabled: boolean) => request<{ enabled: boolean }>('PUT', '/api/settings/update-check', { enabled }),
   places: (name: string) =>

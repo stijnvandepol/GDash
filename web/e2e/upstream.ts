@@ -1,13 +1,16 @@
 import { createServer, type Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
+import { solarAnswer } from './solar-stand-in';
 
-// A stand-in for Buienradar and MeteoAlarm, so the Rain and Weather
-// warnings widgets show data without the internet. The server is pointed
+// A stand-in for Buienradar, MeteoAlarm and Open-Meteo's solar forecast,
+// so the Rain, Weather warnings and Solar forecast widgets show data
+// without the internet. The server is pointed
 // here with GDASH_TEST_UPSTREAM (cmd/gdash/config.go); the paths are the
 // ones cmd/gdash/warnings.go names. Open-Meteo's path answers 404: the
 // tests use a place in the Netherlands, which Buienradar covers. Every
 // answer is built around the current time, so there is always something
-// ahead.
+// ahead. /open-meteo-solar/requests lists the queries the solar forecast
+// was asked with.
 
 const STEP_MS = 5 * 60_000;
 const HOUR_MS = 3_600_000;
@@ -62,13 +65,22 @@ function feed(now: number): unknown {
 function answer(path: string, now: number): { type: string; body: string } | undefined {
   if (path === '/buienradar/data/raintext') return { type: 'text/plain', body: raintext(now) };
   if (path === '/meteoalarm/api/v1/warnings/feeds-netherlands') return { type: 'application/json', body: JSON.stringify(feed(now)) };
+  if (path === '/open-meteo-solar/v1/forecast') return { type: 'application/json', body: JSON.stringify(solarAnswer(now)) };
   return undefined;
 }
 
 /** Starts the stand-in on a free port of the loopback address. */
 export async function startUpstream(): Promise<{ url: string; close: () => Promise<void> }> {
+  const solarQueries: string[] = [];
   const server: Server = createServer((req, res) => {
-    const found = answer(new URL(req.url ?? '/', 'http://upstream').pathname, Date.now());
+    const url = new URL(req.url ?? '/', 'http://upstream');
+    if (url.pathname === '/open-meteo-solar/requests') {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(solarQueries));
+      return;
+    }
+    if (url.pathname === '/open-meteo-solar/v1/forecast') solarQueries.push(url.search);
+    const found = answer(url.pathname, Date.now());
     if (!found) {
       res.writeHead(404).end();
       return;

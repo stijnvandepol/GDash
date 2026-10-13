@@ -29,6 +29,7 @@ describe('waitingText', () => {
     expect(waitingText(undefined, 'airquality')).toBe('No location set. Choose one under Integrations.');
     expect(waitingText(undefined, 'waste')).toBe('No calendar. Add one under Integrations.');
     expect(waitingText(undefined, 'energyprice')).toBe('Loading the electricity price…');
+    expect(waitingText(undefined, 'solar')).toBe('No solar panels set up. Add them under Integrations.');
     expect(waitingText(undefined, 'holidays')).toBe('Loading holidays…');
     expect(waitingText(undefined, 'fuel')).toBe('Set a weather location under Integrations, or choose a place for this widget.');
     expect(waitingText(undefined, 'rain')).toBe('Set a weather location under Integrations, or choose a place for this widget.');
@@ -47,6 +48,7 @@ describe('waitingText', () => {
     expect(waitingText({ ...entry, failing: true }, 'airquality')).toBe('Could not load the air quality');
     expect(waitingText({ ...entry, failing: true }, 'waste')).toBe('Could not load the waste collection');
     expect(waitingText({ ...entry, failing: true }, 'energyprice')).toBe('Could not load the electricity price');
+    expect(waitingText({ ...entry, failing: true }, 'solar')).toBe('Could not load the solar forecast');
     expect(waitingText({ ...entry, failing: true }, 'fuel')).toBe('Could not load the fuel prices');
     expect(waitingText({ ...entry, failing: true }, 'rain')).toBe('Could not load the rain forecast');
     expect(waitingText({ ...entry, failing: true }, 'warnings')).toBe('Could not load the weather warnings');
