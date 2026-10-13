@@ -43,6 +43,7 @@ func (s *Server) handleCustomSources(mux *http.ServeMux) {
 	mux.Handle("PUT /api/custom-sources/{id}/values", s.requireUser(s.putCustomSourceValues))
 	mux.Handle("DELETE /api/custom-sources/{id}", s.requireUser(s.deleteCustomSource))
 	mux.Handle("POST /api/custom-sources/{id}/tests", s.requireUser(s.postCustomSourceTest))
+	mux.Handle("POST /api/custom-source-tests", s.requireUser(s.postCustomSourceTrial))
 	mux.Handle("POST /api/custom-rule-checks", s.requireUser(s.postCustomRuleCheck))
 }
 
@@ -237,6 +238,38 @@ func (s *Server) postCustomSourceTest(w http.ResponseWriter, r *http.Request) {
 		s.writeLastPushed(w, id)
 		return
 	}
+	s.writeFetched(w, r, src)
+}
+
+// postCustomSourceTrial handles POST /api/custom-source-tests with a source
+// as a form has it, and the id of the stored source it changes or none:
+// fetches it once without storing it, so a setup can be tried before it is
+// saved. A secret left empty is the stored source's. 200 as a Test, 404 for
+// an unknown id, 422 naming each invalid field, 502 when the fetch fails.
+func (s *Server) postCustomSourceTrial(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		custom.Input
+		ID int64 `json:"id"`
+	}
+	if !decodeJSON(w, r, &body) {
+		return
+	}
+	src, err := s.Settings.TrialCustomSource(r.Context(), body.ID, body.Input)
+	if err != nil {
+		s.writeSettingsError(w, "try custom source", err)
+		return
+	}
+	if src.Mode == custom.ModePush {
+		writeValidationError(w, []validation.FieldError{{Field: "mode", Message: "GDash cannot ask a source that your system sends; save it and send data to it"}})
+		return
+	}
+	s.writeFetched(w, r, src)
+}
+
+// writeFetched fetches src once and answers like a Test. 502 with what went
+// wrong, such as the status the API answered with; the message names the
+// host but never a secret.
+func (s *Server) writeFetched(w http.ResponseWriter, r *http.Request, src custom.Source) {
 	ctx, cancel := context.WithTimeout(r.Context(), customTestTimeout)
 	defer cancel()
 	raw, err := s.CustomFetcher.Fetch(ctx, src)

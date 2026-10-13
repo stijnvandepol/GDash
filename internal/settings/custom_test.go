@@ -175,6 +175,65 @@ func TestCustomSourceWithAnotherKey(t *testing.T) {
 	}
 }
 
+func TestCustomSourcePresetIsListed(t *testing.T) {
+	ctx := context.Background()
+	svc := newService(t)
+	own, err := svc.AddCustomSource(ctx, customInput(nil))
+	if err != nil || own.Preset != "" {
+		t.Fatalf("own source = %+v, %v", own, err)
+	}
+	made, err := svc.AddCustomSource(ctx, customInput(func(in *custom.Input) { in.Name, in.Preset = "P1 meter", "homewizard-p1" }))
+	if err != nil || made.Preset != "homewizard-p1" {
+		t.Fatalf("source from a preset = %+v, %v", made, err)
+	}
+	list, err := svc.CustomSources(ctx)
+	if err != nil || len(list) != 2 || list[0].Preset != "" || list[1].Preset != "homewizard-p1" {
+		t.Fatalf("list = %+v, %v", list, err)
+	}
+	// The web interface tells its own APIs apart by an empty preset, so the
+	// field is always sent.
+	shown, _ := json.Marshal(list[0])
+	if !strings.Contains(string(shown), `"preset":""`) {
+		t.Errorf("an own source is listed as %s, without an empty preset", shown)
+	}
+	if fetched, _ := svc.CustomSourceWithSecrets(ctx, made.ID); fetched.Preset != "homewizard-p1" {
+		t.Errorf("source with secrets has preset %q", fetched.Preset)
+	}
+	if _, err := svc.AddCustomSource(ctx, customInput(func(in *custom.Input) { in.Preset = "Not A Preset" })); len(validation.Fields(err)) != 1 {
+		t.Fatalf("an invalid preset: %v", err)
+	}
+}
+
+func TestTrialCustomSourceKeepsStoredSecretsWithoutStoring(t *testing.T) {
+	ctx := context.Background()
+	svc := newService(t)
+	view, err := svc.AddCustomSource(ctx, customInput(func(in *custom.Input) { in.Auth.Kind, in.Auth.Secret = custom.AuthBearer, apiKey }))
+	if err != nil {
+		t.Fatal(err)
+	}
+	changed := customInput(func(in *custom.Input) {
+		in.URL = "https://api.example.com/v2"
+		in.Auth.Kind = custom.AuthBearer
+	})
+	trial, err := svc.TrialCustomSource(ctx, view.ID, changed)
+	if err != nil || trial.ID != 0 || trial.AuthSecret != apiKey || trial.URL != "https://api.example.com/v2" {
+		t.Fatalf("trial of a change = %+v, %v; want the new address with the stored token and no ID", trial, err)
+	}
+	if stored, _ := svc.CustomSourceWithSecrets(ctx, view.ID); stored.URL != "https://api.example.com/v1?city=oss" {
+		t.Fatalf("a trial changed the stored source: %+v", stored)
+	}
+	// A new source has no stored token to keep.
+	if _, err := svc.TrialCustomSource(ctx, 0, changed); len(validation.Fields(err)) != 1 {
+		t.Fatalf("a new source without its token: %v", err)
+	}
+	if _, err := svc.TrialCustomSource(ctx, view.ID+1, changed); !errors.Is(err, store.ErrNotFound) {
+		t.Fatalf("a trial of an unknown source: %v", err)
+	}
+	if list, _ := svc.CustomSources(ctx); len(list) != 1 {
+		t.Fatalf("a trial stored a source: %+v", list)
+	}
+}
+
 func TestCustomSourceLimit(t *testing.T) {
 	ctx := context.Background()
 	svc := newService(t)

@@ -33,12 +33,14 @@ type CustomSource struct {
 	// NamedValues is empty for a source without named values.
 	NamedValues string
 	// Login is how a source with auth "login" logs in, as JSON, or empty.
-	Login     string
+	Login string
+	// Preset is the id of the preset it was made from, or empty.
+	Preset    string
 	CreatedAt time.Time
 	UpdatedAt time.Time
 }
 
-const customSourceColumns = "id, name, mode, url, method, body, auth, auth_name, headers, secrets_sealed, interval_seconds, sample, named_values, login, created_at, updated_at"
+const customSourceColumns = "id, name, mode, url, method, body, auth, auth_name, headers, secrets_sealed, interval_seconds, sample, named_values, login, preset, created_at, updated_at"
 
 // CustomSources returns every custom source in the order they were added.
 func (s *Store) CustomSources(ctx context.Context) ([]CustomSource, error) {
@@ -83,10 +85,10 @@ func (s *Store) AddCustomSource(ctx context.Context, src CustomSource, limit int
 		return 0, fmt.Errorf("%w: limit of %d custom sources reached", ErrConflict, limit)
 	}
 	res, err := tx.ExecContext(ctx,
-		`INSERT INTO custom_sources (name, mode, url, method, body, auth, auth_name, headers, secrets_sealed, interval_seconds, sample, named_values, login, created_at, updated_at)
-		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		`INSERT INTO custom_sources (name, mode, url, method, body, auth, auth_name, headers, secrets_sealed, interval_seconds, sample, named_values, login, preset, created_at, updated_at)
+		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		src.Name, src.Mode, src.URL, src.Method, src.Body, src.Auth, src.AuthName, src.Headers, src.SecretsSealed,
-		src.IntervalSeconds, src.Sample, src.NamedValues, src.Login, formatTime(src.CreatedAt), formatTime(src.UpdatedAt))
+		src.IntervalSeconds, src.Sample, src.NamedValues, src.Login, src.Preset, formatTime(src.CreatedAt), formatTime(src.UpdatedAt))
 	if err != nil {
 		return 0, fmt.Errorf("add custom source: %w", err)
 	}
@@ -103,9 +105,9 @@ func (s *Store) AddCustomSource(ctx context.Context, src CustomSource, limit int
 func (s *Store) UpdateCustomSource(ctx context.Context, src CustomSource) error {
 	res, err := s.db.ExecContext(ctx,
 		`UPDATE custom_sources SET name = ?, mode = ?, url = ?, method = ?, body = ?, auth = ?, auth_name = ?, headers = ?,
-		 secrets_sealed = ?, interval_seconds = ?, sample = ?, login = ?, updated_at = ? WHERE id = ?`,
+		 secrets_sealed = ?, interval_seconds = ?, sample = ?, login = ?, preset = ?, updated_at = ? WHERE id = ?`,
 		src.Name, src.Mode, src.URL, src.Method, src.Body, src.Auth, src.AuthName, src.Headers, src.SecretsSealed,
-		src.IntervalSeconds, src.Sample, src.Login, formatTime(src.UpdatedAt), src.ID)
+		src.IntervalSeconds, src.Sample, src.Login, src.Preset, formatTime(src.UpdatedAt), src.ID)
 	if err != nil {
 		return fmt.Errorf("update custom source: %w", err)
 	}
@@ -136,7 +138,7 @@ func scanCustomSource(row interface{ Scan(...any) error }) (CustomSource, error)
 	var src CustomSource
 	var created, updated string
 	err := row.Scan(&src.ID, &src.Name, &src.Mode, &src.URL, &src.Method, &src.Body, &src.Auth, &src.AuthName, &src.Headers,
-		&src.SecretsSealed, &src.IntervalSeconds, &src.Sample, &src.NamedValues, &src.Login, &created, &updated)
+		&src.SecretsSealed, &src.IntervalSeconds, &src.Sample, &src.NamedValues, &src.Login, &src.Preset, &created, &updated)
 	if err != nil {
 		return CustomSource{}, err
 	}

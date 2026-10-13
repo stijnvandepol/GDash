@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"os"
 	"path/filepath"
 	"testing"
 	"time"
@@ -16,7 +17,7 @@ func TestCustomSourceRoundTrip(t *testing.T) {
 	src := CustomSource{
 		Name: "Prices", Mode: "fetch", URL: "https://api.example.com/prices?currency=EUR", Method: "POST", Body: `{"q":1}`,
 		Auth: "header", AuthName: "X-API-Key", Headers: `[{"name":"Accept-Language","value":"nl"}]`,
-		SecretsSealed: "sealed", IntervalSeconds: 300, Sample: `{"price":1}`, NamedValues: `{"values":[]}`,
+		SecretsSealed: "sealed", IntervalSeconds: 300, Sample: `{"price":1}`, NamedValues: `{"values":[]}`, Preset: "tibber",
 		CreatedAt: created, UpdatedAt: created,
 	}
 	id, err := s.AddCustomSource(ctx, src, 20)
@@ -29,8 +30,10 @@ func TestCustomSourceRoundTrip(t *testing.T) {
 		t.Fatalf("CustomSource = %+v, %v; want %+v", got, err, src)
 	}
 
-	// An update keeps the named values; they change on their own.
-	src.Name, src.Auth, src.SecretsSealed, src.UpdatedAt = "Renamed", "none", "", created.Add(time.Hour)
+	// An update keeps the named values; they change on their own. The
+	// preset changes with the rest: an update without one makes it the
+	// household's own API.
+	src.Name, src.Auth, src.SecretsSealed, src.Preset, src.UpdatedAt = "Renamed", "none", "", "", created.Add(time.Hour)
 	if err := s.UpdateCustomSource(ctx, CustomSource{
 		ID: src.ID, Name: src.Name, Mode: src.Mode, URL: src.URL, Method: src.Method, Body: src.Body, Auth: src.Auth, AuthName: src.AuthName,
 		Headers: src.Headers, IntervalSeconds: src.IntervalSeconds, Sample: src.Sample, UpdatedAt: src.UpdatedAt,
@@ -215,5 +218,49 @@ func TestCustomSourceModeMigrationKeepsFetching(t *testing.T) {
 	list, err := s.CustomSources(ctx)
 	if err != nil || len(list) != 1 || list[0].Mode != "fetch" {
 		t.Fatalf("after the migration = %+v, %v; want one source that fetches", list, err)
+	}
+}
+
+func TestCustomSourcePresetMigrationKeepsSourcesAsTheirOwn(t *testing.T) {
+	ctx := context.Background()
+	path := filepath.Join(t.TempDir(), "gdash.db")
+	db, err := sql.Open("sqlite", "file:"+path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	scripts, err := loadMigrations()
+	if err != nil {
+		t.Fatal(err)
+	}
+	// A database from before the preset column, with a source in it.
+	old := &Store{db: db}
+	if err := old.migrate(ctx, path, scripts[:23]); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := db.ExecContext(ctx, `INSERT INTO custom_sources (name, url, method, auth, interval_seconds, named_values, created_at, updated_at)
+		VALUES ('P1 meter', 'http://192.168.1.50/api/v1/data', 'GET', 'none', 30, '{"values":[]}', '2026-01-01T00:00:00Z', '2026-01-01T00:00:00Z')`); err != nil {
+		t.Fatal(err)
+	}
+	db.Close()
+
+	s, err := Open(ctx, path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer s.Close()
+	list, err := s.CustomSources(ctx)
+	if err != nil || len(list) != 1 || list[0].Preset != "" || list[0].Name != "P1 meter" || list[0].NamedValues != `{"values":[]}` {
+		t.Fatalf("after the migration = %+v, %v; want the source as it was, without a preset", list, err)
+	}
+	if _, err := os.Stat(path + ".bak-v23"); err != nil {
+		t.Fatalf("no backup before the migration: %v", err)
+	}
+
+	list[0].Preset = "homewizard-p1"
+	if err := s.UpdateCustomSource(ctx, list[0]); err != nil {
+		t.Fatal(err)
+	}
+	if got, err := s.CustomSource(ctx, list[0].ID); err != nil || got.Preset != "homewizard-p1" {
+		t.Fatalf("after setting the preset = %+v, %v", got, err)
 	}
 }

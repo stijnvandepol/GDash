@@ -3,6 +3,7 @@ package custom
 import (
 	"encoding/json"
 	"slices"
+	"strings"
 	"testing"
 	"time"
 
@@ -79,11 +80,24 @@ func TestCheckNamesEveryInvalidField(t *testing.T) {
 		{"auth.secret", func(in *Input) { in.Auth.Kind, in.Auth.Secret = AuthBearer, "has space" }},
 		{"url", func(in *Input) { in.URL = "https://example.com/#top" }},
 		{"auth.name", func(in *Input) { in.Auth.Kind, in.Auth.Name, in.Auth.Secret = AuthHeader, "Content-Length", "1" }},
+		{"preset", func(in *Input) { in.Preset = "HomeWizard-P1" }},
+		{"preset", func(in *Input) { in.Preset = "-p1" }},
+		{"preset", func(in *Input) { in.Preset = "homewizard/p1" }},
+		{"preset", func(in *Input) { in.Preset = strings.Repeat("a", 41) }},
 	}
 	for _, c := range cases {
 		_, err := Check(input(c.mutate), nil)
 		if got := fieldsOf(err); !slices.Contains(got, c.field) {
 			t.Errorf("%s: fields %v", c.field, got)
+		}
+	}
+}
+
+func TestCheckKeepsThePreset(t *testing.T) {
+	for _, preset := range []string{"", "homewizard-p1", "pi-hole", strings.Repeat("a", 40)} {
+		src, err := Check(input(func(in *Input) { in.Preset = preset }), nil)
+		if err != nil || src.Preset != preset {
+			t.Errorf("preset %q: Check = %q, %v", preset, src.Preset, err)
 		}
 	}
 }

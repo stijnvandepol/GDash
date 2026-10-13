@@ -381,7 +381,7 @@ uses GeoNames data; the coordinates can also be entered by hand.
 A custom source is any JSON HTTP API set up under Integrations. Its secret values never leave the server: they are sealed
 with `secret.key` like calendar addresses, never returned, logged or put in an error or the audit log.
 
-**custom source:** `{"id": 1, "name": "Weather in Oss", "mode": "fetch", "url": "https://api.open-meteo.com/v1/forecast?…", "method": "GET", "body": "", "auth": {"kind": "header", "name": "X-API-Key", "secretSet": true}, "headers": [{"name": "X-Tenant", "value": "", "secret": true}], "intervalSeconds": 900, "sample": {…} | null, "values": [named value], "lists": [named list], "unreadable": false, "createdAt": "…", "updatedAt": "…"}`.
+**custom source:** `{"id": 1, "name": "Weather in Oss", "mode": "fetch", "url": "https://api.open-meteo.com/v1/forecast?…", "method": "GET", "body": "", "auth": {"kind": "header", "name": "X-API-Key", "secretSet": true}, "headers": [{"name": "X-Tenant", "value": "", "secret": true}], "intervalSeconds": 900, "sample": {…} | null, "values": [named value], "lists": [named list], "preset": "", "unreadable": false, "createdAt": "…", "updatedAt": "…"}`.
 A request body has the same fields, with `auth.secret` instead of `auth.secretSet` and `sample` as any JSON value,
 and without `values` and `lists`, which change on their own (below) and are kept by a `PUT` of the source:
 
@@ -397,6 +397,7 @@ and without `values` and `lists`, which change on their own (below) and are kept
 | `headers` | up to 10 `{name, value, secret}`; not `Host`, `Authorization`, `Content-Type`, `Content-Length` or another header that the request sets itself, no name twice. An empty `value` of a `secret` header keeps the stored one with that name |
 | `intervalSeconds` | 30 to 86400: how often it is fetched, or for a pushed source how often an answer is expected |
 | `sample` | an answer to design against, up to 48 KB of JSON, or `null` |
+| `preset` | the id of the preset the web interface made the source from, such as `homewizard-p1` (the name of its file in `web/src/admin/presets`): up to 40 lowercase letters, digits and `-`, starting with a letter or digit. Empty or absent for the household's own API. The server checks the form only; the web interface shows a source with a preset under that preset's own card and offers it as a widget of its own. A `PUT` replaces it like the other fields, so a `PUT` without it makes the source the household's own |
 
 The list adds `lastPushAt` to a pushed source once it sent an answer: when the last one arrived.
 
@@ -420,6 +421,7 @@ follow the syntax below. At most 40 values and 10 lists per source.
 | `PUT /api/custom-sources/{id}/values` `{values, lists}` | admin | `200` custom source | `401`, `404`, `422` naming each field, such as `values[1].path` or `lists[0].columns[2].name` |
 | `DELETE /api/custom-sources/{id}` | admin | `204`; its widgets say it is not available | `401`, `404` |
 | `POST /api/custom-sources/{id}/tests` | admin | `200 {"data", "truncated", "bytes"}`: one fresh answer, cut down for the editor (25 items per list, 200 characters per text, 12 levels, 2000 values); for a pushed source the last answer it sent, with `receivedAt` | `401`, `404`, `502 fetch_failed` with what went wrong, such as the status the API answered; `409 nothing_received` for a pushed source that sent nothing yet |
+| `POST /api/custom-source-tests` with a source as for `POST /api/custom-sources`, and `id` of a stored source or none | admin | `200` as a test: one fresh answer of the source as given, which is not stored, so a form can try it before it saves. With `id` it is a change of that source: a secret left empty is its stored one | `401`, `404` for an unknown `id`, `422` naming each field, also `mode` for a pushed source, `502 fetch_failed` |
 | `PUT /api/custom-sources/{id}/data` with the answer as the body | admin or API token | `204` | `401`, `403` cross-site, `404`, `409 not_pushed` for a source that GDash fetches, `413 too_large` over 1 MB, `415` without `Content-Type: application/json`, `422 invalid_json`, `429 rate_limited` within 5 seconds of its last accepted answer, with `Retry-After: 5` |
 | `POST /api/custom-rule-checks` `{when, data, value?, row?}` | admin | `200 {"result"}`, or `{"error"}` when the condition does not apply to `data` | `401`, `422` naming `when` |
 

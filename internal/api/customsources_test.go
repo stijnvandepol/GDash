@@ -40,7 +40,7 @@ func TestCustomSourcesNeedLogin(t *testing.T) {
 	for _, route := range [][2]string{
 		{"GET", "/api/custom-sources"}, {"POST", "/api/custom-sources"}, {"PUT", "/api/custom-sources/1"},
 		{"DELETE", "/api/custom-sources/1"}, {"POST", "/api/custom-sources/1/tests"}, {"POST", "/api/custom-rule-checks"},
-		{"PUT", "/api/custom-sources/1/values"},
+		{"PUT", "/api/custom-sources/1/values"}, {"POST", "/api/custom-source-tests"},
 	} {
 		if status, _ := env.do(t, route[0], route[1], `{}`); status != http.StatusUnauthorized {
 			t.Errorf("%s %s without login = %d, want 401", route[0], route[1], status)
@@ -150,6 +150,69 @@ func TestCustomSourceTestReportsWhatWentWrong(t *testing.T) {
 	status, body := env.do(t, "POST", "/api/custom-sources/1/tests", "")
 	if status != http.StatusBadGateway || !strings.Contains(body, "status 401") || strings.Contains(body, customKey) {
 		t.Fatalf("test with a wrong key = %d %s", status, body)
+	}
+	if strings.Contains(env.logs.String(), customKey) {
+		t.Fatal("the log holds the key")
+	}
+}
+
+func TestCustomSourceFromAPresetIsListedWithIt(t *testing.T) {
+	env := newTestEnv(t, nil)
+	env.setUp(t)
+	api := customAPI(t)
+	withPreset := strings.Replace(customBody(api.URL, customKey), `"name"`, `"preset": "homewizard-p1", "name"`, 1)
+	if status, body := env.do(t, "POST", "/api/custom-sources", withPreset); status != http.StatusCreated || !strings.Contains(body, `"preset":"homewizard-p1"`) {
+		t.Fatalf("create = %d %s", status, body)
+	}
+	if status, body := env.do(t, "POST", "/api/custom-sources", customBody(api.URL, customKey)); status != http.StatusCreated || !strings.Contains(body, `"preset":""`) {
+		t.Fatalf("create without a preset = %d %s", status, body)
+	}
+	_, listed := env.do(t, "GET", "/api/custom-sources", "")
+	if !strings.Contains(listed, `"preset":"homewizard-p1"`) || !strings.Contains(listed, `"preset":""`) {
+		t.Fatalf("list = %s", listed)
+	}
+	invalid := strings.Replace(withPreset, "homewizard-p1", "../p1", 1)
+	if status, body := env.do(t, "POST", "/api/custom-sources", invalid); status != http.StatusUnprocessableEntity || !strings.Contains(body, `"field":"preset"`) {
+		t.Fatalf("an invalid preset = %d %s", status, body)
+	}
+}
+
+func TestCustomSourceTrialFetchesWithoutStoring(t *testing.T) {
+	env := newTestEnv(t, nil)
+	env.setUp(t)
+	api := customAPI(t)
+
+	status, body := env.do(t, "POST", "/api/custom-source-tests", customBody(api.URL, customKey))
+	if status != http.StatusOK || !strings.Contains(body, `"temp":21.5`) {
+		t.Fatalf("trial = %d %s", status, body)
+	}
+	if _, listed := env.do(t, "GET", "/api/custom-sources", ""); strings.Contains(listed, "Thermometer") {
+		t.Fatalf("a trial stored the source: %s", listed)
+	}
+	if n := env.settingsChanges.Load(); n != 0 {
+		t.Errorf("SettingsChanged called %d times by a trial, want 0", n)
+	}
+	status, body = env.do(t, "POST", "/api/custom-source-tests", customBody(api.URL, "wrong-"+customKey))
+	if status != http.StatusBadGateway || !strings.Contains(body, "status 401") || strings.Contains(body, customKey) {
+		t.Fatalf("trial with a wrong key = %d %s", status, body)
+	}
+
+	// A change of a stored source keeps its secrets when they are left empty.
+	if status, body := env.do(t, "POST", "/api/custom-sources", customBody(api.URL, customKey)); status != http.StatusCreated {
+		t.Fatalf("create = %d %s", status, body)
+	}
+	change := strings.Replace(customBody(api.URL, ""), `"name"`, `"id": 1, "name"`, 1)
+	if status, body := env.do(t, "POST", "/api/custom-source-tests", change); status != http.StatusOK || !strings.Contains(body, `"temp":21.5`) {
+		t.Fatalf("trial of a change = %d %s", status, body)
+	}
+	if status, _ := env.do(t, "POST", "/api/custom-source-tests", strings.Replace(change, `"id": 1`, `"id": 9`, 1)); status != http.StatusNotFound {
+		t.Fatalf("trial of an unknown source = %d, want 404", status)
+	}
+	if status, body := env.do(t, "POST", "/api/custom-source-tests", `{"name": "Mine", "mode": "push", "method": "GET", "intervalSeconds": 60, "auth": {"kind": "none"}}`); status != http.StatusUnprocessableEntity || !strings.Contains(body, `"field":"mode"`) {
+		t.Fatalf("trial of a pushed source = %d %s", status, body)
+	}
+	if status, body := env.do(t, "POST", "/api/custom-source-tests", `{"name": "", "url": "ftp://x", "method": "GET", "intervalSeconds": 60}`); status != http.StatusUnprocessableEntity || !strings.Contains(body, `"field":"url"`) {
+		t.Fatalf("trial of an invalid source = %d %s", status, body)
 	}
 	if strings.Contains(env.logs.String(), customKey) {
 		t.Fatal("the log holds the key")

@@ -76,6 +76,9 @@ type Source struct {
 	Interval time.Duration
 	// Sample is a pasted answer to design widgets against, or empty.
 	Sample string
+	// Preset is the id of the preset the source was made from, or empty
+	// for the household's own API.
+	Preset string
 }
 
 // Input is a source as the web interface sends it. An empty secret keeps
@@ -97,9 +100,16 @@ type Input struct {
 	Headers         []Header        `json:"headers"`
 	IntervalSeconds int             `json:"intervalSeconds"`
 	Sample          json.RawMessage `json:"sample"`
+	// Preset is the id of the preset the web interface made the source
+	// from, such as homewizard-p1, or empty for the household's own API.
+	Preset string `json:"preset"`
 }
 
 var (
+	// presetID is the form of a preset's id: the name of its file in
+	// web/src/admin/presets. The server does not know the presets
+	// themselves, so it checks the form only.
+	presetID = regexp.MustCompile(`^[a-z0-9][a-z0-9-]{0,39}$`)
 	// headerName is an HTTP token (RFC 9110).
 	headerName = regexp.MustCompile("^[A-Za-z0-9!#$%&'*+.^_`|~-]{1,64}$")
 	paramName  = regexp.MustCompile(`^[A-Za-z0-9_.\-\[\]]{1,64}$`)
@@ -118,12 +128,15 @@ var (
 // messages never contain a secret.
 func Check(in Input, old *Source) (Source, error) {
 	var errs validation.Collector
-	src := Source{Name: in.Name}
+	src := Source{Name: in.Name, Preset: in.Preset}
 	if old != nil {
 		src.ID = old.ID
 	}
 	if msg := nameProblem(in.Name); msg != "" {
 		errs.Add("name", msg)
+	}
+	if in.Preset != "" && !presetID.MatchString(in.Preset) {
+		errs.Add("preset", "use the id of a preset, such as homewizard-p1: up to 40 lowercase letters, digits and -, or leave it empty")
 	}
 	switch in.Mode {
 	case "", ModeFetch:

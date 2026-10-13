@@ -41,6 +41,9 @@ type CustomSource struct {
 	// offers for this source.
 	Values []custom.NamedValue `json:"values"`
 	Lists  []custom.NamedList  `json:"lists"`
+	// Preset is the id of the preset the source was made from, such as
+	// homewizard-p1, or empty for the household's own API.
+	Preset string `json:"preset"`
 	// Unreadable is true when the secrets cannot be decrypted, for example
 	// after the database was moved without its secret.key.
 	Unreadable bool      `json:"unreadable"`
@@ -142,6 +145,34 @@ func (s *Service) UpdateCustomSource(ctx context.Context, id int64, in custom.In
 	return s.customView(row), nil
 }
 
+// TrialCustomSource checks a source as a form has it, to fetch it once
+// without storing it: a new one when id is 0, or a change of stored source
+// id, whose secrets an empty secret keeps. The result has ID 0, so a trial
+// that logs in never takes the session of the stored source. It returns a
+// *validation.Error for invalid input and store.ErrNotFound for an unknown
+// ID.
+func (s *Service) TrialCustomSource(ctx context.Context, id int64, in custom.Input) (custom.Source, error) {
+	var old *custom.Source
+	if id != 0 {
+		stored, err := s.Store.CustomSource(ctx, id)
+		if err != nil {
+			return custom.Source{}, err
+		}
+		opened, err := s.openCustom(stored)
+		if err != nil {
+			// The secrets are lost with the key; the form asks for them.
+			opened = custom.Source{ID: id}
+		}
+		old = &opened
+	}
+	src, err := custom.Check(in, old)
+	if err != nil {
+		return custom.Source{}, err
+	}
+	src.ID = 0
+	return src, nil
+}
+
 // SetCustomSourceValues replaces the named values of a source. It returns
 // a *validation.Error for invalid values and store.ErrNotFound for an
 // unknown ID.
@@ -205,7 +236,7 @@ func (s *Service) customRow(src custom.Source) (store.CustomSource, error) {
 	}
 	return store.CustomSource{
 		ID: src.ID, Name: src.Name, Mode: src.Mode, URL: src.URL, Method: src.Method, Body: src.Body, Auth: src.Auth,
-		AuthName: src.AuthName, Headers: string(headers), SecretsSealed: sealed, Login: login,
+		AuthName: src.AuthName, Headers: string(headers), SecretsSealed: sealed, Login: login, Preset: src.Preset,
 		IntervalSeconds: int(src.Interval / time.Second), Sample: src.Sample, UpdatedAt: s.Now().UTC(),
 	}, nil
 }
@@ -214,7 +245,7 @@ func (s *Service) customRow(src custom.Source) (store.CustomSource, error) {
 func (s *Service) openCustom(row store.CustomSource) (custom.Source, error) {
 	src := custom.Source{
 		ID: row.ID, Name: row.Name, Mode: row.Mode, URL: row.URL, Method: row.Method, Body: row.Body, Auth: row.Auth,
-		AuthName: row.AuthName, Interval: time.Duration(row.IntervalSeconds) * time.Second, Sample: row.Sample,
+		AuthName: row.AuthName, Interval: time.Duration(row.IntervalSeconds) * time.Second, Sample: row.Sample, Preset: row.Preset,
 	}
 	if err := json.Unmarshal([]byte(row.Headers), &src.Headers); err != nil {
 		return custom.Source{}, fmt.Errorf("stored headers of custom source %d are invalid: %w", row.ID, err)
@@ -247,7 +278,7 @@ func (s *Service) openCustom(row store.CustomSource) (custom.Source, error) {
 func (s *Service) customView(row store.CustomSource) CustomSource {
 	v := CustomSource{
 		ID: row.ID, Name: row.Name, Mode: row.Mode, URL: row.URL, Method: row.Method, Body: row.Body,
-		IntervalSeconds: row.IntervalSeconds, CreatedAt: row.CreatedAt, UpdatedAt: row.UpdatedAt,
+		IntervalSeconds: row.IntervalSeconds, Preset: row.Preset, CreatedAt: row.CreatedAt, UpdatedAt: row.UpdatedAt,
 		Headers: []custom.Header{}, Values: []custom.NamedValue{}, Lists: []custom.NamedList{},
 	}
 	v.Auth.Kind, v.Auth.Name = row.Auth, row.AuthName
