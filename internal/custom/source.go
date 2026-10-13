@@ -70,8 +70,10 @@ type Source struct {
 	AuthName string
 	// AuthSecret is the token, API key or password.
 	AuthSecret string
-	Headers    []Header
-	Interval   time.Duration
+	// Login is set for AuthLogin only.
+	Login    Login
+	Headers  []Header
+	Interval time.Duration
 	// Sample is a pasted answer to design widgets against, or empty.
 	Sample string
 }
@@ -89,6 +91,8 @@ type Input struct {
 		Kind   string `json:"kind"`
 		Name   string `json:"name"`
 		Secret string `json:"secret"`
+		// Login is how to log in, for the kind "login" only.
+		Login *Login `json:"login"`
 	} `json:"auth"`
 	Headers         []Header        `json:"headers"`
 	IntervalSeconds int             `json:"intervalSeconds"`
@@ -152,14 +156,19 @@ func checkRequest(errs *validation.Collector, in Input, old *Source, src *Source
 	if old != nil {
 		oldAuth = old.auth()
 	}
-	auth := CheckAuth(errs, Auth{Kind: in.Auth.Kind, Name: in.Auth.Name, Secret: in.Auth.Secret}, oldAuth, src.URL)
-	src.AuthName, src.AuthSecret = auth.Name, auth.Secret
+	var auth Auth
+	if in.Auth.Kind == AuthLogin {
+		auth = checkLoginAuth(errs, in, oldAuth, src.URL)
+	} else {
+		auth = CheckAuth(errs, Auth{Kind: in.Auth.Kind, Name: in.Auth.Name, Secret: in.Auth.Secret}, oldAuth, src.URL)
+	}
+	src.AuthName, src.AuthSecret, src.Login = auth.Name, auth.Secret, auth.Login
 	src.Headers = checkHeaders(errs, in.Headers, old)
 }
 
 // auth is the source's authentication.
 func (s Source) auth() Auth {
-	return Auth{Kind: s.Auth, Name: s.AuthName, Secret: s.AuthSecret}
+	return Auth{Kind: s.Auth, Name: s.AuthName, Secret: s.AuthSecret, Login: s.Login}
 }
 
 // checkPushed refuses a request for a source that is sent to GDash, rather
@@ -177,7 +186,7 @@ func checkPushed(errs *validation.Collector, in Input, src *Source) {
 	if in.Body != "" {
 		errs.Add("body", unused)
 	}
-	if (in.Auth.Kind != "" && in.Auth.Kind != AuthNone) || in.Auth.Name != "" || in.Auth.Secret != "" {
+	if (in.Auth.Kind != "" && in.Auth.Kind != AuthNone) || in.Auth.Name != "" || in.Auth.Secret != "" || in.Auth.Login != nil {
 		errs.Add("auth.kind", unused)
 	}
 	if len(in.Headers) > 0 {

@@ -234,7 +234,7 @@ func newTestEnv(t *testing.T, discover func(context.Context) ([]cast.Device, err
 		Stops:             stops,
 		Traffic:           trafficGuard,
 		KNMI:              fakeKNMI{},
-		CustomFetcher:     &custom.Fetcher{HTTP: outbound.NewClient(5 * time.Second)},
+		CustomFetcher:     &custom.Fetcher{HTTP: outbound.NewClient(5 * time.Second), Box: box, Now: now},
 		WebPageChecker:    &webpage.Checker{HTTP: outbound.NewClient(5 * time.Second)},
 		ReceiveCustom:     sources.receiveCustom,
 		ReceiveHomey:      sources.receiveHomey,

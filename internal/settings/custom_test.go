@@ -111,6 +111,45 @@ func TestCustomSourceSecretsAreSealedAndNeverShown(t *testing.T) {
 	}
 }
 
+func TestCustomSourceLoginIsShownWithoutThePassword(t *testing.T) {
+	ctx := context.Background()
+	svc := newService(t)
+	login := custom.Login{URL: "http://pi.hole/api/auth", Body: `{"password": "{secret}"}`, TokenPath: "session.sid", Place: custom.TokenInHeader, ValidityPath: "session.validity"}
+	withLogin := func(password string) func(*custom.Input) {
+		return func(in *custom.Input) {
+			in.URL = "http://pi.hole/api/stats/summary"
+			in.Auth.Kind, in.Auth.Name, in.Auth.Secret, in.Auth.Login = custom.AuthLogin, "X-FTL-SID", password, &login
+		}
+	}
+	view, err := svc.AddCustomSource(ctx, customInput(withLogin(apiKey)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	shown, _ := json.Marshal(view)
+	row, _ := svc.Store.CustomSource(ctx, view.ID)
+	if strings.Contains(string(shown), apiKey) || strings.Contains(row.Login+row.SecretsSealed, apiKey) {
+		t.Fatalf("the view or the row holds the password: %s %+v", shown, row)
+	}
+	if view.Auth.Login == nil || *view.Auth.Login != login || !view.Auth.SecretSet {
+		t.Fatalf("view auth = %+v, want the login and that the password is set", view.Auth)
+	}
+	// An edit without the password keeps it.
+	if _, err := svc.UpdateCustomSource(ctx, view.ID, customInput(withLogin(""))); err != nil {
+		t.Fatal(err)
+	}
+	src, err := svc.CustomSourceWithSecrets(ctx, view.ID)
+	if err != nil || src.AuthSecret != apiKey || src.Login != login {
+		t.Fatalf("Source = %+v, %v", src, err)
+	}
+	// Another kind of authentication drops the login.
+	if _, err := svc.UpdateCustomSource(ctx, view.ID, customInput(nil)); err != nil {
+		t.Fatal(err)
+	}
+	if row, _ := svc.Store.CustomSource(ctx, view.ID); row.Login != "" {
+		t.Fatalf("login after switching to none = %q", row.Login)
+	}
+}
+
 func TestCustomSourceWithAnotherKey(t *testing.T) {
 	ctx := context.Background()
 	svc := newService(t)

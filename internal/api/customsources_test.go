@@ -89,6 +89,57 @@ func TestCustomSourceSecretsNeverLeaveTheServer(t *testing.T) {
 	}
 }
 
+func TestCustomSourceThatLogsInFirst(t *testing.T) {
+	env := newTestEnv(t, nil)
+	env.setUp(t)
+	const sid = "sid-0123456789abcdef"
+	// A stand-in for Pi-hole v6: a session ID for the password, wanted in X-FTL-SID.
+	api := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		switch {
+		case r.URL.Path == "/api/auth":
+			body, _ := io.ReadAll(r.Body)
+			if string(body) != `{"password": "`+customKey+`"}` {
+				http.Error(w, `{"session":{"valid":false}}`, http.StatusUnauthorized)
+				return
+			}
+			_, _ = io.WriteString(w, `{"session":{"valid":true,"sid":"`+sid+`","validity":1800}}`)
+		case r.Header.Get("X-FTL-SID") == sid:
+			_, _ = io.WriteString(w, `{"queries":{"total":1234}}`)
+		default:
+			http.Error(w, `{}`, http.StatusUnauthorized)
+		}
+	}))
+	t.Cleanup(api.Close)
+	source := func(password string) string {
+		return `{"name": "Pi-hole", "url": "` + api.URL + `/api/stats/summary", "method": "GET", "intervalSeconds": 60, "headers": [],
+			"auth": {"kind": "login", "name": "X-FTL-SID", "secret": "` + password + `", "login": {"url": "` + api.URL + `/api/auth",
+			"body": "{\"password\": \"{secret}\"}", "tokenPath": "session.sid", "place": "header", "validityPath": "session.validity"}}}`
+	}
+
+	status, body := env.do(t, "POST", "/api/custom-sources", source(customKey))
+	if status != http.StatusCreated || !strings.Contains(body, `"tokenPath":"session.sid"`) || !strings.Contains(body, `"secretSet":true`) {
+		t.Fatalf("create = %d %s", status, body)
+	}
+	if status, body = env.do(t, "POST", "/api/custom-sources/1/tests", ""); status != http.StatusOK || !strings.Contains(body, `"total":1234`) {
+		t.Fatalf("test = %d %s", status, body)
+	}
+	if status, body = env.do(t, "PUT", "/api/custom-sources/1", source("wrong-password")); status != http.StatusOK {
+		t.Fatalf("update = %d %s", status, body)
+	}
+	status, body = env.do(t, "POST", "/api/custom-sources/1/tests", "")
+	if status != http.StatusBadGateway || !strings.Contains(body, "the login was refused with status 401; check the password") {
+		t.Fatalf("test with a wrong password = %d %s", status, body)
+	}
+	_, listed := env.do(t, "GET", "/api/custom-sources", "")
+	_, audit := env.do(t, "GET", "/api/audit-events", "")
+	for what, text := range map[string]string{"list": listed, "test": body, "audit": audit, "log": env.logs.String()} {
+		if strings.Contains(text, customKey) || strings.Contains(text, "wrong-password") || strings.Contains(text, sid) {
+			t.Errorf("the %s holds the password or the session ID: %s", what, text)
+		}
+	}
+}
+
 func TestCustomSourceTestReportsWhatWentWrong(t *testing.T) {
 	env := newTestEnv(t, nil)
 	env.setUp(t)

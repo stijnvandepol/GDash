@@ -180,7 +180,7 @@ func startData(ctx context.Context, cfg config, db *store.Store, svc *settings.S
 			Logger: logger,
 		},
 		knmi:       &knmi.Client{BaseURL: knmiURL, HTTP: outbound.NewClient(upstreamTimeout), UserAgent: userAgent, Now: time.Now},
-		custom:     &custom.Fetcher{HTTP: outbound.NewClient(upstreamTimeout), UserAgent: userAgent},
+		custom:     &custom.Fetcher{HTTP: outbound.NewClient(upstreamTimeout), UserAgent: userAgent, Box: svc.Box, Now: time.Now},
 		stops:      &departures.Directory{Source: transit, Now: time.Now, Logger: logger},
 		dashboards: db.Dashboards,
 		displays:   db.Displays,

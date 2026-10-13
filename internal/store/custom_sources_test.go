@@ -116,6 +116,75 @@ func TestCustomSourcePushMode(t *testing.T) {
 	}
 }
 
+func TestCustomSourceLogin(t *testing.T) {
+	ctx := context.Background()
+	s, _ := openTestStore(t)
+	login := `{"url":"http://pi.hole/api/auth","body":"{\"password\":\"{secret}\"}","tokenPath":"session.sid","place":"header","validityPath":"session.validity"}`
+	src := CustomSource{
+		Name: "Pi-hole", Mode: "fetch", URL: "http://pi.hole/api/stats/summary", Method: "GET", Auth: "login", AuthName: "X-FTL-SID",
+		Headers: "[]", SecretsSealed: "sealed", IntervalSeconds: 60, Login: login, CreatedAt: created, UpdatedAt: created,
+	}
+	id, err := s.AddCustomSource(ctx, src, 20)
+	if err != nil {
+		t.Fatal(err)
+	}
+	src.ID = id
+	if got, err := s.CustomSource(ctx, id); err != nil || got != src {
+		t.Fatalf("CustomSource = %+v, %v; want %+v", got, err, src)
+	}
+	src.Auth, src.AuthName, src.Login = "none", "", ""
+	if err := s.UpdateCustomSource(ctx, src); err != nil {
+		t.Fatal(err)
+	}
+	if got, err := s.CustomSource(ctx, id); err != nil || got.Login != "" || got.Auth != "none" {
+		t.Fatalf("after dropping the login = %+v, %v", got, err)
+	}
+}
+
+func TestCustomSourceLoginMigrationKeepsSourcesAndIDs(t *testing.T) {
+	ctx := context.Background()
+	path := filepath.Join(t.TempDir(), "gdash.db")
+	db, err := sql.Open("sqlite", "file:"+path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	scripts, err := loadMigrations()
+	if err != nil {
+		t.Fatal(err)
+	}
+	// A database from before the login column, with two sources of which
+	// the newest was deleted again.
+	old := &Store{db: db}
+	if err := old.migrate(ctx, path, scripts[:22]); err != nil {
+		t.Fatal(err)
+	}
+	for _, name := range []string{"Prices", "Deleted"} {
+		if _, err := db.ExecContext(ctx, `INSERT INTO custom_sources (name, url, method, auth, auth_name, secrets_sealed, interval_seconds, named_values, created_at, updated_at)
+			VALUES (?, 'https://x', 'GET', 'header', 'X-Key', 'sealed', 60, '{"values":[]}', '2026-01-01T00:00:00Z', '2026-01-01T00:00:00Z')`, name); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if _, err := db.ExecContext(ctx, `DELETE FROM custom_sources WHERE name = 'Deleted'`); err != nil {
+		t.Fatal(err)
+	}
+	db.Close()
+
+	s, err := Open(ctx, path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer s.Close()
+	list, err := s.CustomSources(ctx)
+	if err != nil || len(list) != 1 || list[0].ID != 1 || list[0].AuthName != "X-Key" || list[0].SecretsSealed != "sealed" || list[0].NamedValues != `{"values":[]}` {
+		t.Fatalf("after the migration = %+v, %v; want the one source as it was", list, err)
+	}
+	// Widgets may still name the deleted source 2: a new one never gets its ID.
+	id, err := s.AddCustomSource(ctx, CustomSource{Name: "New", Mode: "fetch", URL: "https://y", Method: "GET", Auth: "login", Headers: "[]", IntervalSeconds: 60, CreatedAt: created, UpdatedAt: created}, 20)
+	if err != nil || id != 3 {
+		t.Fatalf("new source = %d, %v; want ID 3", id, err)
+	}
+}
+
 func TestCustomSourceModeMigrationKeepsFetching(t *testing.T) {
 	ctx := context.Background()
 	path := filepath.Join(t.TempDir(), "gdash.db")

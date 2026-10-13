@@ -29,6 +29,9 @@ type CustomSource struct {
 		Kind      string `json:"kind"`
 		Name      string `json:"name"`
 		SecretSet bool   `json:"secretSet"`
+		// Login is how GDash logs in, for the kind "login" only; it holds
+		// no secret.
+		Login *custom.Login `json:"login,omitempty"`
 	} `json:"auth"`
 	// Headers carry an empty value when they are secret.
 	Headers         []custom.Header `json:"headers"`
@@ -182,6 +185,14 @@ func (s *Service) customRow(src custom.Source) (store.CustomSource, error) {
 	if err != nil {
 		return store.CustomSource{}, err
 	}
+	login := ""
+	if src.Auth == custom.AuthLogin {
+		encoded, err := json.Marshal(src.Login)
+		if err != nil {
+			return store.CustomSource{}, err
+		}
+		login = string(encoded)
+	}
 	sealed := ""
 	if secrets.Auth != "" || len(secrets.Headers) > 0 {
 		plain, err := json.Marshal(secrets)
@@ -194,7 +205,7 @@ func (s *Service) customRow(src custom.Source) (store.CustomSource, error) {
 	}
 	return store.CustomSource{
 		ID: src.ID, Name: src.Name, Mode: src.Mode, URL: src.URL, Method: src.Method, Body: src.Body, Auth: src.Auth,
-		AuthName: src.AuthName, Headers: string(headers), SecretsSealed: sealed,
+		AuthName: src.AuthName, Headers: string(headers), SecretsSealed: sealed, Login: login,
 		IntervalSeconds: int(src.Interval / time.Second), Sample: src.Sample, UpdatedAt: s.Now().UTC(),
 	}, nil
 }
@@ -207,6 +218,11 @@ func (s *Service) openCustom(row store.CustomSource) (custom.Source, error) {
 	}
 	if err := json.Unmarshal([]byte(row.Headers), &src.Headers); err != nil {
 		return custom.Source{}, fmt.Errorf("stored headers of custom source %d are invalid: %w", row.ID, err)
+	}
+	if row.Login != "" {
+		if err := json.Unmarshal([]byte(row.Login), &src.Login); err != nil {
+			return custom.Source{}, fmt.Errorf("stored login of custom source %d is invalid: %w", row.ID, err)
+		}
 	}
 	if row.SecretsSealed == "" {
 		return src, nil
@@ -235,6 +251,14 @@ func (s *Service) customView(row store.CustomSource) CustomSource {
 		Headers: []custom.Header{}, Values: []custom.NamedValue{}, Lists: []custom.NamedList{},
 	}
 	v.Auth.Kind, v.Auth.Name = row.Auth, row.AuthName
+	if row.Login != "" {
+		var login custom.Login
+		if err := json.Unmarshal([]byte(row.Login), &login); err != nil {
+			v.Unreadable = true
+		} else {
+			v.Auth.Login = &login
+		}
+	}
 	if row.NamedValues != "" {
 		var named custom.Values
 		if err := json.Unmarshal([]byte(row.NamedValues), &named); err != nil {

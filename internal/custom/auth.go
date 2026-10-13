@@ -15,6 +15,10 @@ const (
 	AuthHeader = "header"
 	AuthQuery  = "query"
 	AuthBasic  = "basic"
+	// AuthLogin posts the secret to a login address first and sends the
+	// session token from its answer with every request. Only custom
+	// sources take it (see checkLoginAuth); CheckAuth refuses it.
+	AuthLogin = "login"
 )
 
 // Auth is how a request to an address an admin typed in authenticates:
@@ -24,6 +28,8 @@ type Auth struct {
 	Kind   string
 	Name   string
 	Secret string
+	// Login is how to log in, for AuthLogin only.
+	Login Login
 }
 
 // CheckAuth validates in for a request to address and returns the
@@ -86,7 +92,8 @@ func plainSecret(s string, spaces bool) bool {
 }
 
 // Apply puts the authentication on req. The key of query authentication
-// is added here and never stored in the address.
+// is added here and never stored in the address. AuthLogin needs its
+// session token, which applyToken puts on.
 func (a Auth) Apply(req *http.Request) {
 	switch a.Kind {
 	case AuthBearer:

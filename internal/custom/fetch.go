@@ -11,8 +11,11 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/stijnvandepol/gdash/internal/outbound"
+	"github.com/stijnvandepol/gdash/internal/secret"
 )
 
 const (
@@ -30,6 +33,8 @@ type FetchError struct {
 	// cause stays in the server log; for a network error it can hold the
 	// address that was dialled, never the request's secrets.
 	cause error
+	// status is the HTTP status that was answered, or 0 when there was none.
+	status int
 }
 
 func (e *FetchError) Error() string {
@@ -47,20 +52,47 @@ type Fetcher struct {
 	// timeout; its redirect policy is replaced by the stricter one below.
 	HTTP      *http.Client
 	UserAgent string
+	// Box seals the session tokens of sources that log in first, and Now
+	// tells when one runs out; both are needed for AuthLogin only.
+	Box *secret.Box
+	Now func() time.Time
+
+	// mu guards sessions, the session of each source that logs in, by ID.
+	mu       sync.Mutex
+	sessions map[int64]*session
 }
 
-// Fetch requests src once and returns its answer as compact JSON.
+// Fetch requests src and returns its answer as compact JSON. A source that
+// logs in first does so when it has no session yet or its session ran out,
+// and once more when the API refuses a session it gave before.
 func (f *Fetcher) Fetch(ctx context.Context, src Source) (json.RawMessage, error) {
-	req, err := buildRequest(ctx, src)
+	if src.Auth != AuthLogin {
+		return f.fetch(ctx, src, "")
+	}
+	s := f.session(src.ID)
+	token, fresh, err := s.token(ctx, f, src)
 	if err != nil {
 		return nil, err
 	}
-	if f.UserAgent != "" {
-		req.Header.Set("User-Agent", f.UserAgent)
+	answer, err := f.fetch(ctx, src, token)
+	if fresh || !refused(err) {
+		return answer, err
 	}
-	client := *f.HTTP
-	client.CheckRedirect = SameHostRedirects
-	resp, err := client.Do(req)
+	// The API ended the session early, for example after a restart.
+	s.forget()
+	if token, _, err = s.token(ctx, f, src); err != nil {
+		return nil, err
+	}
+	return f.fetch(ctx, src, token)
+}
+
+// fetch requests src once, with token for a source that logs in first.
+func (f *Fetcher) fetch(ctx context.Context, src Source, token string) (json.RawMessage, error) {
+	req, err := buildRequest(ctx, src, token)
+	if err != nil {
+		return nil, err
+	}
+	resp, err := f.do(req)
 	if err != nil {
 		return nil, RequestError(subjectAPI, req.URL.Host, err)
 	}
@@ -107,8 +139,27 @@ func ReadAnswer(r io.Reader) (json.RawMessage, error) {
 	return compact.Bytes(), nil
 }
 
-// buildRequest puts the authentication and headers on the request.
-func buildRequest(ctx context.Context, src Source) (*http.Request, error) {
+// do sends req with GDash's User-Agent, following redirects to the same
+// host only.
+func (f *Fetcher) do(req *http.Request) (*http.Response, error) {
+	if f.UserAgent != "" {
+		req.Header.Set("User-Agent", f.UserAgent)
+	}
+	client := *f.HTTP
+	client.CheckRedirect = SameHostRedirects
+	return client.Do(req)
+}
+
+// refused reports whether err is the API turning the request's
+// authentication down.
+func refused(err error) bool {
+	var fetchErr *FetchError
+	return errors.As(err, &fetchErr) && (fetchErr.status == http.StatusUnauthorized || fetchErr.status == http.StatusForbidden)
+}
+
+// buildRequest puts the authentication and headers on the request, with
+// token for a source that logs in first.
+func buildRequest(ctx context.Context, src Source, token string) (*http.Request, error) {
 	u, err := url.Parse(src.URL)
 	if err != nil {
 		return nil, &FetchError{Message: "the address of this source is invalid"}
@@ -128,7 +179,11 @@ func buildRequest(ctx context.Context, src Source) (*http.Request, error) {
 	for _, h := range src.Headers {
 		req.Header.Set(h.Name, h.Value)
 	}
-	src.auth().Apply(req)
+	auth := src.auth()
+	auth.Apply(req)
+	if auth.Kind == AuthLogin {
+		auth.applyToken(req, token)
+	}
 	return req, nil
 }
 
@@ -192,7 +247,7 @@ func StatusError(subject string, resp *http.Response) error {
 	case http.StatusTooManyRequests:
 		msg += "; it is asked too often, so choose a longer refresh"
 	}
-	return &FetchError{Message: msg}
+	return &FetchError{Message: msg, status: resp.StatusCode}
 }
 
 // jsonContentType accepts JSON media types, and text/plain and none at
