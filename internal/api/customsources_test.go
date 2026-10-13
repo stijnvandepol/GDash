@@ -6,6 +6,9 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
+
+	"github.com/stijnvandepol/gdash/internal/display"
 )
 
 const customKey = "k3y-0123456789"
@@ -151,6 +154,161 @@ func TestCustomSourceValues(t *testing.T) {
 	}
 	if status, _ := env.do(t, "PUT", "/api/custom-sources/9/values", `{"values": []}`); status != http.StatusNotFound {
 		t.Errorf("values of an unknown source = %d, want 404", status)
+	}
+}
+
+const pushBody = `{"name": "Homey", "mode": "push", "intervalSeconds": 60}`
+
+// pushEnv is logged in, with pushed source 1, fetched source 2 and an API
+// token, whose secret it returns.
+func pushEnv(t *testing.T) (*testEnv, string) {
+	t.Helper()
+	env := newTestEnv(t, nil)
+	env.setUp(t)
+	status, body := env.do(t, "POST", "/api/custom-sources", pushBody)
+	if status != http.StatusCreated || !strings.Contains(body, `"mode":"push"`) || !strings.Contains(body, `"url":""`) {
+		t.Fatalf("create pushed source = %d %s", status, body)
+	}
+	if status, body := env.do(t, "POST", "/api/custom-sources", customBody("https://api.example.com", customKey)); status != http.StatusCreated || !strings.Contains(body, `"mode":"fetch"`) {
+		t.Fatalf("create fetched source = %d %s", status, body)
+	}
+	_, secret := env.makeToken(t, "Homey")
+	return env, secret
+}
+
+func TestCustomPushWithATokenOrALogin(t *testing.T) {
+	env, secret := pushEnv(t)
+	if status, body := env.do(t, "POST", "/api/custom-sources/1/tests", ""); status != http.StatusConflict || !strings.Contains(body, "nothing_received") {
+		t.Fatalf("test before any data = %d %s, want 409", status, body)
+	}
+	_, auditBefore := env.do(t, "GET", "/api/audit-events", "")
+
+	status, body := env.bearer(t, "PUT", "/api/custom-sources/1/data", `{"home": {"Anna": true}, "power": 1200}`, secret, nil)
+	if status != http.StatusNoContent || body != "" {
+		t.Fatalf("push with a token = %d %s, want 204", status, body)
+	}
+	status, body = env.do(t, "POST", "/api/custom-sources/1/tests", "")
+	if status != http.StatusOK || !strings.Contains(body, `"power":1200`) || !strings.Contains(body, `"receivedAt":"2026-10-08T17:00:00Z"`) {
+		t.Fatalf("last received = %d %s", status, body)
+	}
+	if _, listed := env.do(t, "GET", "/api/custom-sources", ""); !strings.Contains(listed, `"lastPushAt":"2026-10-08T17:00:00Z"`) ||
+		strings.Count(listed, "lastPushAt") != 1 {
+		t.Errorf("list = %s, want lastPushAt on the pushed source only", listed)
+	}
+
+	// An admin session may send data too, such as from a test in a browser
+	// console; the browser's CSRF check still applies to it.
+	env.advance(customPushGap)
+	if status, body := env.do(t, "PUT", "/api/custom-sources/1/data", `[1, 2]`); status != http.StatusNoContent {
+		t.Fatalf("push with a session = %d %s", status, body)
+	}
+	if _, auditAfter := env.do(t, "GET", "/api/audit-events", ""); auditAfter != auditBefore {
+		t.Errorf("a push was audited: %s", auditAfter)
+	}
+
+	env.advance(customPushGap)
+	for name, header := range map[string]string{"no credentials": "", "wrong token": "Bearer gdk_" + strings.Repeat("A", 43)} {
+		headers := map[string]string{}
+		if header != "" {
+			headers["Authorization"] = header
+		}
+		if status, _ := env.bearer(t, "PUT", "/api/custom-sources/1/data", `{}`, "", headers); status != http.StatusUnauthorized {
+			t.Errorf("%s = %d, want 401", name, status)
+		}
+	}
+	// A cross-site browser request never gets to the token check.
+	if status, _ := env.bearer(t, "PUT", "/api/custom-sources/1/data", `{}`, secret, map[string]string{"Sec-Fetch-Site": "cross-site"}); status != http.StatusForbidden {
+		t.Errorf("cross-site push = %d, want 403", status)
+	}
+}
+
+func TestCustomPushRefusals(t *testing.T) {
+	env, secret := pushEnv(t)
+	cases := []struct {
+		name, path, body, contentType string
+		status                        int
+	}{
+		{"a fetched source", "/api/custom-sources/2/data", `{}`, "application/json", http.StatusConflict},
+		{"an unknown source", "/api/custom-sources/9/data", `{}`, "application/json", http.StatusNotFound},
+		{"a bad id", "/api/custom-sources/x/data", `{}`, "application/json", http.StatusNotFound},
+		{"over 1 MB", "/api/custom-sources/1/data", `"` + strings.Repeat("x", 1<<20) + `"`, "application/json", http.StatusRequestEntityTooLarge},
+		{"not JSON", "/api/custom-sources/1/data", `{"a":`, "application/json", http.StatusUnprocessableEntity},
+		{"empty", "/api/custom-sources/1/data", ``, "application/json", http.StatusUnprocessableEntity},
+		{"text", "/api/custom-sources/1/data", `{}`, "text/plain", http.StatusUnsupportedMediaType},
+	}
+	for _, c := range cases {
+		status, body := env.bearer(t, "PUT", c.path, c.body, secret, map[string]string{"Content-Type": c.contentType})
+		if status != c.status {
+			t.Errorf("%s = %d %s, want %d", c.name, status, body, c.status)
+		}
+	}
+	// None of those counted: the first good answer is taken, the next one
+	// within 5 seconds is not.
+	if status, body := env.bearer(t, "PUT", "/api/custom-sources/1/data", `{"n": 1}`, secret, nil); status != http.StatusNoContent {
+		t.Fatalf("first push = %d %s", status, body)
+	}
+	env.advance(customPushGap - time.Second)
+	status, body := env.bearer(t, "PUT", "/api/custom-sources/1/data", `{"n": 2}`, secret, nil)
+	if status != http.StatusTooManyRequests || !strings.Contains(body, "rate_limited") {
+		t.Fatalf("push within 5 seconds = %d %s, want 429", status, body)
+	}
+	env.advance(time.Second)
+	if status, body := env.bearer(t, "PUT", "/api/custom-sources/1/data", `{"n": 3}`, secret, nil); status != http.StatusNoContent {
+		t.Fatalf("push after 5 seconds = %d %s", status, body)
+	}
+	if _, body := env.do(t, "POST", "/api/custom-sources/1/tests", ""); !strings.Contains(body, `"n":3`) {
+		t.Fatalf("last received = %s, want the third answer", body)
+	}
+}
+
+func TestCustomPushInputChecks(t *testing.T) {
+	env := newTestEnv(t, nil)
+	env.setUp(t)
+	status, body := env.do(t, "POST", "/api/custom-sources",
+		`{"name": "Homey", "mode": "push", "url": "https://x", "intervalSeconds": 60, "auth": {"kind": "bearer", "secret": "t"}}`)
+	if status != http.StatusUnprocessableEntity || !strings.Contains(body, `"field":"url"`) || !strings.Contains(body, `"field":"auth.kind"`) {
+		t.Fatalf("pushed source with an address = %d %s, want 422 on url and auth.kind", status, body)
+	}
+	if status, body := env.do(t, "POST", "/api/custom-sources", pushBody); status != http.StatusCreated {
+		t.Fatalf("create = %d %s", status, body)
+	}
+	// Switching to fetching needs an address like any fetched source.
+	status, body = env.do(t, "PUT", "/api/custom-sources/1", `{"name": "Homey", "mode": "fetch", "method": "GET", "intervalSeconds": 60, "auth": {"kind": "none"}}`)
+	if status != http.StatusUnprocessableEntity || !strings.Contains(body, `"field":"url"`) {
+		t.Fatalf("switch without an address = %d %s", status, body)
+	}
+}
+
+func TestPushedDataReachesScreensNarrowedAndGoesStale(t *testing.T) {
+	env, secret := pushEnv(t)
+	layout := `{"id":"hall","name":"Hall","widgets":[{"id":"home","type":"custom","x":0,"y":0,"w":8,"h":4,"settings":{
+		"source":1,"mode":"value","title":"Power","path":"power"}}]}`
+	if status, body := env.do(t, "POST", "/api/dashboards", layout); status != http.StatusCreated {
+		t.Fatalf("create dashboard = %d %s", status, body)
+	}
+	if status, body := env.bearer(t, "PUT", "/api/custom-sources/1/data", `{"power": 1200, "alarmCode": "4711"}`, secret, nil); status != http.StatusNoContent {
+		t.Fatalf("push = %d %s", status, body)
+	}
+	shown := func() string {
+		status, body := env.do(t, "GET", "/api/dashboards/hall/preview", "")
+		if status != http.StatusOK {
+			t.Fatalf("preview = %d %s", status, body)
+		}
+		return string(decodeSnapshot(t, body).Data[display.CustomSource].Value)
+	}
+	fresh := shown()
+	if !strings.Contains(fresh, `"value":1200`) || strings.Contains(fresh, "4711") || strings.Contains(fresh, `"stale"`) {
+		t.Fatalf("screen gets %s, want only the power, fresh", fresh)
+	}
+	// Two intervals of a minute and 30 seconds later it is still current;
+	// a moment after that it is stale.
+	env.advance(150 * time.Second)
+	if got := shown(); strings.Contains(got, `"stale"`) {
+		t.Fatalf("after 2m30s = %s, want it still fresh", got)
+	}
+	env.advance(time.Second)
+	if got := shown(); !strings.Contains(got, `"stale":true`) || !strings.Contains(got, `"value":1200`) {
+		t.Fatalf("after 2m31s = %s, want the last value, stale", got)
 	}
 }
 

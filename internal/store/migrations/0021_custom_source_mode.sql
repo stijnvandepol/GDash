@@ -1,0 +1,11 @@
+-- How GDash gets the answer of a custom source: 'fetch' asks the address
+-- every interval, as before; 'push' waits for the household's own system
+-- (a HomeyScript, Node-RED, a Home Assistant automation) to send it to
+-- PUT /api/custom-sources/{id}/data. A push source keeps an empty url,
+-- GET, no authentication and no headers; its interval is how often data
+-- is expected. The last pushed answer lives in the data hub's cache, like
+-- a fetched one, not here.
+--
+-- Rollback: restore gdash.db.bak-v20, which GDash writes before applying
+-- this migration.
+ALTER TABLE custom_sources ADD COLUMN mode TEXT NOT NULL DEFAULT 'fetch' CHECK (mode IN ('fetch', 'push'));

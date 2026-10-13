@@ -23,6 +23,7 @@ import (
 	"github.com/stijnvandepol/gdash/internal/datahub"
 	"github.com/stijnvandepol/gdash/internal/pairing"
 	"github.com/stijnvandepol/gdash/internal/photos"
+	"github.com/stijnvandepol/gdash/internal/ratelimit"
 	"github.com/stijnvandepol/gdash/internal/settings"
 	"github.com/stijnvandepol/gdash/internal/store"
 	"github.com/stijnvandepol/gdash/internal/update"
@@ -75,6 +76,13 @@ type Server struct {
 	Homey                HomeyReader
 	Stops                StopSearcher
 	CustomFetcher        CustomFetcher
+	// ReceiveCustom stores the answer that a pushed custom source sent; it
+	// returns datahub.ErrNotPushed when the data hub does not have the
+	// source as pushed (yet).
+	ReceiveCustom func(sourceID int64, answer json.RawMessage) error
+	// customPushes allows one accepted answer per pushed source per
+	// customPushGap.
+	customPushes *ratelimit.Limiter
 	// SettingsChanged is called after a data source setting changes, so
 	// the data hub fetches what is configured now.
 	SettingsChanged func()

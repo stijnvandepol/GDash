@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"slices"
 	"testing"
+	"time"
 
 	"github.com/stijnvandepol/gdash/internal/validation"
 )
@@ -103,5 +104,52 @@ func TestCheckKeepsStoredSecrets(t *testing.T) {
 	_, err = Check(input(func(in *Input) { in.Auth.Kind, in.Auth.Name = AuthQuery, "key" }), old)
 	if !slices.Contains(fieldsOf(err), "auth.secret") {
 		t.Fatalf("a header key became a query key without asking: %v", err)
+	}
+}
+
+func pushInput(mutate func(*Input)) Input {
+	in := Input{Name: "Homey", Mode: ModePush, IntervalSeconds: 60}
+	if mutate != nil {
+		mutate(&in)
+	}
+	return in
+}
+
+func TestCheckPushedSource(t *testing.T) {
+	old := &Source{ID: 3, Mode: ModeFetch, Auth: AuthBearer, AuthSecret: "old-token", URL: "https://x"}
+	src, err := Check(pushInput(func(in *Input) { in.Auth.Kind, in.Method = AuthNone, "GET" }), old)
+	want := Source{ID: 3, Name: "Homey", Mode: ModePush, Method: "GET", Auth: AuthNone, Interval: time.Minute}
+	if err != nil || src.Mode != want.Mode || src.URL != "" || src.Auth != AuthNone || src.AuthSecret != "" || src.Method != "GET" ||
+		src.ID != 3 || src.Interval != time.Minute || len(src.Headers) != 0 {
+		t.Fatalf("Check = %+v, %v; want %+v without the old token", src, err, want)
+	}
+	if src, err := Check(input(nil), nil); err != nil || src.Mode != ModeFetch {
+		t.Fatalf("a source without a mode = %+v, %v; want one that fetches", src, err)
+	}
+
+	cases := []struct {
+		field  string
+		mutate func(*Input)
+	}{
+		{"url", func(in *Input) { in.URL = "https://example.com" }},
+		{"method", func(in *Input) { in.Method = "POST" }},
+		{"body", func(in *Input) { in.Body = "{}" }},
+		{"auth.kind", func(in *Input) { in.Auth.Kind, in.Auth.Secret = AuthBearer, "t" }},
+		{"auth.kind", func(in *Input) { in.Auth.Secret = "t" }},
+		{"headers", func(in *Input) { in.Headers = []Header{{Name: "X-A", Value: "1"}} }},
+		{"intervalSeconds", func(in *Input) { in.IntervalSeconds = 10 }},
+		{"mode", func(in *Input) { in.Mode = "poll" }},
+	}
+	for _, c := range cases {
+		_, err := Check(pushInput(c.mutate), nil)
+		if got := fieldsOf(err); !slices.Contains(got, c.field) {
+			t.Errorf("%s: fields %v", c.field, got)
+		}
+	}
+}
+
+func TestPushFreshFor(t *testing.T) {
+	if got := PushFreshFor(time.Minute); got != 150*time.Second {
+		t.Fatalf("PushFreshFor(1m) = %v, want 2m30s", got)
 	}
 }

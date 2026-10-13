@@ -179,11 +179,20 @@ func TestRevokedTokenStopsWorking(t *testing.T) {
 	}
 }
 
-// A token opens the announcement route and nothing else.
+// A token opens the announcement route and a pushed source's data, nothing
+// else: not even the source itself.
 func TestAPITokenOpensNoOtherRoute(t *testing.T) {
 	env := newTestEnv(t, nil)
 	secret := env.withDisplays(t)
+	if status, body := env.do(t, "POST", "/api/custom-sources", pushBody); status != http.StatusCreated {
+		t.Fatalf("create pushed source = %d %s", status, body)
+	}
 	for _, req := range []struct{ method, path, body string }{
+		{"GET", "/api/custom-sources", ""},
+		{"PUT", "/api/custom-sources/1", pushBody},
+		{"PUT", "/api/custom-sources/1/values", `{"values":[],"lists":[]}`},
+		{"POST", "/api/custom-sources/1/tests", ""},
+		{"DELETE", "/api/custom-sources/1", ""},
 		{"GET", "/api/displays", ""},
 		{"POST", "/api/displays", `{"id":"x","name":"X"}`},
 		{"GET", "/api/api-tokens", ""},

@@ -184,3 +184,22 @@ func TestFetchAcceptsJSONWithoutAJSONContentType(t *testing.T) {
 		}
 	}
 }
+
+func TestReadAnswer(t *testing.T) {
+	got, err := ReadAnswer(strings.NewReader("{ \"a\" : [1, 2] }\n"))
+	if err != nil || string(got) != `{"a":[1,2]}` {
+		t.Fatalf("ReadAnswer = %s, %v; want compact JSON", got, err)
+	}
+	limit := `"` + strings.Repeat("x", MaxResponseBytes-2) + `"`
+	if _, err := ReadAnswer(strings.NewReader(limit)); err != nil {
+		t.Fatalf("an answer of exactly 1 MB: %v", err)
+	}
+	if _, err := ReadAnswer(strings.NewReader(limit + " ")); !errors.Is(err, ErrAnswerTooLarge) {
+		t.Fatalf("an answer over 1 MB: %v, want ErrAnswerTooLarge", err)
+	}
+	for _, bad := range []string{"", "{", "1 2", "<html>"} {
+		if _, err := ReadAnswer(strings.NewReader(bad)); !errors.Is(err, ErrAnswerNotJSON) {
+			t.Errorf("ReadAnswer(%q) = %v, want ErrAnswerNotJSON", bad, err)
+		}
+	}
+}

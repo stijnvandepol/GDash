@@ -7,6 +7,7 @@ import (
 	"errors"
 	"io"
 	"log/slog"
+	"maps"
 	"net/http"
 	"net/http/cookiejar"
 	"net/http/httptest"
@@ -58,6 +59,23 @@ type fakeSources struct {
 	cast    map[string]casting.Status
 	// takeOvers are the displays whose TV an admin took back.
 	takeOvers []string
+	now       func() time.Time
+}
+
+// receiveCustom plays the data hub taking a pushed answer: two intervals
+// of a minute and 30 seconds fresh.
+func (f *fakeSources) receiveCustom(sourceID int64, answer json.RawMessage) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	// A new map, as the hub hands out copies: a handler may still read
+	// the old one.
+	f.entries = maps.Clone(f.entries)
+	if f.entries == nil {
+		f.entries = map[string]datahub.Entry{}
+	}
+	at := f.now()
+	f.entries[custom.SourceKey(sourceID)] = datahub.Entry{Value: answer, FetchedAt: at, StaleAfter: at.Add(custom.PushFreshFor(time.Minute))}
+	return nil
 }
 
 func (f *fakeSources) Search(context.Context, string) ([]weather.Place, error) {
@@ -118,7 +136,12 @@ type testEnv struct {
 	// updates answers from a fake GitHub that names v1.3.0 the latest
 	// release; nothing checks until a test calls Check.
 	updates *update.Checker
+	// elapsed is how far the server's clock moved on.
+	elapsed *atomic.Int64
 }
+
+// advance moves the server's clock on by d.
+func (e *testEnv) advance(d time.Duration) { e.elapsed.Add(int64(d)) }
 
 func newTestEnv(t *testing.T, discover func(context.Context) ([]cast.Device, error)) *testEnv {
 	t.Helper()
@@ -139,8 +162,12 @@ func newTestEnv(t *testing.T, discover func(context.Context) ([]cast.Device, err
 	pairingService := pairing.New(st)
 	logs := &syncBuffer{}
 	logger := slog.New(slog.NewTextHandler(logs, nil))
-	now := func() time.Time { return time.Date(2026, 10, 8, 17, 0, 0, 0, time.UTC) }
-	sources := &fakeSources{}
+	// The clock stands still unless a test moves it on with advance.
+	elapsed := &atomic.Int64{}
+	now := func() time.Time {
+		return time.Date(2026, 10, 8, 17, 0, 0, 0, time.UTC).Add(time.Duration(elapsed.Load()))
+	}
+	sources := &fakeSources{now: now}
 	stops := &fakeStops{}
 	board := announcement.NewBoard(now)
 	album, err := photos.NewStore(filepath.Join(t.TempDir(), "photos"))
@@ -176,6 +203,7 @@ func newTestEnv(t *testing.T, discover func(context.Context) ([]cast.Device, err
 		Places:               sources,
 		Stops:                stops,
 		CustomFetcher:        &custom.Fetcher{HTTP: outbound.NewClient(5 * time.Second)},
+		ReceiveCustom:        sources.receiveCustom,
 		HomeAssistant:        &homeassistant.Client{HTTP: &http.Client{Timeout: 5 * time.Second}},
 		Homey:                &homey.Client{HTTP: &http.Client{Timeout: 5 * time.Second}},
 		SettingsChanged:      func() { settingsChanges.Add(1) },
@@ -203,7 +231,7 @@ func newTestEnv(t *testing.T, discover func(context.Context) ([]cast.Device, err
 	return &testEnv{
 		srv: srv, client: &http.Client{Jar: jar}, changes: changes, settingsChanges: settingsChanges,
 		pairing: pairingService, store: st, sources: sources, stops: stops, board: board, announced: announced, logs: logs,
-		updates: updates,
+		updates: updates, elapsed: elapsed,
 	}
 }
 

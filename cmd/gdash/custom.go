@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"log/slog"
 	"slices"
 	"time"
@@ -28,10 +29,23 @@ const (
 )
 
 // customSources returns a hub source for each custom source that a
-// dashboard shows; the others are never fetched.
+// dashboard shows; the others are never fetched. Every pushed source is in
+// the hub, shown or not: it costs no requests, and its last answer is
+// there to name values in before a dashboard shows it.
 func (d *dataSources) customSources(all []custom.Source, shown []int64) []datahub.Source {
 	var sources []datahub.Source
 	for _, src := range all {
+		if src.Mode == custom.ModePush {
+			sources = append(sources, datahub.Source{
+				Key:      custom.SourceKey(src.ID),
+				Interval: src.Interval,
+				FreshFor: custom.PushFreshFor(src.Interval),
+				// Renaming it or changing its interval keeps the last
+				// answer; switching from fetching starts over.
+				Version: d.fingerprint(struct{ Mode string }{custom.ModePush}),
+			})
+			continue
+		}
 		if !slices.Contains(shown, src.ID) {
 			continue
 		}
@@ -46,6 +60,12 @@ func (d *dataSources) customSources(all []custom.Source, shown []int64) []datahu
 		})
 	}
 	return sources
+}
+
+// receiveCustom stores an answer that a pushed source sent, as its latest;
+// the hub then refreshes the screens and the rules.
+func (d *dataSources) receiveCustom(sourceID int64, answer json.RawMessage) error {
+	return d.hub.Put(custom.SourceKey(sourceID), answer)
 }
 
 // customRules posts the announcements of Custom widget rules that start to

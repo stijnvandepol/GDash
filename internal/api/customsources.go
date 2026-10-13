@@ -4,12 +4,15 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"mime"
 	"net/http"
 	"net/url"
 	"strconv"
 	"time"
 
 	"github.com/stijnvandepol/gdash/internal/custom"
+	"github.com/stijnvandepol/gdash/internal/datahub"
+	"github.com/stijnvandepol/gdash/internal/ratelimit"
 	"github.com/stijnvandepol/gdash/internal/settings"
 	"github.com/stijnvandepol/gdash/internal/validation"
 )
@@ -19,13 +22,22 @@ type CustomFetcher interface {
 	Fetch(ctx context.Context, src custom.Source) (json.RawMessage, error)
 }
 
-// customTestTimeout bounds a Test; the fetcher's client has its own,
-// shorter timeout per request.
-const customTestTimeout = 20 * time.Second
+const (
+	// customTestTimeout bounds a Test; the fetcher's client has its own,
+	// shorter timeout per request.
+	customTestTimeout = 20 * time.Second
+	// customPushGap is the least time between two accepted answers of one
+	// pushed source, so a script stuck in a loop cannot keep the server
+	// busy: every answer is decoded and published to every screen.
+	customPushGap = 5 * time.Second
+)
 
 // handleCustomSources adds the routes of custom API sources, all for a
-// logged-in admin only.
+// logged-in admin only, except the one that a household's system sends a
+// pushed source's answer to, which also takes an API token.
 func (s *Server) handleCustomSources(mux *http.ServeMux) {
+	s.customPushes = ratelimit.New(s.Now, 1, customPushGap)
+	mux.Handle("PUT /api/custom-sources/{id}/data", s.requireUserOrToken(s.putCustomSourceData))
 	mux.Handle("GET /api/custom-sources", s.requireUser(s.listCustomSources))
 	mux.Handle("POST /api/custom-sources", s.requireUser(s.postCustomSource))
 	mux.Handle("PUT /api/custom-sources/{id}", s.requireUser(s.putCustomSource))
@@ -35,15 +47,94 @@ func (s *Server) handleCustomSources(mux *http.ServeMux) {
 	mux.Handle("POST /api/custom-rule-checks", s.requireUser(s.postCustomRuleCheck))
 }
 
+// listedCustomSource is a source in the list, with when a pushed one last
+// sent its answer.
+type listedCustomSource struct {
+	settings.CustomSource
+	LastPushAt *time.Time `json:"lastPushAt,omitempty"`
+}
+
 // listCustomSources handles GET /api/custom-sources: {"sources": [...]},
-// without secrets; each says whether its authentication secret is set.
+// without secrets; each says whether its authentication secret is set, and
+// a pushed one when its last answer arrived (lastPushAt, absent before the
+// first).
 func (s *Server) listCustomSources(w http.ResponseWriter, r *http.Request) {
 	list, err := s.Settings.CustomSources(r.Context())
 	if err != nil {
 		s.internalError(w, "list custom sources", err)
 		return
 	}
-	writeJSON(w, http.StatusOK, map[string]any{"sources": list})
+	status := s.SourceStatus()
+	out := make([]listedCustomSource, len(list))
+	for i, src := range list {
+		out[i].CustomSource = src
+		if entry := status[custom.SourceKey(src.ID)]; src.Mode == custom.ModePush && !entry.FetchedAt.IsZero() {
+			out[i].LastPushAt = &entry.FetchedAt
+		}
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"sources": out})
+}
+
+// putCustomSourceData handles PUT /api/custom-sources/{id}/data with an API
+// token or an admin session. The body, JSON of at most 1 MB sent as
+// application/json, becomes the answer of a pushed source, exactly as if
+// GDash had fetched it. 204; 404 for an unknown source, 409 for one that
+// GDash fetches itself, 413 over 1 MB, 415 for another content type, 422
+// for a body that is not JSON, 429 within 5 seconds of its last accepted
+// answer. Not audited: a script sends one every minute.
+func (s *Server) putCustomSourceData(w http.ResponseWriter, r *http.Request) {
+	id, ok := customSourceID(w, r)
+	if !ok {
+		return
+	}
+	src, err := s.Store.CustomSource(r.Context(), id)
+	if err != nil {
+		s.writeSettingsError(w, "read custom source", err)
+		return
+	}
+	if src.Mode != custom.ModePush {
+		writeError(w, http.StatusConflict, "not_pushed", "GDash fetches this source from its address. Edit it under Settings and choose that your system sends the data.")
+		return
+	}
+	if mediaType, _, err := mime.ParseMediaType(r.Header.Get("Content-Type")); err != nil || mediaType != "application/json" {
+		writeError(w, http.StatusUnsupportedMediaType, "unsupported_media_type", "Send the data as application/json.")
+		return
+	}
+	key := strconv.FormatInt(id, 10)
+	if !s.customPushes.Attempt(key) {
+		w.Header().Set("Retry-After", strconv.Itoa(int(customPushGap.Seconds())))
+		writeError(w, http.StatusTooManyRequests, "rate_limited", "This source received data less than 5 seconds ago. Send it at most once a minute or so.")
+		return
+	}
+	answer, err := custom.ReadAnswer(http.MaxBytesReader(w, r.Body, custom.MaxResponseBytes+1))
+	if err != nil {
+		// Only an accepted answer counts against the limit.
+		s.customPushes.Release(key)
+		writeAnswerError(w, err)
+		return
+	}
+	if err := s.ReceiveCustom(id, answer); err != nil {
+		s.customPushes.Release(key)
+		if errors.Is(err, datahub.ErrNotPushed) {
+			writeError(w, http.StatusConflict, "not_pushed", "GDash is still switching this source over. Try again in a moment.")
+			return
+		}
+		s.internalError(w, "receive custom source data", err)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func writeAnswerError(w http.ResponseWriter, err error) {
+	switch {
+	case errors.Is(err, custom.ErrAnswerTooLarge):
+		writeError(w, http.StatusRequestEntityTooLarge, "too_large", "The data is larger than 1 MB. Send only the values the dashboards show.")
+	case errors.Is(err, custom.ErrAnswerNotJSON):
+		writeError(w, http.StatusUnprocessableEntity, "invalid_json", "The data is not valid JSON.")
+	default:
+		// The client stopped sending halfway; there is no one to tell.
+		writeError(w, http.StatusBadRequest, "incomplete", "The data did not arrive completely.")
+	}
 }
 
 // postCustomSource handles POST /api/custom-sources with a source: 201
@@ -125,7 +216,8 @@ func (s *Server) deleteCustomSource(w http.ResponseWriter, r *http.Request) {
 // postCustomSourceTest handles POST /api/custom-sources/{id}/tests: fetches
 // the source once and returns {data, truncated}, the answer cut down for
 // the editor's tree. 502 with what went wrong, such as the status the API
-// answered with; the message names the host but never a secret.
+// answered with; the message names the host but never a secret. A pushed
+// source gives the answer it last sent instead, see writeLastPushed.
 func (s *Server) postCustomSourceTest(w http.ResponseWriter, r *http.Request) {
 	id, ok := customSourceID(w, r)
 	if !ok {
@@ -134,6 +226,10 @@ func (s *Server) postCustomSourceTest(w http.ResponseWriter, r *http.Request) {
 	src, err := s.Settings.CustomSourceWithSecrets(r.Context(), id)
 	if err != nil {
 		s.writeSettingsError(w, "read custom source", err)
+		return
+	}
+	if src.Mode == custom.ModePush {
+		s.writeLastPushed(w, id)
 		return
 	}
 	ctx, cancel := context.WithTimeout(r.Context(), customTestTimeout)
@@ -149,13 +245,34 @@ func (s *Server) postCustomSourceTest(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadGateway, "fetch_failed", message)
 		return
 	}
+	s.writeAnswer(w, raw, nil)
+}
+
+// writeLastPushed answers a Test of a pushed source with the answer it
+// last sent, and when it arrived as receivedAt: GDash cannot ask for one.
+// 409 when nothing has arrived yet.
+func (s *Server) writeLastPushed(w http.ResponseWriter, id int64) {
+	entry := s.SourceStatus()[custom.SourceKey(id)]
+	if len(entry.Value) == 0 {
+		writeError(w, http.StatusConflict, "nothing_received", "Nothing has been received yet. Send data to this source first; Settings shows how.")
+		return
+	}
+	s.writeAnswer(w, entry.Value, &entry.FetchedAt)
+}
+
+// writeAnswer sends an answer cut down for the editor's tree.
+func (s *Server) writeAnswer(w http.ResponseWriter, raw json.RawMessage, receivedAt *time.Time) {
 	var doc any
 	if err := json.Unmarshal(raw, &doc); err != nil {
 		s.internalError(w, "decode custom source answer", err)
 		return
 	}
 	data, cut := custom.Preview(doc)
-	writeJSON(w, http.StatusOK, map[string]any{"data": data, "truncated": cut, "bytes": len(raw)})
+	body := map[string]any{"data": data, "truncated": cut, "bytes": len(raw)}
+	if receivedAt != nil {
+		body["receivedAt"] = receivedAt
+	}
+	writeJSON(w, http.StatusOK, body)
 }
 
 // postCustomRuleCheck handles POST /api/custom-rule-checks {when, data,
@@ -198,6 +315,9 @@ func customSourceID(w http.ResponseWriter, r *http.Request) (int64, bool) {
 // describeCustomSource is the audit detail: the name and host, never the
 // path or query, which could hold a key.
 func describeCustomSource(src settings.CustomSource) string {
+	if src.Mode == custom.ModePush {
+		return src.Name + " (sent to GDash)"
+	}
 	host := ""
 	if u, err := url.Parse(src.URL); err == nil {
 		host = u.Host

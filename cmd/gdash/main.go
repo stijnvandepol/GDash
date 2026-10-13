@@ -203,6 +203,7 @@ func serve(ctx context.Context, logger *slog.Logger) error {
 		Homey:          sources.homey,
 		Stops:          sources.stops,
 		CustomFetcher:  sources.custom,
+		ReceiveCustom:  sources.receiveCustom,
 		TrustedProxies: cfg.trustedProxies,
 		Web:            frontend,
 		Discover:       cast.Discover,

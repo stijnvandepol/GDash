@@ -71,16 +71,38 @@ func (f *Fetcher) Fetch(ctx context.Context, src Source) (json.RawMessage, error
 	if !jsonContentType(resp.Header.Get("Content-Type")) {
 		return nil, &FetchError{Message: "the API answered with " + mediaType(resp.Header.Get("Content-Type")) + ", not JSON"}
 	}
-	body, err := io.ReadAll(io.LimitReader(resp.Body, MaxResponseBytes+1))
-	if err != nil {
+	answer, err := ReadAnswer(resp.Body)
+	switch {
+	case errors.Is(err, ErrAnswerTooLarge):
+		return nil, &FetchError{Message: "the answer is larger than 1 MB; use an address that returns less, such as with a filter or a limit"}
+	case errors.Is(err, ErrAnswerNotJSON):
+		return nil, &FetchError{Message: "the answer is not valid JSON"}
+	case err != nil:
 		return nil, requestError(req.URL.Host, err)
 	}
+	return answer, nil
+}
+
+// Errors of ReadAnswer.
+var (
+	ErrAnswerTooLarge = errors.New("the answer is larger than 1 MB")
+	ErrAnswerNotJSON  = errors.New("the answer is not valid JSON")
+)
+
+// ReadAnswer reads an answer of at most MaxResponseBytes and returns it as
+// compact JSON. A fetched answer and one that a household's system sends
+// to GDash both pass through it, so they are held to the same limits.
+func ReadAnswer(r io.Reader) (json.RawMessage, error) {
+	body, err := io.ReadAll(io.LimitReader(r, MaxResponseBytes+1))
+	if err != nil {
+		return nil, err
+	}
 	if len(body) > MaxResponseBytes {
-		return nil, &FetchError{Message: "the answer is larger than 1 MB; use an address that returns less, such as with a filter or a limit"}
+		return nil, ErrAnswerTooLarge
 	}
 	var compact bytes.Buffer
 	if err := json.Compact(&compact, body); err != nil {
-		return nil, &FetchError{Message: "the answer is not valid JSON"}
+		return nil, ErrAnswerNotJSON
 	}
 	return compact.Bytes(), nil
 }

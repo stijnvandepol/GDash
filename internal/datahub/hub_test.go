@@ -282,3 +282,75 @@ func TestStoppedLoopDoesNotWriteTheCache(t *testing.T) {
 		t.Fatal("a stopped loop wrote its result to disk")
 	}
 }
+
+func pushed(interval time.Duration) Source {
+	return Source{Key: "custom.source.1", Version: "push", Interval: interval, FreshFor: 2*interval + 30*time.Second}
+}
+
+func TestPutStoresPushedValue(t *testing.T) {
+	h, store, changes := newTestHub(t)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	h.Configure(ctx, []Source{pushed(time.Minute)})
+	if got, ok := h.Entries()["custom.source.1"]; !ok || len(got.Value) != 0 {
+		t.Fatalf("entry before the first push = %+v, %v; want an empty one", got, ok)
+	}
+	before := changes.Load()
+	if err := h.Put("custom.source.1", []byte(`{"on":true}`)); err != nil {
+		t.Fatal(err)
+	}
+	got := h.Entries()["custom.source.1"]
+	if string(got.Value) != `{"on":true}` || got.Failing || !got.FetchedAt.Equal(fixedNow) {
+		t.Fatalf("entry = %+v", got)
+	}
+	if want := fixedNow.Add(150 * time.Second); !got.StaleAfter.Equal(want) {
+		t.Fatalf("StaleAfter = %v, want %v (2 intervals and 30 seconds)", got.StaleAfter, want)
+	}
+	if changes.Load() != before+1 {
+		t.Fatal("a push did not report a change")
+	}
+	if saved, ok, err := store.Load("custom.source.1", "push"); err != nil || !ok || string(saved.Value) != `{"on":true}` {
+		t.Fatalf("pushed value on disk = %+v, %v, %v", saved, ok, err)
+	}
+
+	// A new interval with the same version keeps the value and applies
+	// to the next push.
+	h.Configure(ctx, []Source{pushed(5 * time.Minute)})
+	if got := h.Entries()["custom.source.1"]; string(got.Value) != `{"on":true}` {
+		t.Fatalf("entry after a new interval = %+v, want the pushed value kept", got)
+	}
+	if err := h.Put("custom.source.1", []byte(`1`)); err != nil {
+		t.Fatal(err)
+	}
+	if got := h.Entries()["custom.source.1"]; !got.StaleAfter.Equal(fixedNow.Add(630 * time.Second)) {
+		t.Fatalf("StaleAfter after a new interval = %v", got.StaleAfter)
+	}
+}
+
+func TestPutRefusesFetchedAndUnknownSources(t *testing.T) {
+	h, _, _ := newTestHub(t)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	var fetches atomic.Int32
+	h.Configure(ctx, []Source{counting("custom.source.2", "a", 1, &fetches)})
+	for _, key := range []string{"custom.source.2", "custom.source.3"} {
+		if err := h.Put(key, []byte(`1`)); !errors.Is(err, ErrNotPushed) {
+			t.Errorf("Put(%s) = %v, want ErrNotPushed", key, err)
+		}
+	}
+}
+
+func TestPushedValueSurvivesARestart(t *testing.T) {
+	h, store, _ := newTestHub(t)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	h.Configure(ctx, []Source{pushed(time.Minute)})
+	if err := h.Put("custom.source.1", []byte(`42`)); err != nil {
+		t.Fatal(err)
+	}
+	restarted := New(store, h.logger, func() {})
+	restarted.Configure(ctx, []Source{pushed(time.Minute)})
+	if got := restarted.Entries()["custom.source.1"]; string(got.Value) != "42" || !got.FetchedAt.Equal(fixedNow) {
+		t.Fatalf("entry after a restart = %+v, want the last pushed value", got)
+	}
+}

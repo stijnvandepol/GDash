@@ -37,6 +37,23 @@ const (
 	AuthBasic  = "basic"
 )
 
+// How GDash gets the answer of a source.
+const (
+	// ModeFetch asks the source's address every interval.
+	ModeFetch = "fetch"
+	// ModePush waits for the household's own system, such as a
+	// HomeyScript or Home Assistant, to send the answer.
+	ModePush = "push"
+)
+
+// pushGrace is added to two intervals before a pushed answer counts as
+// stale: a script that runs every minute is late now and then.
+const pushGrace = 30 * time.Second
+
+// PushFreshFor is how long a pushed answer counts as current: two
+// intervals, so one missed push does not show at once, and a margin.
+func PushFreshFor(interval time.Duration) time.Duration { return 2*interval + pushGrace }
+
 // Header is an extra request header. A secret one is sealed and never
 // shown again.
 type Header struct {
@@ -47,8 +64,12 @@ type Header struct {
 
 // Source is a source with its secrets, for the server only.
 type Source struct {
-	ID     int64
-	Name   string
+	ID   int64
+	Name string
+	// Mode is ModeFetch or ModePush. A pushed source has no address,
+	// authentication or headers, and Interval is how often an answer is
+	// expected.
+	Mode   string
 	URL    string
 	Method string
 	Body   string
@@ -67,7 +88,9 @@ type Source struct {
 // Input is a source as the web interface sends it. An empty secret keeps
 // the one already stored, so the form never needs to show it.
 type Input struct {
-	Name   string `json:"name"`
+	Name string `json:"name"`
+	// Mode is "fetch" (also when empty, as before modes existed) or "push".
+	Mode   string `json:"mode"`
 	URL    string `json:"url"`
 	Method string `json:"method"`
 	Body   string `json:"body"`
@@ -100,32 +123,70 @@ var (
 // messages never contain a secret.
 func Check(in Input, old *Source) (Source, error) {
 	var errs validation.Collector
-	src := Source{Name: in.Name, Method: strings.ToUpper(strings.TrimSpace(in.Method)), Auth: in.Auth.Kind}
+	src := Source{Name: in.Name}
 	if old != nil {
 		src.ID = old.ID
 	}
 	if msg := nameProblem(in.Name); msg != "" {
 		errs.Add("name", msg)
 	}
-	src.URL = checkURL(&errs, in.URL)
-	src.Body = checkBody(&errs, src.Method, in.Body)
-	checkAuth(&errs, in, old, &src)
-	src.Headers = checkHeaders(&errs, in.Headers, old)
+	switch in.Mode {
+	case "", ModeFetch:
+		src.Mode = ModeFetch
+		checkRequest(&errs, in, old, &src)
+	case ModePush:
+		src.Mode = ModePush
+		checkPushed(&errs, in, &src)
+	default:
+		errs.Add("mode", "choose fetch or push")
+	}
 	interval := time.Duration(in.IntervalSeconds) * time.Second
 	if interval < MinInterval || interval > MaxInterval {
 		errs.Add("intervalSeconds", "use 30 seconds to 24 hours (30 to 86400)")
 	}
 	src.Interval = interval
 	src.Sample = checkSample(&errs, in.Sample)
+	if err := errs.Err(); err != nil {
+		return Source{}, err
+	}
+	return src, nil
+}
+
+// checkRequest checks the request of a source that GDash fetches.
+func checkRequest(errs *validation.Collector, in Input, old *Source, src *Source) {
+	src.Method, src.Auth = strings.ToUpper(strings.TrimSpace(in.Method)), in.Auth.Kind
+	src.URL = checkURL(errs, in.URL)
+	src.Body = checkBody(errs, src.Method, in.Body)
+	checkAuth(errs, in, old, src)
+	src.Headers = checkHeaders(errs, in.Headers, old)
 	if src.Auth == AuthQuery && src.URL != "" && src.AuthName != "" {
 		if u, err := url.Parse(src.URL); err == nil && u.Query().Has(src.AuthName) {
 			errs.Add("auth.name", "the address already has this parameter; remove it from the address")
 		}
 	}
-	if err := errs.Err(); err != nil {
-		return Source{}, err
+}
+
+// checkPushed refuses a request for a source that is sent to GDash, rather
+// than ignoring it: an address that is never fetched would look like it
+// is. Its secrets, if it fetched before, are dropped with it.
+func checkPushed(errs *validation.Collector, in Input, src *Source) {
+	src.Method, src.Auth = "GET", AuthNone
+	const unused = "a source that your system sends to GDash has none; leave it empty"
+	if strings.TrimSpace(in.URL) != "" {
+		errs.Add("url", unused)
 	}
-	return src, nil
+	if method := strings.ToUpper(strings.TrimSpace(in.Method)); method != "" && method != "GET" {
+		errs.Add("method", unused)
+	}
+	if in.Body != "" {
+		errs.Add("body", unused)
+	}
+	if (in.Auth.Kind != "" && in.Auth.Kind != AuthNone) || in.Auth.Name != "" || in.Auth.Secret != "" {
+		errs.Add("auth.kind", unused)
+	}
+	if len(in.Headers) > 0 {
+		errs.Add("headers", unused)
+	}
 }
 
 func nameProblem(name string) string {

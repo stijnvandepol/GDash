@@ -7,6 +7,7 @@ package datahub
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log/slog"
 	"maps"
@@ -34,8 +35,26 @@ type Source struct {
 	// downloads several calendars needs more than one that asks a single
 	// weather service.
 	Timeout time.Duration
-	Fetch   func(ctx context.Context) (any, error)
+	// Fetch gets the value. A source without Fetch is pushed: the hub never
+	// asks for it, and its value arrives through Put instead.
+	Fetch func(ctx context.Context) (any, error)
+	// FreshFor is how long a value counts as current; zero means Interval
+	// plus a minute. A pushed value that is sent late has no retry to
+	// cover for it, so its sender may need a wider margin.
+	FreshFor time.Duration
 }
+
+// freshFor returns how long a value of src counts as current.
+func (src Source) freshFor() time.Duration {
+	if src.FreshFor > 0 {
+		return src.FreshFor
+	}
+	return src.Interval + staleMargin
+}
+
+// ErrNotPushed is returned by Put for a key that the hub does not have as
+// a pushed source, such as one that was just removed or now fetches.
+var ErrNotPushed = errors.New("not a pushed source")
 
 // Entry is the latest known value of a source. Displays show Value and use
 // StaleAfter to warn that the value may be outdated.
@@ -60,10 +79,12 @@ type Hub struct {
 	running map[string]runningSource
 }
 
-// runningSource is a source whose loop is running.
+// runningSource is a configured source: a fetched one has a loop running,
+// which cancel stops.
 type runningSource struct {
 	version string
 	cancel  context.CancelFunc
+	source  Source
 }
 
 // New creates a hub. onChange is called after every entry update, from the
@@ -107,6 +128,10 @@ func (h *Hub) Configure(ctx context.Context, sources []Source) {
 	for _, src := range sources {
 		running, ok := h.running[src.Key]
 		if ok && running.version == src.Version {
+			// A running loop keeps its own copy; this one is what Put
+			// reads, so a pushed source follows a new interval at once.
+			running.source = src
+			h.running[src.Key] = running
 			continue
 		}
 		if ok {
@@ -124,8 +149,10 @@ func (h *Hub) Configure(ctx context.Context, sources []Source) {
 			changed = true
 		}
 		loopCtx, cancel := context.WithCancel(ctx)
-		h.running[src.Key] = runningSource{version: src.Version, cancel: cancel}
-		go h.loop(loopCtx, src)
+		h.running[src.Key] = runningSource{version: src.Version, cancel: cancel, source: src}
+		if src.Fetch != nil {
+			go h.loop(loopCtx, src)
+		}
 	}
 	h.mu.Unlock()
 	if changed {
@@ -186,8 +213,29 @@ func (h *Hub) refresh(ctx context.Context, src Source) error {
 		return fmt.Errorf("encode %s value: %w", src.Key, err)
 	}
 	now := h.now()
-	entry := Entry{Value: raw, FetchedAt: now, StaleAfter: now.Add(src.Interval + staleMargin)}
+	entry := Entry{Value: raw, FetchedAt: now, StaleAfter: now.Add(src.freshFor())}
 	h.set(ctx, src, entry)
+	return nil
+}
+
+// Put stores value, which must be valid JSON, as the latest value of the
+// pushed source key, in memory and on disk, like a fetched value. It
+// returns ErrNotPushed when key is not configured as a pushed source.
+func (h *Hub) Put(key string, value json.RawMessage) error {
+	h.mu.Lock()
+	running, ok := h.running[key]
+	if !ok || running.source.Fetch != nil {
+		h.mu.Unlock()
+		return ErrNotPushed
+	}
+	now := h.now()
+	entry := Entry{Value: value, FetchedAt: now, StaleAfter: now.Add(running.source.freshFor())}
+	h.entries[key] = entry
+	if err := h.store.Save(key, running.version, entry); err != nil {
+		h.logger.Warn("could not persist data", "source", key, "error", err)
+	}
+	h.mu.Unlock()
+	h.onChange()
 	return nil
 }
 

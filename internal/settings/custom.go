@@ -17,8 +17,11 @@ import (
 // sources themselves, their checks and fetching are in internal/custom;
 // this file stores them, with the secrets sealed.
 type CustomSource struct {
-	ID     int64  `json:"id"`
-	Name   string `json:"name"`
+	ID   int64  `json:"id"`
+	Name string `json:"name"`
+	// Mode is "fetch" or "push"; a pushed source has an empty url, GET and
+	// no authentication or headers.
+	Mode   string `json:"mode"`
 	URL    string `json:"url"`
 	Method string `json:"method"`
 	Body   string `json:"body"`
@@ -190,7 +193,7 @@ func (s *Service) customRow(src custom.Source) (store.CustomSource, error) {
 		}
 	}
 	return store.CustomSource{
-		ID: src.ID, Name: src.Name, URL: src.URL, Method: src.Method, Body: src.Body, Auth: src.Auth,
+		ID: src.ID, Name: src.Name, Mode: src.Mode, URL: src.URL, Method: src.Method, Body: src.Body, Auth: src.Auth,
 		AuthName: src.AuthName, Headers: string(headers), SecretsSealed: sealed,
 		IntervalSeconds: int(src.Interval / time.Second), Sample: src.Sample, UpdatedAt: s.Now().UTC(),
 	}, nil
@@ -199,7 +202,7 @@ func (s *Service) customRow(src custom.Source) (store.CustomSource, error) {
 // openCustom decrypts a stored source.
 func (s *Service) openCustom(row store.CustomSource) (custom.Source, error) {
 	src := custom.Source{
-		ID: row.ID, Name: row.Name, URL: row.URL, Method: row.Method, Body: row.Body, Auth: row.Auth,
+		ID: row.ID, Name: row.Name, Mode: row.Mode, URL: row.URL, Method: row.Method, Body: row.Body, Auth: row.Auth,
 		AuthName: row.AuthName, Interval: time.Duration(row.IntervalSeconds) * time.Second, Sample: row.Sample,
 	}
 	if err := json.Unmarshal([]byte(row.Headers), &src.Headers); err != nil {
@@ -227,7 +230,7 @@ func (s *Service) openCustom(row store.CustomSource) (custom.Source, error) {
 
 func (s *Service) customView(row store.CustomSource) CustomSource {
 	v := CustomSource{
-		ID: row.ID, Name: row.Name, URL: row.URL, Method: row.Method, Body: row.Body,
+		ID: row.ID, Name: row.Name, Mode: row.Mode, URL: row.URL, Method: row.Method, Body: row.Body,
 		IntervalSeconds: row.IntervalSeconds, CreatedAt: row.CreatedAt, UpdatedAt: row.UpdatedAt,
 		Headers: []custom.Header{}, Values: []custom.NamedValue{}, Lists: []custom.NamedList{},
 	}
