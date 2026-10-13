@@ -1,0 +1,60 @@
+{
+  "id": "pi-hole",
+  "name": "Pi-hole",
+  "description": "DNS queries and how many were blocked, from Pi-hole 6",
+  "category": "home",
+  "icon": "shield",
+  "tags": ["local"],
+  "docs": "https://docs.pi-hole.net/api/auth/",
+  "comment": "Pi-hole 6 (FTL v6 API). POST /api/auth with {\"password\"} answers {\"session\": {\"sid\", \"validity\"}} (docs.pi-hole.net/api/auth); every other request carries the sid in X-FTL-SID. GET /api/stats/summary answers queries.{total, blocked, percent_blocked, unique_domains, forwarded, cached}, clients.{active, total} and gravity.{domains_being_blocked, last_update}, from the stats.yaml spec in pi-hole/FTL (src/api/docs/content/specs). Pi-hole 5 and older have another API and are not covered. An app password (Settings, Web interface / API) works instead of the login password (docs.pi-hole.net/api/auth).",
+  "placeholders": [
+    {
+      "key": "server",
+      "label": "Address of Pi-hole",
+      "kind": "origin",
+      "example": "http://192.168.1.2",
+      "hint": "The address you open Pi-hole's web interface with, without /admin, such as http://pi.hole or http://192.168.1.2:8080."
+    }
+  ],
+  "source": {
+    "name": "Pi-hole",
+    "url": "{server}/api/stats/summary",
+    "method": "GET",
+    "body": "",
+    "auth": {
+      "kind": "login",
+      "name": "X-FTL-SID",
+      "login": {
+        "url": "{server}/api/auth",
+        "body": "{\"password\": \"{secret}\"}",
+        "tokenPath": "session.sid",
+        "place": "header",
+        "validityPath": "session.validity"
+      }
+    },
+    "secretHint": "An app password from Pi-hole (Settings, Web interface / API, Configure app password), or the password you log in with. GDash logs in with it and keeps the session it gets encrypted in memory.",
+    "headers": [],
+    "intervalSeconds": 60,
+    "sample": {
+      "queries": {
+        "total": 48213,
+        "blocked": 5120,
+        "percent_blocked": 10.6,
+        "unique_domains": 2210,
+        "forwarded": 30120,
+        "cached": 12973
+      },
+      "clients": { "active": 14, "total": 22 },
+      "gravity": { "domains_being_blocked": 104756, "last_update": 1791880000 },
+      "took": 0.0003
+    }
+  },
+  "values": [
+    { "name": "Queries", "path": "queries.total", "decimals": 0 },
+    { "name": "Blocked", "path": "queries.blocked", "decimals": 0 },
+    { "name": "Blocked share", "path": "queries.percent_blocked", "unit": "%", "decimals": 1 },
+    { "name": "Active clients", "path": "clients.active", "decimals": 0 },
+    { "name": "Domains on the blocklist", "path": "gravity.domains_being_blocked", "decimals": 0 }
+  ],
+  "lists": []
+}

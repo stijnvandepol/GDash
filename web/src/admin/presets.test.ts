@@ -104,6 +104,20 @@ describe('presetInput', () => {
     const basic = presetInput(adguard, { name: 'DNS', answers: { server: 'http://10.0.0.3:3000' }, secret: 'pw', user: ' admin ' });
     expect(basic.auth).toEqual({ kind: 'basic', name: 'admin', secret: 'pw' });
   });
+
+  it('logs in to Pi-hole on the address the household fills in', () => {
+    const piHole = PRESETS.find((p) => p.id === 'pi-hole')!;
+    const input = presetInput(piHole, { name: 'Pi-hole', answers: { server: 'http://192.168.1.2:8080/' }, secret: ' app-pw ', user: '' });
+    expect(input.url).toBe('http://192.168.1.2:8080/api/stats/summary');
+    expect(input.auth).toEqual({
+      kind: 'login',
+      name: 'X-FTL-SID',
+      secret: 'app-pw',
+      login: { url: 'http://192.168.1.2:8080/api/auth', body: '{"password": "{secret}"}', tokenPath: 'session.sid', place: 'header', validityPath: 'session.validity' },
+    });
+    // The preset itself keeps its placeholder for the next one.
+    expect(piHole.source.auth.login?.url).toBe('{server}/api/auth');
+  });
 });
 
 describe('sourcesFrom', () => {

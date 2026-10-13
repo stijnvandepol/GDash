@@ -91,3 +91,21 @@ test('a custom API that logs in first, such as Pi-hole, is set up under Integrat
   // The test and the screen's fetch share one session.
   expect(logins).toBe(1);
 });
+
+test('the Pi-hole preset logs in with the password and names its values', async ({ adminPage: page }) => {
+  const setup = await openIntegration(page, 'Pi-hole');
+  await setup.getByRole('textbox', { name: /^Address of Pi-hole/ }).fill(piHoleUrl);
+  await setup.getByRole('textbox', { name: /^Password/ }).fill(PASSWORD);
+  await setup.getByRole('button', { name: 'Add Pi-hole' }).click();
+  await expect(setup).toContainText('Pi-hole is added as a custom API with 5 values.');
+  // GDash logs in and asks Pi-hole at once.
+  await expect(setup.getByText('Pi-hole answered.')).toBeVisible({ timeout: 15_000 });
+  await expect(setup.getByRole('listitem').filter({ hasText: 'Blocked share' })).toContainText('10.6 %');
+
+  const listed = await (await page.request.get('/api/custom-sources')).text();
+  expect(listed).not.toContain(PASSWORD);
+  expect(listed).not.toContain(SID);
+  const { sources } = JSON.parse(listed) as { sources: { url: string; auth: { kind: string; login?: { url: string } } }[] };
+  const made = sources.filter((s) => s.auth.kind === 'login');
+  expect(made.map((s) => s.auth.login?.url)).toContain(`${piHoleUrl}/api/auth`);
+});

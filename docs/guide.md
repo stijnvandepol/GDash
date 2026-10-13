@@ -847,6 +847,7 @@ authentication and the values, so you only fill in what is yours. Under
 | Tibber, Electricity Maps | A personal token or free key; Electricity Maps also the zone, such as NL |
 | Quatt heat pump | The CIC's IP address; Quatt calls this address beta, so an update may change it |
 | AdGuard Home, Speedtest Tracker | The address, and the login or an API token |
+| Pi-hole (6 and later) | The address and an app password or the login password; GDash logs in first, see [the Pi-hole example](#example-pi-hole-6-which-wants-you-to-log-in-first) |
 | Jellyfin, Plex | The server's address and an API key or X-Plex-Token |
 | Mealie, Todoist | The address and an API token; Todoist also a filter, such as `today` |
 
@@ -982,10 +983,14 @@ ask for a time zone; a time without a zone counts as UTC.)
 Pi-hole 6 gives a session for its password: `POST /api/auth` with
 `{"password": "…"}` answers `{"session": {"sid": "…", "validity": 1800}}`,
 and every other request carries the session ID in the `X-FTL-SID` header.
-GDash does that for you:
+GDash does that for you. The quickest way is the **Pi-hole** preset under
+**Integrations**: fill in the address you open Pi-hole with, such as
+`http://192.168.1.2`, and the password, and it adds the queries, the
+blocked queries and their share, the active clients and the size of the
+blocklist as named values. By hand:
 
 1. In Pi-hole, under Settings, Web interface / API, make an **app
-   password** (it can only use the API) and copy it.
+   password** and copy it, or use the password you log in with.
 2. Add a custom API with the address
    `http://pi.hole/api/stats/summary` (or your Pi-hole's own address, such
    as `http://192.168.1.2/api/stats/summary`) and **Authentication: Log in

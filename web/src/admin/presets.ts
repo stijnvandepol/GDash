@@ -1,4 +1,4 @@
-import type { CustomAuthKind, CustomHeader, CustomSource, CustomSourceInput, NamedList, NamedValue } from './api';
+import type { CustomAuthKind, CustomHeader, CustomLogin, CustomSource, CustomSourceInput, NamedList, NamedValue } from './api';
 import type { IconName } from './Icon.svelte';
 import type { CategoryId, Tag } from './integrations';
 
@@ -37,7 +37,8 @@ export interface Preset {
     url: string;
     method: 'GET' | 'POST';
     body: string;
-    auth: { kind: CustomAuthKind; name: string };
+    /** For the kind "login", how to log in; its address takes the same placeholders. */
+    auth: { kind: CustomAuthKind; name: string; login?: CustomLogin };
     /** Where to find the key or token, under its field. */
     secretHint?: string;
     headers: CustomHeader[];
@@ -89,9 +90,9 @@ export function placeholderProblem(kind: PlaceholderKind, raw: string): string {
 }
 
 /** The address with each placeholder filled in, encoded for where it goes. */
-export function fillAddress(preset: Preset, answers: Record<string, string>): string {
+export function fillAddress(preset: Preset, answers: Record<string, string>, address = preset.source.url): string {
   const kinds = new Map(preset.placeholders.map((p) => [p.key, p.kind]));
-  return preset.source.url.replace(PLACEHOLDER, (_, key: string) => {
+  return address.replace(PLACEHOLDER, (_, key: string) => {
     const value = (answers[key] ?? '').trim();
     switch (kinds.get(key)) {
       case 'host':
@@ -117,13 +118,19 @@ export interface PresetAnswers {
 export function presetInput(preset: Preset, { name, answers, secret, user }: PresetAnswers): CustomSourceInput {
   const { source } = preset;
   const authName = source.auth.kind === 'basic' ? user.trim() : source.auth.name;
+  const login = source.auth.login;
   return {
     name: name.trim(),
     mode: 'fetch',
     url: fillAddress(preset, answers),
     method: source.method,
     body: source.method === 'POST' ? source.body : '',
-    auth: { kind: source.auth.kind, name: authName, secret: source.auth.kind === 'none' ? '' : secret.trim() },
+    auth: {
+      kind: source.auth.kind,
+      name: authName,
+      secret: source.auth.kind === 'none' ? '' : secret.trim(),
+      ...(source.auth.kind === 'login' && login ? { login: { ...login, url: fillAddress(preset, answers, login.url) } } : {}),
+    },
     headers: source.headers.map((h) => ({ ...h })),
     intervalSeconds: source.intervalSeconds,
     sample: source.sample,

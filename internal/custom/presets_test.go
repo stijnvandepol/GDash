@@ -29,8 +29,9 @@ type preset struct {
 		Method string `json:"method"`
 		Body   string `json:"body"`
 		Auth   struct {
-			Kind string `json:"kind"`
-			Name string `json:"name"`
+			Kind  string `json:"kind"`
+			Name  string `json:"name"`
+			Login *Login `json:"login"`
 		} `json:"auth"`
 		Headers         []Header        `json:"headers"`
 		IntervalSeconds int             `json:"intervalSeconds"`
@@ -71,10 +72,9 @@ func loadPresets(t *testing.T) map[string]preset {
 	return out
 }
 
-// filled is the preset's address with each placeholder's example, as the
-// web interface fills it in.
-func filled(p preset) string {
-	address := p.Source.URL
+// filled is the preset's address, or another address of it such as its
+// login's, with each placeholder's example, as the web interface fills it in.
+func filled(p preset, address string) string {
 	for _, ph := range p.Placeholders {
 		value := ph.Example
 		if ph.Kind == "id" || ph.Kind == "text" {
@@ -87,9 +87,14 @@ func filled(p preset) string {
 
 func TestPresetsPassTheServersChecks(t *testing.T) {
 	for id, p := range loadPresets(t) {
-		in := Input{Name: p.Source.Name, Mode: ModeFetch, URL: filled(p), Method: p.Source.Method, Body: p.Source.Body,
+		in := Input{Name: p.Source.Name, Mode: ModeFetch, URL: filled(p, p.Source.URL), Method: p.Source.Method, Body: p.Source.Body,
 			Headers: p.Source.Headers, IntervalSeconds: p.Source.IntervalSeconds, Sample: p.Source.Sample}
 		in.Auth.Kind, in.Auth.Name = p.Source.Auth.Kind, p.Source.Auth.Name
+		if login := p.Source.Auth.Login; login != nil {
+			filledLogin := *login
+			filledLogin.URL = filled(p, login.URL)
+			in.Auth.Login = &filledLogin
+		}
 		if in.Auth.Kind != AuthNone {
 			in.Auth.Secret = "preset-test-secret"
 		}
