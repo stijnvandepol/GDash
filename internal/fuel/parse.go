@@ -9,6 +9,8 @@ import (
 	"slices"
 	"strings"
 	"unicode/utf8"
+
+	"github.com/stijnvandepol/gdash/internal/geo"
 )
 
 const (
@@ -63,7 +65,7 @@ func pick(stations []poi, area Area, fuel string) []Station {
 	for _, s := range stations {
 		price, hasPrice := s.price(fuel)
 		name := s.label()
-		dist := distanceKm(area.Latitude, area.Longitude, s.Coordinates.Latitude, s.Coordinates.Longitude)
+		dist := geo.DistanceKm(area.Latitude, area.Longitude, s.Coordinates.Latitude, s.Coordinates.Longitude)
 		if !hasPrice || name == "" || dist > float64(area.RadiusKm) {
 			continue
 		}

@@ -5,6 +5,8 @@ import (
 	"os"
 	"strings"
 	"testing"
+
+	"github.com/stijnvandepol/gdash/internal/geo"
 )
 
 // oss is the centre of Oss; testdata/oss.json holds the 19 stations the ANWB
@@ -125,24 +127,11 @@ func TestBoxHoldsTheWholeCircle(t *testing.T) {
 // destination is the point radius km from the area's centre towards bearing.
 func destination(a Area, bearing float64) (lat, lon float64) {
 	rad := math.Pi / 180
-	d := float64(a.RadiusKm) / earthRadiusKm
+	d := float64(a.RadiusKm) / geo.EarthRadiusKm
 	lat1, lon1, b := a.Latitude*rad, a.Longitude*rad, bearing*rad
 	lat2 := math.Asin(math.Sin(lat1)*math.Cos(d) + math.Cos(lat1)*math.Sin(d)*math.Cos(b))
 	lon2 := lon1 + math.Atan2(math.Sin(b)*math.Sin(d)*math.Cos(lat1), math.Cos(d)-math.Sin(lat1)*math.Sin(lat2))
 	return lat2 / rad, lon2 / rad
-}
-
-func TestDistanceIsGreatCircle(t *testing.T) {
-	// Amsterdam Centraal to Rotterdam Centraal is about 57 km as the crow flies.
-	if got := distanceKm(52.3791, 4.9003, 51.9244, 4.4693); math.Abs(got-57) > 1.5 {
-		t.Errorf("Amsterdam to Rotterdam = %.1f km, want about 57", got)
-	}
-	if got := distanceKm(51.76, 5.52, 51.76, 5.52); got != 0 {
-		t.Errorf("distance to itself = %v, want 0", got)
-	}
-	if got := distanceKm(0, 0, 0, 180); math.Abs(got-math.Pi*earthRadiusKm) > 0.001 {
-		t.Errorf("half the earth = %.1f km", got)
-	}
 }
 
 func TestPricesBelowTheSanityMinimumAreIgnored(t *testing.T) {
