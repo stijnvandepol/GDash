@@ -153,8 +153,8 @@ describe('rainView', () => {
 
 describe('rainWaitingText', () => {
   it('asks for a place or a weather location when the server has none to follow', () => {
-    expect(rainWaitingText({ ...entry, value: {} }, undefined)).toBe('Set a weather location under Settings, or choose a place for this widget.');
-    expect(rainWaitingText(undefined, undefined)).toBe('Set a weather location under Settings, or choose a place for this widget.');
+    expect(rainWaitingText({ ...entry, value: {} }, undefined)).toBe('Set a weather location under Integrations, or choose a place for this widget.');
+    expect(rainWaitingText(undefined, undefined)).toBe('Set a weather location under Integrations, or choose a place for this widget.');
     expect(rainWaitingText(entry, { place: { name: 'Oss', latitude: 51.77, longitude: 5.53 } })).toBe('Loading the rain forecast…');
     expect(rainWaitingText({ ...entry, failing: true }, undefined)).toBe('Could not load the rain forecast');
   });

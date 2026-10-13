@@ -108,7 +108,7 @@ describe('warningWindow', () => {
 
 describe('warningsWaitingText', () => {
   it('asks for a province when the server has none to follow', () => {
-    const notSetUp = 'Choose a province for this widget, or set a weather location in the Netherlands under Settings.';
+    const notSetUp = 'Choose a province for this widget, or set a weather location in the Netherlands under Integrations.';
     expect(warningsWaitingText(undefined, undefined)).toBe(notSetUp);
     expect(warningsWaitingText({ ...entry, value: {} }, undefined)).toBe(notSetUp);
     expect(warningsWaitingText(entry, { region: 'Zeeland' })).toBe('Loading weather warnings…');
