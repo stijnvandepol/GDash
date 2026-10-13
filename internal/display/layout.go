@@ -87,7 +87,10 @@ var WidgetTypes = map[string]WidgetType{
 	"news":        {Source: "news.default", MinW: 6, MinH: 4, Settings: maxItems},
 	"calendar":    {Source: "calendar.default", MinW: 6, MinH: 4, Settings: maxItems},
 	"text":        {MinW: 4, MinH: 3, Settings: map[string]Setting{"text": {Kind: SettingText, Min: 1, Max: 300, Required: true}}},
-	"photos":      {Source: PhotosSource, MinW: 4, MinH: 3, Settings: map[string]Setting{"seconds": {Kind: SettingInteger, Min: 5, Max: 600}}},
+	"photos": {Source: PhotosSource, MinW: 4, MinH: 3, Settings: map[string]Setting{
+		"seconds": {Kind: SettingInteger, Min: 5, Max: 600},
+		"source":  {Kind: SettingChoice, Options: []string{PhotosUploaded, PhotosImmich}},
+	}},
 	"countdown": {MinW: 4, MinH: 4, Settings: map[string]Setting{
 		"label": {Kind: SettingText, Min: 1, Max: 60, Required: true},
 		"date":  {Kind: SettingDate, Required: true},
@@ -103,6 +106,7 @@ var WidgetTypes = map[string]WidgetType{
 	"homey":             homeyWidget,
 	HomeyPresenceWidget: homeyPresenceWidget,
 	CustomWidget:        customWidget,
+	CameraWidget:        cameraWidget,
 }
 
 // AirQualitySource is the data key of the air quality and pollen at the
@@ -120,6 +124,36 @@ const MaxEntitiesPerWidget = 8
 // PhotosSource is the data key of the photo list; the server builds it
 // from the photo folder rather than fetching it.
 const PhotosSource = "photos.default"
+
+// Where a Photos widget takes its photos from: the uploaded ones, the
+// default, or the Immich album chosen under Integrations.
+const (
+	PhotosUploaded = "uploaded"
+	PhotosImmich   = "immich"
+)
+
+// ImmichSource is the data key of the photos of the Immich album: the IDs
+// of a random part of its images, which screens load through the server.
+const ImmichSource = "photos.immich"
+
+// widgetSource is the data key a widget shows: its type's, except for a
+// Photos widget that shows the Immich album.
+func widgetSource(w Widget) string {
+	if w.Type == "photos" && w.Settings["source"] == PhotosImmich {
+		return ImmichSource
+	}
+	return WidgetTypes[w.Type].Source
+}
+
+// UsesImmich reports whether a Photos widget on the dashboards shows the
+// Immich album, so the album is only read while a screen can show it.
+func UsesImmich(dashboards []Dashboard) bool {
+	return slices.ContainsFunc(dashboards, func(d Dashboard) bool { return slices.ContainsFunc(d.Widgets, ShowsImmich) })
+}
+
+// ShowsImmich reports whether w is a Photos widget that shows the Immich
+// album.
+func ShowsImmich(w Widget) bool { return widgetSource(w) == ImmichSource }
 
 var validDashboardID = regexp.MustCompile(`^[a-z0-9][a-z0-9-]{0,31}$`)
 
@@ -139,7 +173,7 @@ func Normalize(d Dashboard) Dashboard {
 	}
 	widgets := make([]Widget, len(d.Widgets))
 	for i, w := range d.Widgets {
-		w.Source = WidgetTypes[w.Type].Source
+		w.Source = widgetSource(w)
 		widgets[i] = w
 	}
 	d.Widgets = widgets
@@ -255,8 +289,12 @@ func valueProblem(key string, value any, rule Setting) string {
 			return fmt.Sprintf("%s must be a date as YYYY-MM-DD", key)
 		}
 	case SettingCalendar:
-		if _, ok := calendarID(value); !ok {
+		if _, ok := settingID(value); !ok {
 			return fmt.Sprintf("%s must be the number of a calendar added under Integrations", key)
+		}
+	case SettingCamera:
+		if _, ok := settingID(value); !ok {
+			return fmt.Sprintf("%s must be the number of a camera added under Integrations", key)
 		}
 	case SettingEntities:
 		if ids, ok := entityIDs(value, rule.Max); !ok || len(ids) < rule.Min {

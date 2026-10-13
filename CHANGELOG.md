@@ -7,6 +7,18 @@ the format follows [Keep a Changelog](https://keepachangelog.com).
 
 ### Added
 
+- Camera widget: a still image of a camera at home, such as Frigate's latest
+  image or a Reolink, Hikvision or Home Assistant snapshot, refreshed every 5
+  to 300 seconds. Cameras are added under Integrations, Cameras, with a user
+  name and password, a token or an API key, which are stored encrypted. GDash
+  fetches the image itself, once per refresh however many screens show it and
+  only while one does, and only screens of a display that shows the camera can
+  load it. When the camera stops answering, the last image stays with the time
+  it was taken in the warning colour.
+- The Photos widget can show an Immich album: connect Immich under
+  Integrations, choose an album, and set the widget to Immich album. A random
+  part of up to 100 photos changes every 30 minutes; videos are left out, and
+  the screens never see Immich's address or key.
 - A **Rain** widget: the rain in the next two hours at the weather location or
   a place you choose, as a bar per five minutes and one sentence such as "Dry
   for the next 2 hours", "Rain from 14:20 (light)" or "Rain until 15:05

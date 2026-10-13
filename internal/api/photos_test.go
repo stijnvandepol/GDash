@@ -62,13 +62,19 @@ func get(t *testing.T, client *http.Client, url string) (int, http.Header) {
 // pairedScreen returns a client paired with the kitchen display.
 func pairedScreen(t *testing.T, env *testEnv) *http.Client {
 	t.Helper()
+	return pairedScreenOf(t, env, "keuken")
+}
+
+// pairedScreenOf returns a client paired with the display.
+func pairedScreenOf(t *testing.T, env *testEnv, displayID string) *http.Client {
+	t.Helper()
 	screen := tv()
-	_, body := post(t, screen, env.srv.URL+"/api/pairing-requests", `{"displayId":"keuken"}`)
+	_, body := post(t, screen, env.srv.URL+"/api/pairing-requests", `{"displayId":"`+displayID+`"}`)
 	var req pairing.Request
 	if err := json.Unmarshal([]byte(body), &req); err != nil {
 		t.Fatal(err)
 	}
-	if status, body := env.do(t, "POST", "/api/displays/keuken/pairings", `{"code":"`+req.Code+`"}`); status != http.StatusCreated {
+	if status, body := env.do(t, "POST", "/api/displays/"+displayID+"/pairings", `{"code":"`+req.Code+`"}`); status != http.StatusCreated {
 		t.Fatalf("approve = %d %s", status, body)
 	}
 	if status, body := post(t, screen, env.srv.URL+"/api/display-sessions", `{"pollToken":"`+req.PollToken+`"}`); status != http.StatusCreated {

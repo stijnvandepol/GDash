@@ -87,6 +87,17 @@ come from another site (cross-site request forgery protection).
 | `POST /api/photos` multipart, field `photo` | admin | `201` photo | `401`, `409` at 50 photos, `422` for another kind of file or one over 8 MB |
 | `DELETE /api/photos/{name}` | admin | `204` | `401`, `404` |
 | `GET /api/photos/{name}` | admin or any paired screen | `200` the image | `404`, also for anyone else |
+| `PUT /api/immich` `{url, key}` | admin | `200` [settings.immich](#objects) after Immich listed its albums with the key; the album stays chosen when the address stays the same | `401`, `422` naming `url` or `key` |
+| `DELETE /api/immich` | admin | `204`; Photos widgets set to Immich show that it is not set up | `401` |
+| `GET /api/immich/albums` | admin | `200 {"albums": [{id, name, assetCount}]}`, owned and shared, at most 500 | `401`, `409 not_connected`, `502 upstream_unavailable` |
+| `PUT /api/immich/album` `{albumId}` | admin | `200` settings.immich | `401`, `409 not_connected`, `422` naming `albumId` for an album Immich does not list, `502 upstream_unavailable` |
+| `GET /api/immich/assets/{id}` | admin, or a screen paired with a display that shows the Immich album now | `200` the photo, Immich's `preview` size with its location and camera details removed, `Cache-Control: private, max-age=86400` | `404` for anyone else and for any ID that is not one of the album's current photos (`photos.immich`), `502 upstream_unavailable` |
+| `GET /api/cameras` | admin | `200 {"cameras": [camera], "unreadable": false}`; `unreadable` is true when the cameras cannot be decrypted, and adding one then starts a new list | `401` |
+| `POST /api/cameras` `{name, url, auth}` | admin | `201` camera | `401`, `409` at 10 cameras, `422` naming each field |
+| `PUT /api/cameras/{id}` `{name, url, auth}` | admin | `200` camera; an empty `auth.secret` keeps the stored one for the same kind | `401`, `404`, `422` |
+| `DELETE /api/cameras/{id}` | admin | `204`; Camera widgets that show it say it is not available | `401`, `404` |
+| `POST /api/cameras/{id}/tests` | admin | `200 {contentType, bytes}` after one image, past what is kept | `401`, `404`, `502 fetch_failed` with what went wrong, naming the host but never the address's path, query or a secret |
+| `GET /api/cameras/{id}/image` | admin, or a screen paired with a display that shows the camera now | `200` the latest image, `Cache-Control: no-store`, `Last-Modified` when GDash received it, `X-Image-Stale: true` when the camera failed since | `404` for anyone else and for an unknown camera, `502 camera_unavailable` when the camera has not sent an image yet |
 | `GET /api/cast-devices` | admin | `200 {"devices": [device]}` | `401`, `500 discovery_failed` |
 | `GET /api/displays/{id}/events` | paired screen or admin | `text/event-stream`, `snapshot` events | `401 not_paired`, `404` for an invalid id |
 | `POST /api/pairing-requests` `{displayId}` | no | `201 {code, pollToken, expiresAt}` | `404`, `429 rate_limited` |
@@ -319,6 +330,7 @@ widget for them:
 - waste `waste.default`, energy price `energyprice.nl`, fuel `fuel.default`
 - holidays `holidays.nl`, rain `rain.default`, weather warnings `warnings.default`
 - Homey `homey.default` (values) and `homey.users` (who is home)
+- the Immich album `photos.immich`
 - custom sources `custom.source.<id>`; a pushed custom source is there from the start, as it is never fetched
 
 Place search sends the typed name to Open-Meteo's geocoding service, which
@@ -512,7 +524,7 @@ allows, overlaps another, lacks a required setting, or has a setting its type do
 | `news` | 6x4 | `news.default` | `maxItems`: 1 to 20 |
 | `calendar` | 6x4 | `calendar.default` | `maxItems`: 1 to 20 |
 | `text` | 4x3 | none | `text`: 1 to 300 characters, line breaks allowed (required) |
-| `photos` | 4x3 | `photos.default` | `seconds`: 5 to 600 per photo, default 30 |
+| `photos` | 4x3 | `photos.default`, or `photos.immich` with `source` `immich` | `seconds`: 5 to 600 per photo, default 30, `source`: `uploaded` (default) or `immich` |
 | `countdown` | 4x4 | none | `label`: 1 to 60 characters, `date`: `YYYY-MM-DD` (both required) |
 | `holidays` | 6x4 | `holidays.nl` | `region`: `north`, `middle` (default) or `south`, `show`: `both` (default), `school` or `public`, `maxItems`: 1 to 20, default 5 |
 | `homeassistant` | 4x3 | `homeassistant.default` | `entities`: 1 to 8 entity IDs such as `sensor.living_room_temperature` (required) |
@@ -522,12 +534,13 @@ allows, overlaps another, lacks a required setting, or has a setting its type do
 | `rain` | 5x3 | `rain.default` | `place`: a place with `name`, `latitude` and `longitude`, default the weather location |
 | `warnings` | 6x3 | `warnings.default` | `region`: `Groningen`, `Friesland`, `Drenthe`, `Overijssel`, `Flevoland`, `Gelderland`, `Utrecht`, `Noord-Holland`, `Zuid-Holland`, `Zeeland`, `Noord-Brabant`, `Limburg` or `Waddeneilanden`, default the province of the weather location, `announce`: `true` to put a code orange or red warning over every display when it starts, default `false` |
 | `fuel` | 6x4 | `fuel.default` | `place`: a place with `name`, `latitude` and `longitude`, default the weather location, `radius`: 1 to 25 km, default 5, `fuel`: `EURO95` (default), `EURO98`, `DIESEL`, `AUTOGAS` or `CNG`, `maxItems`: 1 to 10, default 5 |
+| `camera` | 4x3 | none: the screen loads `GET /api/cameras/{id}/image` | `camera`: the `id` of a camera (required), `seconds`: 5 to 300 between images, default 10, `fit`: `contain` (default, the whole image) or `cover` (fills the tile) |
 | `custom` | 4x3 | `custom.default` | `source`: the `id` of a custom source (required), `mode`: `value`, `list`, `keyValues` or `badges` (required), `title`: up to 60 characters; value mode: `path` (required), `label` (up to 40), `unit` (up to 12), `decimals` 0 to 6; list mode: `path` of the list and `fields`, 1 to 3 paths read from each item (both required); key-values and badges mode: `pairs`, 1 to 8 `{label, path}` (required); a badge is on when its value is `true`, a number other than 0, or the text `on`, `home`, `yes`, `open` or `true` in any case, and a screen only receives the labels of the badges that are on, as `badges`; `rules`: up to 6, see [Custom APIs](#custom-apis) |
 
-A setting's `kind` is `integer`, `text`, `date`, `calendar`, `entities`, `homeyCapabilities`, `homeyUsers`, `stop`,
-`place`, `choice` or `boolean`, or for the Custom widget `customSource`, `path`, `paths`, `pairs` and `rules`; `min`
-and `max` bound an integer, a text's length in characters, or the number of entities or items. A `choice` is one of the
-strings in the setting's `options`; a `boolean` is `true` or `false`. A
+A setting's `kind` is `integer`, `text`, `date`, `calendar`, `camera`, `entities`, `homeyCapabilities`, `homeyUsers`,
+`stop`, `place`, `choice` or `boolean`, or for the Custom widget `customSource`, `path`, `paths`, `pairs` and `rules`;
+`min` and `max` bound an integer, a text's length in characters, or the number of entities or items. A `choice` is one
+of the strings in the setting's `options`; a `boolean` is `true` or `false`. A
 `place` is exactly `{"name": "Oss", "latitude": 51.765, "longitude": 5.518}`: a name of 1 to 100 characters, a latitude
 from -90 to 90 and a longitude from -180 to 180 as numbers, and no other field; it is what `GET /api/places` returns
 for a result, without `region`. A Custom widget's settings are checked together, and an error names the setting, such
@@ -535,7 +548,8 @@ as `widgets[2]` with `rules[0].when: … at character 7`. Its `source`, like a `
 sources when a dashboard is saved or imported: a widget whose source is deleted, or that came from another GDash, says
 on the screen that its API is not available. A `calendar` setting is a whole number from 1 up, the `id` of a
 calendar; the server does not check that the calendar exists when a dashboard is saved, so a widget whose calendar is
-deleted later says on the screen that it cannot find it. A `stop` is one code of 1 to 16 letters and digits.
+deleted later says on the screen that it cannot find it. A `camera` setting is the same for a camera; IDs of removed
+cameras are never given to a new one. A `stop` is one code of 1 to 16 letters and digits.
 Text settings are shown as plain text on the screen, never as HTML.
 
 **settings:** `{"language": "nl", "location": {"name": "Oss", "latitude": 51.77, "longitude": 5.52} | null, "newsFeeds": [{"id": 1, "name": "NOS", "url": "https://…"}], "calendars": [{"id": 2, "name": "Family", "host": "calendar.google.com", "color": "blue", "unreadable": false}], "updateCheck": true}`.
@@ -552,6 +566,27 @@ an empty `title`, which the screen fills in in its own language.
 **settings.homeAssistant:** `{"url": "http://192.168.1.10:8123", "unreadable": false}`, or `null` when not connected.
 
 **settings.homey:** `{"mode": "local", "url": "http://192.168.1.20", "unreadable": false}`, `{"mode": "push", "url": "", "unreadable": false}` for a Homey that sends its data, or `null` when not connected.
+
+**settings.immich:** `{"url": "http://192.168.1.10:2283", "albumId": "4b1c…", "albumName": "Holidays", "unreadable": false}`,
+or `null` when not connected; `albumId` and `albumName` are empty until an album is chosen. The address is stored
+without a trailing `/api`. GDash calls Immich with the key in the `x-api-key` header on `GET /api/albums`,
+`POST /api/search/random` `{"albumIds": [id], "type": "IMAGE", "size": 100}` and
+`GET /api/assets/{id}/thumbnail?size=preview`, paths that Immich v2 and v3 serve; Immich v3.2 marks `albumIds` and
+`type` of the search as deprecated in favour of a `filter` object that v2 does not know. Redirects to another host
+are refused, as the key would follow them.
+
+**photos data (`photos.immich`):** the IDs of up to 100 images of the chosen album, picked at random by Immich and
+shuffled, refreshed every 30 minutes, only while a Photos widget shows the album; videos are left out. A screen
+loads each from `GET /api/immich/assets/{id}`.
+
+**camera:** `{"id": 1, "name": "Front door", "url": "http://192.168.1.20:5000/api/front_door/latest.jpg", "auth": {"kind": "basic", "name": "admin", "secretSet": true}}`.
+The input has `auth: {kind, name, secret}` with the kinds of a custom source (`none`, `bearer`, `header`, `query`,
+`basic`) and the same rules. The address is http or https without a user name, password or `#` part. A camera's
+image is a JPEG, PNG or WebP of at most 5 MB, judged by its bytes; the request times out after 10 seconds and
+follows redirects only to the same host. GDash asks the camera only when a screen or admin asks for its image and the
+kept one is at least the shortest `seconds` of the Camera widgets that the asking screen's display shows (5 seconds
+for an admin); it keeps only the latest image of each camera, in memory, and drops it after 10 minutes without a
+request. The cameras are stored as one sealed value in the settings.
 
 **weather data (`weather.current`):** the current values, `days` for the forecast and `sun`, the sunrise and sunset
 of yesterday and the coming days as local times, `{"date": "2026-10-09", "sunrise": "2026-10-09T07:50", "sunset": "2026-10-09T18:56"}`.

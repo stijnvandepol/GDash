@@ -102,6 +102,7 @@ export interface SettingRule {
     | 'text'
     | 'date'
     | 'calendar'
+    | 'camera'
     | 'entities'
     | 'homeyCapabilities'
     | 'homeyUsers'
@@ -155,8 +156,48 @@ export interface Settings {
   homeAssistant: HomeAssistant | null;
   /** Null until Homey is connected; the API key never leaves the server. */
   homey: Homey | null;
+  /** Null until Immich is connected; the API key never leaves the server. */
+  immich: Immich | null;
   /** Whether GDash asks GitHub once a day for the latest release. */
   updateCheck: boolean;
+}
+
+export interface Immich {
+  url: string;
+  /** Empty until an album is chosen. */
+  albumId: string;
+  albumName: string;
+  /** True when the connection cannot be decrypted with this server's key. */
+  unreadable: boolean;
+}
+
+/** An Immich album to choose for the Photos widget. */
+export interface ImmichAlbum {
+  id: string;
+  name: string;
+  assetCount: number;
+}
+
+/** A camera on the home network; its secret never leaves the server. */
+export interface Camera {
+  id: number;
+  name: string;
+  /** The snapshot address, shown to admins only. */
+  url: string;
+  auth: { kind: CustomAuthKind; name: string; secretSet: boolean };
+}
+
+/** A camera as the form sends it; an empty secret keeps the stored one. */
+export interface CameraInput {
+  name: string;
+  url: string;
+  auth: { kind: CustomAuthKind; name: string; secret: string };
+}
+
+/** The result of a camera's Test button. */
+export interface CameraTest {
+  contentType: string;
+  bytes: number;
 }
 
 export interface Homey {

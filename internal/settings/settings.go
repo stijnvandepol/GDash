@@ -13,6 +13,7 @@ import (
 	"net/url"
 	"slices"
 	"strings"
+	"sync"
 	"time"
 	"unicode/utf8"
 
@@ -76,6 +77,8 @@ type Settings struct {
 	HomeAssistant *HomeAssistant `json:"homeAssistant"`
 	// Homey is nil until a connection is set up.
 	Homey *Homey `json:"homey"`
+	// Immich is nil until a connection is set up.
+	Immich *Immich `json:"immich"`
 	// UpdateCheck is whether GDash asks GitHub once a day for the latest
 	// release, to show a notice when a newer one is out.
 	UpdateCheck bool `json:"updateCheck"`
@@ -97,6 +100,8 @@ type Sources struct {
 	Homey *homey.Connection
 	// HomeyPushed is true when the Homey sends its data itself.
 	HomeyPushed bool
+	// Immich is nil when no readable connection with an album is set up.
+	Immich *ImmichAlbum
 }
 
 // Service reads and changes the settings.
@@ -105,6 +110,10 @@ type Service struct {
 	Box    *secret.Box
 	Now    func() time.Time
 	Logger *slog.Logger
+
+	// camerasMu makes reading, changing and storing the list of cameras
+	// one step.
+	camerasMu sync.Mutex
 }
 
 // Get returns the settings for the web interface.
@@ -143,6 +152,9 @@ func (s *Service) Get(ctx context.Context) (Settings, error) {
 		return Settings{}, err
 	}
 	if out.Homey, err = s.homeyView(ctx); err != nil {
+		return Settings{}, err
+	}
+	if out.Immich, err = s.immichView(ctx); err != nil {
 		return Settings{}, err
 	}
 	return out, nil
@@ -196,6 +208,10 @@ func (s *Service) Sources(ctx context.Context) (Sources, error) {
 		out.HomeyPushed = true
 	case ok:
 		out.Homey = &homeySetup.Connection
+	}
+	if out.Immich, err = s.immichAlbum(ctx); err != nil {
+		s.Logger.Error("immich connection cannot be decrypted; connect again", "error", err)
+		out.Immich = nil
 	}
 	return out, nil
 }

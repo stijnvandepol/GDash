@@ -160,19 +160,41 @@ add calendars and feeds under Integrations, and the photos once you add photos.
 | Note | A short text for the household |
 | Countdown | The days until a date, such as a holiday |
 | Holidays | The coming school holidays of your region and the public holidays in the Netherlands; see [Holidays](#holidays) |
-| Photos | A slideshow of your photos |
+| Photos | A slideshow of your uploaded photos, or of an Immich album; see [Photos from Immich](#photos-from-immich) |
 | Home Assistant | Up to eight sensors or switches from Home Assistant |
 | Homey | Up to eight sensors or switches from a Homey Pro; see [Homey](#homey) |
 | Who's home (Homey) | A round badge with initials for each chosen person who is home |
 | Departures | The next buses, trams, metros and ferries at one stop in the Netherlands |
 | Fuel prices | The cheapest petrol stations near a place, for one kind of fuel (Netherlands) |
 | Custom API | A value, a list or labelled values from any JSON API you add, with rules; see [Custom APIs](#custom-apis) |
+| Camera | A still image of a camera at home, refreshed every few seconds; see [Cameras](#cameras) |
 
 **Photos** are added under Integrations, Photos: JPEG, PNG or WebP, up to 8 MB
 each and 50 in total. They stay on your server and only go to paired
 screens and to you; the rest of the network gets nothing. GDash removes
 the location and other details a phone stores in a photo before it keeps
 it; the picture itself is not changed.
+
+### Photos from Immich
+
+A Photos widget can show an album of your own [Immich](https://immich.app)
+server instead of the uploaded photos.
+
+1. In Immich, open **Account settings**, **API keys**, **New API key**. Give
+   it a name, such as GDash, and the permissions **album.read**,
+   **asset.read** and **asset.view**; nothing else is needed. Copy the key.
+2. In GDash, under Integrations, Immich, enter the address you open
+   Immich at, such as `http://192.168.1.10:2283`, and paste the key. GDash
+   tries them before it saves them and stores the key encrypted.
+3. Press **Choose album** and pick the album.
+4. In the Photos widget's settings, set **Photos from** to **Immich album**.
+
+GDash reads a random part of up to 100 photos of the album every 30 minutes,
+so a large album keeps changing; videos are left out. The screens load each
+photo through GDash, in the size Immich makes for screens, so they never
+see Immich's address or key, and only screens of a display that shows the
+album get its photos. GDash does not store the photos; only their IDs are
+kept. It uses Immich's API as Immich v2 and v3 serve it.
 
 Every display shows the **Default** dashboard until you choose another one
 in the list at the display.
@@ -371,6 +393,47 @@ announcements, but cannot read or change anything else. With this setup
 GDash keeps the whole last snapshot on disk, not only the values the screens
 show, so the editor can list them; the screens still get only their own
 widgets' values and the labels of the people who are home.
+## Cameras
+
+A **Camera** widget shows a still image of a camera on your network,
+refreshed every 5 to 300 seconds (10 by default). It is a picture, not a
+video: enough to see who is at the door or whether the car is in the
+driveway.
+
+1. Find the camera's snapshot address: an address that answers with one
+   JPEG, PNG or WebP image. Some examples:
+   - Frigate: `http://192.168.1.20:5000/api/front_door/latest.jpg`
+   - Reolink: `http://192.168.1.30/cgi-bin/api.cgi?cmd=Snap&channel=0`,
+     with the camera's user name and password as basic authentication
+   - Hikvision: `http://192.168.1.31/ISAPI/Streaming/channels/101/picture`,
+     with a user name and password; allow basic authentication in the
+     camera's security settings, as GDash does not do digest authentication
+   - Home Assistant: `http://homeassistant.local:8123/api/camera_proxy/camera.front_door`,
+     with a long-lived access token as a bearer token
+   A video stream (RTSP, MJPEG) does not work.
+2. Under Integrations, Cameras, press **Add a camera**, give it a
+   name and paste the address. Choose the authentication: none, a user name
+   and password, a bearer token, an API key in a header or an API key in
+   the address. The password or key is stored encrypted and never shown
+   again. **Test** fetches one image and shows it.
+3. Add a **Camera** widget to a dashboard, choose the camera by name, how
+   often it refreshes and whether it shows the whole image or fills the
+   tile.
+
+GDash fetches the image itself and passes it to the screens, so a TV never
+sees the camera's address or password. Only screens of a display that
+shows the camera right now, and you in the web interface, can load it;
+anyone else on the network gets nothing. A camera is only asked for an image
+while a screen shows it, and at most once per refresh, however many screens
+show it. When the camera does not answer, the screen keeps the last image
+and shows the time it was taken in the warning colour, such as 14:02. GDash
+keeps only the latest image of each camera, in memory; it never writes a
+camera image to disk, and drops it ten minutes after no screen asked for it.
+
+Camera images show what happens in and around your home on every TV that
+shows the widget; think about who can see that screen. Showing a camera
+only while a Custom API rule is on, such as when the doorbell rings, is not
+possible yet.
 
 ## Departures
 

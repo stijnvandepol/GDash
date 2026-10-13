@@ -81,7 +81,30 @@ fully trust, such as a guest's phone.
   upload is accepted by its content (JPEG, PNG or WebP), not by its name.
   Location, camera, date and other metadata (EXIF, XMP, IPTC, text chunks)
   are removed before a photo is stored; only a JPEG's orientation stays.
-- **Outgoing requests:** feeds, calendars, Home Assistant and custom APIs are
+- **Immich:** the address and API key are sealed together and the key is
+  never returned or logged. Screens load the album's photos through GDash,
+  never from Immich, and only a screen of a display that shows the album, or
+  an admin, gets them; GDash only hands out photos that the album gave in
+  its last refresh, so the key cannot be used to reach the rest of the
+  library. The photos are not stored; their location and camera details are
+  removed on the way. Requests to Immich follow redirects only to the same
+  host, as the key is in a header that Go would otherwise send along.
+- **Cameras:** camera images show what happens in and around the home, on
+  every TV that shows a Camera widget, so put one only on screens whose
+  viewers may see that. A camera's address and password or key are sealed
+  together with the other cameras and never returned or logged; the server
+  fetches the image and the screens load it from GDash, so a TV never learns
+  where the camera is or how to open it. Only a screen paired with a display
+  that shows the camera now, and admins, can load the image; anyone else gets
+  404, also for a camera that exists. Images stay on the LAN: GDash keeps only
+  the latest image of each camera, in memory, never writes one to disk or to
+  a backup, sends it with `Cache-Control: no-store` and drops it ten minutes
+  after the last screen asked. A camera is asked at most once per refresh,
+  only while a screen asks, with the outgoing-request rules below: at most 5
+  MB, JPEG, PNG or WebP by content, 10 seconds, redirects only to the same
+  host. The web interface and display pages allow `blob:` images, which the
+  Camera widget makes from what it fetched from GDash.
+- **Outgoing requests:** feeds, calendars, Home Assistant, Homey, Immich, cameras and custom APIs are
   fetched with a client that refuses link-local addresses, where cloud hosts
   serve instance metadata. Departures are fetched from OVapi over plain HTTP, because its
   HTTPS certificate belongs to another domain; the request carries no secret

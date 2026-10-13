@@ -36,8 +36,9 @@ func number(value any) (float64, bool) {
 	return 0, false
 }
 
-// calendarID reads a calendar setting: a whole number from 1 up.
-func calendarID(value any) (int64, bool) {
+// settingID reads a setting that names a calendar or a camera under
+// Settings by its ID: a whole number from 1 up.
+func settingID(value any) (int64, bool) {
 	n, ok := number(value)
 	if !ok || n != math.Trunc(n) || n < 1 || n > maxCalendarID {
 		return 0, false
@@ -52,7 +53,7 @@ func WasteCalendarIDs(dashboards []Dashboard) []int64 {
 	var ids []int64
 	for _, d := range dashboards {
 		for _, w := range d.Widgets {
-			if id, ok := calendarID(w.Settings["calendar"]); ok && w.Type == "waste" {
+			if id, ok := settingID(w.Settings["calendar"]); ok && w.Type == "waste" {
 				ids = append(ids, id)
 			}
 		}

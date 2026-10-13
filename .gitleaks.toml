@@ -36,3 +36,9 @@ description = "Made-up API key of a stand-in API in the custom source tests"
 condition = "AND"
 paths = ['''internal/api/customsources_test\.go''']
 regexes = ['''k3y-0123456789''']
+
+[[allowlists]]
+description = "Made-up API key of the stand-in Immich in the camera and Immich browser test"
+condition = "AND"
+paths = ['''web/e2e/16-camera-immich\.spec\.ts''']
+regexes = ['''e2e-immich-stand-in-key''']

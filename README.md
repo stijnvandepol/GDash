@@ -61,10 +61,11 @@ survive the internet dropping out. GDash is made for exactly that.
 | Home Assistant | Sensors and switches, such as the temperature or a door | Your Home Assistant, read only |
 | Homey | Sensors and switches, and who is home as badges with initials | Your Homey Pro, read only, with an API key |
 | News | Headlines from up to five RSS or Atom feeds | Any feed (default: NOS) |
-| Photos | A slideshow of photos you upload | Stored on your server |
+| Photos | A slideshow of photos you upload, or of an Immich album | Stored on your server, or [Immich](https://immich.app) with an API key |
 | Note and countdown | A short text, or the days until a date | — |
 | Holidays | The coming school holidays of your region and the public holidays (Netherlands) | [Rijksoverheid open data](https://opendata.rijksoverheid.nl), no key; public holidays computed |
 | Custom API | A value, a list or labelled values from any JSON API, with rules | Any API you add: open, or with a key, token or password |
+| Camera | A still image of a camera at home, refreshed every few seconds | Any snapshot address (Frigate, Reolink, Hikvision, Home Assistant), through GDash |
 
 The last good value of every source is kept when the internet drops, and a
 screen marks data that has gone stale.
@@ -294,5 +295,6 @@ data of the [Dutch government](https://opendata.rijksoverheid.nl) (CC0), electri
 the [ANWB](https://www.anwb.nl), rain forecasts by
 [Buienradar.nl](https://www.buienradar.nl) (free for non-commercial use with
 this credit, which the Rain widget also shows), weather warnings by the
-[KNMI](https://www.knmi.nl) through [MeteoAlarm](https://meteoalarm.org). The typefaces are under the SIL Open Font
+[KNMI](https://www.knmi.nl) through [MeteoAlarm](https://meteoalarm.org). Photo albums from
+[Immich](https://immich.app), through its API. The typefaces are under the SIL Open Font
 License; all bundled licences are in [THIRD_PARTY_LICENSES](THIRD_PARTY_LICENSES).

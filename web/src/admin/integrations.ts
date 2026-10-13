@@ -61,6 +61,8 @@ export interface IntegrationContext {
   sources: CustomSource[];
   photoCount: number;
   tokenCount: number;
+  /** How many cameras are added; 0 while the server has no cameras. */
+  cameraCount: number;
   /** The widget types this server reports. */
   widgetTypes: string[];
 }

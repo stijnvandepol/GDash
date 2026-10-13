@@ -2,24 +2,21 @@
   import type { Entry } from '../protocol';
   import { t } from '../i18n.svelte';
   import { msToNextPage } from '../pages';
+  import { photoSource, photoUrls } from './photos';
 
   const DEFAULT_SECONDS = 30;
-  // The names the server gives photos; anything else in a snapshot is
-  // ignored rather than put in a URL.
-  const PHOTO_NAME = /^[0-9a-f]{32}\.(jpg|png|webp)$/;
 
   let { entry, settings }: { entry: Entry | undefined; settings: Record<string, unknown> | undefined } = $props();
 
-  const names = $derived(
-    Array.isArray(entry?.value) ? entry.value.filter((n): n is string => typeof n === 'string' && PHOTO_NAME.test(n)) : [],
-  );
+  const source = $derived(photoSource(settings));
+  const urls = $derived(photoUrls(entry?.value, source));
   const seconds = $derived(typeof settings?.seconds === 'number' && settings.seconds > 0 ? settings.seconds : DEFAULT_SECONDS);
 
   // Photos change on the wall clock, like pages, so every screen of a
   // display shows the same photo; one timer to the next change.
   let now = $state(Date.now());
   $effect(() => {
-    if (names.length < 2) return;
+    if (urls.length < 2) return;
     const every = seconds;
     now = Date.now();
     let timer = setTimeout(function next() {
@@ -28,15 +25,23 @@
     }, msToNextPage(now, every));
     return () => clearTimeout(timer);
   });
-  const current = $derived(names.length > 0 ? names[Math.floor(now / 1000 / seconds) % names.length] : undefined);
+  const current = $derived(urls.length > 0 ? urls[Math.floor(now / 1000 / seconds) % urls.length] : undefined);
+
+  // An album that is not set up has no entry; one being read has no value yet.
+  const waiting = $derived.by(() => {
+    if (source === 'uploaded') return t('photosNone');
+    if (entry === undefined) return t('immichNotSetUp');
+    if (entry.value === undefined) return t(entry.failing ? 'immichFailed' : 'immichLoading');
+    return t('immichNone');
+  });
 </script>
 
 {#if current}
   {#key current}
-    <img src="/api/photos/{current}" alt="" />
+    <img src={current} alt="" />
   {/key}
 {:else}
-  <span class="muted">{t('photosNone')}</span>
+  <span class="muted">{waiting}</span>
 {/if}
 
 <style>

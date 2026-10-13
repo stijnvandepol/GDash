@@ -29,6 +29,7 @@ import (
 	"github.com/stijnvandepol/gdash/internal/apitoken"
 	"github.com/stijnvandepol/gdash/internal/auth"
 	"github.com/stijnvandepol/gdash/internal/backup"
+	"github.com/stijnvandepol/gdash/internal/camera"
 	"github.com/stijnvandepol/gdash/internal/cast"
 	"github.com/stijnvandepol/gdash/internal/display"
 	"github.com/stijnvandepol/gdash/internal/outbound"
@@ -192,15 +193,20 @@ func serve(ctx context.Context, logger *slog.Logger) error {
 	}
 	go updates.Run(ctx)
 	handler := (&api.Server{
-		Snapshots:      snapshots,
-		Auth:           authService,
-		Pairing:        pairings,
-		APITokens:      apitoken.New(db),
-		Store:          db,
-		Settings:       settingsService,
-		Places:         weather.Geocoder{BaseURL: weather.DefaultGeocodingURL, HTTP: &http.Client{Timeout: upstreamTimeout}},
-		HomeAssistant:  sources.home,
-		Homey:          sources.homey,
+		Snapshots:     snapshots,
+		Auth:          authService,
+		Pairing:       pairings,
+		APITokens:     apitoken.New(db),
+		Store:         db,
+		Settings:      settingsService,
+		Places:        weather.Geocoder{BaseURL: weather.DefaultGeocodingURL, HTTP: &http.Client{Timeout: upstreamTimeout}},
+		HomeAssistant: sources.home,
+		Homey:         sources.homey,
+		Immich:        sources.immich,
+		Cameras: &camera.Keeper{
+			Fetcher: &camera.Fetcher{HTTP: outbound.NewClient(camera.Timeout), UserAgent: userAgent()},
+			Now:     time.Now, Logger: logger,
+		},
 		Stops:          sources.stops,
 		CustomFetcher:  sources.custom,
 		ReceiveCustom:  sources.receiveCustom,

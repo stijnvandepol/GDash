@@ -89,6 +89,31 @@ describe('defaultSettings', () => {
     expect(defaultSettings(custom, today)).toEqual({ mode: 'value' });
   });
 
+  it('starts a Camera widget on a 10-second refresh showing the whole image, with the camera to be chosen', () => {
+    const camera: WidgetType = {
+      minW: 4,
+      minH: 3,
+      settings: {
+        camera: { kind: 'camera', required: true },
+        seconds: { kind: 'integer', min: 5, max: 300, required: false },
+        fit: { kind: 'choice', options: ['contain', 'cover'], required: false },
+      },
+    };
+    expect(defaultSettings(camera, today)).toEqual({ seconds: 10, fit: 'contain' });
+  });
+
+  it('starts a Photos widget on the uploaded photos', () => {
+    const photos: WidgetType = {
+      minW: 4,
+      minH: 3,
+      settings: {
+        seconds: { kind: 'integer', min: 5, max: 600, required: false },
+        source: { kind: 'choice', options: ['uploaded', 'immich'], required: false },
+      },
+    };
+    expect(defaultSettings(photos, today)).toEqual({ seconds: 30, source: 'uploaded' });
+  });
+
   it('skips settings it has no default for', () => {
     const odd: WidgetType = { minW: 1, minH: 1, settings: { colour: { kind: 'text', required: false } } };
     expect(defaultSettings(odd, today)).toEqual({});
@@ -147,6 +172,8 @@ describe('settingLabel', () => {
     expect(settingLabel('news', 'maxItems')).toBe('Headlines at most');
     expect(settingLabel('calendar', 'maxItems')).toBe('Appointments at most');
     expect(settingLabel('forecast', 'days')).toBe('Days ahead');
+    expect(settingLabel('camera', 'seconds')).toBe('Refresh every (seconds)');
+    expect(settingLabel('photos', 'seconds')).toBe('Seconds per photo');
   });
 
   it('falls back to the general label, then to the key', () => {

@@ -72,8 +72,8 @@ export function parseSample(text: string): { sample: unknown } | { error: string
   }
 }
 
-/** What the secret field says when a secret is stored and may be kept. */
-export function secretPlaceholder(source: CustomSource | undefined, kind: CustomAuthKind): string {
+/** What the secret field of a custom API or camera says when a secret is stored and may be kept. */
+export function secretPlaceholder(source: Pick<CustomSource, 'auth'> | undefined, kind: CustomAuthKind): string {
   return source?.auth.secretSet && source.auth.kind === kind ? 'Stored; leave empty to keep it' : '';
 }
 

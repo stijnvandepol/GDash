@@ -13,9 +13,11 @@ import {
 } from './integrations';
 import { PRESETS, sourcesFrom, type Preset } from './presets';
 import ApiTokenSetting from './ApiTokenSetting.svelte';
+import CameraSetting from './CameraSetting.svelte';
 import CustomSourceSetting from './CustomSourceSetting.svelte';
 import HomeAssistantSetting from './HomeAssistantSetting.svelte';
 import HomeySetting from './HomeySetting.svelte';
+import ImmichSetting from './ImmichSetting.svelte';
 import LocationSetting from './LocationSetting.svelte';
 import PhotoSetting from './PhotoSetting.svelte';
 import PresetSetup from './PresetSetup.svelte';
@@ -222,9 +224,6 @@ const SERVICES: Integration[] = [
     panel: (ctx) => view(PhotoSetting, { onerror: ctx.onerror }),
   },
   {
-    // Immich, as a source for the Photos widget, is being built: its card
-    // shows once the server's settings have an immich key, and it gets its
-    // panel with it.
     id: 'immich',
     name: 'Immich',
     description: 'Photos from an album on your own Immich server',
@@ -234,7 +233,16 @@ const SERVICES: Integration[] = [
     tags: ['local'],
     kind: 'service',
     requires: { setting: 'immich' },
-    state: ({ settings }) => ((settings as unknown as Record<string, unknown>).immich ? { kind: 'connected', detail: 'Set up.' } : NOT_SET_UP),
+    state: ({ settings, status }) => {
+      const immich = settings.immich;
+      if (!immich) return NOT_SET_UP;
+      if (immich.unreadable) return { kind: 'problem', detail: 'The connection cannot be read on this server. Connect again.' };
+      if (!immich.albumId) return { kind: 'problem', detail: 'Connected; choose an album.' };
+      const st = sourceState(status['photos.immich'], 'Read once a Photos widget shows it.');
+      return { ...st, detail: `${immich.albumName}. ${st.detail}` };
+    },
+    panel: (ctx) =>
+      view(ImmichSetting, { connection: ctx.settings.immich, status: ctx.status['photos.immich'], onchanged: ctx.onchanged, onerror: ctx.onerror }),
   },
   {
     // Synology Photos, as a source for the Photos widget, is being built
@@ -250,6 +258,22 @@ const SERVICES: Integration[] = [
     requires: { setting: 'synologyPhotos' },
     state: ({ settings }) =>
       (settings as unknown as Record<string, unknown>).synologyPhotos ? { kind: 'connected', detail: 'Set up.' } : NOT_SET_UP,
+  },
+  {
+    id: 'camera',
+    name: 'Camera snapshots',
+    description: 'A still from a camera at home, refreshed on the screen',
+    keywords: 'snapshot doorbell cctv frigate reolink hikvision',
+    category: 'home',
+    icon: 'camera',
+    tags: ['local'],
+    kind: 'service',
+    requires: { widget: 'camera' },
+    // A camera is asked only while a screen shows it, so it has no
+    // status of its own: Test under its setup asks it now.
+    state: ({ cameraCount }) =>
+      cameraCount > 0 ? { kind: 'connected', detail: `${count(cameraCount, 'camera', 'cameras')}. Asked while a screen shows one.` } : NOT_SET_UP,
+    panel: (ctx) => view(CameraSetting, { onchanged: ctx.onchanged, onerror: ctx.onerror }),
   },
   {
     id: 'custom',
@@ -289,7 +313,7 @@ const SERVICES: Integration[] = [
 
 // Built-in sources: no setup, a widget is all it takes. Each shows only when
 // the server reports its widget type, so the cards of the sources that are
-// still being built (rain, warnings, holidays, moon, camera) appear by
+// still being built (rain, warnings, holidays, moon) appear by
 // themselves once they land.
 const BUILT_IN: Integration[] = [
   {
@@ -387,18 +411,6 @@ const BUILT_IN: Integration[] = [
     kind: 'builtin',
     requires: { widget: 'energyprice' },
     state: ({ status }) => builtinState(status['energyprice.nl']),
-  },
-  {
-    id: 'camera',
-    name: 'Camera snapshots',
-    description: 'A still from a camera at home, refreshed on the screen',
-    keywords: 'snapshot doorbell cctv',
-    category: 'home',
-    icon: 'camera',
-    tags: ['local'],
-    kind: 'builtin',
-    requires: { widget: 'camera' },
-    state: () => builtinState(undefined),
   },
   {
     id: 'waste',

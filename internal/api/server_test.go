@@ -22,6 +22,7 @@ import (
 	"github.com/stijnvandepol/gdash/internal/announcement"
 	"github.com/stijnvandepol/gdash/internal/apitoken"
 	"github.com/stijnvandepol/gdash/internal/auth"
+	"github.com/stijnvandepol/gdash/internal/camera"
 	"github.com/stijnvandepol/gdash/internal/cast"
 	"github.com/stijnvandepol/gdash/internal/casting"
 	"github.com/stijnvandepol/gdash/internal/custom"
@@ -29,6 +30,7 @@ import (
 	"github.com/stijnvandepol/gdash/internal/display"
 	"github.com/stijnvandepol/gdash/internal/homeassistant"
 	"github.com/stijnvandepol/gdash/internal/homey"
+	"github.com/stijnvandepol/gdash/internal/immich"
 	"github.com/stijnvandepol/gdash/internal/outbound"
 	"github.com/stijnvandepol/gdash/internal/pairing"
 	"github.com/stijnvandepol/gdash/internal/photos"
@@ -156,6 +158,8 @@ type testEnv struct {
 	updates *update.Checker
 	// elapsed is how far the server's clock moved on.
 	elapsed *atomic.Int64
+	// cameraClock is the clock of the camera keeper, which tests move.
+	cameraClock *movableClock
 }
 
 // advance moves the server's clock on by d.
@@ -193,6 +197,7 @@ func newTestEnv(t *testing.T, discover func(context.Context) ([]cast.Device, err
 		t.Fatal(err)
 	}
 	settingsService := &settings.Service{Store: st, Box: box, Now: now, Logger: logger}
+	cameraClock := &movableClock{now: now()}
 	releases := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		_, _ = io.WriteString(w, `{"tag_name":"v1.3.0","draft":false,"prerelease":false}`)
 	}))
@@ -214,17 +219,21 @@ func newTestEnv(t *testing.T, discover func(context.Context) ([]cast.Device, err
 			"preview/index.html":  {Data: []byte("<html>preview</html>")},
 			"assets/app.js":       {Data: []byte("console.log(1)")},
 		},
-		Discover:             discover,
-		DisplaysChanged:      func() { changes.Add(1) },
-		DashboardsChanged:    func() { changes.Add(1) },
-		Settings:             settingsService,
-		Places:               sources,
-		Stops:                stops,
-		CustomFetcher:        &custom.Fetcher{HTTP: outbound.NewClient(5 * time.Second)},
-		ReceiveCustom:        sources.receiveCustom,
-		ReceiveHomey:         sources.receiveHomey,
-		HomeAssistant:        &homeassistant.Client{HTTP: &http.Client{Timeout: 5 * time.Second}},
-		Homey:                &homey.Client{HTTP: &http.Client{Timeout: 5 * time.Second}},
+		Discover:          discover,
+		DisplaysChanged:   func() { changes.Add(1) },
+		DashboardsChanged: func() { changes.Add(1) },
+		Settings:          settingsService,
+		Places:            sources,
+		Stops:             stops,
+		CustomFetcher:     &custom.Fetcher{HTTP: outbound.NewClient(5 * time.Second)},
+		ReceiveCustom:     sources.receiveCustom,
+		ReceiveHomey:      sources.receiveHomey,
+		HomeAssistant:     &homeassistant.Client{HTTP: &http.Client{Timeout: 5 * time.Second}},
+		Homey:             &homey.Client{HTTP: &http.Client{Timeout: 5 * time.Second}},
+		Immich:            &immich.Client{HTTP: outbound.NewClient(5 * time.Second)},
+		Cameras: &camera.Keeper{
+			Fetcher: &camera.Fetcher{HTTP: outbound.NewClient(5 * time.Second)}, Now: cameraClock.Now, Logger: logger,
+		},
 		SettingsChanged:      func() { settingsChanges.Add(1) },
 		Announcements:        board,
 		AnnouncementsChanged: func(time.Time) { announced.Add(1) },
@@ -250,8 +259,26 @@ func newTestEnv(t *testing.T, discover func(context.Context) ([]cast.Device, err
 	return &testEnv{
 		srv: srv, client: &http.Client{Jar: jar}, changes: changes, settingsChanges: settingsChanges,
 		pairing: pairingService, store: st, sources: sources, stops: stops, board: board, announced: announced, logs: logs,
-		updates: updates, elapsed: elapsed,
+		updates: updates, elapsed: elapsed, cameraClock: cameraClock,
 	}
+}
+
+// movableClock is a clock that tests move by hand.
+type movableClock struct {
+	mu  sync.Mutex
+	now time.Time
+}
+
+func (c *movableClock) Now() time.Time {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return c.now
+}
+
+func (c *movableClock) add(d time.Duration) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.now = c.now.Add(d)
 }
 
 // do sends a request with a JSON body and returns status and body.

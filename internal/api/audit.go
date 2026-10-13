@@ -54,6 +54,12 @@ const (
 	auditCustomSourceAdded      = "custom_source_added"
 	auditCustomSourceChanged    = "custom_source_changed"
 	auditCustomSourceRemoved    = "custom_source_removed"
+	auditCameraAdded            = "camera_added"
+	auditCameraChanged          = "camera_changed"
+	auditCameraRemoved          = "camera_removed"
+	auditImmichConnected        = "immich_connected"
+	auditImmichAlbumChosen      = "immich_album_chosen"
+	auditImmichRemoved          = "immich_removed"
 	defaultAuditPage            = 100
 	maxAuditDetailCharacters    = 200
 )

@@ -18,6 +18,7 @@ import (
 	"github.com/stijnvandepol/gdash/internal/announcement"
 	"github.com/stijnvandepol/gdash/internal/apitoken"
 	"github.com/stijnvandepol/gdash/internal/auth"
+	"github.com/stijnvandepol/gdash/internal/camera"
 	"github.com/stijnvandepol/gdash/internal/cast"
 	"github.com/stijnvandepol/gdash/internal/casting"
 	"github.com/stijnvandepol/gdash/internal/datahub"
@@ -75,6 +76,7 @@ type Server struct {
 	Places               PlaceSearcher
 	HomeAssistant        HomeAssistantReader
 	Homey                HomeyReader
+	Immich               ImmichReader
 	Stops                StopSearcher
 	CustomFetcher        CustomFetcher
 	// ReceiveCustom stores the answer that a pushed custom source sent; it
@@ -104,6 +106,8 @@ type Server struct {
 	// the TV now; false when the display has no running keeper.
 	TakeOverCast func(displayID string) bool
 	Photos       *photos.Store
+	// Cameras keeps the latest image of each camera that screens show.
+	Cameras *camera.Keeper
 	// Backup writes the zip that POST /api/backup downloads.
 	Backup BackupWriter
 	// PhotosChanged is called after a photo is added or removed, so photo
@@ -193,6 +197,8 @@ func (s *Server) Handler() http.Handler {
 	mux.Handle("POST /api/photos", s.requireUser(s.postPhoto))
 	mux.Handle("DELETE /api/photos/{name}", s.requireUser(s.deletePhoto))
 	mux.HandleFunc("GET /api/photos/{name}", s.getPhoto)
+	s.handleImmich(mux)
+	s.handleCameras(mux)
 
 	mux.Handle("GET /api/cast-devices", s.requireUser(s.castDevices))
 	mux.Handle("GET /api/displays", s.requireUser(s.listDisplays))
@@ -208,9 +214,11 @@ func (s *Server) Handler() http.Handler {
 }
 
 // displayCSP (also used for the web interface) allows nothing from outside the server: no CDN, no fonts from
-// Google, no inline scripts.
+// Google, no inline scripts. Images may be blob: URLs, which the page makes
+// itself from what it fetched from this server: a Camera widget fetches its
+// image to read when it was taken.
 const (
-	pageCSP    = "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; font-src 'self'; base-uri 'none'; form-action 'none'"
+	pageCSP    = "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: blob:; connect-src 'self'; font-src 'self'; base-uri 'none'; form-action 'none'"
 	displayCSP = pageCSP + "; frame-ancestors 'none'"
 	// previewCSP is the same, except that the web interface may show the
 	// preview in a frame.

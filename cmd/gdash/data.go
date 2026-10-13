@@ -22,6 +22,7 @@ import (
 	"github.com/stijnvandepol/gdash/internal/holidays"
 	"github.com/stijnvandepol/gdash/internal/homeassistant"
 	"github.com/stijnvandepol/gdash/internal/homey"
+	"github.com/stijnvandepol/gdash/internal/immich"
 	"github.com/stijnvandepol/gdash/internal/news"
 	"github.com/stijnvandepol/gdash/internal/outbound"
 	"github.com/stijnvandepol/gdash/internal/photos"
@@ -42,6 +43,7 @@ type dataSources struct {
 	calendar   *calendar.Client
 	home       *homeassistant.Client
 	homey      *homey.Client
+	immich     *immich.Client
 	energy     energyprice.Client
 	departures *departures.Client
 	fuel       *fuel.Client
@@ -133,6 +135,7 @@ func startData(ctx context.Context, cfg config, db *store.Store, svc *settings.S
 		calendar:   &calendar.Client{HTTP: outbound.NewClient(upstreamTimeout), Location: time.Local, Now: time.Now},
 		home:       &homeassistant.Client{HTTP: outbound.NewClient(upstreamTimeout)},
 		homey:      &homey.Client{HTTP: outbound.NewClient(upstreamTimeout)},
+		immich:     &immich.Client{HTTP: outbound.NewClient(immich.Timeout)},
 		departures: transit,
 		fuel:       &fuel.Client{BaseURL: fuel.DefaultBaseURL, HTTP: outbound.NewClient(upstreamTimeout), UserAgent: userAgent},
 		custom:     &custom.Fetcher{HTTP: outbound.NewClient(upstreamTimeout), UserAgent: userAgent},
@@ -205,6 +208,7 @@ func (d *dataSources) sync(ctx context.Context) error {
 	sources := d.build(cfg, display.EntityIDs(dashboards), display.StopCodes(dashboards))
 	sources = append(sources, d.dashboardSources(cfg, dashboards)...)
 	sources = append(sources, d.homeySources(cfg, dashboards)...)
+	sources = append(sources, d.immichSources(cfg, dashboards)...)
 	d.hub.Configure(ctx, append(sources, d.customSources(customs, display.CustomSourceIDs(dashboards))...))
 	return nil
 }

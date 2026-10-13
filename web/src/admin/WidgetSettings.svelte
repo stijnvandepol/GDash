@@ -6,6 +6,7 @@
   import HomeyUserPicker from './HomeyUserPicker.svelte';
   import { presenceUsers } from './homey';
   import CalendarPicker from './CalendarPicker.svelte';
+  import CameraPicker from './CameraPicker.svelte';
   import StopPicker from './StopPicker.svelte';
   import PlacePicker from './PlacePicker.svelte';
   import CustomWidgetSettings from './CustomWidgetSettings.svelte';
@@ -89,6 +90,8 @@
     <HomeyUserPicker selected={presenceUsers(settings[key])} max={rule.max ?? 1} onchange={(users) => set(key, users)} />
   {:else if rule.kind === 'calendar'}
     <CalendarPicker selected={typeof settings[key] === 'number' ? settings[key] : undefined} onchange={(id) => set(key, id)} />
+  {:else if rule.kind === 'camera'}
+    <CameraPicker selected={typeof settings[key] === 'number' ? settings[key] : undefined} onchange={(id) => set(key, id)} />
   {:else if rule.kind === 'stop'}
     <StopPicker code={text(key)} name={text('stopName')} onpick={pickStop} />
   {:else if rule.kind === 'place'}

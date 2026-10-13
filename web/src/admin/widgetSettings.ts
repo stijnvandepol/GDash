@@ -43,6 +43,7 @@ export const WIDGETS: Record<string, WidgetInfo> = {
   custom: { label: 'Custom API', category: 'home', description: 'Values from an API under Integrations', icon: 'braces' },
   homey: { label: 'Homey', category: 'home', description: 'Device values from your Homey', icon: 'house' },
   homeypresence: { label: 'Who’s home (Homey)', category: 'home', description: 'Who is home, from your Homey', icon: 'people' },
+  camera: { label: 'Camera', category: 'home', description: 'A still from a camera at home', icon: 'camera' },
   calendar: { label: 'Calendar', category: 'agenda', description: 'Your next appointments', icon: 'calendar' },
   waste: { label: 'Waste collection', category: 'agenda', description: 'The next waste pickups', icon: 'bin' },
   text: { label: 'Note', category: 'agenda', description: 'A short note for the household', icon: 'note' },
@@ -100,6 +101,8 @@ export const SETTING_LABELS: Record<string, string> = {
   region: 'Region',
   show: 'Show',
   announce: 'Announce code orange and red on every screen',
+  fit: 'Fit',
+  source: 'Photos from',
 };
 
 /** What an optional choice says when nothing is chosen, per setting; a choice without one always has a value. */
@@ -122,10 +125,11 @@ export function settingLabel(widgetType: string, key: string): string {
   if (key === 'maxItems' && ITEM_NAMES[widgetType]) return `${ITEM_NAMES[widgetType]} at most`;
   if (key === 'days' && widgetType === 'forecast') return 'Days ahead';
   if (key === 'region') return widgetType === 'holidays' ? 'School holiday region' : widgetType === 'warnings' ? 'Province' : 'Region';
+  if (key === 'seconds' && widgetType === 'camera') return 'Refresh every (seconds)';
   return SETTING_LABELS[key] ?? key;
 }
 
-/** Names of the options of choice settings in the editor: the fuels by the ANWB's codes, and the holiday choices. */
+/** Names of the options of choice settings in the editor: the fuels by the ANWB's codes, the holiday choices, and how photos and camera images fit. */
 export const CHOICE_LABELS: Record<string, string> = {
   EURO95: 'Euro 95 / E10',
   EURO98: 'Euro 98',
@@ -138,7 +142,14 @@ export const CHOICE_LABELS: Record<string, string> = {
   both: 'School and public holidays',
   school: 'School holidays',
   public: 'Public holidays',
+  contain: 'Whole image',
+  cover: 'Fill the tile',
+  uploaded: 'Uploaded photos',
+  immich: 'Immich album',
 };
+
+/** How often a new Camera widget refreshes, in seconds; internal/display holds the same default. */
+export const CAMERA_SECONDS = 10;
 
 const COUNTDOWN_DAYS = 30;
 /** The longest place name the server accepts. */
@@ -165,6 +176,8 @@ export function defaultSettings(type: WidgetType, today = new Date()): Record<st
     region: 'middle',
     show: 'both',
     announce: false,
+    fit: 'contain',
+    source: 'uploaded',
   };
   // stop and stopName stay unset until a stop is chosen: there is no sensible default.
   // A Custom widget starts as one value; its API and path are chosen in its form.
@@ -176,6 +189,8 @@ export function defaultSettings(type: WidgetType, today = new Date()): Record<st
     // not a province.
     if (key in defaults && (rule.kind !== 'choice' || rule.options?.includes(defaults[key] as string))) settings[key] = defaults[key];
   }
+  // A camera is asked for a new image more often than a photo changes.
+  if (type.settings.camera?.kind === 'camera') settings.seconds = CAMERA_SECONDS;
   return settings;
 }
 

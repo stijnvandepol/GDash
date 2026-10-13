@@ -193,6 +193,22 @@ func (s *Store) Delete(name string) error {
 	return err
 }
 
+// ImageType returns the content type of a JPEG, PNG or WebP image, judged
+// by its first bytes as uploads are; ok is false for any other content.
+// Camera snapshots and Immich photos are checked with it too.
+func ImageType(data []byte) (contentType string, ok bool) {
+	contentType = http.DetectContentType(data)
+	_, ok = extensions[contentType]
+	return contentType, ok
+}
+
+// StripMetadata removes what an image of contentType (one ImageType
+// accepts) says about where, when and with what it was taken, as uploads
+// lose it; see stripMetadata.
+func StripMetadata(contentType string, data []byte) ([]byte, error) {
+	return stripMetadata(extensions[contentType], data)
+}
+
 func contentType(name string) string {
 	for typ, ext := range extensions {
 		if strings.HasSuffix(name, ext) {
