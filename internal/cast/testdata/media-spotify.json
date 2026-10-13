@@ -1,0 +1,38 @@
+{
+  "type": "MEDIA_STATUS",
+  "status": [
+    {
+      "mediaSessionId": 1,
+      "playbackRate": 1,
+      "playerState": "PLAYING",
+      "currentTime": 63.514,
+      "supportedMediaCommands": 514511,
+      "volume": { "level": 1, "muted": false },
+      "activeTrackIds": [],
+      "media": {
+        "contentId": "spotify:track:2ZtxQ1tq5x6PcwLgrkXu9p",
+        "streamType": "BUFFERED",
+        "mediaCategory": "AUDIO",
+        "contentType": "application/x-spotify.track",
+        "metadata": {
+          "metadataType": 3,
+          "title": "One More Time",
+          "songName": "One More Time",
+          "artist": "Daft Punk",
+          "albumName": "Discovery",
+          "images": [
+            { "url": "https://i.scdn.co/image/ab67616d0000b2738a5a2a9f6f2c1e5d3b4c7e10", "height": 640, "width": 640 },
+            { "url": "https://i.scdn.co/image/ab67616d00001e028a5a2a9f6f2c1e5d3b4c7e10", "height": 300, "width": 300 },
+            { "url": "https://i.scdn.co/image/ab67616d000048518a5a2a9f6f2c1e5d3b4c7e10", "height": 64, "width": 64 }
+          ]
+        },
+        "duration": 320.357,
+        "tracks": [],
+        "customData": { "context_uri": "spotify:album:2noRn2Aes5aoNVsU6iWThc" }
+      },
+      "currentItemId": 1,
+      "repeatMode": "REPEAT_OFF"
+    }
+  ],
+  "requestId": 4
+}

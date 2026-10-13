@@ -1,0 +1,25 @@
+{
+  "type": "MEDIA_STATUS",
+  "status": [
+    {
+      "mediaSessionId": 3,
+      "playbackRate": 1,
+      "playerState": "PLAYING",
+      "currentTime": 1843.2,
+      "supportedMediaCommands": 12303,
+      "volume": { "level": 0.6, "muted": false },
+      "media": {
+        "contentId": "https://icecast.omroep.nl/radio2-bb-mp3",
+        "streamType": "LIVE",
+        "contentType": "audio/mpeg",
+        "metadata": {
+          "metadataType": 3,
+          "title": "NPO Radio 2",
+          "images": [{ "url": "data:image/png;base64,iVBORw0KGgo=" }]
+        },
+        "duration": null
+      }
+    }
+  ],
+  "requestId": 7
+}

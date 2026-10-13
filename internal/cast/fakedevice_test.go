@@ -20,7 +20,8 @@ import (
 // launched apps, and can play what people do with a TV: close the app,
 // cast from another sender, switch input or switch the TV off. Each of
 // those reaches the connected senders as an unsolicited status, as on
-// real hardware.
+// real hardware. It can also play media as another sender's cast: a media
+// app that answers GET_STATUS and pushes MEDIA_STATUS (see play).
 type fakeDevice struct {
 	t  *testing.T
 	ln net.Listener
@@ -34,6 +35,11 @@ type fakeDevice struct {
 	// without HDMI-CEC.
 	activeInput *bool
 	open        []*fakeConn
+	// media is the "status" list that each running media app, by
+	// transport ID, answers GET_STATUS with on the media namespace.
+	media map[string]string
+	// mediaCommands are the types of every media message senders sent.
+	mediaCommands []string
 
 	appMessages chan Message
 	pongs       chan struct{}
@@ -45,6 +51,9 @@ type fakeDevice struct {
 type fakeConn struct {
 	net.Conn
 	writeMu sync.Mutex
+	// transports are the apps this sender opened a virtual connection
+	// to; an app only talks to those. Guarded by the device's mu.
+	transports map[string]bool
 }
 
 func (c *fakeConn) send(m Message) {
@@ -63,6 +72,7 @@ func newFakeDevice(t *testing.T, apps ...Application) *fakeDevice {
 		t:           t,
 		ln:          ln,
 		apps:        apps,
+		media:       map[string]string{},
 		appMessages: make(chan Message, 16),
 		pongs:       make(chan struct{}, 16),
 		conns:       make(chan net.Conn, 4),
@@ -102,6 +112,91 @@ func (d *fakeDevice) closeApps() {
 // castFrom puts app on screen as another sender's cast, replacing what ran.
 func (d *fakeDevice) castFrom(app Application) {
 	d.change(func() { d.apps = []Application{app} })
+}
+
+// play puts a media app on the device as another sender's cast, replacing
+// what ran. The app answers GET_STATUS on the media namespace with a
+// MEDIA_STATUS whose "status" list is status, a JSON array.
+func (d *fakeDevice) play(app Application, status string) {
+	d.change(func() {
+		d.apps = []Application{app}
+		d.media[app.TransportID] = status
+	})
+}
+
+// pushMedia sends a MEDIA_STATUS from the media app at transport to every
+// sender connected to it, as an app does when it plays, pauses or moves to
+// the next track. status becomes what GET_STATUS answers from then on.
+func (d *fakeDevice) pushMedia(transport, status string) {
+	d.mu.Lock()
+	d.media[transport] = status
+	var connected []*fakeConn
+	for _, c := range d.open {
+		if c.transports[transport] {
+			connected = append(connected, c)
+		}
+	}
+	d.mu.Unlock()
+	for _, c := range connected {
+		c.send(Message{SourceID: transport, DestinationID: "*", Namespace: nsMedia, Payload: mediaStatusPayload(status, 0)})
+	}
+}
+
+// mediaCommandsSent returns the types of the media messages senders sent.
+func (d *fakeDevice) mediaCommandsSent() []string {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	return append([]string(nil), d.mediaCommands...)
+}
+
+// dropConnections ends every sender's connection, as a device that
+// restarts or leaves the Wi-Fi does.
+func (d *fakeDevice) dropConnections() {
+	d.mu.Lock()
+	open := append([]*fakeConn(nil), d.open...)
+	d.mu.Unlock()
+	for _, c := range open {
+		c.Close()
+	}
+}
+
+// mediaRequest answers a sender's message on the media namespace. Like a
+// real app it only listens to senders that opened a virtual connection to
+// its transport.
+func (d *fakeDevice) mediaRequest(conn *fakeConn, m Message, payload map[string]any) {
+	d.mu.Lock()
+	kind, _ := payload["type"].(string)
+	d.mediaCommands = append(d.mediaCommands, kind)
+	status, running := d.media[m.DestinationID]
+	connected := conn.transports[m.DestinationID]
+	d.mu.Unlock()
+	if kind != "GET_STATUS" || !running || !connected {
+		return
+	}
+	conn.send(Message{SourceID: m.DestinationID, DestinationID: m.SourceID, Namespace: nsMedia, Payload: mediaStatusPayload(status, payload["requestId"])})
+}
+
+func mediaStatusPayload(status string, requestID any) string {
+	body, _ := json.Marshal(map[string]any{"type": "MEDIA_STATUS", "requestId": requestID, "status": json.RawMessage(status)})
+	return string(body)
+}
+
+// connection follows a sender's virtual connections to apps.
+func (d *fakeDevice) connection(conn *fakeConn, m Message, payload map[string]any) {
+	if m.DestinationID == receiverID {
+		return
+	}
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	switch payload["type"] {
+	case "CONNECT":
+		if conn.transports == nil {
+			conn.transports = map[string]bool{}
+		}
+		conn.transports[m.DestinationID] = true
+	case "CLOSE":
+		delete(conn.transports, m.DestinationID)
+	}
 }
 
 // setInput reports whether the TV shows the Cast device's input.
@@ -180,6 +275,9 @@ func (d *fakeDevice) handle(conn *fakeConn) {
 				d.push(d.statusPayload(0))
 			}
 		case nsConnection:
+			d.connection(conn, m, payload)
+		case nsMedia:
+			d.mediaRequest(conn, m, payload)
 		default:
 			d.appMessages <- m
 		}

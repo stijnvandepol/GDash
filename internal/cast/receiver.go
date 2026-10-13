@@ -13,6 +13,25 @@ type Application struct {
 	SessionID    string `json:"sessionId"`
 	TransportID  string `json:"transportId"`
 	IsIdleScreen bool   `json:"isIdleScreen"`
+	// StatusText is what the app says it does, such as "Casting: Song".
+	StatusText string `json:"statusText"`
+	// Namespaces are the message namespaces the app listens on.
+	Namespaces []Namespace `json:"namespaces"`
+}
+
+// Namespace is one entry of an application's namespaces.
+type Namespace struct {
+	Name string `json:"name"`
+}
+
+// speaks reports whether the app listens on namespace.
+func (a Application) speaks(namespace string) bool {
+	for _, ns := range a.Namespaces {
+		if ns.Name == namespace {
+			return true
+		}
+	}
+	return false
 }
 
 // ReceiverStatus is the state of a Cast device. IsActiveInput and IsStandBy
