@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { capabilityChoices, initials, presenceUsers } from './homey';
+import { capabilityChoices, describeSnapshot, homeyScript, initials, isSnapshotLate, presenceUsers, snapshotURL } from './homey';
 
 describe('initials', () => {
   it('takes the first and last word, or two letters of one', () => {
@@ -25,5 +25,33 @@ describe('capabilityChoices', () => {
     ]);
     expect(choice).toEqual({ id: 'd1/measure_temperature', name: 'Thermostat · Temperature', zone: 'Kitchen', detail: 'Kitchen · 21.5 °C' });
     expect(capabilityChoices([{ key: 'd2/onoff', device: 'Lamp', title: 'On', capability: 'onoff', value: null }])[0]?.detail).toBe('–');
+  });
+});
+
+describe('the HomeyScript', () => {
+  const script = homeyScript(snapshotURL('http://192.168.1.2:8420'), 'gdk_token');
+
+  it('sends to GDash with the token', () => {
+    expect(script).toContain("'http://192.168.1.2:8420/api/homey/snapshot'");
+    expect(script).toContain("TOKEN = 'gdk_token'");
+    expect(script).toContain("method: 'PUT'");
+  });
+
+  it('stays clear of syntax an older Homey may not know', () => {
+    expect(script).not.toContain('?.');
+    expect(script).not.toContain('??');
+  });
+});
+
+describe('describeSnapshot', () => {
+  const at = '2026-10-13T08:00:00Z';
+  const after = (seconds: number) => Date.parse(at) + seconds * 1000;
+
+  it('says when the last snapshot arrived, and when that is late', () => {
+    expect(describeSnapshot(undefined)).toContain('Nothing received yet');
+    expect(describeSnapshot(at, after(120))).toBe('Last data received 2 minutes ago.');
+    expect(isSnapshotLate(at, after(180))).toBe(false);
+    expect(isSnapshotLate(at, after(181))).toBe(true);
+    expect(describeSnapshot(at, after(240))).toContain('late');
   });
 });

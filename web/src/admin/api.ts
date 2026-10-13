@@ -169,6 +169,7 @@ export const api = {
   homeAssistantEntities: () =>
     request<{ entities: HomeAssistantEntity[] }>('GET', '/api/homeassistant/entities').then((r) => r.entities),
   connectHomey: (url: string, key: string) => request<Homey>('PUT', '/api/homey', { url, key }),
+  useHomeyPush: () => request<Homey>('PUT', '/api/homey', { mode: 'push' }),
   disconnectHomey: () => request<void>('DELETE', '/api/homey'),
   homeyCapabilities: () =>
     request<{ capabilities: HomeyCapability[] }>('GET', '/api/homey/capabilities').then((r) => r.capabilities),

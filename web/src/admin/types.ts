@@ -159,6 +159,9 @@ export interface Settings {
 }
 
 export interface Homey {
+  /** local: GDash asks the Homey with an API key; push: the Homey sends its data with HomeyScript. */
+  mode: 'local' | 'push';
+  /** Empty when the Homey sends its data. */
   url: string;
   /** True when the connection cannot be decrypted with this server's key. */
   unreadable: boolean;

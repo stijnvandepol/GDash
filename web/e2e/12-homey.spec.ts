@@ -61,12 +61,12 @@ test.afterAll(async () => {
 test('Homey is connected under Settings, and a wrong key is named', async ({ adminPage: page }) => {
   await openTab(page, 'Settings');
   const section = page.locator('section.card', { has: page.getByRole('heading', { name: 'Homey', exact: true }) });
-  await section.getByLabel('Address').fill(homeyUrl);
-  await section.getByLabel('API key').fill('not-the-key');
+  await section.getByRole('textbox', { name: 'Address' }).fill(homeyUrl);
+  await section.getByRole('textbox', { name: 'API key' }).fill('not-the-key');
   await section.getByRole('button', { name: 'Connect' }).click();
   await expect(section.getByText('Homey did not accept this API key')).toBeVisible();
 
-  await section.getByLabel('API key').fill(KEY);
+  await section.getByRole('textbox', { name: 'API key' }).fill(KEY);
   await section.getByRole('button', { name: 'Connect' }).click();
   await expect(section.getByText('Connected')).toBeVisible();
   await expect(section.getByText(homeyUrl)).toBeVisible();

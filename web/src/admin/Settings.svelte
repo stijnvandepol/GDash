@@ -156,8 +156,9 @@
 
     <HomeySetting
       connection={settings.homey}
-      status={status['homey.default'] ?? status['homey.users']}
+      status={settings.homey?.mode === 'push' ? status['homey.snapshot'] : (status['homey.default'] ?? status['homey.users'])}
       onchanged={load}
+      onmanagetokens={() => (section = 'automations')}
       onerror={handle}
     />
 

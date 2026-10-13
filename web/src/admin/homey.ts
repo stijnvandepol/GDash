@@ -1,5 +1,51 @@
 import type { HomeyCapability } from './api';
 import type { Searchable } from './entities';
+import { describeAge } from './status';
+
+/** Where a Homey that sends its data sends it; origin is GDash's own, such as http://192.168.1.2:8420. */
+export function snapshotURL(origin: string): string {
+  return `${origin}/api/homey/snapshot`;
+}
+
+/**
+ * The HomeyScript that sends a Homey's devices and users to GDash, with url
+ * and token filled in. A Homey Pro (Early 2019) may run an older Node.js,
+ * so it stays clear of ?. and ??.
+ */
+export function homeyScript(url: string, token: string): string {
+  return `// Sends every device and who is home to GDash. Run it every minute from a Flow.
+const GDASH_URL = '${url}', TOKEN = '${token}';
+const devs = await Homey.devices.getDevices(), zones = await Homey.zones.getZones();
+let users = {};
+try { users = await Homey.users.getUsers(); } catch (e) {}
+const out = { at: new Date().toISOString(), devices: [], users: [] };
+for (const d of Object.values(devs)) {
+  if (!d.capabilitiesObj) continue;
+  const caps = {};
+  for (const [id, c] of Object.entries(d.capabilitiesObj)) caps[id] = { title: c.title, value: c.value, units: c.units || null };
+  out.devices.push({ id: d.id, name: d.name, zone: zones[d.zone] ? zones[d.zone].name : null, available: d.available !== false, caps: caps });
+}
+for (const u of Object.values(users)) out.users.push({ id: u.id, name: u.name, present: u.present === true, asleep: u.asleep === true });
+const r = await fetch(GDASH_URL, { method: 'PUT', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + TOKEN }, body: JSON.stringify(out) });
+if (!r.ok) throw new Error('GDash ' + r.status);
+return true;`;
+}
+
+/** The screens mark a Homey's data as old this long after its last snapshot (cmd/gdash). */
+const SNAPSHOT_FRESH_MS = 3 * 60_000;
+
+/** Whether the last snapshot, received at updatedAt, is older than the screens accept. */
+export function isSnapshotLate(updatedAt: string | undefined, now = Date.now()): boolean {
+  return updatedAt !== undefined && now > Date.parse(updatedAt) + SNAPSHOT_FRESH_MS;
+}
+
+/** "Last data received 2 minutes ago.", or that nothing arrived yet. */
+export function describeSnapshot(updatedAt: string | undefined, now = Date.now()): string {
+  if (!updatedAt) return 'Nothing received yet. Add the script and its Flow on your Homey.';
+  const ago = describeAge(Math.max(0, Math.round((now - Date.parse(updatedAt)) / 60_000)));
+  const late = isSnapshotLate(updatedAt, now) ? ' That is late; the screens mark Homey values as old. Check the Flow on your Homey.' : '';
+  return `Last data received ${ago}.${late}`;
+}
 
 /** The longest badge label the server accepts (internal/display). */
 export const MAX_BADGE_LABEL = 12;
