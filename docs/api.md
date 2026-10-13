@@ -101,6 +101,7 @@ come from another site (cross-site request forgery protection).
 | `DELETE /api/cameras/{id}` | admin | `204`; Camera widgets that show it say it is not available | `401`, `404` |
 | `POST /api/cameras/{id}/tests` | admin | `200 {contentType, bytes}` after one image, past what is kept | `401`, `404`, `502 fetch_failed` with what went wrong, naming the host but never the address's path, query or a secret |
 | `GET /api/cameras/{id}/image` | admin, or a screen paired with a display that shows the camera now | `200` the latest image, `Cache-Control: no-store`, `Last-Modified` when GDash received it, `X-Image-Stale: true` when the camera failed since | `404` for anyone else and for an unknown camera, `502 camera_unavailable` when the camera has not sent an image yet |
+| `GET /api/now-playing/artwork/{id}` | admin, or a paired screen whose display was sent this cover in its `nowplaying.default` data | `200` the cover (JPEG, PNG, WebP or GIF, at most 2 MB), `Cache-Control: private, max-age=600` | `404`, also for anyone else, a cover of something that no longer plays and one that could not be fetched |
 | `GET /api/cast-devices` | admin | `200 {"devices": [device]}` | `401`, `500 discovery_failed` |
 | `GET /api/displays/{id}/events` | paired screen or admin | `text/event-stream`, `snapshot` events | `401 not_paired`, `404` for an invalid id |
 | `POST /api/pairing-requests` `{displayId}` | no | `201 {code, pollToken, expiresAt}` | `404`, `429 rate_limited` |
@@ -334,6 +335,7 @@ widget for them:
 - holidays `holidays.nl`, rain `rain.default`, weather warnings `warnings.default`
 - Homey `homey.default` (values) and `homey.users` (who is home)
 - the albums `photos.immich` and `photos.synology`
+- Now playing `nowplaying.default`, which GDash pushes itself from the Cast devices
 - custom sources `custom.source.<id>`; a pushed custom source is there from the start, as it is never fetched
 
 Place search sends the typed name to Open-Meteo's geocoding service, which
@@ -538,10 +540,11 @@ allows, overlaps another, lacks a required setting, or has a setting its type do
 | `warnings` | 6x3 | `warnings.default` | `region`: `Groningen`, `Friesland`, `Drenthe`, `Overijssel`, `Flevoland`, `Gelderland`, `Utrecht`, `Noord-Holland`, `Zuid-Holland`, `Zeeland`, `Noord-Brabant`, `Limburg` or `Waddeneilanden`, default the province of the weather location, `announce`: `true` to put a code orange or red warning over every display when it starts, default `false` |
 | `fuel` | 6x4 | `fuel.default` | `place`: a place with `name`, `latitude` and `longitude`, default the weather location, `radius`: 1 to 25 km, default 5, `fuel`: `EURO95` (default), `EURO98`, `DIESEL`, `AUTOGAS` or `CNG`, `maxItems`: 1 to 10, default 5 |
 | `camera` | 4x3 | none: the screen loads `GET /api/cameras/{id}/image` | `camera`: the `id` of a camera (required), `seconds`: 5 to 300 between images, default 10, `fit`: `contain` (default, the whole image) or `cover` (fills the tile) |
+| `nowplaying` | 6x4 | `nowplaying.default` | `devices`: up to 8 Cast device IDs (the 32 hex characters of `GET /api/cast-devices`); absent or empty follows any device. A TV that a display is linked to is never followed. Screens receive only the devices their widgets follow |
 | `custom` | 4x3 | `custom.default` | `source`: the `id` of a custom source (required), `mode`: `value`, `list`, `keyValues` or `badges` (required), `title`: up to 60 characters; value mode: `path` (required), `label` (up to 40), `unit` (up to 12), `decimals` 0 to 6; list mode: `path` of the list and `fields`, 1 to 3 paths read from each item (both required); key-values and badges mode: `pairs`, 1 to 8 `{label, path}` (required); a badge is on when its value is `true`, a number other than 0, or the text `on`, `home`, `yes`, `open` or `true` in any case, and a screen only receives the labels of the badges that are on, as `badges`; `rules`: up to 6, see [Custom APIs](#custom-apis) |
 
 A setting's `kind` is `integer`, `text`, `date`, `calendar`, `camera`, `entities`, `homeyCapabilities`, `homeyUsers`,
-`stop`, `place`, `choice` or `boolean`, or for the Custom widget `customSource`, `path`, `paths`, `pairs` and `rules`;
+`castDevices`, `stop`, `place`, `choice` or `boolean`, or for the Custom widget `customSource`, `path`, `paths`, `pairs` and `rules`;
 `min` and `max` bound an integer, a text's length in characters, or the number of entities or items. A `choice` is one
 of the strings in the setting's `options`; a `boolean` is `true` or `false`. A
 `place` is exactly `{"name": "Oss", "latitude": 51.765, "longitude": 5.518}`: a name of 1 to 100 characters, a latitude
@@ -692,6 +695,16 @@ times and GDash reads them as such. `delayMinutes` is how many whole minutes `ex
 `cancelled` is true for a cancelled trip; both are left out when zero or false. A stop without departures has an empty
 list. Vehicles that have left, and journeys that end at the stop, are not in the list; the screen counts the minutes to
 `expected` itself and drops a vehicle when it has gone.
+
+**now playing data (`nowplaying.default`):** maps the Cast device IDs that a screen's own widgets follow (all of them
+when one follows any device) to what plays there, for the devices that play, pause or buffer something:
+`{"e542…": {"name": "Kitchen speaker", "group": true, "app": "Spotify", "title": "One More Time", "artist": "Daft Punk", "album": "Discovery", "image": "/api/now-playing/artwork/0123…", "state": "playing", "position": 63.5, "duration": 320.4, "at": "2026-10-13T08:00:00Z"}}`.
+`state` is `playing`, `paused` or `buffering`; `position` and `duration` are seconds, and `position` was read at `at`,
+so a playing track has moved on by the time since then. `duration` is 0 for a live stream. `artist` is the artist of a
+track, the series of an episode or the subtitle (such as a YouTube channel); `group` is only present for a speaker
+group, and `album` and `image` only when the app gives them. `image` is a GDash address, never the app's own. The
+entry is pushed by GDash itself, which follows the devices over the Cast protocol without controlling them; an empty
+object means that nothing plays.
 
 **device:** `{"id": "e542…", "name": "Living room TV", "model": "Chromecast HD", "addr": "192.168.1.50:8009", "hasScreen": true}`
 

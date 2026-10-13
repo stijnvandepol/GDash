@@ -62,6 +62,7 @@ survive the internet dropping out. GDash is made for exactly that.
 | Homey | Sensors and switches, and who is home as badges with initials | Your Homey Pro, read only, with an API key |
 | News | Headlines from up to five RSS or Atom feeds | Any feed (default: NOS) |
 | Photos | A slideshow of photos you upload, or of an album of Immich or Synology Photos | Stored on your server, [Immich](https://immich.app) with an API key, or a Synology Photos share link |
+| Now playing | What plays on your Cast speakers, groups and Nest Hubs, with the cover and progress | The devices themselves, read only |
 | Note and countdown | A short text, or the days until a date | — |
 | Holidays | The coming school holidays of your region and the public holidays (Netherlands) | [Rijksoverheid open data](https://opendata.rijksoverheid.nl), no key; public holidays computed |
 | Custom API | A value, a list or labelled values from any JSON API, with rules | Any API you add: open, or with a key, token or password |

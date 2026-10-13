@@ -39,6 +39,16 @@ the format follows [Keep a Changelog](https://keepachangelog.com).
   a warning sign. With **Announce** on, a code orange or red warning that
   starts is shown over every screen for five minutes, once per warning; see
   [docs/guide.md](docs/guide.md#weather-warnings).
+- A **Now playing** widget shows what plays on the other Cast devices in the
+  house (speakers, speaker groups, Nest Hubs): the device, the app, the
+  title, artist and album, the cover and how far the track is, with the
+  most recently started one large and the others in a list. It follows any
+  device or up to eight chosen ones, never a TV that GDash shows a
+  dashboard on, and only reads: it never starts, pauses or stops anything.
+  Covers are fetched by the server and served at
+  `GET /api/now-playing/artwork/{id}` only to the screens that show them.
+  The TV shows what plays in the house; see
+  [docs/guide.md](docs/guide.md#now-playing).
 - A `boolean` kind for widget settings, shown as a checkbox in the editor.
 - `GDASH_TEST_UPSTREAM` lets the end-to-end tests stand in for Buienradar,
   Open-Meteo's rain forecast and MeteoAlarm on the loopback address.

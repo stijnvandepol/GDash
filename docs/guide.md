@@ -627,6 +627,51 @@ Good to know:
 - Warnings for the sea, the IJsselmeer and the harbours are left out: they are
   for shipping.
 
+## Now playing
+
+The Now playing widget shows what plays on the other Cast devices in the
+house: speakers such as a Nest Mini or Nest Audio, speaker groups, Nest Hubs
+and Chromecasts that are not a GDash display. For each it shows the device,
+the app (Spotify, YouTube Music, Plex, ...), the title, the artist or album,
+the album art and how far the track is. It needs no account: GDash asks the
+devices themselves, on the home network.
+
+1. Add a **Now playing** widget to a dashboard and select it.
+2. Under **Cast devices**, keep **Any device that is playing**, or choose
+   **Only these devices** and tick up to eight speakers or groups. GDash
+   searches the network for them when the settings open; **Search again**
+   looks once more.
+
+The device that started playing most recently gets a large card: the cover
+on the left, the title, artist and album on the right, and a thin line that
+shows how far the track is, which the screen moves on by itself every
+second. A paused device shows a pause mark. Other devices that play are
+listed below the card, as many as fit. A long title shrinks, and ends in an
+ellipsis when it still does not fit. When nothing plays, the widget says
+"Nothing playing".
+
+Good to know:
+
+- **The TV shows what plays in the house.** Everyone who can see the screen
+  sees which song, video or podcast plays in the bedroom. Choose only the
+  devices that the room may see, or leave the widget off a dashboard that
+  guests see. A screen only receives the devices that its own widgets follow.
+- **GDash only reads.** It never starts, pauses or stops anything on these
+  devices. It keeps a connection open to each device that a widget follows,
+  as the Google Home app and Home Assistant do, and asks again every 30
+  seconds. When no dashboard has the widget, it closes them.
+- **The TVs that GDash shows a dashboard on are left alone.** The editor
+  cannot choose them, and "any device" skips them.
+- A speaker group shows once: the speakers in a playing group that play the
+  same song are not listed again.
+- The cover comes from the address the app gives (Spotify's or YouTube's
+  servers, or your Plex server). GDash fetches it, at most 2 MB and only
+  JPEG, PNG, WebP or GIF, keeps it for ten minutes and gives it only to the
+  screens that show it. When it cannot be fetched, the widget shows a note
+  instead. The address itself never reaches a screen.
+- Some apps say less than others: a radio stream has no duration, so the
+  line is replaced by "Live", and an app that gives no cover shows the note.
+
 ## Custom APIs
 
 The Custom widget shows data from any API that answers with JSON: a public
