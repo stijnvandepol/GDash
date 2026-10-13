@@ -6,6 +6,7 @@
   // way back to the widgets to add, its name and removal, the settings below.
   let {
     label,
+    widgetType,
     type,
     settings,
     onchange,
@@ -13,6 +14,8 @@
     onback,
   }: {
     label: string;
+    /** The widget's type id, such as news. */
+    widgetType: string;
     /** Undefined for a widget type this server does not know. */
     type: WidgetType | undefined;
     settings: Record<string, unknown>;
@@ -31,7 +34,7 @@
   </div>
   {#if type}
     <div class="settings">
-      <WidgetSettings {type} {settings} {onchange} />
+      <WidgetSettings {widgetType} {type} {settings} {onchange} />
     </div>
   {/if}
 </div>

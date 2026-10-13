@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { WIDGETS, defaultSettings, isoDate, paletteGroups, placeSetting } from './widgetSettings';
+import { WIDGETS, defaultSettings, isoDate, paletteGroups, placeSetting, settingLabel } from './widgetSettings';
 import type { WidgetType } from './api';
 
 const today = new Date(2026, 9, 9);
@@ -113,5 +113,19 @@ describe('paletteGroups', () => {
       ['Time & date', ['Clock']],
       ['Other', ['aquarium']],
     ]);
+  });
+});
+
+describe('settingLabel', () => {
+  it('words a count after what the widget shows', () => {
+    expect(settingLabel('news', 'maxItems')).toBe('Headlines at most');
+    expect(settingLabel('calendar', 'maxItems')).toBe('Appointments at most');
+    expect(settingLabel('forecast', 'days')).toBe('Days ahead');
+  });
+
+  it('falls back to the general label, then to the key', () => {
+    expect(settingLabel('aquarium', 'maxItems')).toBe('How many at most');
+    expect(settingLabel('fuel', 'radius')).toBe('Radius (km)');
+    expect(settingLabel('aquarium', 'depth')).toBe('depth');
   });
 });

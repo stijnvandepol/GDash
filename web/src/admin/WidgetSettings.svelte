@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { DepartureStop, Place, WidgetType } from './api';
-  import { FUEL_LABELS, SETTING_LABELS, placeSetting } from './widgetSettings';
+  import { FUEL_LABELS, placeSetting, settingLabel } from './widgetSettings';
   import EntityPicker from './EntityPicker.svelte';
   import HomeyCapabilityPicker from './HomeyCapabilityPicker.svelte';
   import HomeyUserPicker from './HomeyUserPicker.svelte';
@@ -14,10 +14,13 @@
   const SINGLE_LINE_MAX = 60;
 
   let {
+    widgetType,
     type,
     settings,
     onchange,
   }: {
+    /** The widget's type id, such as news, for wording the labels. */
+    widgetType: string;
     type: WidgetType;
     settings: Record<string, unknown>;
     /** Called with the full new settings after every edit. */
@@ -90,7 +93,7 @@
     <PlacePicker name={placeName(key)} onpick={(place) => pickPlace(key, place)} onclear={() => set(key, undefined)} />
   {:else}
   <label class="inline-label">
-    {SETTING_LABELS[key] ?? key}
+    {settingLabel(widgetType, key)}
     {#if rule.kind === 'integer'}
       <input
         type="number"

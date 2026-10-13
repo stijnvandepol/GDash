@@ -83,7 +83,7 @@ export function paletteGroups(types: string[], query = ''): PaletteGroup[] {
 }
 
 export const SETTING_LABELS: Record<string, string> = {
-  maxItems: 'Items',
+  maxItems: 'How many at most',
   days: 'Days',
   text: 'Text',
   label: 'Label',
@@ -94,6 +94,22 @@ export const SETTING_LABELS: Record<string, string> = {
   radius: 'Radius (km)',
   fuel: 'Fuel',
 };
+
+// What "how many" counts, per widget: a setting named after what the
+// household sees on the TV rather than after the field.
+const ITEM_NAMES: Record<string, string> = {
+  calendar: 'Appointments',
+  news: 'Headlines',
+  departures: 'Departures',
+  fuel: 'Petrol stations',
+};
+
+/** The label of a setting in the editor, worded for the widget it belongs to. */
+export function settingLabel(widgetType: string, key: string): string {
+  if (key === 'maxItems' && ITEM_NAMES[widgetType]) return `${ITEM_NAMES[widgetType]} at most`;
+  if (key === 'days' && widgetType === 'forecast') return 'Days ahead';
+  return SETTING_LABELS[key] ?? key;
+}
 
 /** Names of the fuels in the editor, by the ANWB's codes. */
 export const FUEL_LABELS: Record<string, string> = {

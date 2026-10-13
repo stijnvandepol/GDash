@@ -245,6 +245,7 @@
         {#key selected}
           <WidgetInspector
             label={LABELS[selectedWidget.type] ?? selectedWidget.type}
+            widgetType={selectedWidget.type}
             type={selectedType}
             settings={selectedWidget.settings ?? {}}
             onchange={setSettings}
