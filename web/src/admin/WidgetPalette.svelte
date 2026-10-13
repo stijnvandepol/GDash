@@ -1,27 +1,31 @@
 <script lang="ts">
   import Icon from './Icon.svelte';
-  import { paletteGroups } from './widgetSettings';
+  import { paletteGroups, type PaletteEntry, type PaletteItem } from './widgetSettings';
 
   // The widgets to add, beside the canvas: a search on top, then the
-  // widget types by category. A click or Enter adds one.
+  // widget types by category, with the devices and services that are set
+  // up as widgets of their own. A click or Enter adds one.
   let {
     types,
+    extra = [],
     onadd,
   }: {
     /** The widget types this server has. */
     types: string[];
-    onadd: (type: string) => void;
+    /** Entries beside the types, such as each preset that is set up. */
+    extra?: PaletteEntry[];
+    onadd: (item: PaletteItem) => void;
   } = $props();
 
   let query = $state('');
   let list: HTMLDivElement;
 
-  const groups = $derived(paletteGroups(types, query));
+  const groups = $derived(paletteGroups(types, query, extra));
   const count = $derived(groups.reduce((n, g) => n + g.items.length, 0));
 
-  function add(type: string) {
+  function add(item: PaletteItem) {
     query = '';
-    onadd(type);
+    onadd(item);
   }
 
   function items(): HTMLButtonElement[] {
@@ -38,7 +42,7 @@
     } else if (event.key === 'Enter' && query.trim() !== '') {
       event.preventDefault();
       const first = groups[0]?.items[0];
-      if (first) add(first.type);
+      if (first) add(first);
     }
   }
 
@@ -78,19 +82,19 @@
       <section class="group" aria-label={group.label}>
         <h3 class="group-label">{group.label}</h3>
         <ul>
-          {#each group.items as item (item.type)}
+          {#each group.items as item (item.key)}
             <li>
               <button
                 type="button"
                 class="item"
-                aria-labelledby="palette-{item.type}-name"
-                aria-describedby={item.description ? `palette-${item.type}-text` : undefined}
-                onclick={() => add(item.type)}
+                aria-labelledby="palette-{item.key}-name"
+                aria-describedby={item.description ? `palette-${item.key}-text` : undefined}
+                onclick={() => add(item)}
               >
                 <span class="glyph"><Icon name={item.icon} size={18} /></span>
                 <span class="text">
-                  <span class="name" id="palette-{item.type}-name">{item.label}</span>
-                  {#if item.description}<span class="description" id="palette-{item.type}-text">{item.description}</span>{/if}
+                  <span class="name" id="palette-{item.key}-name">{item.label}</span>
+                  {#if item.description}<span class="description" id="palette-{item.key}-text">{item.description}</span>{/if}
                 </span>
                 <span class="plus" aria-hidden="true">+</span>
               </button>

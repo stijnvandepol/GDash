@@ -2,8 +2,8 @@
   "id": "pi-hole",
   "name": "Pi-hole",
   "description": "DNS queries and how many were blocked, from Pi-hole 6",
-  "category": "home",
-  "icon": "shield",
+  "category": "network",
+  "icon": "funnel",
   "tags": ["local"],
   "docs": "https://docs.pi-hole.net/api/auth/",
   "comment": "Pi-hole 6 (FTL v6 API). POST /api/auth with {\"password\"} answers {\"session\": {\"sid\", \"validity\"}} (docs.pi-hole.net/api/auth); every other request carries the sid in X-FTL-SID. GET /api/stats/summary answers queries.{total, blocked, percent_blocked, unique_domains, forwarded, cached}, clients.{active, total} and gravity.{domains_being_blocked, last_update}, from the stats.yaml spec in pi-hole/FTL (src/api/docs/content/specs). Pi-hole 5 and older have another API and are not covered. An app password (Settings, Web interface / API) works instead of the login password (docs.pi-hole.net/api/auth).",
@@ -56,5 +56,30 @@
     { "name": "Active clients", "path": "clients.active", "decimals": 0 },
     { "name": "Domains on the blocklist", "path": "gravity.domains_being_blocked", "decimals": 0 }
   ],
-  "lists": []
+  "lists": [],
+  "instance": "server",
+  "views": [
+    {
+      "id": "blocked", "name": "Blocked", "mode": "keyValues", "title": "Pi-hole", "w": 5, "h": 4,
+      "values": [
+        { "name": "Blocked" },
+        { "name": "Blocked share", "label": "Share" }
+      ]
+    },
+    {
+      "id": "share", "name": "Blocked share", "mode": "value", "title": "Blocked by Pi-hole", "w": 5, "h": 4,
+      "values": [
+        { "name": "Blocked share" }
+      ]
+    },
+    {
+      "id": "overview", "name": "Overview", "mode": "keyValues", "title": "Pi-hole", "w": 6, "h": 5,
+      "values": [
+        { "name": "Queries" },
+        { "name": "Blocked" },
+        { "name": "Blocked share", "label": "Share" },
+        { "name": "Active clients", "label": "Clients" }
+      ]
+    }
+  ]
 }

@@ -3,7 +3,7 @@
   "name": "HomeWizard P1 meter",
   "description": "Power now, electricity in and out, and gas, from the meter on your smart meter",
   "category": "energy",
-  "icon": "bolt",
+  "icon": "meter",
   "tags": ["local", "no-key", "nl"],
   "docs": "https://api-documentation.homewizard.com/docs/v1/measurement",
   "comment": "API v1 over plain HTTP. Every field is optional and left out when the smart meter does not send it. total_gas_m3 is the older top-level gas field; whether newer firmware only reports gas under external[] is unverified. HomeWizard will phase out v1 in favour of v2 (HTTPS with a token).",
@@ -43,11 +43,25 @@
     { "name": "Gas", "path": "total_gas_m3", "unit": "m³", "decimals": 2 }
   ],
   "lists": [],
-  "rule": {
-    "for": "Power now",
-    "summary": "show Power now in the warning colour above 3000 W",
-    "when": "value > 3000",
-    "tone": "warn",
-    "message": "Using a lot of power"
-  }
+  "instance": "meter",
+  "views": [
+    {
+      "id": "power", "name": "Power now", "mode": "value", "title": "Power now", "w": 5, "h": 4,
+      "values": [
+        { "name": "Power now" }
+      ],
+      "rules": [
+        { "when": "number(value) < 0", "tone": "ok", "message": "Exporting to the grid" },
+        { "when": "number(value) > 3000", "tone": "warn", "message": "Using a lot of power" }
+      ]
+    },
+    {
+      "id": "readings", "name": "Meter readings", "mode": "keyValues", "title": "Meter readings", "w": 6, "h": 4,
+      "values": [
+        { "name": "Electricity in" },
+        { "name": "Electricity out" },
+        { "name": "Gas" }
+      ]
+    }
+  ]
 }

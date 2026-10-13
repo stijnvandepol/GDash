@@ -11,7 +11,7 @@ import {
   type IntegrationContext,
   type IntegrationState,
 } from './integrations';
-import { PRESETS, sourcesFrom, type Preset } from './presets';
+import { PRESETS, madeFrom, ownSources, sourcesFrom, type Preset } from './presets';
 import ApiTokenSetting from './ApiTokenSetting.svelte';
 import CameraSetting from './CameraSetting.svelte';
 import CustomSourceSetting from './CustomSourceSetting.svelte';
@@ -320,13 +320,15 @@ const SERVICES: Integration[] = [
   {
     id: 'custom',
     name: 'Custom APIs',
-    description: 'Any API that answers with JSON, or JSON your own system sends',
+    description: 'Your own JSON API, fetched by GDash or sent by your own system',
     keywords: 'json rest http webhook node-red values',
     category: 'own',
     icon: 'braces',
     tags: ['push'],
     kind: 'service',
-    state: ({ sources, status }) => {
+    state: (ctx) => {
+      const { status } = ctx;
+      const sources = ownSources(ctx.sources);
       if (sources.length === 0) return NOT_SET_UP;
       const unreadable = sources.find((s) => s.unreadable);
       if (unreadable) return { kind: 'problem', detail: `The secrets of ${unreadable.name} cannot be read on this server. Edit it.` };
@@ -548,25 +550,43 @@ const BUILT_IN: Integration[] = [
   },
 ];
 
+/**
+ * A preset's card: what its setups say, one or several (two meters). A
+ * custom API that looks made from the preset before sources kept their
+ * preset is mentioned, so it can be moved under the card.
+ */
+export function presetState(preset: Preset, { sources, status }: Pick<IntegrationContext, 'sources' | 'status'>): IntegrationState {
+  const made = madeFrom(preset, sources);
+  if (made.length === 0) {
+    const earlier = sourcesFrom(preset, sources)[0];
+    return earlier ? { kind: 'idle', detail: `Not set up · ${earlier.name} under Custom APIs looks like one` } : NOT_SET_UP;
+  }
+  const unreadable = made.find((s) => s.unreadable);
+  if (unreadable) return { kind: 'problem', detail: `The secrets of ${unreadable.name} cannot be read on this server. Enter them again.` };
+  const failing = made.find((s) => status[`custom.source.${s.id}`]?.failing);
+  if (failing) {
+    const st = sourceState(status[`custom.source.${failing.id}`], NOT_FETCHED);
+    return { kind: 'problem', detail: made.length > 1 ? `${failing.name}: ${st.detail}` : st.detail };
+  }
+  if (made.length === 1) {
+    const st = sourceState(status[`custom.source.${made[0]!.id}`], NOT_FETCHED);
+    return { ...st, detail: `${made[0]!.name}. ${st.detail}` };
+  }
+  return { kind: 'connected', detail: `${count(made.length, preset.instance, `${preset.instance}s`)}: ${made.map((s) => s.name).join(', ')}.` };
+}
+
 function presetIntegration(preset: Preset): Integration {
   return {
     id: `preset-${preset.id}`,
     name: preset.name,
     description: preset.description,
-    keywords: 'preset custom api',
     category: preset.category,
     icon: preset.icon,
     tags: preset.tags,
-    kind: 'preset',
+    kind: 'service',
     requires: { widget: 'custom' },
-    state: ({ sources, status }) => {
-      const made = sourcesFrom(preset, sources)[0];
-      if (!made) return { kind: 'idle', detail: 'Preset · Custom API' };
-      const st = sourceState(status[`custom.source.${made.id}`], NOT_FETCHED);
-      return { ...st, detail: `As ${made.name}. ${st.detail}` };
-    },
-    panel: (ctx) =>
-      view(PresetSetup, { preset, made: sourcesFrom(preset, ctx.sources), onchanged: ctx.onchanged, onopen: ctx.onopen, onerror: ctx.onerror }),
+    state: (ctx) => presetState(preset, ctx),
+    panel: (ctx) => view(PresetSetup, { preset, sources: ctx.sources, status: ctx.status, onchanged: ctx.onchanged, onerror: ctx.onerror }),
   };
 }
 

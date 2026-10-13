@@ -1,11 +1,16 @@
 import type { CustomAuthKind, CustomHeader, CustomLogin, CustomSource, CustomSourceInput, NamedList, NamedValue } from './api';
+import type { Rule } from './customWidget';
 import type { IconName } from './Icon.svelte';
 import type { CategoryId, Tag } from './integrations';
+import { resolvePath } from './jsonPath';
 
-// Presets for a custom API: reviewable JSON files in ./presets, one per
-// service, that fill in a new custom API with its address, authentication,
-// refresh and named values. The address has placeholders, such as
-// http://{ip}/api/v1/data, that the household fills in.
+// Presets: reviewable JSON files in ./presets, one per device or service,
+// that the household sees as integrations of their own. Underneath, each
+// setup is a custom API with the preset's address, authentication, refresh
+// and named values, and a widget is a Custom widget made from one of the
+// preset's views. The address has placeholders, such as
+// http://{ip}/api/v1/data, that the household fills in. A source keeps the
+// preset's id, so the page finds the sources of each preset.
 
 /** What a placeholder takes, and so how it is checked and put in the address. */
 export type PlaceholderKind = 'host' | 'origin' | 'id' | 'text';
@@ -47,11 +52,31 @@ export interface Preset {
   };
   values: NamedValue[];
   lists: NamedList[];
+  /** What one setup is, lowercase and singular, such as meter or server: "Add another meter". */
+  instance: string;
+  /** The widgets it offers; the first is the one a new widget starts as. */
+  views: PresetView[];
+}
+
+/** A ready-made Custom widget of a preset. */
+export interface PresetView {
+  id: string;
+  /** What the widget's settings call it, such as Power now. */
+  name: string;
+  mode: 'value' | 'keyValues' | 'list' | 'badges';
+  title?: string;
   /**
-   * A rule to suggest for a widget that shows the named value or list in
-   * for: summary in words, the rest as the widget editor stores it.
+   * The named values it shows, by name, with the label each gets: value
+   * mode shows the first, large, with its label under it.
    */
-  rule?: { for: string; summary: string; when: string; tone: string; message: string; hide?: boolean };
+  values?: { name: string; label?: string }[];
+  /** The named list it shows, by name, in list mode. */
+  list?: string;
+  /** Its size on the dashboard's grid, at least the Custom widget's smallest. */
+  w: number;
+  h: number;
+  /** Rules as the widget stores them, with conditions in internal/custom's language. */
+  rules?: Rule[];
 }
 
 const PLACEHOLDER = /\{([a-z][a-zA-Z0-9]*)\}/g;
@@ -105,6 +130,29 @@ export function fillAddress(preset: Preset, answers: Record<string, string>, add
   });
 }
 
+/** The address's placeholders as filled in for a source of the preset, or null for an address of another shape. */
+export function answersFrom(preset: Preset, url: string): Record<string, string> | null {
+  const keys: string[] = [];
+  const pattern = preset.source.url
+    .split(PLACEHOLDER)
+    .map((part, i) => {
+      if (i % 2 === 0) return part.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      keys.push(part);
+      return '(.+?)';
+    })
+    .join('');
+  const match = new RegExp(`^${pattern}$`).exec(url);
+  if (!match) return null;
+  const kinds = new Map(preset.placeholders.map((p) => [p.key, p.kind]));
+  const answers: Record<string, string> = {};
+  keys.forEach((key, i) => {
+    const raw = match[i + 1]!;
+    const kind = kinds.get(key);
+    answers[key] = kind === 'host' || kind === 'origin' ? raw : decodeURIComponent(raw);
+  });
+  return answers;
+}
+
 /** What the household fills in: a name, the placeholders, and the key or the user name and password. */
 export interface PresetAnswers {
   name: string;
@@ -112,10 +160,11 @@ export interface PresetAnswers {
   secret: string;
   /** The user name, for basic authentication. */
   user: string;
+  intervalSeconds?: number;
 }
 
-/** The new custom API a preset makes with the household's answers. */
-export function presetInput(preset: Preset, { name, answers, secret, user }: PresetAnswers): CustomSourceInput {
+/** The custom API a preset makes with the household's answers; it keeps the preset's id. */
+export function presetInput(preset: Preset, { name, answers, secret, user, intervalSeconds }: PresetAnswers): CustomSourceInput {
   const { source } = preset;
   const authName = source.auth.kind === 'basic' ? user.trim() : source.auth.name;
   const login = source.auth.login;
@@ -132,15 +181,32 @@ export function presetInput(preset: Preset, { name, answers, secret, user }: Pre
       ...(source.auth.kind === 'login' && login ? { login: { ...login, url: fillAddress(preset, answers, login.url) } } : {}),
     },
     headers: source.headers.map((h) => ({ ...h })),
-    intervalSeconds: source.intervalSeconds,
+    intervalSeconds: intervalSeconds ?? source.intervalSeconds,
     sample: source.sample,
+    preset: preset.id,
   };
 }
 
+/** The sources that were set up with this preset. */
+export function madeFrom(preset: Preset, sources: CustomSource[]): CustomSource[] {
+  return sources.filter((s) => s.preset === preset.id);
+}
+
+/** The household's own APIs: the sources that no preset made. */
+export function ownSources(sources: CustomSource[]): CustomSource[] {
+  return sources.filter((s) => !s.preset);
+}
+
+/** The preset a source was set up with, if any this web interface knows. */
+export function presetOf(source: Pick<CustomSource, 'preset'> | undefined): Preset | undefined {
+  return source?.preset ? PRESETS.find((p) => p.id === source.preset) : undefined;
+}
+
 /**
- * The custom APIs that were made from this preset: their address has its
- * shape and they name the same paths. Presets for devices with one API,
- * such as the HomeWizard meters, share an address and differ in values.
+ * Own APIs that look made from this preset before sources kept their
+ * preset: their address has its shape and they name the same paths.
+ * Presets for devices with one API, such as the HomeWizard meters, share
+ * an address and differ in values.
  */
 export function sourcesFrom(preset: Preset, sources: CustomSource[]): CustomSource[] {
   const pattern = preset.source.url
@@ -149,7 +215,23 @@ export function sourcesFrom(preset: Preset, sources: CustomSource[]): CustomSour
     .join('');
   const address = new RegExp(`^${pattern}$`);
   const paths = namedPaths(preset);
-  return sources.filter((s) => s.mode === 'fetch' && address.test(s.url) && namedPaths(s) === paths);
+  return ownSources(sources).filter((s) => s.mode === 'fetch' && address.test(s.url) && namedPaths(s) === paths);
+}
+
+/** What a named value says in an answer, with its unit, for the setup's test. */
+export function shownValue(data: unknown, value: NamedValue): string {
+  const { found, value: v } = resolvePath(data, value.path);
+  if (!found) return 'Not in the answer';
+  const text = typeof v === 'string' ? v : (JSON.stringify(v) ?? 'null');
+  const clipped = text.length > 60 ? `${text.slice(0, 59)}…` : text;
+  return value.unit && typeof v === 'number' ? `${clipped} ${value.unit}` : clipped;
+}
+
+/** How many items a named list has in an answer. */
+export function shownList(data: unknown, list: NamedList): string {
+  const { found, value } = resolvePath(data, list.path);
+  if (!found || !Array.isArray(value)) return 'Not in the answer';
+  return value.length === 1 ? '1 item' : `${value.length} items`;
 }
 
 /** The paths of the named values and lists, as one comparable string. */

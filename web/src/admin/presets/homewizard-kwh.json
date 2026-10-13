@@ -3,7 +3,7 @@
   "name": "HomeWizard kWh meter",
   "description": "Power and energy of one group or device, such as solar panels or a heat pump",
   "category": "energy",
-  "icon": "bolt",
+  "icon": "socket",
   "tags": ["local", "no-key", "nl"],
   "docs": "https://api-documentation.homewizard.com/docs/v1/measurement",
   "comment": "API v1 over plain HTTP, the same endpoint as the P1 meter with the kWh meter's fields. The field names are from the documentation; the numbers in the sample are illustrative.",
@@ -37,5 +37,24 @@
     { "name": "Energy in", "path": "total_power_import_kwh", "unit": "kWh", "decimals": 1 },
     { "name": "Energy out", "path": "total_power_export_kwh", "unit": "kWh", "decimals": 1 }
   ],
-  "lists": []
+  "lists": [],
+  "instance": "meter",
+  "views": [
+    {
+      "id": "power", "name": "Power now", "mode": "value", "title": "Power now", "w": 5, "h": 4,
+      "values": [
+        { "name": "Power" }
+      ],
+      "rules": [
+        { "when": "number(value) < 0", "tone": "ok", "message": "Returning to the grid" }
+      ]
+    },
+    {
+      "id": "readings", "name": "Meter readings", "mode": "keyValues", "title": "Meter readings", "w": 6, "h": 4,
+      "values": [
+        { "name": "Energy in" },
+        { "name": "Energy out" }
+      ]
+    }
+  ]
 }

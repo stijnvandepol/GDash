@@ -1,5 +1,7 @@
 <script lang="ts">
-  import type { DepartureStop, Place, WidgetType } from './api';
+  import type { CustomSource, DepartureStop, Place, WidgetType } from './api';
+  import { presetWidget } from './presetWidget';
+  import PresetWidgetSettings from './PresetWidgetSettings.svelte';
   import { CHOICE_LABELS, CHOICE_UNSET, placeSetting, settingLabel } from './widgetSettings';
   import EntityPicker from './EntityPicker.svelte';
   import HomeyCapabilityPicker from './HomeyCapabilityPicker.svelte';
@@ -21,12 +23,15 @@
     widgetType,
     type,
     settings,
+    sources,
     onchange,
   }: {
     /** The widget's type id, such as news, for wording the labels. */
     widgetType: string;
     type: WidgetType;
     settings: Record<string, unknown>;
+    /** The custom sources, null while they load. */
+    sources: CustomSource[] | null;
     /** Called with the full new settings after every edit. */
     onchange: (settings: Record<string, unknown>) => void;
   } = $props();
@@ -42,8 +47,10 @@
       .sort((a, b) => Number(isWhere(b)) - Number(isWhere(a))),
   );
 
-  // The Custom widget's settings depend on each other, so it has its own form.
+  // The Custom widget's settings depend on each other, so it has its own
+  // form; one that shows a device or service with a preset has the preset's.
   const isCustom = $derived(type.settings.source?.kind === 'customSource');
+  const preset = $derived(isCustom && sources ? presetWidget(settings, sources) : undefined);
 
   function pickStop(stop: DepartureStop) {
     onchange({ ...settings, stop: stop.code, stopName: stop.name });
@@ -80,7 +87,11 @@
   }
 </script>
 
-{#if isCustom}
+{#if isCustom && sources === null}
+  <p class="small muted" role="status">Loading…</p>
+{:else if preset}
+  <PresetWidgetSettings preset={preset.preset} sources={preset.sources} {settings} {onchange} />
+{:else if isCustom}
   <CustomWidgetSettings {settings} {onchange} />
 {:else if type.settings.roads?.kind === 'roads'}
   <TrafficWidgetSettings {settings} {onchange} />

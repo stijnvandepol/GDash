@@ -96,11 +96,12 @@ test('the Pi-hole preset logs in with the password and names its values', async 
   const setup = await openIntegration(page, 'Pi-hole');
   await setup.getByRole('textbox', { name: /^Address of Pi-hole/ }).fill(piHoleUrl);
   await setup.getByRole('textbox', { name: /^Password/ }).fill(PASSWORD);
-  await setup.getByRole('button', { name: 'Add Pi-hole' }).click();
-  await expect(setup).toContainText('Pi-hole is added as a custom API with 5 values.');
-  // GDash logs in and asks Pi-hole at once.
+  // Test logs in and asks Pi-hole before anything is saved.
+  await setup.getByRole('button', { name: 'Test', exact: true }).click();
   await expect(setup.getByText('Pi-hole answered.')).toBeVisible({ timeout: 15_000 });
   await expect(setup.getByRole('listitem').filter({ hasText: 'Blocked share' })).toContainText('10.6 %');
+  await setup.getByRole('button', { name: 'Save', exact: true }).click();
+  await expect(setup.getByRole('list', { name: 'Pi-hole set up' })).toContainText('Connected');
 
   const listed = await (await page.request.get('/api/custom-sources')).text();
   expect(listed).not.toContain(PASSWORD);

@@ -47,12 +47,13 @@
       ]
     }
   ],
-  "rule": {
-    "for": "Now playing",
-    "summary": "hide the sessions where nothing plays",
-    "when": "row.NowPlayingItem == null",
-    "tone": "",
-    "message": "",
-    "hide": true
-  }
+  "instance": "server",
+  "views": [
+    {
+      "id": "playing", "name": "Now playing", "mode": "list", "title": "Now playing", "w": 8, "h": 4, "list": "Now playing",
+      "rules": [
+        { "when": "row.NowPlayingItem == null", "hide": true }
+      ]
+    }
+  ]
 }

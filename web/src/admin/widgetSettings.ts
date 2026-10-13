@@ -41,7 +41,7 @@ export const WIDGETS: Record<string, WidgetInfo> = {
   homeassistant: { label: 'Home Assistant', category: 'home', description: 'Sensors and switches at home', icon: 'house' },
   energyprice: { label: 'Energy price', category: 'home', description: "Today's electricity price", icon: 'bolt' },
   solar: { label: 'Solar forecast', category: 'home', description: 'Expected solar production today', icon: 'solar' },
-  custom: { label: 'Custom API', category: 'home', description: 'Values from an API under Integrations', icon: 'braces' },
+  custom: { label: 'Custom API', category: 'home', description: 'Your own JSON API', icon: 'braces' },
   homey: { label: 'Homey', category: 'home', description: 'Device values from your Homey', icon: 'house' },
   homeypresence: { label: 'Who’s home (Homey)', category: 'home', description: 'Who is home, from your Homey', icon: 'people' },
   camera: { label: 'Camera', category: 'home', description: 'A still from a camera at home', icon: 'camera' },
@@ -61,10 +61,19 @@ export const WIDGETS: Record<string, WidgetInfo> = {
 export const WIDGET_LABELS: Record<string, string> = Object.fromEntries(Object.entries(WIDGETS).map(([type, w]) => [type, w.label]));
 
 export interface PaletteItem {
+  /** Unique in the palette: the widget type, or preset-<id> for a preset's widget. */
+  key: string;
   type: string;
   label: string;
   description: string;
   icon: IconName;
+  /** The preset whose widget this is, made as a Custom widget. */
+  preset?: string;
+}
+
+/** An entry beside the widget types, such as a preset's widget, with where it goes. */
+export interface PaletteEntry extends PaletteItem {
+  category: WidgetCategory;
 }
 
 export interface PaletteGroup {
@@ -73,19 +82,27 @@ export interface PaletteGroup {
 }
 
 /**
- * The palette for the types this server has, narrowed to those whose name
- * or description holds every word of the search. Empty groups are left out.
+ * The palette for the types this server has, with the extra entries after
+ * the types of their category, narrowed to those whose name or description
+ * holds every word of the search. Empty groups are left out.
  */
-export function paletteGroups(types: string[], query = ''): PaletteGroup[] {
+export function paletteGroups(types: string[], query = '', extra: PaletteEntry[] = []): PaletteGroup[] {
   const words = query.toLowerCase().split(/\s+/).filter(Boolean);
   const matches = (item: PaletteItem) => words.every((word) => `${item.label} ${item.description}`.toLowerCase().includes(word));
   const item = (type: string): PaletteItem => {
     const w = WIDGETS[type];
-    return { type, label: w?.label ?? type, description: w?.description ?? '', icon: w?.icon ?? 'widget' };
+    return { key: type, type, label: w?.label ?? type, description: w?.description ?? '', icon: w?.icon ?? 'widget' };
   };
   const known = Object.keys(WIDGETS).filter((type) => types.includes(type));
+  const entries = extra.filter((e) => types.includes(e.type)).map(({ category, ...entry }) => ({ category, entry }));
   const groups: PaletteGroup[] = [
-    ...WIDGET_CATEGORIES.map((c) => ({ label: c.label, items: known.filter((type) => WIDGETS[type]!.category === c.id).map(item) })),
+    ...WIDGET_CATEGORIES.map((c) => ({
+      label: c.label,
+      items: [
+        ...known.filter((type) => WIDGETS[type]!.category === c.id).map(item),
+        ...entries.filter((e) => e.category === c.id).map((e) => e.entry),
+      ],
+    })),
     { label: 'Other', items: types.filter((type) => !WIDGETS[type]).map(item) },
   ];
   return groups.map((g) => ({ ...g, items: g.items.filter(matches) })).filter((g) => g.items.length > 0);

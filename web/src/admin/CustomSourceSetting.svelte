@@ -9,6 +9,7 @@
   import CustomSourceForm from './CustomSourceForm.svelte';
   import CustomSourceValues from './CustomSourceValues.svelte';
   import JsonTree from './JsonTree.svelte';
+  import { ownSources } from './presets';
 
   // internal/custom allows this many sources.
   const MAX_SOURCES = 20;
@@ -28,7 +29,10 @@
     onerror: (err: unknown) => string;
   } = $props();
 
+  // The household's own APIs; those set up with a preset are under its own card.
   let sources = $state<CustomSource[]>([]);
+  // All sources, which count towards the limit together.
+  let total = $state(0);
   let error = $state('');
   // 'new', the id of the source being edited, or null.
   let editing = $state<'new' | number | null>(null);
@@ -44,7 +48,9 @@
 
   async function load() {
     try {
-      sources = await api.customSources();
+      const all = await api.customSources();
+      sources = ownSources(all);
+      total = all.length;
     } catch (err) {
       error = onerror(err);
     }
@@ -98,10 +104,10 @@
 <section class="card">
   <h2>Custom APIs</h2>
   <p class="muted">
-    Show data from any API that answers with JSON, such as a public transport, energy or weather service, or a device
-    on your network, or JSON that your own system, such as a Homey or Home Assistant, sends to GDash. Add it here and
-    name the values it should show under Values; then add a Custom API widget to a dashboard and choose them by name.
-    Only APIs that a dashboard shows are fetched.
+    Show data from your own API that answers with JSON, or JSON that your own system, such as a Homey or Home
+    Assistant, sends to GDash. Add it here and name the values it should show under Values; then add a Custom API
+    widget to a dashboard and choose them by name. Only APIs that a dashboard shows are fetched. For a device or
+    service that has its own card under Integrations, such as a HomeWizard meter or Pi-hole, use that card instead.
   </p>
   {#if sources.length > 0}
     <ul class="list">
@@ -171,7 +177,7 @@
   {/if}
   {#if editing === 'new'}
     <CustomSourceForm onsaved={saved} oncancel={() => (editing = null)} {onerror} />
-  {:else if sources.length < MAX_SOURCES}
+  {:else if total < MAX_SOURCES}
     <div><button class="secondary" onclick={() => (editing = 'new')}>Add a custom API</button></div>
   {:else}
     <p class="small muted">The limit of {MAX_SOURCES} custom APIs is reached.</p>

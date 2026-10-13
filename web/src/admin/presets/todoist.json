@@ -51,11 +51,13 @@
       ]
     }
   ],
-  "rule": {
-    "for": "Tasks",
-    "summary": "show urgent tasks in the warning colour",
-    "when": "row.priority == 4",
-    "tone": "warn",
-    "message": ""
-  }
+  "instance": "list",
+  "views": [
+    {
+      "id": "tasks", "name": "Tasks", "mode": "list", "title": "Today", "w": 6, "h": 5, "list": "Tasks",
+      "rules": [
+        { "when": "row.priority == 4", "tone": "warn" }
+      ]
+    }
+  ]
 }

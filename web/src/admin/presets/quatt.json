@@ -3,7 +3,7 @@
   "name": "Quatt heat pump",
   "description": "Heat pump output, water and room temperatures from the Quatt CIC",
   "category": "home",
-  "icon": "house",
+  "icon": "fan",
   "tags": ["local", "no-key", "nl"],
   "docs": "https://github.com/marcoboers/home-assistant-quatt",
   "comment": "Quatt has no public documentation: the address and keys are those of the Home Assistant Quatt integration. The beta path may change with a CIC update. hp1.power is the heat it gives, hp1.powerInput the electricity it uses. hp2 only exists on a Duo. The layout of the whole answer is put together from the integration's keys, not captured (unverified).",
@@ -37,5 +37,23 @@
     { "name": "Outside", "path": "hp1.temperatureOutside", "unit": "°C", "decimals": 1 },
     { "name": "Room", "path": "thermostat.otFtRoomTemperature", "unit": "°C", "decimals": 1 }
   ],
-  "lists": []
+  "lists": [],
+  "instance": "heat pump",
+  "views": [
+    {
+      "id": "overview", "name": "Overview", "mode": "keyValues", "title": "Heat pump", "w": 6, "h": 5,
+      "values": [
+        { "name": "Heat output" },
+        { "name": "Electricity used" },
+        { "name": "Water out" },
+        { "name": "Outside" }
+      ]
+    },
+    {
+      "id": "heat", "name": "Heat output", "mode": "value", "title": "Heat output", "w": 5, "h": 4,
+      "values": [
+        { "name": "Heat output" }
+      ]
+    }
+  ]
 }

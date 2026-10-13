@@ -50,5 +50,17 @@
         { "name": "Show", "path": "grandparentTitle" }
       ]
     }
+  ],
+  "instance": "server",
+  "views": [
+    {
+      "id": "playing", "name": "Now playing", "mode": "list", "title": "Now playing", "w": 8, "h": 4, "list": "Now playing"
+    },
+    {
+      "id": "streams", "name": "Streams", "mode": "value", "title": "Streams on Plex", "w": 4, "h": 3,
+      "values": [
+        { "name": "Streams" }
+      ]
+    }
   ]
 }

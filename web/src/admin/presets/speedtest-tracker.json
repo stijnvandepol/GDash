@@ -2,7 +2,7 @@
   "id": "speedtest-tracker",
   "name": "Speedtest Tracker",
   "description": "The last speed test of your internet connection",
-  "category": "home",
+  "category": "network",
   "icon": "gauge",
   "tags": ["local"],
   "docs": "https://docs.speedtest-tracker.dev/api/authorization",
@@ -45,5 +45,25 @@
     { "name": "Ping", "path": "data.ping", "unit": "ms", "decimals": 0 },
     { "name": "Healthy", "path": "data.healthy" }
   ],
-  "lists": []
+  "lists": [],
+  "instance": "server",
+  "views": [
+    {
+      "id": "speed", "name": "Internet speed", "mode": "keyValues", "title": "Internet speed", "w": 6, "h": 4,
+      "values": [
+        { "name": "Download" },
+        { "name": "Upload" },
+        { "name": "Ping" }
+      ],
+      "rules": [
+        { "when": "data.healthy == false", "tone": "warn", "message": "Slower than expected" }
+      ]
+    },
+    {
+      "id": "download", "name": "Download", "mode": "value", "title": "Download", "w": 5, "h": 4,
+      "values": [
+        { "name": "Download" }
+      ]
+    }
+  ]
 }

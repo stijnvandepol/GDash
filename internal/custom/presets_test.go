@@ -39,10 +39,89 @@ type preset struct {
 	} `json:"source"`
 	Values []NamedValue `json:"values"`
 	Lists  []NamedList  `json:"lists"`
-	Rule   *struct {
-		For  string `json:"for"`
-		When string `json:"when"`
-	} `json:"rule"`
+	Views  []presetView `json:"views"`
+}
+
+// presetView is a ready-made Custom widget of a preset, which names the
+// preset's values and list by name.
+type presetView struct {
+	ID     string `json:"id"`
+	Mode   string `json:"mode"`
+	Title  string `json:"title"`
+	Values []struct {
+		Name  string `json:"name"`
+		Label string `json:"label"`
+	} `json:"values"`
+	List  string           `json:"list"`
+	Rules []map[string]any `json:"rules"`
+}
+
+// settings are the widget settings the dashboard editor makes from the
+// view (web/src/admin/presetWidget.ts), with numbers as JSON decodes them.
+func (v presetView) settings(t *testing.T, p preset) map[string]any {
+	t.Helper()
+	named := func(name string) NamedValue {
+		for _, value := range p.Values {
+			if value.Name == name {
+				return value
+			}
+		}
+		t.Fatalf("%s, view %s: %q is no named value", p.ID, v.ID, name)
+		return NamedValue{}
+	}
+	out := map[string]any{"source": float64(1), "mode": v.Mode}
+	if v.Title != "" {
+		out["title"] = v.Title
+	}
+	switch v.Mode {
+	case ModeValue:
+		if len(v.Values) != 1 {
+			t.Fatalf("%s, view %s: value mode shows one value, not %d", p.ID, v.ID, len(v.Values))
+		}
+		value := named(v.Values[0].Name)
+		out["path"] = value.Path
+		if v.Values[0].Label != "" {
+			out["label"] = v.Values[0].Label
+		}
+		if value.Unit != "" {
+			out["unit"] = value.Unit
+		}
+		if value.Decimals != nil {
+			out["decimals"] = float64(*value.Decimals)
+		}
+	case ModeKeyValues, ModeBadges:
+		pairs := []any{}
+		for _, shown := range v.Values {
+			label := shown.Label
+			if label == "" {
+				label = shown.Name
+			}
+			pairs = append(pairs, map[string]any{"label": label, "path": named(shown.Name).Path})
+		}
+		out["pairs"] = pairs
+	case ModeList:
+		for _, l := range p.Lists {
+			if l.Name == v.List {
+				out["path"] = l.Path
+				fields := []any{}
+				for _, c := range l.Columns {
+					fields = append(fields, c.Path)
+				}
+				out["fields"] = fields
+			}
+		}
+		if out["path"] == nil {
+			t.Fatalf("%s, view %s: %q is no named list", p.ID, v.ID, v.List)
+		}
+	}
+	if len(v.Rules) > 0 {
+		rules := []any{}
+		for _, r := range v.Rules {
+			rules = append(rules, r)
+		}
+		out["rules"] = rules
+	}
+	return out
 }
 
 func loadPresets(t *testing.T) map[string]preset {
@@ -141,38 +220,59 @@ func TestPresetValuesAreInTheirSample(t *testing.T) {
 	}
 }
 
-func TestPresetRulesWorkOnTheirSample(t *testing.T) {
-	for id, p := range loadPresets(t) {
-		if p.Rule == nil {
-			continue
+func TestPresetIDsAreAccepted(t *testing.T) {
+	for id := range loadPresets(t) {
+		if _, err := Check(input(func(in *Input) { in.Preset = id }), nil); err != nil {
+			t.Errorf("%s: a source with this preset is refused: %v", id, err)
 		}
-		expr, err := ParseExpr(p.Rule.When)
-		if err != nil {
-			t.Errorf("%s: the rule does not parse: %v", id, err)
-			continue
+	}
+}
+
+// Each view is a Custom widget that the server takes and that shows the
+// preset's own sample, with rules that work on it.
+func TestPresetViewsMakeWidgetsThatShowTheirSample(t *testing.T) {
+	now := time.Date(2026, 10, 13, 12, 0, 0, 0, time.UTC)
+	for id, p := range loadPresets(t) {
+		if len(p.Views) == 0 {
+			t.Errorf("%s: no views", id)
 		}
 		var doc any
 		if err := json.Unmarshal(p.Source.Sample, &doc); err != nil {
 			t.Fatal(err)
 		}
-		vars := map[string]any{}
-		for _, v := range p.Values {
-			if v.Name == p.Rule.For {
-				vars["value"], _ = mustPath(t, v.Path).Resolve(doc)
+		seen := map[string]bool{}
+		for _, v := range p.Views {
+			if seen[v.ID] {
+				t.Errorf("%s: view %s twice", id, v.ID)
 			}
-		}
-		for _, l := range p.Lists {
-			if l.Name == p.Rule.For {
-				items, _ := mustPath(t, l.Path).Resolve(doc)
+			seen[v.ID] = true
+			w, err := ParseWidget(v.settings(t, p))
+			if err != nil {
+				t.Errorf("%s, view %s: the widget is refused: %v", id, v.ID, err)
+				continue
+			}
+			shown := w.Show(Data{Doc: doc, HasValue: true}, now)
+			if shown.State != StateOK || (v.Mode == ModeValue && shown.Value == nil) || (v.Mode == ModeList && len(shown.Rows) == 0 && len(w.Rules) == 0) {
+				t.Errorf("%s, view %s: shows %+v for the sample", id, v.ID, shown)
+			}
+			for _, pair := range shown.Pairs {
+				if pair.Value == nil {
+					t.Errorf("%s, view %s: %s is not in the sample", id, v.ID, pair.Label)
+				}
+			}
+			vars := map[string]any{}
+			if v.Mode == ModeValue {
+				vars["value"], _ = w.Path.Resolve(doc)
+			}
+			if v.Mode == ModeList {
+				items, _ := w.Path.Resolve(doc)
 				vars["row"] = items.([]any)[0]
 			}
-		}
-		if len(vars) == 0 {
-			t.Errorf("%s: the rule is for %q, which is no named value or list", id, p.Rule.For)
-			continue
-		}
-		if _, err := expr.Matches(Env{Doc: doc, Vars: vars, Now: time.Date(2026, 10, 13, 12, 0, 0, 0, time.UTC)}); err != nil {
-			t.Errorf("%s: the rule fails on the sample: %v", id, err)
+			for i, r := range w.Rules {
+				if _, err := r.When.Matches(Env{Doc: doc, Vars: vars, Now: now}); err != nil {
+					t.Errorf("%s, view %s: rule %d fails on the sample: %v", id, v.ID, i, err)
+				}
+			}
 		}
 	}
 }

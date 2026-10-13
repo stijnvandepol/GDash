@@ -3,7 +3,7 @@
   "name": "SolarEdge",
   "description": "Solar power now and the energy of today and this month",
   "category": "energy",
-  "icon": "sun",
+  "icon": "solar",
   "tags": ["free-key"],
   "docs": "https://knowledge-center.solaredge.com/sites/kc/files/se_monitoring_api.pdf",
   "comment": "Site Overview of the Monitoring Server API (August 2022 edition). An account may make 300 requests a day, so it refreshes every 15 minutes (96 a day). The overview section does not state its units; W and Wh are taken from other endpoints in the same document (unverified).",
@@ -42,5 +42,21 @@
     { "name": "This month", "path": "overview.lastMonthData.energy", "unit": "Wh", "decimals": 0 },
     { "name": "Updated", "path": "overview.lastUpdateTime" }
   ],
-  "lists": []
+  "lists": [],
+  "instance": "site",
+  "views": [
+    {
+      "id": "solar", "name": "Solar now", "mode": "value", "title": "Solar now", "w": 5, "h": 4,
+      "values": [
+        { "name": "Solar now" }
+      ]
+    },
+    {
+      "id": "energy", "name": "Energy", "mode": "keyValues", "title": "Solar energy", "w": 6, "h": 4,
+      "values": [
+        { "name": "Today" },
+        { "name": "This month" }
+      ]
+    }
+  ]
 }

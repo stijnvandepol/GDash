@@ -78,6 +78,7 @@ export function toInput(source: CustomSource): CustomSourceInput {
     headers: source.headers.map((h) => ({ ...h })),
     intervalSeconds: source.intervalSeconds,
     sample: source.sample ?? null,
+    preset: source.preset,
   };
 }
 

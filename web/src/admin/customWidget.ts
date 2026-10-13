@@ -1,4 +1,5 @@
-import type { NamedList, NamedValue } from './api';
+import { api, ApiError, type CustomSource, type NamedList, type NamedValue } from './api';
+import { errorMessage } from './errors';
 import { parsePath, resolvePath } from './jsonPath';
 
 // Helpers for the Custom widget's settings in the editor. The server checks
@@ -69,6 +70,22 @@ export function checkContext(doc: unknown, mode: string, path: string): { value?
   if (mode === 'value') return { value };
   if (mode === 'list' && Array.isArray(value)) return { row: value[0] };
   return {};
+}
+
+/**
+ * What a rule's condition gives for a widget now, in words: checked against
+ * the source's sample, or a fresh answer without one.
+ */
+export async function checkRule(source: CustomSource | undefined, when: string, mode: string, path: string): Promise<string> {
+  if (!source) return 'Choose an API first.';
+  try {
+    const doc = source.sample ?? (await api.testCustomSource(source.id)).data;
+    const answer = await api.checkRule({ when, data: doc, ...checkContext(doc, mode, path) });
+    return answer.error ? `Does not apply now: ${answer.error}` : `Gives ${JSON.stringify(answer.result)} now`;
+  } catch (err) {
+    const reason = err instanceof ApiError ? err.fieldMessage('when') : undefined;
+    return reason ? `Cannot be read: ${reason}` : errorMessage(err, () => {});
+  }
 }
 
 /** The named list a list widget shows: the one with its list path and columns. */

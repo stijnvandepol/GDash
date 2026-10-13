@@ -3,7 +3,7 @@
   "name": "Electricity Maps",
   "description": "How much CO₂ the electricity in your country causes right now",
   "category": "energy",
-  "icon": "air",
+  "icon": "leaf",
   "tags": ["free-key"],
   "docs": "https://github.com/jpbede/aioelectricitymaps",
   "comment": "v3 carbon-intensity/latest with the auth-token header, from the client library that Home Assistant uses; the official documentation refuses automated reading. api.electricitymaps.com answers without a redirect. The free key is for personal, non-commercial use; Home Assistant gives its limit as 50 requests an hour (unverified at the source), so it refreshes every 15 minutes.",
@@ -36,11 +36,16 @@
   },
   "values": [{ "name": "Carbon intensity", "path": "carbonIntensity", "unit": "gCO2eq/kWh", "decimals": 0 }],
   "lists": [],
-  "rule": {
-    "for": "Carbon intensity",
-    "summary": "show it in the good colour while the electricity is clean",
-    "when": "value < 150",
-    "tone": "ok",
-    "message": "Clean power now"
-  }
+  "instance": "zone",
+  "views": [
+    {
+      "id": "carbon", "name": "Carbon intensity", "mode": "value", "title": "Grid carbon", "w": 5, "h": 4,
+      "values": [
+        { "name": "Carbon intensity" }
+      ],
+      "rules": [
+        { "when": "number(value) < 150", "tone": "ok", "message": "Clean power now" }
+      ]
+    }
+  ]
 }

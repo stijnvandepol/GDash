@@ -350,6 +350,8 @@ export interface CustomSource {
   /** The values named under Integrations, which the dashboard editor offers by name. */
   values: NamedValue[];
   lists: NamedList[];
+  /** The id of the preset it was set up with, such as homewizard-p1, or empty for the household's own API. */
+  preset: string;
   /** True when the secrets cannot be decrypted with this server's key. */
   unreadable: boolean;
   /** When a source that is sent to GDash last sent its data; absent before the first time. */
@@ -388,6 +390,8 @@ export interface CustomSourceInput {
   headers: CustomHeader[];
   intervalSeconds: number;
   sample: unknown;
+  /** The preset it is set up with; absent or empty for the household's own API. */
+  preset?: string;
 }
 
 /** One answer of a custom API, cut down for the editor. */

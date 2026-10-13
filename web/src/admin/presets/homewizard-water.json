@@ -30,5 +30,20 @@
     { "name": "Flow", "path": "active_liter_lpm", "unit": "l/min", "decimals": 1 },
     { "name": "Water total", "path": "total_liter_m3", "unit": "m³", "decimals": 3 }
   ],
-  "lists": []
+  "lists": [],
+  "instance": "meter",
+  "views": [
+    {
+      "id": "flow", "name": "Water now", "mode": "value", "title": "Water now", "w": 5, "h": 4,
+      "values": [
+        { "name": "Flow" }
+      ]
+    },
+    {
+      "id": "total", "name": "Meter reading", "mode": "value", "title": "Water meter", "w": 5, "h": 4,
+      "values": [
+        { "name": "Water total" }
+      ]
+    }
+  ]
 }

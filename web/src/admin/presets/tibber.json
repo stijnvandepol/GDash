@@ -3,7 +3,7 @@
   "name": "Tibber",
   "description": "The electricity price of this hour on your Tibber contract",
   "category": "energy",
-  "icon": "bolt",
+  "icon": "tag",
   "tags": ["free-key"],
   "docs": "https://developer.tibber.com/docs/guides/calling-api",
   "comment": "GraphQL over POST with a bearer token; GDash sends the User-Agent that Tibber asks for. Tibber asks to fetch prices sparingly and publishes no numeric limit, so it refreshes every 15 minutes. currentSubscription is null for a home without an active contract. The level values (VERY_CHEAP to VERY_EXPENSIVE) come from client libraries, not the guide (unverified).",
@@ -38,11 +38,24 @@
     { "name": "Price level", "path": "data.viewer.homes[0].currentSubscription.priceInfo.current.level" }
   ],
   "lists": [],
-  "rule": {
-    "for": "Price level",
-    "summary": "show Price level in the warning colour when it is expensive",
-    "when": "value == \"EXPENSIVE\" or value == \"VERY_EXPENSIVE\"",
-    "tone": "warn",
-    "message": "Expensive now"
-  }
+  "instance": "account",
+  "views": [
+    {
+      "id": "price", "name": "Price now", "mode": "value", "title": "Electricity price", "w": 5, "h": 4,
+      "values": [
+        { "name": "Price now" }
+      ],
+      "rules": [
+        { "when": "data.viewer.homes[0].currentSubscription.priceInfo.current.level == \"EXPENSIVE\" or data.viewer.homes[0].currentSubscription.priceInfo.current.level == \"VERY_EXPENSIVE\"", "tone": "warn", "message": "Expensive now" },
+        { "when": "data.viewer.homes[0].currentSubscription.priceInfo.current.level == \"CHEAP\" or data.viewer.homes[0].currentSubscription.priceInfo.current.level == \"VERY_CHEAP\"", "tone": "ok", "message": "Cheap now" }
+      ]
+    },
+    {
+      "id": "level", "name": "Price and level", "mode": "keyValues", "title": "Electricity price", "w": 6, "h": 4,
+      "values": [
+        { "name": "Price now", "label": "Price" },
+        { "name": "Price level", "label": "Level" }
+      ]
+    }
+  ]
 }

@@ -22,7 +22,7 @@ function entry(change: Partial<CatalogueEntry> = {}): CatalogueEntry {
     category: 'energy',
     icon: 'bolt',
     tags: ['local', 'no-key', 'nl'],
-    kind: 'preset',
+    kind: 'service',
     keywords: 'electricity',
     ...change,
   };

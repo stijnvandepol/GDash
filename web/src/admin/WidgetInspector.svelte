@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { WidgetType } from './api';
+  import type { CustomSource, WidgetType } from './api';
   import WidgetSettings from './WidgetSettings.svelte';
 
   // The selected widget's settings, in the panel beside the canvas: the
@@ -9,6 +9,7 @@
     widgetType,
     type,
     settings,
+    sources,
     onchange,
     onremove,
     onback,
@@ -19,6 +20,8 @@
     /** Undefined for a widget type this server does not know. */
     type: WidgetType | undefined;
     settings: Record<string, unknown>;
+    /** The custom sources, null while they load; a Custom widget's settings depend on them. */
+    sources: CustomSource[] | null;
     onchange: (settings: Record<string, unknown>) => void;
     onremove: () => void;
     /** Leaves the settings for the widgets to add. */
@@ -34,7 +37,7 @@
   </div>
   {#if type}
     <div class="settings">
-      <WidgetSettings {widgetType} {type} {settings} {onchange} />
+      <WidgetSettings {widgetType} {type} {settings} {sources} {onchange} />
     </div>
   {/if}
 </div>

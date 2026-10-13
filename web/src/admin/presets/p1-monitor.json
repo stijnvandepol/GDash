@@ -3,7 +3,7 @@
   "name": "P1 Monitor",
   "description": "Power and gas from a P1 Monitor (ztatz) on your smart meter",
   "category": "energy",
-  "icon": "bolt",
+  "icon": "meter",
   "tags": ["local", "no-key", "nl"],
   "docs": "https://github.com/klaasnicolaas/python-p1monitor",
   "comment": "The official API page of ztatz.nl was not reachable; the endpoint and field names are those of the python-p1monitor library and its fixture, which Home Assistant uses. The answer is a list with the newest reading first, hence $[0]. The key TIMESTAMP_lOCAL really has a lower-case L.",
@@ -44,5 +44,26 @@
     { "name": "Gas", "path": "$[0].CONSUMPTION_GAS_M3", "unit": "m³", "decimals": 3 },
     { "name": "Tariff", "path": "$[0].TARIFCODE" }
   ],
-  "lists": []
+  "lists": [],
+  "instance": "monitor",
+  "views": [
+    {
+      "id": "power", "name": "Power now", "mode": "value", "title": "Power used", "w": 5, "h": 4,
+      "values": [
+        { "name": "Power used" }
+      ],
+      "rules": [
+        { "when": "number($[0].PRODUCTION_W) > 0", "tone": "ok", "message": "Returning to the grid" }
+      ]
+    },
+    {
+      "id": "overview", "name": "Overview", "mode": "keyValues", "title": "Smart meter", "w": 6, "h": 5,
+      "values": [
+        { "name": "Power used" },
+        { "name": "Power returned" },
+        { "name": "Gas" },
+        { "name": "Tariff" }
+      ]
+    }
+  ]
 }

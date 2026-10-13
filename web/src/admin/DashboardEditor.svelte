@@ -4,12 +4,15 @@
   import 'gridstack/dist/gridstack.min.css';
   import { GridStack, type GridStackNode, type GridStackWidget } from 'gridstack';
   import { onDestroy, onMount, tick } from 'svelte';
-  import { api, ApiError, type Dashboard, type Widget, type WidgetCatalogue } from './api';
+  import { api, ApiError, type CustomSource, type Dashboard, type Widget, type WidgetCatalogue } from './api';
   import type { PreviewDraft } from '../previewApi';
+  import { errorMessage } from './errors';
   import DashboardPreview from './DashboardPreview.svelte';
   import WidgetInspector from './WidgetInspector.svelte';
   import WidgetPalette from './WidgetPalette.svelte';
-  import { WIDGET_LABELS as LABELS, defaultSettings } from './widgetSettings';
+  import { PRESETS } from './presets';
+  import { newPresetWidget, presetPaletteEntries, presetWidget } from './presetWidget';
+  import { WIDGET_LABELS as LABELS, defaultSettings, type PaletteItem } from './widgetSettings';
 
   let {
     dashboard,
@@ -41,8 +44,34 @@
   let grid: GridStack | null = null;
   let resizeObserver: ResizeObserver | null = null;
 
+  // The custom sources, so a widget of a device or service with a preset is
+  // shown by its name; null until they are loaded.
+  let sources = $state<CustomSource[] | null>(null);
+
   const selectedWidget = $derived(selected ? widgets[selected] : undefined);
   const selectedType = $derived(selectedWidget ? catalogue.types[selectedWidget.type] : undefined);
+  const paletteExtra = $derived(sources ? presetPaletteEntries(sources) : []);
+
+  /** What a widget is called: a preset's name for its widget, else its type's. */
+  function labelOf(w: Pick<Widget, 'type' | 'settings'>): string {
+    const preset = w.type === 'custom' && sources ? presetWidget(w.settings ?? {}, sources)?.preset : undefined;
+    return preset?.name ?? LABELS[w.type] ?? w.type;
+  }
+
+  async function loadSources() {
+    try {
+      sources = await api.customSources();
+    } catch (err) {
+      sources = [];
+      message = errorMessage(err, onSessionEnded);
+      return;
+    }
+    // The canvas was drawn with the type names before the sources came.
+    for (const el of container.querySelectorAll<HTMLElement>('.grid-stack-item')) {
+      const w = widgets[el.getAttribute('gs-id') ?? ''];
+      if (w?.type === 'custom') grid?.update(el, { content: labelOf(w) });
+    }
+  }
 
   onMount(() => {
     name = dashboard.name;
@@ -78,6 +107,8 @@
 
     resizeObserver = new ResizeObserver(() => grid?.cellHeight(cellHeight()));
     resizeObserver.observe(container);
+    if ('custom' in catalogue.types) void loadSources();
+    else sources = [];
   });
 
   onDestroy(() => {
@@ -92,7 +123,7 @@
 
   function toNode(w: Widget): GridStackWidget {
     const type = catalogue.types[w.type];
-    return { id: w.id, x: w.x, y: w.y, w: w.w, h: w.h, minW: type?.minW, minH: type?.minH, content: LABELS[w.type] ?? w.type };
+    return { id: w.id, x: w.x, y: w.y, w: w.w, h: w.h, minW: type?.minW, minH: type?.minH, content: labelOf(w) };
   }
 
   // gridstack owns the widget elements, so the selection is marked on them
@@ -109,18 +140,25 @@
     selected = item?.getAttribute('gs-id') ?? null;
   }
 
-  function addWidget(type: string) {
+  function addWidget(item: PaletteItem) {
     if (!grid) return;
+    const type = item.type;
     const t = catalogue.types[type]!;
+    // A preset's widget starts as its first view, from its first setup.
+    const preset = PRESETS.find((p) => p.id === item.preset);
+    const made = preset && sources ? newPresetWidget(preset, sources, { w: t.minW, h: t.minH }) : undefined;
+    const { settings, w, h } = made ?? { settings: defaultSettings(t), w: t.minW, h: t.minH };
+    const base = preset?.id ?? type;
     let n = 1;
-    while (widgets[`${type}-${n}`] || (n === 1 && widgets[type])) n++;
-    const id = n === 1 ? type : `${type}-${n}`;
-    const node: GridStackWidget = { ...toNode({ id, type, x: 0, y: 0, w: t.minW, h: t.minH }), autoPosition: true };
+    while (widgets[`${base}-${n}`] || (n === 1 && widgets[base])) n++;
+    const id = n === 1 ? base : `${base}-${n}`;
+    const widget: Widget = { id, type, x: 0, y: 0, w, h, settings };
+    const node: GridStackWidget = { ...toNode(widget), autoPosition: true };
     if (!grid.willItFit(node)) {
-      message = `There is no free space for a ${LABELS[type]?.toLowerCase() ?? type} widget. Make room first.`;
+      message = `There is no free space for a ${item.label} widget. Make room first.`;
       return;
     }
-    widgets[id] = { id, type, x: 0, y: 0, w: t.minW, h: t.minH, settings: defaultSettings(t) };
+    widgets[id] = widget;
     grid.addWidget(node);
     selected = id;
     message = '';
@@ -155,6 +193,11 @@
     if (!w) return;
     w.settings = settings;
     dirty = true;
+    // Another source can be another preset's, with another name.
+    if (w.type === 'custom') {
+      const el = container.querySelector<HTMLElement>(`.grid-stack-item[gs-id="${CSS.escape(w.id)}"]`);
+      if (el) grid?.update(el, { content: labelOf(w) });
+    }
   }
 
   /** The widgets as they are on the canvas now. */
@@ -204,7 +247,7 @@
     if (!match || !grid) return `${f.field}: ${f.message}`;
     const node = (grid.save(false) as GridStackNode[])[Number(match[1])];
     const w = node ? widgets[String(node.id)] : undefined;
-    return `${w ? (LABELS[w.type] ?? w.type) : f.field}: ${f.message}`;
+    return `${w ? labelOf(w) : f.field}: ${f.message}`;
   }
 
   async function close() {
@@ -244,17 +287,18 @@
       {#if selectedWidget}
         {#key selected}
           <WidgetInspector
-            label={LABELS[selectedWidget.type] ?? selectedWidget.type}
+            label={labelOf(selectedWidget)}
             widgetType={selectedWidget.type}
             type={selectedType}
             settings={selectedWidget.settings ?? {}}
+            {sources}
             onchange={setSettings}
             onremove={removeSelected}
             onback={deselect}
           />
         {/key}
       {:else}
-        <WidgetPalette types={Object.keys(catalogue.types)} onadd={addWidget} />
+        <WidgetPalette types={Object.keys(catalogue.types)} extra={paletteExtra} onadd={addWidget} />
       {/if}
     </aside>
   </div>

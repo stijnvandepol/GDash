@@ -152,7 +152,7 @@
   <div>
     <h1 class="page-title">Integrations</h1>
     <p class="page-lede">
-      Everything GDash shows data from. Set up a service, start from a preset, or add a built-in source to a dashboard.
+      Everything GDash shows data from. Set up a device or service, or add a built-in source to a dashboard.
     </p>
   </div>
   {#if context}
@@ -262,7 +262,7 @@
             <li class="setup-row">
               <div class="setup" id="setup-{item.id}" tabindex="-1" role="region" aria-label="Set up {item.name}">
                 <div class="setup-head">
-                  <span class="small muted">{item.kind === 'preset' ? 'New custom API from a preset' : `Setup of ${item.name}`}</span>
+                  <span class="small muted">Setup of {item.name}</span>
                   <button type="button" class="link" onclick={close}>Close<span class="sr-only"> {item.name}</span></button>
                 </div>
                 <panel.component {...panel.props} />
@@ -381,8 +381,7 @@
     gap: var(--s-3);
   }
   /* What it is says how it looks: a service you connect is a thing on the
-     desk (a surface); a built-in source is printed on the panel (a line);
-     a preset is a stencil to cut a custom API from (a dashed line). */
+     desk (a surface); a built-in source is printed on the panel (a line). */
   .item {
     display: grid;
     grid-template-rows: auto 1fr auto;
@@ -394,10 +393,6 @@
   }
   .item.service {
     background: var(--surface);
-  }
-  .item.preset {
-    border-style: dashed;
-    border-color: var(--border-strong);
   }
   .item.open {
     border-color: var(--text);

@@ -1,12 +1,12 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { api, ApiError, type CustomSource } from './api';
+  import { api, type CustomSource } from './api';
   import { errorMessage } from './errors';
   import CustomRules from './CustomRules.svelte';
   import {
     MAX_PAIRS,
     MODES,
-    checkContext,
+    checkRule,
     defaultLabel,
     findList,
     pairs,
@@ -48,7 +48,9 @@
 
   onMount(async () => {
     try {
-      sources = await api.customSources();
+      // The household's own APIs: a widget of a preset has its own settings,
+      // unless this web interface does not know the preset.
+      sources = (await api.customSources()).filter((s) => !s.preset || s.id === settings.source);
     } catch (err) {
       loadError = errorMessage(err, () => {});
     } finally {
@@ -82,18 +84,6 @@
     update({ pairs: pairList.map((p, i) => (i === index ? { label: p.label || defaultLabel(mode, value.name), path } : p)) });
   }
 
-  // A rule is checked against the sample, or a fresh answer without one.
-  async function checkRule(when: string): Promise<string> {
-    if (sourceId === undefined) return 'Choose an API first.';
-    try {
-      const doc = source?.sample ?? (await api.testCustomSource(sourceId)).data;
-      const answer = await api.checkRule({ when, data: doc, ...checkContext(doc, mode, text('path')) });
-      return answer.error ? `Does not apply now: ${answer.error}` : `Gives ${JSON.stringify(answer.result)} now`;
-    } catch (err) {
-      const reason = err instanceof ApiError ? err.fieldMessage('when') : undefined;
-      return reason ? `Cannot be read: ${reason}` : errorMessage(err, () => {});
-    }
-  }
 </script>
 
 <label>
@@ -183,7 +173,7 @@
   {/if}
 {/if}
 
-<CustomRules rules={rules(settings.rules)} {mode} subjects={ruleSubjects} onchange={(next) => update({ rules: next })} oncheck={checkRule} />
+<CustomRules rules={rules(settings.rules)} {mode} subjects={ruleSubjects} onchange={(next) => update({ rules: next })} oncheck={(when) => checkRule(source, when, mode, text('path'))} />
 
 <style>
   .row {

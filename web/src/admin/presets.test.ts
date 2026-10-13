@@ -3,13 +3,27 @@ import { describe, expect, it } from 'vitest';
 import type { CustomSource } from './api';
 import { AUTH_KINDS, INTERVALS } from './customSources';
 import { CATEGORIES, TAGS } from './integrations';
-import { PRESETS, fillAddress, placeholderProblem, placeholdersIn, presetInput, sourcesFrom, type Preset } from './presets';
+import {
+  PRESETS,
+  answersFrom,
+  fillAddress,
+  madeFrom,
+  ownSources,
+  placeholderProblem,
+  placeholdersIn,
+  presetInput,
+  presetOf,
+  shownList,
+  shownValue,
+  sourcesFrom,
+  type Preset,
+} from './presets';
 
 const icons = readFileSync(new URL('./Icon.svelte', import.meta.url), 'utf8');
 
 const p1 = PRESETS.find((p) => p.id === 'homewizard-p1')!;
 
-function source(url: string, mode: 'fetch' | 'push' = 'fetch'): CustomSource {
+function source(url: string, mode: 'fetch' | 'push' = 'fetch', preset = ''): CustomSource {
   return {
     id: 1,
     name: 'P1',
@@ -23,6 +37,7 @@ function source(url: string, mode: 'fetch' | 'push' = 'fetch'): CustomSource {
     sample: null,
     values: [],
     lists: [],
+    preset,
     unreadable: false,
   };
 }
@@ -44,6 +59,64 @@ describe('the presets', () => {
     for (const p of preset.placeholders) expect(placeholderProblem(p.kind, p.example)).toBe('');
     expect(AUTH_KINDS.map((a) => a.kind)).toContain(preset.source.auth.kind);
     expect(INTERVALS.map((i) => i.seconds)).toContain(preset.source.intervalSeconds);
+    expect(preset.instance).toMatch(/^[a-z][a-z ]{1,20}$/);
+  });
+
+  // The server checks that each view makes a widget it takes and that shows
+  // the sample; these are what the editor needs to offer it.
+  it.each(PRESETS.map((p) => [p.id, p] as [string, Preset]))('%s has views the editor can offer', (_, preset) => {
+    expect(preset.views.length).toBeGreaterThan(0);
+    expect(preset.views.length).toBeLessThanOrEqual(3);
+    expect(new Set(preset.views.map((v) => v.id)).size).toBe(preset.views.length);
+    for (const view of preset.views) {
+      // The Custom widget is at least 4 by 3 on a grid of 24 by 14.
+      expect(view.w).toBeGreaterThanOrEqual(4);
+      expect(view.h).toBeGreaterThanOrEqual(3);
+      expect(view.w).toBeLessThanOrEqual(12);
+      expect(view.h).toBeLessThanOrEqual(7);
+      expect(view.name.length).toBeGreaterThan(0);
+      for (const shown of view.values ?? []) expect(preset.values.map((v) => v.name)).toContain(shown.name);
+      if (view.mode === 'list') expect(preset.lists.map((l) => l.name)).toContain(view.list);
+      else expect(view.values?.length).toBeGreaterThan(0);
+    }
+  });
+});
+
+describe('answersFrom', () => {
+  it('reads the placeholders back from an address, decoded as they were filled in', () => {
+    expect(answersFrom(p1, 'http://192.168.1.50/api/v1/data')).toEqual({ ip: '192.168.1.50' });
+    const todoist = PRESETS.find((p) => p.id === 'todoist')!;
+    const url = fillAddress(todoist, { filter: 'today | #Home' });
+    expect(answersFrom(todoist, url)).toEqual({ filter: 'today | #Home' });
+    const piHole = PRESETS.find((p) => p.id === 'pi-hole')!;
+    expect(answersFrom(piHole, 'http://192.168.1.2:8080/api/stats/summary')).toEqual({ server: 'http://192.168.1.2:8080' });
+  });
+
+  it('gives null for an address of another shape', () => {
+    expect(answersFrom(p1, 'http://192.168.1.50/api/v2/data')).toBeNull();
+  });
+});
+
+describe('the sources of a preset', () => {
+  it('are those that keep its id; the rest are the household’s own', () => {
+    const made = { ...source('http://192.168.1.50/api/v1/data', 'fetch', 'homewizard-p1'), id: 2 };
+    const own = source('https://api.example.com/x');
+    const other = { ...source('http://192.168.1.51/api/v1/data', 'fetch', 'homewizard-kwh'), id: 3 };
+    expect(madeFrom(p1, [own, made, other])).toEqual([made]);
+    expect(ownSources([own, made, other])).toEqual([own]);
+    expect(presetOf(made)).toBe(p1);
+    expect(presetOf(own)).toBeUndefined();
+    expect(presetOf({ preset: 'not-a-preset' })).toBeUndefined();
+  });
+});
+
+describe('shownValue and shownList', () => {
+  it('say what a named value or list holds, with its unit', () => {
+    expect(shownValue({ a: 1234 }, { name: 'Power', path: 'a', unit: 'W' })).toBe('1234 W');
+    expect(shownValue({ a: '12 Mbps' }, { name: 'Down', path: 'a' })).toBe('12 Mbps');
+    expect(shownValue({}, { name: 'Down', path: 'a' })).toBe('Not in the answer');
+    expect(shownList({ l: [1, 2] }, { name: 'L', path: 'l', columns: [] })).toBe('2 items');
+    expect(shownList({ l: {} }, { name: 'L', path: 'l', columns: [] })).toBe('Not in the answer');
   });
 });
 
@@ -94,6 +167,8 @@ describe('presetInput', () => {
     expect(input).toMatchObject({ name: 'Meter', mode: 'fetch', url: 'http://10.0.0.2/api/v1/data', method: 'GET', intervalSeconds: 30 });
     expect(input.auth).toEqual({ kind: 'none', name: '', secret: '' });
     expect(input.sample).toEqual(p1.source.sample);
+    expect(input.preset).toBe('homewizard-p1');
+    expect(presetInput(p1, { name: 'M', answers: { ip: '10.0.0.2' }, secret: '', user: '', intervalSeconds: 60 }).intervalSeconds).toBe(60);
 
     const tibber = PRESETS.find((p) => p.id === 'tibber')!;
     const post = presetInput(tibber, { name: 'Tibber', answers: {}, secret: ' token ', user: 'ignored' });
@@ -132,5 +207,10 @@ describe('sourcesFrom', () => {
     const made = { ...source('http://192.168.1.50/api/v1/data'), values: p1.values };
     expect(sourcesFrom(kwh, [made])).toEqual([]);
     expect(sourcesFrom(p1, [made])).toEqual([made]);
+  });
+
+  it('only looks at own APIs: a source that keeps a preset is that preset’s', () => {
+    const kept = { ...source('http://192.168.1.50/api/v1/data', 'fetch', 'homewizard-p1'), values: p1.values };
+    expect(sourcesFrom(p1, [kept])).toEqual([]);
   });
 });

@@ -3,7 +3,7 @@
   "name": "DSMR-reader",
   "description": "Today’s electricity, gas and costs from your DSMR-reader",
   "category": "energy",
-  "icon": "bolt",
+  "icon": "meter",
   "tags": ["local", "nl"],
   "docs": "https://dsmr-reader.readthedocs.io/en/v5/reference/api.html",
   "comment": "API v2, consumption/today, checked against the source (src/dsmr_api, branch v6): since v3.1 the API reference only ships inside an installation. The API is off until it is switched on under Configuration, API. kWh and m³ are inferred from the meter readings. Without readings today the answer is a plain JSON string instead of an object. The live power is at /api/v2/consumption/electricity-live (currently_delivered in W) for a second custom API.",
@@ -41,5 +41,23 @@
     { "name": "Gas today", "path": "gas", "unit": "m³", "decimals": 2 },
     { "name": "Costs today", "path": "total_cost", "unit": "€", "decimals": 2 }
   ],
-  "lists": []
+  "lists": [],
+  "instance": "reader",
+  "views": [
+    {
+      "id": "today", "name": "Today", "mode": "keyValues", "title": "Energy today", "w": 6, "h": 5,
+      "values": [
+        { "name": "Electricity today", "label": "Electricity" },
+        { "name": "Returned today", "label": "Returned" },
+        { "name": "Gas today", "label": "Gas" },
+        { "name": "Costs today", "label": "Costs" }
+      ]
+    },
+    {
+      "id": "costs", "name": "Costs today", "mode": "value", "title": "Energy costs today", "w": 5, "h": 4,
+      "values": [
+        { "name": "Costs today" }
+      ]
+    }
+  ]
 }

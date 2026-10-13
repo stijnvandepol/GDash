@@ -1,214 +1,154 @@
 <script lang="ts">
   import { toast } from './toast.svelte';
-  import { api, ApiError, type CustomSource } from './api';
-  import { AUTH_KINDS, INTERVALS } from './customSources';
-  import { previewOf } from './customWidget';
-  import { placeholderProblem, presetInput, type Preset } from './presets';
+  import { ask } from './confirm.svelte';
+  import { api, ApiError, type CustomSource, type SourceStatus } from './api';
+  import { hostOf, toInput } from './customSources';
+  import { describeStatus } from './status';
+  import PresetAnswer from './PresetAnswer.svelte';
+  import PresetSourceForm from './PresetSourceForm.svelte';
+  import { madeFrom, sourcesFrom, type Preset } from './presets';
 
-  // A new custom API from a preset: the household fills in the address's
-  // placeholders and the key, GDash makes the API with its named values and
-  // asks it once, so a wrong address shows here and not on a TV.
+  // The setup of a device or service with a preset: each one set up, such
+  // as two P1 meters, with how it is doing, and the form for another.
   let {
     preset,
-    made,
+    sources,
+    status,
     onchanged,
-    onopen,
     onerror,
   }: {
     preset: Preset;
-    /** Custom APIs already made from this preset. */
-    made: CustomSource[];
+    /** Every custom source; this card shows those set up with the preset. */
+    sources: CustomSource[];
+    /** Data hub status by key; a source's key is custom.source.<id>. */
+    status: Record<string, SourceStatus>;
     onchanged: () => Promise<void>;
-    /** Opens another integration, here Custom APIs. */
-    onopen: (id: string) => void;
     onerror: (err: unknown) => string;
   } = $props();
 
+  // internal/custom allows this many sources, of all presets and own APIs together.
+  const MAX_SOURCES = 20;
+
+  const made = $derived(madeFrom(preset, sources));
+  // Own APIs that look made from this preset before sources kept it.
+  const earlier = $derived(sourcesFrom(preset, sources));
+  // 'new', the id of the setup being changed, or null.
   // svelte-ignore state_referenced_locally
-  let name = $state(preset.source.name);
-  let answers = $state<Record<string, string>>({});
-  let secret = $state('');
-  let user = $state('');
-  // svelte-ignore state_referenced_locally
-  let intervalSeconds = $state(preset.source.intervalSeconds);
-  let problems = $state<Record<string, string>>({});
+  let editing = $state<'new' | number | null>(madeFrom(preset, sources).length === 0 ? 'new' : null);
+  let tested = $state<{ id: number; answer: { data: unknown } | { problem: string } | null } | null>(null);
   let error = $state('');
-  let busy = $state(false);
-  let saved = $state<CustomSource | null>(null);
-  // The answer of the first request: the data, or why it failed.
-  let answer = $state<{ data: unknown } | { problem: string } | null>(null);
 
-  const auth = $derived(AUTH_KINDS.find((a) => a.kind === preset.source.auth.kind));
   const ids = $derived(`preset-${preset.id}`);
+  const defaultName = $derived(made.length === 0 ? preset.source.name : `${preset.source.name} ${made.length + 1}`);
 
-  function check(): boolean {
-    const found: Record<string, string> = {};
-    for (const p of preset.placeholders) {
-      const problem = placeholderProblem(p.kind, answers[p.key] ?? '');
-      if (problem) found[p.key] = problem;
-    }
-    if (name.trim() === '') found.name = 'Fill this in.';
-    if (auth?.secretLabel && secret.trim() === '') found.secret = 'Fill this in.';
-    if (preset.source.auth.kind === 'basic' && user.trim() === '') found.user = 'Fill this in.';
-    problems = found;
-    return Object.keys(found).length === 0;
+  async function saved(source: CustomSource) {
+    toast.success(editing === 'new' ? `${source.name} is set up.` : `${source.name} is saved.`);
+    editing = null;
+    await onchanged();
   }
 
-  async function add(event: SubmitEvent) {
-    event.preventDefault();
+  async function test(source: CustomSource) {
+    tested = { id: source.id, answer: null };
+    try {
+      tested = { id: source.id, answer: { data: (await api.testCustomSource(source.id)).data } };
+    } catch (err) {
+      tested = { id: source.id, answer: { problem: err instanceof ApiError && err.status !== 401 ? err.message : onerror(err) } };
+    }
+  }
+
+  async function remove(source: CustomSource) {
+    const message = 'Widgets that show it then say that it is not available. Its secrets are deleted.';
+    if (!(await ask({ title: `Remove ${source.name}?`, message, action: 'Remove' }))) return;
     error = '';
-    if (!check()) return;
-    busy = true;
     try {
-      const input = { ...presetInput(preset, { name, answers, secret, user }), intervalSeconds };
-      const source = await api.addCustomSource(input);
-      saved = await api.saveCustomSourceValues(source.id, { values: preset.values, lists: preset.lists });
-      toast.success(`${saved.name} is added.`);
-      secret = '';
+      await api.deleteCustomSource(source.id);
+      if (tested?.id === source.id) tested = null;
       await onchanged();
-      await ask(saved);
     } catch (err) {
-      if (err instanceof ApiError && err.fields.length > 0) {
-        const fields = Object.fromEntries(err.fields.map((f) => [f.field, f.message]));
-        problems = { name: fields.name ?? '', secret: fields['auth.secret'] ?? '', user: fields['auth.name'] ?? '' };
-        const rest = err.fields.filter((f) => !['name', 'auth.secret', 'auth.name'].includes(f.field));
-        error = rest.map((f) => `${f.field}: ${f.message}`).join('; ');
-      } else {
-        error = onerror(err);
-      }
-    } finally {
-      busy = false;
+      error = onerror(err);
     }
   }
 
-  async function ask(source: CustomSource) {
-    answer = null;
+  /** Moves an own API that was made from this preset before under this card. */
+  async function adopt(source: CustomSource) {
+    error = '';
     try {
-      answer = { data: (await api.testCustomSource(source.id)).data };
+      await api.saveCustomSource(source.id, { ...toInput(source), preset: preset.id });
+      toast.success(`${source.name} is now under ${preset.name}.`);
+      await onchanged();
     } catch (err) {
-      answer = { problem: err instanceof ApiError && err.status !== 401 ? err.message : onerror(err) };
+      error = onerror(err);
     }
-  }
-
-  function again() {
-    saved = null;
-    answer = null;
-    answers = {};
-    name = preset.source.name;
   }
 </script>
 
 <section class="card preset" aria-labelledby="{ids}-title">
   <h2 id="{ids}-title">{preset.name}</h2>
-  {#if saved}
-    <p>
-      <strong>{saved.name}</strong> is added as a custom API with
-      {saved.values.length === 1 ? '1 value' : `${saved.values.length} values`}{saved.lists.length > 0 ? ` and ${saved.lists.length === 1 ? '1 list' : `${saved.lists.length} lists`}` : ''}.
-      Add a Custom API widget to a dashboard and choose them by name.
-    </p>
-    {#if answer === null}
-      <p class="small muted" role="status">Asking {preset.name} for the first time…</p>
-    {:else if 'problem' in answer}
-      <p class="small warn" role="status">GDash could not read it yet: {answer.problem} Check the address under Custom APIs.</p>
-    {:else}
-      <p class="small" role="status">{preset.name} answered. What the values show now:</p>
-    {/if}
-    <ul class="list values">
-      {#each saved.values as value (value.name)}
+  <p class="muted">{preset.description}.</p>
+  {#if made.length > 0}
+    <ul class="list" aria-label="{preset.name} set up">
+      {#each made as source (source.id)}
+        {@const st = status[`custom.source.${source.id}`]}
         <li>
-          <span class="grow"><strong>{value.name}</strong></span>
-          {#if answer && 'data' in answer}<span class="now">{previewOf(answer.data, value.path)}{value.unit ? ` ${value.unit}` : ''}</span>{/if}
+          <div class="grow">
+            <strong>{source.name}</strong>
+            <span class="muted small">{hostOf(source.url)}</span>
+            {#if source.unreadable}
+              <span class="field-error">Its secrets cannot be read on this server. Change it and enter them again.</span>
+            {:else if st?.failing}
+              <span class="small error">{describeStatus(st)}</span>
+            {:else}
+              <span class="small"><span class="badge ok">Connected</span> <span class="muted">{st ? describeStatus(st) : 'Fetched once a dashboard shows it.'}</span></span>
+            {/if}
+          </div>
+          <button class="link" disabled={tested?.id === source.id && tested.answer === null} onclick={() => test(source)}>Test<span class="sr-only"> {source.name}</span></button>
+          <button class="link" aria-expanded={editing === source.id} onclick={() => (editing = editing === source.id ? null : source.id)}>Change<span class="sr-only"> {source.name}</span></button>
+          <button class="link danger" onclick={() => remove(source)}>Remove<span class="sr-only"> {source.name}</span></button>
         </li>
-      {/each}
-      {#each saved.lists as list (list.name)}
-        <li>
-          <span class="grow"><strong>{list.name}</strong> <span class="muted small">list of {list.columns.map((c) => c.name).join(', ')}</span></span>
-        </li>
+        {#if tested?.id === source.id}
+          <li class="form-row">
+            <PresetAnswer {preset} answer={tested.answer} />
+            <button class="link" onclick={() => (tested = null)}>Close</button>
+          </li>
+        {/if}
+        {#if editing === source.id}
+          <li class="form-row">
+            <PresetSourceForm {preset} {source} {defaultName} onsaved={saved} oncancel={() => (editing = null)} {onerror} />
+          </li>
+        {/if}
       {/each}
     </ul>
-    {#if preset.rule}
-      <p class="small muted">
-        A rule to try on a widget that shows {preset.rule.for}: {preset.rule.summary}, with the condition
-        <code>{preset.rule.when}</code> under Advanced.
-      </p>
-    {/if}
-    <div class="inline">
-      <button type="button" class="secondary" onclick={() => onopen('custom')}>Open Custom APIs</button>
-      <button type="button" class="link" onclick={again}>Add another</button>
-    </div>
-  {:else}
-    <p class="muted">{preset.description}</p>
-    <p class="small muted">
-      Makes a custom API that you can change later under Custom APIs.
-      <a href={preset.docs} rel="noopener" target="_blank">The API’s documentation</a>.
-      {#if made.length > 0}Already added: {made.map((s) => s.name).join(', ')}.{/if}
+  {/if}
+  {#each earlier as source (source.id)}
+    <p class="small earlier">
+      <span><strong>{source.name}</strong> under Custom APIs looks set up from {preset.name} before it had a card of its own.</span>
+      <button class="link" onclick={() => adopt(source)}>Move it here<span class="sr-only">: {source.name}</span></button>
     </p>
-    <form onsubmit={add} novalidate>
-      <label>
-        Name
-        <input bind:value={name} maxlength="60" autocomplete="off" aria-invalid={problems.name ? 'true' : undefined} aria-describedby={problems.name ? `${ids}-name-problem` : undefined} />
-        {#if problems.name}<span class="field-error" id="{ids}-name-problem">{problems.name}</span>{/if}
-      </label>
-      {#each preset.placeholders as p (p.key)}
-        <label>
-          {p.label}
-          <input
-            value={answers[p.key] ?? ''}
-            oninput={(e) => (answers[p.key] = (e.target as HTMLInputElement).value)}
-            placeholder={p.example}
-            autocomplete="off"
-            spellcheck="false"
-            inputmode={p.kind === 'origin' ? 'url' : undefined}
-            aria-invalid={problems[p.key] ? 'true' : undefined}
-            aria-describedby={problems[p.key] ? `${ids}-${p.key}-problem` : undefined}
-          />
-          {#if p.hint}<span class="small muted">{p.hint}</span>{/if}
-          {#if problems[p.key]}<span class="field-error" id="{ids}-{p.key}-problem">{problems[p.key]}</span>{/if}
-        </label>
-      {/each}
-      {#if preset.source.auth.kind === 'basic'}
-        <label>
-          {auth?.nameLabel}
-          <input bind:value={user} autocomplete="off" spellcheck="false" aria-invalid={problems.user ? 'true' : undefined} aria-describedby={problems.user ? `${ids}-user-problem` : undefined} />
-          {#if problems.user}<span class="field-error" id="{ids}-user-problem">{problems.user}</span>{/if}
-        </label>
-      {/if}
-      {#if auth?.secretLabel}
-        <label>
-          {auth.secretLabel}
-          <!-- Not type="password", so browsers do not offer to save it. -->
-          <input bind:value={secret} class="masked" autocomplete="off" spellcheck="false" aria-invalid={problems.secret ? 'true' : undefined} aria-describedby={problems.secret ? `${ids}-secret-problem` : undefined} />
-          <span class="small muted">{preset.source.secretHint ? `${preset.source.secretHint} ` : ''}Stored encrypted and never shown again.</span>
-          {#if problems.secret}<span class="field-error" id="{ids}-secret-problem">{problems.secret}</span>{/if}
-        </label>
-      {/if}
-      <label>
-        Refresh
-        <select bind:value={intervalSeconds}>
-          {#each INTERVALS as i (i.seconds)}<option value={i.seconds}>{i.label}</option>{/each}
-        </select>
-      </label>
-      <div class="inline">
-        <button type="submit" disabled={busy}>{busy ? 'Adding…' : `Add ${preset.name}`}</button>
-      </div>
-    </form>
+  {/each}
+  {#if editing === 'new'}
+    {#if made.length > 0}<h3 class="another">Another {preset.instance}</h3>{/if}
+    <PresetSourceForm {preset} {defaultName} onsaved={saved} oncancel={made.length > 0 ? () => (editing = null) : undefined} {onerror} />
+  {:else if sources.length < MAX_SOURCES}
+    <div><button class="secondary" onclick={() => (editing = 'new')}>Add another {preset.instance}</button></div>
+  {:else}
+    <p class="small muted">The limit of {MAX_SOURCES} devices, services and custom APIs together is reached.</p>
   {/if}
   {#if error}<p class="error">{error}</p>{/if}
 </section>
 
 <style>
-  .values {
-    max-width: 40rem;
+  .form-row {
+    display: grid;
+    gap: var(--s-2);
   }
-  .now {
-    font-family: var(--mono);
-    font-size: var(--fs-sm);
-    overflow-wrap: anywhere;
+  .another {
+    font-size: var(--fs-md);
+    padding-top: var(--s-2);
   }
-  .warn {
-    color: var(--warning);
-  }
-  .masked {
-    -webkit-text-security: disc;
+  .earlier {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--s-1) var(--s-3);
   }
 </style>

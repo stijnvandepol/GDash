@@ -33,6 +33,7 @@ const source: CustomSource = {
   sample: { price: 1 },
   values: [],
   lists: [],
+  preset: '',
   unreadable: false,
 };
 
@@ -42,6 +43,11 @@ describe('toInput', () => {
     expect(input.auth).toEqual({ kind: 'header', name: 'X-API-Key', secret: '' });
     expect(input.headers).toEqual([{ name: 'X-Tenant', value: '', secret: true }]);
     expect(input.headers[0]).not.toBe(source.headers[0]);
+  });
+
+  it('keeps the preset, as a PUT without it would make the source an own API', () => {
+    expect(toInput({ ...source, preset: 'tibber' }).preset).toBe('tibber');
+    expect(toInput(source).preset).toBe('');
   });
 });
 

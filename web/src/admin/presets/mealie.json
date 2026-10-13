@@ -3,7 +3,7 @@
   "name": "Mealie",
   "description": "What is on today’s meal plan in Mealie",
   "category": "lists",
-  "icon": "note",
+  "icon": "pot",
   "tags": ["local"],
   "docs": "https://mealie.io/documentation/getting-started/api-usage/",
   "comment": "Mealie 2.0 and later; 1.x used /api/groups/mealplans/today. Checked against the source (routes/households/controller_mealplan.py, schema/meal_plan). The answer is a list at the top level, in camelCase; recipe is null for an entry that is only a note, which has a title instead. Today is the server's day, so Mealie needs the right TZ.",
@@ -39,6 +39,12 @@
         { "name": "Recipe", "path": "recipe.name" },
         { "name": "Note", "path": "title" }
       ]
+    }
+  ],
+  "instance": "server",
+  "views": [
+    {
+      "id": "today", "name": "Meals today", "mode": "list", "title": "Meals today", "w": 6, "h": 4, "list": "Today"
     }
   ]
 }

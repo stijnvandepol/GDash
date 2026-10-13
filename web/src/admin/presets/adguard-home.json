@@ -2,7 +2,7 @@
   "id": "adguard-home",
   "name": "AdGuard Home",
   "description": "DNS queries and how many were blocked, from AdGuard Home",
-  "category": "home",
+  "category": "network",
   "icon": "shield",
   "tags": ["local"],
   "docs": "https://github.com/AdguardTeam/AdGuardHome/blob/master/openapi/openapi.yaml",
@@ -39,5 +39,22 @@
     { "name": "Queries last hour", "path": "dns_queries[-1]", "decimals": 0 },
     { "name": "Blocked last hour", "path": "blocked_filtering[-1]", "decimals": 0 }
   ],
-  "lists": []
+  "lists": [],
+  "instance": "server",
+  "views": [
+    {
+      "id": "blocked", "name": "Blocked today", "mode": "keyValues", "title": "AdGuard Home", "w": 5, "h": 4,
+      "values": [
+        { "name": "Blocked" },
+        { "name": "Queries" }
+      ]
+    },
+    {
+      "id": "hour", "name": "Last hour", "mode": "keyValues", "title": "Last hour", "w": 5, "h": 4,
+      "values": [
+        { "name": "Blocked last hour", "label": "Blocked" },
+        { "name": "Queries last hour", "label": "Queries" }
+      ]
+    }
+  ]
 }

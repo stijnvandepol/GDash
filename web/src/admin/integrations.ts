@@ -3,7 +3,7 @@ import type { IconName } from './Icon.svelte';
 import { describeStatus } from './status';
 
 // The catalogue of integrations: every service GDash can show data from,
-// whether it needs setting up, ships built in or starts from a preset. The
+// whether it needs setting up or ships built in. The
 // cards themselves are listed in integrationRegistry.ts; this file holds
 // what they are made of and how the page finds them.
 
@@ -12,6 +12,7 @@ export const CATEGORIES = [
   { id: 'travel', label: 'Travel' },
   { id: 'energy', label: 'Energy' },
   { id: 'home', label: 'Home' },
+  { id: 'network', label: 'Network' },
   { id: 'lists', label: 'Calendar & lists' },
   { id: 'media', label: 'Photos & media' },
   { id: 'news', label: 'News' },
@@ -43,11 +44,11 @@ export const FILTERS = [
 export type FilterId = (typeof FILTERS)[number]['id'];
 
 /**
- * service: set up here, with an address, a key or a list.
+ * service: set up here, with an address, a key or a list; the presets'
+ * devices and services are services too.
  * builtin: ships with GDash; a widget is all it takes.
- * preset: a ready-made custom API.
  */
-export type IntegrationKind = 'service' | 'builtin' | 'preset';
+export type IntegrationKind = 'service' | 'builtin';
 
 /** What a card's status light says. */
 export type IntegrationState =

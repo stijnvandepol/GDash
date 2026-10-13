@@ -216,6 +216,9 @@ export const api = {
     request<CustomSource>('PUT', `/api/custom-sources/${id}/values`, values),
   deleteCustomSource: (id: number) => request<void>('DELETE', `/api/custom-sources/${id}`),
   testCustomSource: (id: number) => request<CustomTest>('POST', `/api/custom-sources/${id}/tests`),
+  /** Fetches a source as the form has it, without saving; with id, a change of that source that keeps its secrets. */
+  tryCustomSource: (input: CustomSourceInput, id?: number) =>
+    request<CustomTest>('POST', '/api/custom-source-tests', id === undefined ? input : { ...input, id }),
   webPages: () => request<{ pages: WebPage[] }>('GET', '/api/web-pages').then((r) => r.pages),
   addWebPage: (input: WebPageInput) => request<WebPage>('POST', '/api/web-pages', input),
   saveWebPage: (id: number, input: WebPageInput) => request<WebPage>('PUT', `/api/web-pages/${id}`, input),
