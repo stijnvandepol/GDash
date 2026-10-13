@@ -634,7 +634,8 @@ house: speakers such as a Nest Mini or Nest Audio, speaker groups, Nest Hubs
 and Chromecasts that are not a GDash display. For each it shows the device,
 the app (Spotify, YouTube Music, Plex, ...), the title, the artist or album,
 the album art and how far the track is. It needs no account: GDash asks the
-devices themselves, on the home network.
+devices themselves, on the home network. Under Integrations it is the built-in
+card **Now playing (Cast)**, under Photos & media.
 
 1. Add a **Now playing** widget to a dashboard and select it.
 2. Under **Cast devices**, keep **Any device that is playing**, or choose

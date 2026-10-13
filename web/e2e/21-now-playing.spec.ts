@@ -112,6 +112,16 @@ test('a screen shows what plays on the Cast speakers', async ({ adminPage: page 
   await expect(widget.locator('.nothing')).toHaveText('Nothing playing', { timeout: 15_000 });
 });
 
+test('Integrations lists Now playing as a built-in local source without a key', async ({ adminPage: page }) => {
+  await openTab(page, 'Integrations');
+  await page.getByRole('searchbox', { name: 'Search integrations' }).fill('spotify');
+  const card = page.locator('li.item', { has: page.getByRole('heading', { name: 'Now playing (Cast)', exact: true }) });
+  await expect(card).toBeVisible();
+  await expect(page.locator('section.group', { has: card }).getByRole('heading', { level: 2 })).toContainText('Photos & media');
+  await expect(card.locator('.tag')).toHaveText(['Local', 'No key']);
+  await expect(card.getByRole('button', { name: /^Add to a dashboard/ })).toBeVisible();
+});
+
 test('covers are not served for what does not play', async ({ adminPage: page }) => {
   const response = await page.request.get(COVER);
   expect(response.status()).toBe(404);

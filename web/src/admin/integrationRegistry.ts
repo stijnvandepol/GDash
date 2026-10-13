@@ -447,6 +447,18 @@ const BUILT_IN: Integration[] = [
     requires: { widget: 'holidays' },
     state: ({ status }) => builtinState(status['holidays.nl']),
   },
+  {
+    id: 'nowplaying',
+    name: 'Now playing (Cast)',
+    description: 'What plays on your Cast speakers, groups and Nest Hubs, read only',
+    keywords: 'chromecast google cast nest speaker spotify youtube music plex album cover',
+    category: 'media',
+    icon: 'music',
+    tags: ['local', 'no-key'],
+    kind: 'builtin',
+    requires: { widget: 'nowplaying' },
+    state: ({ status }) => builtinState(status['nowplaying.default']),
+  },
 ];
 
 function presetIntegration(preset: Preset): Integration {
