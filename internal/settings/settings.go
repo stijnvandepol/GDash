@@ -1,6 +1,6 @@
 // Package settings manages what GDash fetches: the weather location, news
 // feeds, calendars, the Home Assistant and Homey connections, custom API
-// sources and the solar panels.
+// sources, the solar panels, the KNMI key and whether ANWB traffic info is on.
 // They are edited in the web interface and stored in
 // SQLite; environment variables only fill them on the very first start.
 package settings
@@ -112,6 +112,11 @@ type Sources struct {
 	Synology *synology.Album
 	// Solar is nil without solar panels, or without a place for them.
 	Solar *solar.Setup
+	// TrafficInfo is true when the admin turned ANWB traffic info on and
+	// acknowledged its terms.
+	TrafficInfo bool
+	// KNMIKey is the KNMI Data Platform key, or empty when none is set.
+	KNMIKey string
 }
 
 // Service reads and changes the settings.
@@ -240,6 +245,16 @@ func (s *Service) Sources(ctx context.Context) (Sources, error) {
 	}
 	if out.Solar, err = solarSetup(panels, out.Location); err != nil {
 		return Sources{}, err
+	}
+	traffic, err := s.TrafficInfo(ctx)
+	if err != nil {
+		return Sources{}, err
+	}
+	out.TrafficInfo = traffic.Enabled
+	if key, ok, err := s.KNMIKey(ctx); err != nil {
+		s.Logger.Error("knmi key cannot be decrypted; enter it again", "error", err)
+	} else if ok {
+		out.KNMIKey = key
 	}
 	return out, nil
 }

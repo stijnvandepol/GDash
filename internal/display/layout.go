@@ -77,7 +77,7 @@ var maxItems = map[string]Setting{"maxItems": {Kind: SettingInteger, Min: 1, Max
 // from its type, so a dashboard cannot point a widget at arbitrary data.
 var WidgetTypes = map[string]WidgetType{
 	"clock":       {MinW: 4, MinH: 3},
-	"weather":     {Source: WeatherSource, MinW: 4, MinH: 4},
+	"weather":     weatherWidget,
 	"forecast":    {Source: WeatherSource, MinW: 6, MinH: 4, Settings: map[string]Setting{"days": {Kind: SettingInteger, Min: 1, Max: 7}}},
 	"sun":         {Source: WeatherSource, MinW: 5, MinH: 4},
 	"moon":        {MinW: 4, MinH: 4},
@@ -104,6 +104,7 @@ var WidgetTypes = map[string]WidgetType{
 	"fuel":              fuelWidget,
 	"rain":              rainWidget,
 	"warnings":          warningsWidget,
+	"traffic":           trafficWidget,
 	"homey":             homeyWidget,
 	HomeyPresenceWidget: homeyPresenceWidget,
 	CustomWidget:        customWidget,
@@ -253,7 +254,13 @@ func widgetProblem(w Widget, seen map[string]bool) string {
 	if w.Type == CustomWidget {
 		return customProblem(w.Settings)
 	}
-	return settingsProblem(w, kind)
+	if msg := settingsProblem(w, kind); msg != "" {
+		return msg
+	}
+	if w.Type == "traffic" {
+		return trafficProblem(w.Settings)
+	}
+	return ""
 }
 
 // settingsProblem returns the first problem with a widget's settings, in
@@ -331,6 +338,10 @@ func valueProblem(key string, value any, rule Setting) string {
 		}
 	case SettingCastDevices:
 		return castDevicesProblem(key, value)
+	case SettingChoices:
+		return choicesProblem(key, value, rule)
+	case SettingRoads:
+		return roadsProblem(key, value)
 	}
 	return ""
 }

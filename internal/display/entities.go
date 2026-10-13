@@ -28,6 +28,9 @@ func dataFor(dashboards []Dashboard, data map[string]datahub.Entry, now time.Tim
 	if entry, ok := presenceEntry(dashboards, data); ok {
 		used[HomeyPresenceSource] = entry
 	}
+	if entry, ok := data[KNMISource]; ok && ShowsMeasuredWeather(dashboards) {
+		used[KNMISource] = entry
+	}
 	return used
 }
 
@@ -115,6 +118,9 @@ func narrowShared(used map[string]datahub.Entry, dashboards []Dashboard) {
 	}
 	if entry, ok := used[WebPageSource]; ok {
 		used[WebPageSource] = onlyIDs(entry, WebPageIDs(dashboards))
+	}
+	if entry, ok := used[TrafficSource]; ok {
+		used[TrafficSource] = onlyKeys(entry, TrafficKeys(dashboards))
 	}
 }
 
