@@ -60,9 +60,9 @@ fully trust, such as a guest's phone.
   returned by the API and never logged. GDash only reads from Home
   Assistant.
 - **API tokens:** automations such as Home Assistant post announcements with
-  a token made under Settings. Only its SHA-256 hash is stored, it is shown
-  once, there are at most 10, and revoking one works at once. A token opens
-  three routes only: announcements, the data of a custom API that the
+  a token made under Integrations, API tokens. Only its SHA-256 hash is
+  stored, it is shown once, there are at most 10, and revoking one works at
+  once. A token opens three routes only: announcements, the data of a custom API that the
   household's system sends to GDash (push), and the snapshot of a Homey that
   sends its own data. Tokens are all-or-nothing: every token can do all
   three, for every pushed source, so whoever holds one can put a message on

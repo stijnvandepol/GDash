@@ -172,7 +172,7 @@ curl -X POST http://gdash.local:8420/api/announcements \
 Leading and trailing spaces are trimmed. The answer is `201` with the message
 as the screens get it: `{"title": "Laundry", "message": "…", "expiresAt": "…", "displays": ["kitchen", "hall"]}`.
 
-**Authentication.** Make an API token under Settings, API tokens (or with
+**Authentication.** Make an API token under Integrations, API tokens (or with
 `POST /api/api-tokens`) and send it as `Authorization: Bearer gdk_…`. Only the
 token's SHA-256 hash is stored, so the token is shown once. There are at most 10
 tokens, and `lastUsedAt` shows when each was last used. A token is valid for this
@@ -244,7 +244,7 @@ Cloud and Homey Bridge, which only offer OAuth through Athom's cloud, are not su
 
 A Homey without API keys, such as a Homey Pro (Early 2019), sends its data instead: `PUT /api/homey` with
 `{"mode": "push"}` (no `url` or `key`, else `422`) drops any connection and makes GDash wait for snapshots, which
-the HomeyScript shown under Settings sends every minute from a Flow:
+the HomeyScript shown under Integrations, Homey sends every minute from a Flow:
 
 ```sh
 curl -X PUT http://gdash.local:8420/api/homey/snapshot \
@@ -326,7 +326,7 @@ uses GeoNames data; the coordinates can also be entered by hand.
 
 ## Custom APIs
 
-A custom source is any JSON HTTP API set up under Settings. Its secret values never leave the server: they are sealed
+A custom source is any JSON HTTP API set up under Integrations. Its secret values never leave the server: they are sealed
 with `secret.key` like calendar addresses, never returned, logged or put in an error or the audit log.
 
 **custom source:** `{"id": 1, "name": "Weather in Oss", "mode": "fetch", "url": "https://api.open-meteo.com/v1/forecast?…", "method": "GET", "body": "", "auth": {"kind": "header", "name": "X-API-Key", "secretSet": true}, "headers": [{"name": "X-Tenant", "value": "", "secret": true}], "intervalSeconds": 900, "sample": {…} | null, "values": [named value], "lists": [named list], "unreadable": false, "createdAt": "…", "updatedAt": "…"}`.
@@ -350,7 +350,7 @@ The list adds `lastPushAt` to a pushed source once it sent an answer: when the l
 `unreadable` is true when the secrets cannot be decrypted (the database was moved without its key); such a source is
 not fetched until its secrets are entered again. At most 20 sources exist.
 
-**Named values.** The values and lists of a source that an admin named under Settings, so the dashboard editor offers
+**Named values.** The values and lists of a source that an admin named under Integrations, so the dashboard editor offers
 them by name instead of by path. A Custom widget still stores the paths it shows (and a value's unit and decimals), so
 renaming or removing a named value never changes a dashboard. **named value:** `{"name": "Outside", "path":
 "current.temperature_2m", "unit": "°C", "decimals": 1}`, with `unit` (up to 12 characters) and `decimals` (0 to 6)

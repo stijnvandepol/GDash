@@ -353,7 +353,7 @@ against this; if it still happens, check the server log for cast errors.
 
 **The calendar says it cannot be read on this server.** The database was
 moved without its `secret.key`. Remove the calendar and add it again under
-Settings, Data sources.
+Integrations, Calendars.
 
 **The TV is dark outside the active hours.** That is the display's
 schedule; change it under Displays, Schedule.

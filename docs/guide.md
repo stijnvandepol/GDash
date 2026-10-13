@@ -9,10 +9,10 @@ the setup token, see [install.md](install.md). The web interface is at
 The **Getting started** card at the top lists what is left to do; it
 disappears when the basics are done.
 
-1. **Settings, Data sources, Weather location:** type your town or postcode and choose the
+1. **Integrations, Weather:** type your town or postcode and choose the
    right result, or enter the coordinates. The weather service only receives
    the location rounded to about 1 km.
-2. **Settings, Data sources, News and Calendars:** add RSS or Atom feeds, and the secret
+2. **Integrations, News feeds and Calendars:** add RSS or Atom feeds, and the secret
    iCal address of each calendar you want on the screen. In Google Calendar
    it is under the calendar's settings, "Secret address in iCal format"; in
    Outlook under "Publish a calendar"; in iCloud under "Public calendar".
@@ -29,6 +29,32 @@ disappears when the basics are done.
 Within a few seconds the TV shows the dashboard, and the display's row says
 what the TV is doing, such as "On Tv Keuken since 13:40" or "Cannot find Tv
 Keuken on the network". Change what it shows at any time under **Shows**.
+
+## Integrations
+
+Everything GDash shows data from is under **Integrations**, apart from the
+other settings: the weather location, news feeds, calendars, Home
+Assistant, Homey, photos, custom APIs and the API tokens that automations
+use. Settings keeps the language on the TVs, the test announcement and your
+account.
+
+- **Search** finds a service by its name, what it shows, its category or a
+  label, such as "solar", "train" or "no key". The search stays in the
+  address, so a link or a reload keeps it. The filters show only what is
+  **Connected**, useful in the **Netherlands**, runs on your own network
+  (**Local**) or needs **No key**.
+- Each card says whether it is **Connected** and when it last updated, **Not
+  set up**, or why it fails. **Set up** or **Manage** opens its setup right
+  under the card; **Close** folds it away again.
+- **Built in · no setup** cards, such as fuel prices, departures and the
+  electricity price, only need a widget: **Add to a dashboard** goes to the
+  dashboards.
+- **Preset · Custom API** cards make a custom API for a known device or
+  service, such as a HomeWizard P1 meter or Tibber, see
+  [Start from a preset](#start-from-a-preset).
+
+Nothing matches? If the service has an API that answers with JSON, **Use a
+Custom API**.
 
 ## A screen without Cast
 
@@ -75,7 +101,7 @@ calendar, photos, a countdown to the next New Year and a note), Living room (in
 the Frost style), Study (in Swiss) and Movie night (in Galaxy). Each card shows
 the layout; the button adds it as a new dashboard and opens it in the editor,
 where you can change anything. The calendar and news widgets fill up once you
-add calendars and feeds under Settings, Data sources, and the photos once you add photos.
+add calendars and feeds under Integrations, and the photos once you add photos.
 
 - **Add** a widget from the panel beside the canvas (below it on a phone):
   the widgets are grouped by what they are about, such as Time & date or
@@ -85,7 +111,7 @@ add calendars and feeds under Settings, Data sources, and the photos once you ad
   settings, such as the number of headlines or the text of a note; the
   panel then shows them, and **← Add widgets** goes back. The editor is
   about how a dashboard looks: addresses, keys and the values an API gives
-  are set up under Settings.
+  are set up under Integrations.
 - **Style:** the Style button opens a gallery of twenty-one themes in three
   groups, each shown as a small screen. Minimal dark (the default, best for OLED screens),
   Minimal light and Warm light for bright rooms, Glass, High contrast for
@@ -104,7 +130,7 @@ add calendars and feeds under Settings, Data sources, and the photos once you ad
   GDash and work offline. Under **After sunset** the dashboard can switch to
   another theme between sunset and sunrise, for instance Frost to Frost
   night, Minimal light to Minimal dark or Warm light to Night; the typeface
-  stays. The switch follows the sun at the weather location from Settings
+  stays. The switch follows the sun at the weather location from Integrations
   and reaches the screen within a minute; without a location the style never
   changes. The default is Keep this style, and the preview shows what a
   screen shows right now.
@@ -142,7 +168,7 @@ add calendars and feeds under Settings, Data sources, and the photos once you ad
 | Fuel prices | The cheapest petrol stations near a place, for one kind of fuel (Netherlands) |
 | Custom API | A value, a list or labelled values from any JSON API you add, with rules; see [Custom APIs](#custom-apis) |
 
-**Photos** are added under Settings, Screens, Photos: JPEG, PNG or WebP, up to 8 MB
+**Photos** are added under Integrations, Photos: JPEG, PNG or WebP, up to 8 MB
 each and 50 in total. They stay on your server and only go to paired
 screens and to you; the rest of the network gets nothing. GDash removes
 the location and other details a phone stores in a photo before it keeps
@@ -166,7 +192,7 @@ the pickup dates as an **iCal link**. GDash can show the next pickups from it.
 1. Find the iCal (or "ICS" or "agenda") link of your address on the site of
    your waste collector. It is an address that ends in `.ics` or is called
    "subscribe to calendar".
-2. In GDash, under Settings, Data sources, Calendars, add that link as a
+2. In GDash, under Integrations, Calendars, add that link as a
    calendar and give it a name such as "Waste". It is stored encrypted, like
    any calendar.
 3. Add a **Waste collection** widget to a dashboard. It asks which calendar to
@@ -252,7 +278,7 @@ only reads; it never switches anything.
 1. In Home Assistant, open your profile, Security, and make a **long-lived
    access token**. A separate Home Assistant user for GDash, without
    admin rights, limits what the token can see.
-2. In GDash, under Settings, Data sources, Home Assistant, enter the address you
+2. In GDash, under Integrations, Home Assistant, enter the address you
    open Home Assistant with, such as `http://192.168.1.10:8123`, and the
    token. GDash tries them before it saves them, and stores the token
    encrypted.
@@ -285,7 +311,7 @@ has no API keys: it sends its data itself with HomeyScript, see
 4. Find the address of your Homey on your network, for example in your
    router's list of devices, where it is called Homey. Give it a fixed
    address in the router, so it does not change.
-5. In GDash, under Settings, Data sources, Homey, enter the address, such as
+5. In GDash, under Integrations, Homey, enter the address, such as
    `http://192.168.1.20` (for Homey Self-Hosted Server add its port:
    `http://192.168.1.20:4859`), and paste the key. GDash tries them before
    it saves them, says which of the two is wrong, and stores the key
@@ -318,12 +344,12 @@ GDash instead, every minute; the Homey and Who's home widgets then work as
 with a newer Homey.
 
 1. On your Homey, install **HomeyScript** from the Homey App Store.
-2. In GDash, under Settings, Data sources, Homey, choose **Homey Pro
+2. In GDash, under Integrations, Homey, choose **Homey Pro
    (2016–2019): your Homey sends its data (HomeyScript)** and **Use
    HomeyScript**. GDash shows the steps and the script.
 3. Choose **Make an API token**. GDash fills it into the script; copy the
    script now, as the token is shown once. (You can also make one under
-   Settings, Automations, API tokens.)
+   Integrations, API tokens.)
 4. At [my.homey.app](https://my.homey.app), open **HomeyScript**, make a new
    script, paste the script and save it.
 5. Make a Flow: When **Every 1 minute** (Date & time), Then **Run a script**
@@ -392,7 +418,7 @@ the same that its route planner and app show.
 
 1. Add a **Fuel prices** widget to a dashboard and select it.
 2. **Place**: type a town or postcode and choose it from the list. Leave it
-   empty and the widget uses the weather location from Settings, so a
+   empty and the widget uses the weather location from Integrations, so a
    household with one home needs no setup at all.
 3. **Radius (km)** is how far to look, 1 to 25, default 5. The stations are
    those within that circle around the place, not a square.
@@ -513,7 +539,7 @@ set it up in the web interface; no code and no restart.
 
 ### Add the API
 
-Under **Settings, Data sources, Custom APIs**, choose **Add a custom API**:
+Under **Integrations, Custom APIs**, choose **Add a custom API**:
 
 - **Name** and **Address**, with `http://` or `https://`. The address is
   shown in the web interface, so put an API key under Authentication, not in
@@ -533,13 +559,38 @@ field empty. **Test** fetches the API once and shows the answer as a tree;
 click a value to see its path. GDash only fetches an API while a dashboard
 shows it.
 
+### Start from a preset
+
+For a number of devices and services GDash knows the address, the
+authentication and the values, so you only fill in what is yours. Under
+**Integrations**, the cards marked **Preset · Custom API** do this:
+
+| Preset | You fill in |
+|---|---|
+| HomeWizard P1 meter, kWh meter, water meter | The meter's IP address; turn on Local API in the HomeWizard Energy app |
+| P1 Monitor, DSMR-reader | The IP address; DSMR-reader also its API key |
+| Fronius inverter | The inverter's IP address |
+| SolarEdge | The site ID and the API key of the monitoring portal; refreshes every 15 minutes, as an account may make 300 requests a day |
+| Tibber, Electricity Maps | A personal token or free key; Electricity Maps also the zone, such as NL |
+| Quatt heat pump | The CIC's IP address; Quatt calls this address beta, so an update may change it |
+| AdGuard Home, Speedtest Tracker | The address, and the login or an API token |
+| Jellyfin, Plex | The server's address and an API key or X-Plex-Token |
+| Mealie, Todoist | The address and an API token; Todoist also a filter, such as `today` |
+
+GDash checks what you type before it saves, makes the custom API with its
+named values and asks it once, so a wrong address shows at once. A preset
+may suggest a rule for the widget, such as Power now in the warning colour
+above 3000 W. Change anything later under Custom APIs. The presets are JSON
+files in `web/src/admin/presets`; each names the documentation it was
+checked against.
+
 ### Send data to GDash (push)
 
 Some systems cannot answer requests, but can send data out on a schedule: a
 Homey Pro (Early 2019) with HomeyScript, Node-RED, a Home Assistant
 automation or a shell script on a timer. Let them send their JSON to GDash:
 
-1. Under **Settings, Data sources, Custom APIs**, choose **Add a custom
+1. Under **Integrations, Custom APIs**, choose **Add a custom
    API**, and under **How does GDash get the data?** choose **Your system
    sends it to GDash**. There is no address or authentication to fill in.
 2. Choose **Expected every**: how often your system sends, such as every
@@ -549,7 +600,7 @@ automation or a shell script on a timer. Let them send their JSON to GDash:
    `http://192.168.1.2:8420/api/custom-sources/3/data`, and examples for
    curl, HomeyScript and Home Assistant. Choose **Make an API token**: it is
    filled into the examples and shown once, so copy the example now. You
-   can also make one under Settings, Automations, API tokens.
+   can also make one under Integrations, API tokens.
 4. Let your system send the JSON with `PUT`, the header
    `Authorization: Bearer <API token>` and `Content-Type: application/json`.
    GDash answers `204` when it has it. **How to send** shows the steps
@@ -600,7 +651,7 @@ shows the full example. Keep the token in `secrets.yaml`, as in the
 
 ### Name its values
 
-Still under Settings, **Values** next to the API names the values a
+Still under Custom APIs, **Values** next to the API names the values a
 dashboard can show, so the dashboard editor offers "Outside" instead of
 `current.temperature_2m`:
 
@@ -774,11 +825,11 @@ that your system sends to GDash (see [Send data to GDash](#send-data-to-gdash-pu
 and a Homey's snapshot ([Homey Pro (2016–2019)](#homey-pro-20162019));
 nothing else in GDash can be changed with it.
 
-1. In GDash, under Settings, Automations, **API tokens**, make a token with the name of
+1. In GDash, under Integrations, **API tokens**, make a token with the name of
    the automation, for example "Home Assistant". Copy it now: it is shown once,
    and GDash keeps only a fingerprint of it. You can make up to 10 and
    revoke any of them later; the list shows when each was last used.
-2. Try it under Settings, Automations, **Send a test announcement**. The message shows on
+2. Try it under Settings, Screens, **Send a test announcement**. The message shows on
    every display that is inside its active hours.
 3. Send one from a command line, with your own address and token:
 
@@ -852,7 +903,7 @@ while the machine stands idle. Raise the limit if your machine idles at a few
 watts. Older versions of Home Assistant spell `triggers:` and `trigger:` as
 `trigger:` and `platform:`, and `action:` as `service:`.
 
-If nothing shows up, look at the token under Settings, Automations, API tokens:
+If nothing shows up, look at the token under Integrations, API tokens:
 **Never used** means the request does not reach GDash, so check the address
 and port. In Home Assistant, Developer tools, Actions, run the command with a
 `message` and read its answer: `401` means the token is wrong or revoked, `422`
@@ -887,8 +938,8 @@ Choose **Schedule** at a display:
   when, whether the TV sleeps, something else is on it, someone is using it
   (see [When GDash is not on the TV](#when-gdash-is-not-on-the-tv)), or
   GDash cannot reach it.
-- **Settings, Data sources** shows per news feed, calendar and the weather when it last
-  updated, or that it fails.
+- **Integrations** shows on every card whether it is connected and when it
+  last updated, or why it fails.
 - **Settings, Account, Recent activity** lists logins, failed logins, pairings and
   changes of the last 90 days.
 

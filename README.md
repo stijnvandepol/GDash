@@ -94,6 +94,15 @@ screen marks data that has gone stale.
   outside which the TV may sleep.
 - **Announcements**: a Home Assistant automation posts "The washing machine is
   done" with an API token, and the TVs show it over the dashboard.
+- **Integrations** in one place, apart from the other settings: weather,
+  news feeds, calendars, Home Assistant, Homey, photos, custom APIs and API
+  tokens, next to the built-in sources (fuel prices, departures, electricity
+  prices) as a searchable catalogue. Each card says whether it is connected
+  and when it last updated, and opens its setup right under it. Presets fill
+  in a custom API for a HomeWizard P1, kWh or water meter, P1 Monitor,
+  DSMR-reader, Fronius, SolarEdge, Tibber, Electricity Maps, a Quatt heat
+  pump, AdGuard Home, Speedtest Tracker, Jellyfin, Plex, Mealie or Todoist:
+  type the IP address or key and its values are named.
 - **Custom APIs** without code: add any JSON API, test it or paste a sample
   answer, click and name the values to show, then pick them by name in the
   editor and add rules such as "Outside is below 0" that colour the value,
@@ -104,6 +113,8 @@ screen marks data that has gone stale.
   **activity log** of logins, pairings and changes.
 
 ![The web interface: your dashboards and ready-made templates, each shown in its own theme](docs/images/web-dashboards.jpg)
+
+![Integrations: a search, filters and a card per service, with whether it is connected and when it last updated](docs/images/web-integrations.jpg)
 
 ## Quick start
 
@@ -147,8 +158,8 @@ your home network no setup token is needed in that first hour.
 
 1. Open `http://<your-server>:8420/` and create your account with the setup
    token from the log.
-2. Under **Settings**, choose the location for the weather and add the
-   calendars, news feeds, Home Assistant or Homey you want.
+2. Under **Integrations**, choose the location for the weather and add the
+   calendars, news feeds, Home Assistant, Homey or a meter you want.
 3. Under **Dashboards**, start from a template such as Kitchen or Hallway, or
    build your own.
 4. Under **Displays**, add a display and pick your TV. GDash puts the

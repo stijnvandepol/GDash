@@ -44,7 +44,7 @@ This page covers what is different when GDash runs as an app.
 
    It only works while no account exists; restarting the app opens the hour
    again.
-3. Under **Settings, Data sources**, choose the location for the weather and
+3. Under **Integrations**, choose the location for the weather and
    add news feeds and calendars.
 
 GDash does not appear in Home Assistant's sidebar (no "ingress"). The web
@@ -76,7 +76,7 @@ switches anything.
 1. In Home Assistant, open your profile, **Security**, and create a
    **long-lived access token**. A separate Home Assistant user for GDash,
    without admin rights, limits what the token can see.
-2. In GDash, under **Settings, Data sources, Home Assistant**, enter the
+2. In GDash, under **Integrations, Home Assistant**, enter the
    address you open Home Assistant with, such as `http://192.168.1.10:8123`,
    and the token. GDash tries them before it saves them and stores the token
    encrypted.
@@ -88,7 +88,7 @@ switches anything.
 An automation can put a short message over the dashboard of every TV, such as
 "The washing machine is done".
 
-1. In GDash, under **Settings, Automations, API tokens**, make a token named
+1. In GDash, under **Integrations, API tokens**, make a token named
    "Home Assistant". Copy it: it is shown once.
 2. Keep it out of your configuration, in `secrets.yaml`. The word `Bearer`
    and the space belong to the value:

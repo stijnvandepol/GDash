@@ -30,6 +30,11 @@ the format follows [Keep a Changelog](https://keepachangelog.com).
 
 - The editor names each count after what the widget shows: "Headlines at
   most" instead of "Items", and "Days ahead" for the forecast.
+- The data sources moved from Settings to a fourth tab, Integrations:
+  weather location, news feeds, calendars, Home Assistant, Homey, custom
+  APIs, photos and API tokens. Settings keeps the language on the TVs, the
+  test announcement and the account. Texts on the TVs and error messages
+  now point to Integrations.
 
 ### Fixed
 
@@ -59,6 +64,21 @@ the format follows [Keep a Changelog](https://keepachangelog.com).
   Who's home widgets and the editor's pickers work from the last snapshot,
   which survives a restart, and mark values as old after three minutes
   without one.
+- An Integrations page lists every service GDash can show as a searchable
+  catalogue, grouped by category, with filters for what is connected,
+  Dutch, local or without a key. The search stays in the address. Each card
+  says whether it is connected and when it last updated, or why it fails,
+  and opens its setup under it. Built-in sources (fuel prices, departures,
+  electricity prices, air quality, sunrise and sunset, waste collection)
+  appear as cards that lead to the dashboards; cards for sources that are
+  still being built show by themselves once the server has them.
+- Custom API presets for the HomeWizard P1, kWh and water meters, P1
+  Monitor, DSMR-reader, Fronius, SolarEdge, Tibber, Electricity Maps, the
+  Quatt heat pump, AdGuard Home, Speedtest Tracker, Jellyfin, Plex, Mealie
+  and Todoist. Fill in the IP address or key; GDash checks it, makes the
+  custom API with its named values, asks it once and shows what it says.
+  The presets are reviewable JSON files in `web/src/admin/presets`, and the
+  server's tests check each against its rules.
 - After an update or restart GDash no longer says "Someone is using the TV"
   about its own dashboard: it remembers the cast it started and keeps it,
   with the restarts against the screensaver.
