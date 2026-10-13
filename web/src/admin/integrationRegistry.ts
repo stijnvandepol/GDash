@@ -326,7 +326,7 @@ const BUILT_IN: Integration[] = [
     tags: ['no-key', 'nl'],
     kind: 'builtin',
     requires: { widget: 'rain' },
-    state: ({ settings }) => (settings.location ? builtinState(undefined) : NEEDS_LOCATION),
+    state: ({ settings, status }) => (settings.location ? builtinState(status['rain.default']) : NEEDS_LOCATION),
   },
   {
     id: 'warnings',
@@ -338,7 +338,7 @@ const BUILT_IN: Integration[] = [
     tags: ['no-key', 'nl'],
     kind: 'builtin',
     requires: { widget: 'warnings' },
-    state: () => builtinState(undefined),
+    state: ({ status }) => builtinState(status['warnings.default']),
   },
   {
     id: 'moon',
@@ -422,7 +422,7 @@ const BUILT_IN: Integration[] = [
     tags: ['no-key', 'nl'],
     kind: 'builtin',
     requires: { widget: 'holidays' },
-    state: () => builtinState(undefined),
+    state: ({ status }) => builtinState(status['holidays.nl']),
   },
 ];
 
