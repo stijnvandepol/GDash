@@ -5,6 +5,11 @@ the format follows [Keep a Changelog](https://keepachangelog.com).
 
 ## Unreleased
 
+### Changed
+
+- The editor names each count after what the widget shows: "Headlines at
+  most" instead of "Items", and "Days ahead" for the forecast.
+
 ## 0.8.0 – 2026-10-12
 
 ### Changed
