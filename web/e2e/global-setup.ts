@@ -7,6 +7,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { baseUrl, port } from './env';
 import { startSchoolHolidays } from './school-holidays';
+import { startUpstream } from './upstream';
 
 const START_TIMEOUT_MS = 30_000;
 const STOP_TIMEOUT_MS = 10_000;
@@ -32,7 +33,7 @@ function findBinary(): string {
 }
 
 /** The caller's environment without its GDASH_* settings, so a developer's own setup never reaches the test server. */
-function serverEnvironment(dataDir: string, schoolHolidaysUrl: string): NodeJS.ProcessEnv {
+function serverEnvironment(dataDir: string, schoolHolidaysUrl: string, upstream: string): NodeJS.ProcessEnv {
   const env = Object.fromEntries(Object.entries(process.env).filter(([key]) => !key.startsWith('GDASH_')));
   return {
     ...env,
@@ -43,6 +44,8 @@ function serverEnvironment(dataDir: string, schoolHolidaysUrl: string): NodeJS.P
     // the update notice answer /api/system themselves.
     GDASH_UPDATE_CHECK: 'off',
     GDASH_SCHOOL_HOLIDAYS_URL: schoolHolidaysUrl,
+    // Rain and weather warnings come from e2e/upstream.ts.
+    GDASH_TEST_UPSTREAM: upstream,
   };
 }
 
@@ -67,7 +70,8 @@ async function waitUntilServing(): Promise<void> {
 export default async function globalSetup(): Promise<() => Promise<void>> {
   const dataDir = await mkdtemp(path.join(tmpdir(), 'gdash-e2e-'));
   const schoolHolidays = await startSchoolHolidays();
-  const server = spawn(findBinary(), [], { env: serverEnvironment(dataDir, schoolHolidays.url), stdio: ['ignore', 'ignore', 'pipe'] });
+  const upstream = await startUpstream();
+  const server = spawn(findBinary(), [], { env: serverEnvironment(dataDir, schoolHolidays.url, upstream.url), stdio: ['ignore', 'ignore', 'pipe'] });
 
   let log = '';
   let exited = false;
@@ -94,6 +98,7 @@ export default async function globalSetup(): Promise<() => Promise<void>> {
       await Promise.race([gone, new Promise((resolve) => setTimeout(resolve, STOP_TIMEOUT_MS))]);
     }
     await schoolHolidays.close();
+    await upstream.close();
     await mkdir('test-results', { recursive: true });
     await writeFile(path.join('test-results', 'server.log'), log);
     await rm(dataDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
