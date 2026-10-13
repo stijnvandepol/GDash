@@ -817,8 +817,10 @@ Under **Integrations, Custom APIs**, choose **Add a custom API**:
   the address.
 - **Method**: GET, or POST with an optional JSON body.
 - **Authentication**: none, a bearer token, an API key in a header (such as
-  `X-API-Key`), an API key in the address (such as `appid`), or a user name
-  and password. **Extra headers** can be marked secret.
+  `X-API-Key`), an API key in the address (such as `appid`), a user name
+  and password, or **log in first** for an API that gives a session token
+  for a password (see the Pi-hole example). **Extra headers** can be marked
+  secret.
 - **Refresh**: from every 30 seconds to once a day. Mind the quota of a
   free plan: once a minute is 1440 requests a day.
 - **Sample answer** (optional): paste an answer from the API's
@@ -974,6 +976,37 @@ ask for a time zone; a time without a zone counts as UTC.)
    `Humidity` and `Sky`.
 4. In a Custom widget choose **Show: Labelled values** and add a line for
    each: pick the value, and its label is filled in with its name.
+
+### Example: Pi-hole 6, which wants you to log in first
+
+Pi-hole 6 gives a session for its password: `POST /api/auth` with
+`{"password": "…"}` answers `{"session": {"sid": "…", "validity": 1800}}`,
+and every other request carries the session ID in the `X-FTL-SID` header.
+GDash does that for you:
+
+1. In Pi-hole, under Settings, Web interface / API, make an **app
+   password** (it can only use the API) and copy it.
+2. Add a custom API with the address
+   `http://pi.hole/api/stats/summary` (or your Pi-hole's own address, such
+   as `http://192.168.1.2/api/stats/summary`) and **Authentication: Log in
+   first**. GDash fills in what Pi-hole wants: the login address
+   `http://pi.hole/api/auth` (on the same host as the address; check it if
+   your Pi-hole has another address or port), the body
+   `{"password": "{secret}"}`, the token `session.sid`, the seconds it lasts
+   `session.validity`, and to send it in the header `X-FTL-SID`. Paste the
+   app password under **Password**.
+3. **Test** shows the answer; name `queries.total`, `queries.blocked` and
+   `queries.percent_blocked`, for example as `Queries`, `Blocked` and
+   `Blocked %` with 1 decimal.
+4. A refresh of once a minute or slower keeps Pi-hole's session list short:
+   GDash logs in again only when the session runs out or Pi-hole refuses it,
+   and keeps the session ID encrypted in memory, never on disk.
+
+The same works for other APIs with a login: put `{secret}` where the
+password goes in the body, the path of the token in the answer, and choose
+whether the token goes in a header, in the address or as a bearer token.
+The login address must be on the same host as the API, so the password only
+goes where the data comes from.
 
 ### Badges: who is home
 

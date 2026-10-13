@@ -61,6 +61,14 @@ the format follows [Keep a Changelog](https://keepachangelog.com).
   performance ratio (0.85 unless you change it), or asks Forecast.Solar
   instead; both need no key. It is refreshed every 30 minutes and is an
   estimate from the cloud forecast, not a measurement.
+- A custom API can **log in first**, for an API that gives a session token
+  for a password, such as Pi-hole 6. Choose the authentication "Log in
+  first": GDash posts a JSON body with the password in it to a login address
+  on the API's own host, reads the token from the answer (such as
+  `session.sid`) and sends it in a header, an address parameter or as a
+  bearer token. It keeps the token encrypted in memory only and logs in
+  again when it runs out or the API refuses it. The guide has the Pi-hole
+  settings.
 
 ### Changed
 

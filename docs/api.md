@@ -391,8 +391,9 @@ and without `values` and `lists`, which change on their own (below) and are kept
 | `mode` | `fetch` (GDash fetches `url`; also when absent) or `push` (the household's system sends the answer, see Pushing below). A pushed source has no request: `url`, `body` and `auth.name` empty, `method` empty or `GET`, `auth.kind` empty or `none`, no `headers`, else a `422` on that field. Switching to `push` drops a fetched source's secrets |
 | `url` | `http` or `https`, at most 2048 characters, without a user name, password or `#` |
 | `method` | `GET`, or `POST` with an optional `body` of valid JSON up to 8 KB (sent as `application/json`) |
-| `auth.kind` | `none`, `bearer` (`Authorization: Bearer <secret>`), `header` (`<name>: <secret>`), `query` (`?<name>=<secret>`, added when fetching, never stored in `url`; the parameter may not be in `url` already) or `basic` (`name` is the user name) |
-| `auth.secret` | up to 2048 characters on one line; a bearer token has no spaces. Empty keeps the stored secret, if the kind is the same |
+| `auth.kind` | `none`, `bearer` (`Authorization: Bearer <secret>`), `header` (`<name>: <secret>`), `query` (`?<name>=<secret>`, added when fetching, never stored in `url`; the parameter may not be in `url` already) `basic` (`name` is the user name) or `login` (log in first, below) |
+| `auth.secret` | up to 2048 characters on one line; a bearer token has no spaces. Empty keeps the stored secret, if the kind is the same. For `login` it is the password |
+| `auth.login` | for `login` only: `{url, body, tokenPath, place, validityPath}`. `url` is the login address, `http` or `https` on the same scheme, host and port as `url`; `body` is JSON of at most 8 KB with `{secret}` inside a string where the password goes, such as `{"password": "{secret}"}`; `tokenPath` is the path of the token in the login's answer, such as `session.sid`; `place` is `header` (`<name>: <token>`), `query` (`?<name>=<token>`) or `bearer` (`Authorization: Bearer <token>`, `name` empty); `validityPath` is the path of the seconds the token lasts, such as `session.validity`, or empty. Returned as it was saved: it holds no secret |
 | `headers` | up to 10 `{name, value, secret}`; not `Host`, `Authorization`, `Content-Type`, `Content-Length` or another header that the request sets itself, no name twice. An empty `value` of a `secret` header keeps the stored one with that name |
 | `intervalSeconds` | 30 to 86400: how often it is fetched, or for a pushed source how often an answer is expected |
 | `sample` | an answer to design against, up to 48 KB of JSON, or `null` |
@@ -429,6 +430,16 @@ sent. A redirect is followed only to the same host (at most 3, never from https 
 header would otherwise go along. The answer must be a 2xx with at most 1 MB of JSON (`application/json`, `*+json`,
 `text/json`, `text/plain` or no type). The last good answer is kept on failure and on disk, like other sources; the
 status is under `custom.source.<id>` in `GET /api/settings`. The raw answer stays on the server.
+
+**Logging in first.** A `login` source posts `auth.login.body`, with the password escaped as JSON text in place of
+`{secret}`, to `auth.login.url` (`Content-Type: application/json`, the same client, redirect and size rules) and reads
+the token at `tokenPath`: text of at most 8 KB on one line. It then sends the token with every request, in the place
+`place` names. The token is kept in memory only, sealed with `secret.key`, never stored, logged, returned or put in an
+error, and one login is made at a time per source. GDash logs in again when the seconds at `validityPath` run out
+(30 seconds early, at most 10%; a validity is taken as 10 seconds to 24 hours), when `auth.login`, `auth.name` or the
+password changes, after a restart, and once when the API answers `401` or `403` to a token it accepted before. A
+login answered with `401` or `403` gives `502 fetch_failed` "the login was refused …; check the password", without
+retrying. A Test of the source shares the session with the screens.
 
 **Pushing.** A system that cannot answer requests, such as a Homey Pro (Early 2019) running HomeyScript, Node-RED or a
 Home Assistant `rest_command`, sends the answer of a `push` source itself:
@@ -675,7 +686,7 @@ minutes while a Photos widget shows it, as `"<unit id>-<cache key>-<size>"`; vid
 are left out. A screen loads each from `GET /api/synology/photos/{id}`.
 
 **camera:** `{"id": 1, "name": "Front door", "url": "http://192.168.1.20:5000/api/front_door/latest.jpg", "auth": {"kind": "basic", "name": "admin", "secretSet": true}}`.
-The input has `auth: {kind, name, secret}` with the kinds of a custom source (`none`, `bearer`, `header`, `query`,
+The input has `auth: {kind, name, secret}` with the kinds of a custom source except `login` (`none`, `bearer`, `header`, `query`,
 `basic`) and the same rules. The address is http or https without a user name, password or `#` part. A camera's
 image is a JPEG, PNG or WebP of at most 5 MB, judged by its bytes; the request times out after 10 seconds and
 follows redirects only to the same host. GDash asks the camera only when a screen or admin asks for its image and the

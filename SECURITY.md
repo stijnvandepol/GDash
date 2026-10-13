@@ -152,7 +152,12 @@ fully trust, such as a guest's phone.
   API keys, passwords and secret headers are encrypted with the key file,
   never returned by the API, logged or put in errors or the audit log
   (which names a source by name and host); an API key for the address is
-  added when fetching and never stored in it. Screens never get an API's
+  added when fetching and never stored in it. A source that logs in first
+  posts its password only to a login address on the API's own scheme, host
+  and port, escaped as JSON text inside the body, and keeps the session
+  token it gets back in memory only, sealed with the key file: never on
+  disk, in the cache, a log, an error or an API answer. It logs in again
+  when the token runs out or is refused, one login at a time per source. Screens never get an API's
   answer, only the values their own widgets show, as text. Rules are not
   scripts: they are parsed into a fixed set of comparisons, calculations
   and seven functions, without loops, assignment or access to anything but
