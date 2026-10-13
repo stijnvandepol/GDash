@@ -1,6 +1,7 @@
 // Package homey reads devices and users from a Homey Pro through its local
-// Web API, so a dashboard can show sensors, switches and who is home. It
-// only reads: GDash never changes anything in Homey.
+// Web API, so a dashboard can show sensors, switches and who is home, or
+// from the snapshot that an older Homey without API keys sends itself
+// (snapshot.go). It only reads: GDash never changes anything in Homey.
 package homey
 
 import (
@@ -232,6 +233,12 @@ func (c *Client) Capabilities(ctx context.Context, conn Connection) ([]Capabilit
 	if err != nil {
 		return nil, err
 	}
+	return capabilityList(devices, func(d apiDevice) string { return zones[string(d.Zone)] }), nil
+}
+
+// capabilityList lists every readable capability of devices, sorted by
+// zone, device and title; zoneOf names the zone of a device.
+func capabilityList(devices map[string]apiDevice, zoneOf func(apiDevice) string) []Capability {
 	var list []Capability
 	for deviceID, device := range devices {
 		for capID, capability := range device.Caps {
@@ -239,13 +246,13 @@ func (c *Client) Capabilities(ctx context.Context, conn Connection) ([]Capabilit
 			if !ValidKey(key) || (capability.Getable != nil && !*capability.Getable) {
 				continue
 			}
-			list = append(list, Capability{Key: key, Zone: zones[string(device.Zone)], State: device.state(capID, capability)})
+			list = append(list, Capability{Key: key, Zone: zoneOf(device), State: device.state(capID, capability)})
 		}
 	}
 	slices.SortFunc(list, func(a, b Capability) int {
 		return cmp.Or(cmp.Compare(a.Zone, b.Zone), cmp.Compare(a.Device, b.Device), cmp.Compare(a.Title, b.Title), cmp.Compare(a.Key, b.Key))
 	})
-	return list, nil
+	return list
 }
 
 // Users lists Homey's users, sorted by name, with whether each is home.
@@ -254,6 +261,11 @@ func (c *Client) Users(ctx context.Context, conn Connection) ([]User, error) {
 	if err := c.get(ctx, conn, usersPath, &all); err != nil {
 		return nil, err
 	}
+	return userList(all), nil
+}
+
+// userList lists users by ID, sorted by name, leaving out invalid IDs.
+func userList(all map[string]apiUser) []User {
 	list := make([]User, 0, len(all))
 	for id, u := range all {
 		if !ValidUserID(id) {
@@ -266,7 +278,7 @@ func (c *Client) Users(ctx context.Context, conn Connection) ([]User, error) {
 		list = append(list, User{ID: id, Name: name, Present: u.Present != nil && *u.Present})
 	}
 	slices.SortFunc(list, func(a, b User) int { return cmp.Or(cmp.Compare(a.Name, b.Name), cmp.Compare(a.ID, b.ID)) })
-	return list, nil
+	return list
 }
 
 // Presence returns, for each user in ids that Homey knows, whether that

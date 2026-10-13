@@ -12,7 +12,6 @@ import (
 
 	"github.com/stijnvandepol/gdash/internal/custom"
 	"github.com/stijnvandepol/gdash/internal/datahub"
-	"github.com/stijnvandepol/gdash/internal/ratelimit"
 	"github.com/stijnvandepol/gdash/internal/settings"
 	"github.com/stijnvandepol/gdash/internal/validation"
 )
@@ -26,17 +25,17 @@ const (
 	// customTestTimeout bounds a Test; the fetcher's client has its own,
 	// shorter timeout per request.
 	customTestTimeout = 20 * time.Second
-	// customPushGap is the least time between two accepted answers of one
-	// pushed source, so a script stuck in a loop cannot keep the server
-	// busy: every answer is decoded and published to every screen.
-	customPushGap = 5 * time.Second
+	// pushGap is the least time between two accepted answers of one pushed
+	// source, a custom one or Homey, so a script stuck in a loop cannot keep
+	// the server busy: every answer is decoded and published to every
+	// screen.
+	pushGap = 5 * time.Second
 )
 
 // handleCustomSources adds the routes of custom API sources, all for a
 // logged-in admin only, except the one that a household's system sends a
 // pushed source's answer to, which also takes an API token.
 func (s *Server) handleCustomSources(mux *http.ServeMux) {
-	s.customPushes = ratelimit.New(s.Now, 1, customPushGap)
 	mux.Handle("PUT /api/custom-sources/{id}/data", s.requireUserOrToken(s.putCustomSourceData))
 	mux.Handle("GET /api/custom-sources", s.requireUser(s.listCustomSources))
 	mux.Handle("POST /api/custom-sources", s.requireUser(s.postCustomSource))
@@ -100,21 +99,20 @@ func (s *Server) putCustomSourceData(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusUnsupportedMediaType, "unsupported_media_type", "Send the data as application/json.")
 		return
 	}
-	key := strconv.FormatInt(id, 10)
-	if !s.customPushes.Attempt(key) {
-		w.Header().Set("Retry-After", strconv.Itoa(int(customPushGap.Seconds())))
-		writeError(w, http.StatusTooManyRequests, "rate_limited", "This source received data less than 5 seconds ago. Send it at most once a minute or so.")
+	key := "custom/" + strconv.FormatInt(id, 10)
+	if !s.pushes.Attempt(key) {
+		writeRateLimited(w)
 		return
 	}
 	answer, err := custom.ReadAnswer(http.MaxBytesReader(w, r.Body, custom.MaxResponseBytes+1))
 	if err != nil {
 		// Only an accepted answer counts against the limit.
-		s.customPushes.Release(key)
+		s.pushes.Release(key)
 		writeAnswerError(w, err)
 		return
 	}
 	if err := s.ReceiveCustom(id, answer); err != nil {
-		s.customPushes.Release(key)
+		s.pushes.Release(key)
 		if errors.Is(err, datahub.ErrNotPushed) {
 			writeError(w, http.StatusConflict, "not_pushed", "GDash is still switching this source over. Try again in a moment.")
 			return
@@ -125,6 +123,13 @@ func (s *Server) putCustomSourceData(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
+// writeRateLimited refuses data that arrived within pushGap of the last.
+func writeRateLimited(w http.ResponseWriter) {
+	w.Header().Set("Retry-After", strconv.Itoa(int(pushGap.Seconds())))
+	writeError(w, http.StatusTooManyRequests, "rate_limited", "Data arrived less than 5 seconds ago. Send it at most about once a minute.")
+}
+
+// writeAnswerError refuses data that custom.ReadAnswer did not accept.
 func writeAnswerError(w http.ResponseWriter, err error) {
 	switch {
 	case errors.Is(err, custom.ErrAnswerTooLarge):

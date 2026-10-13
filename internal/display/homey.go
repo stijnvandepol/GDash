@@ -23,6 +23,11 @@ const (
 	// are home, by widget (CustomKey). It is built for each screen from
 	// HomeyUsersSource and holds nobody who is away.
 	HomeyPresenceSource = "homey.presence"
+	// HomeySnapshotSource is the data key of the last snapshot that a
+	// Homey sent itself (homey.Snapshot), for the editor's pickers. No
+	// widget shows it: a screen gets HomeySource and HomeyPresenceSource,
+	// which the server derives from it.
+	HomeySnapshotSource = "homey.snapshot"
 
 	// HomeyPresenceWidget is the type of the Who's home widget.
 	HomeyPresenceWidget = "homeypresence"
@@ -93,6 +98,26 @@ func homeySettingProblem(key string, value any, rule Setting) string {
 		return fmt.Sprintf("choose %d to %d Homey device values", rule.Min, rule.Max)
 	}
 	return ""
+}
+
+// HomeySnapshotData returns what a snapshot that a Homey sent puts in the
+// data hub, by data key: the snapshot itself, and the values and presence
+// that screens read, in the form a polled Homey gives them, of every
+// device and user. Each screen gets only those of its own widgets.
+func HomeySnapshotData(snapshot homey.Snapshot) (map[string]json.RawMessage, error) {
+	out := map[string]json.RawMessage{}
+	for key, v := range map[string]any{
+		HomeySnapshotSource: snapshot,
+		HomeySource:         snapshot.States(),
+		HomeyUsersSource:    snapshot.Presence(),
+	} {
+		raw, err := json.Marshal(v)
+		if err != nil {
+			return nil, fmt.Errorf("encode %s: %w", key, err)
+		}
+		out[key] = raw
+	}
+	return out, nil
 }
 
 // HomeyCapabilityKeys returns every capability the dashboards' Homey

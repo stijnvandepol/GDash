@@ -53,6 +53,38 @@ func TestHomeyKeyIsSecret(t *testing.T) {
 	}
 }
 
+func TestHomeyPushReplacesTheConnection(t *testing.T) {
+	ctx := context.Background()
+	s := newService(t)
+	conn, err := CheckHomey("http://192.168.1.20/", homeyKey)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := s.SetHomey(ctx, conn); err != nil {
+		t.Fatal(err)
+	}
+	if err := s.SetHomeyPush(ctx); err != nil {
+		t.Fatal(err)
+	}
+	if got, err := s.Get(ctx); err != nil || got.Homey == nil || got.Homey.Mode != HomeyPush || got.Homey.URL != "" {
+		t.Fatalf("Get homey = %+v, %v; want push without an address", got.Homey, err)
+	}
+	src, err := s.Sources(ctx)
+	if err != nil || src.Homey != nil || !src.HomeyPushed {
+		t.Fatalf("Sources = %+v, %v; want pushed, without the old key", src, err)
+	}
+	if setup, ok, err := s.HomeySetup(ctx); err != nil || !ok || !setup.Pushed || setup.Connection.Key != "" {
+		t.Fatalf("HomeySetup = %+v, %v, %v", setup, ok, err)
+	}
+	// Connecting again switches back.
+	if err := s.SetHomey(ctx, conn); err != nil {
+		t.Fatal(err)
+	}
+	if got, _ := s.Get(ctx); got.Homey.Mode != HomeyLocal || got.Homey.URL != "http://192.168.1.20" {
+		t.Fatalf("Get after connecting = %+v", got.Homey)
+	}
+}
+
 func TestCheckHomey(t *testing.T) {
 	if _, err := CheckHomey("192.168.1.20", "two words"); fieldNames(err) != "url,key" {
 		t.Fatalf("fields = %q, want url,key", fieldNames(err))

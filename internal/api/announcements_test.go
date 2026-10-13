@@ -179,8 +179,8 @@ func TestRevokedTokenStopsWorking(t *testing.T) {
 	}
 }
 
-// A token opens the announcement route and a pushed source's data, nothing
-// else: not even the source itself.
+// A token opens the announcement route, a pushed source's data and a Homey
+// snapshot, nothing else: not even the source or the Homey setting itself.
 func TestAPITokenOpensNoOtherRoute(t *testing.T) {
 	env := newTestEnv(t, nil)
 	secret := env.withDisplays(t)
@@ -200,6 +200,8 @@ func TestAPITokenOpensNoOtherRoute(t *testing.T) {
 		{"GET", "/api/audit-events", ""},
 		{"PUT", "/api/homeassistant", `{"url":"http://x","token":"y"}`},
 		{"PUT", "/api/homey", `{"url":"http://x","key":"y"}`},
+		{"PUT", "/api/homey", `{"mode":"push"}`},
+		{"GET", "/api/homey/capabilities", ""},
 	} {
 		if status, _ := env.bearer(t, req.method, req.path, req.body, secret, nil); status != http.StatusUnauthorized {
 			t.Errorf("%s %s with a token = %d, want 401", req.method, req.path, status)

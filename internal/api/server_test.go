@@ -26,6 +26,7 @@ import (
 	"github.com/stijnvandepol/gdash/internal/casting"
 	"github.com/stijnvandepol/gdash/internal/custom"
 	"github.com/stijnvandepol/gdash/internal/datahub"
+	"github.com/stijnvandepol/gdash/internal/display"
 	"github.com/stijnvandepol/gdash/internal/homeassistant"
 	"github.com/stijnvandepol/gdash/internal/homey"
 	"github.com/stijnvandepol/gdash/internal/outbound"
@@ -65,6 +66,22 @@ type fakeSources struct {
 // receiveCustom plays the data hub taking a pushed answer: two intervals
 // of a minute and 30 seconds fresh.
 func (f *fakeSources) receiveCustom(sourceID int64, answer json.RawMessage) error {
+	f.put(map[string]json.RawMessage{custom.SourceKey(sourceID): answer}, custom.PushFreshFor(time.Minute))
+	return nil
+}
+
+// receiveHomey plays the data hub taking a Homey snapshot: fresh for three
+// minutes, as cmd/gdash sets it up.
+func (f *fakeSources) receiveHomey(snapshot homey.Snapshot) error {
+	values, err := display.HomeySnapshotData(snapshot)
+	if err != nil {
+		return err
+	}
+	f.put(values, 3*time.Minute)
+	return nil
+}
+
+func (f *fakeSources) put(values map[string]json.RawMessage, freshFor time.Duration) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	// A new map, as the hub hands out copies: a handler may still read
@@ -74,8 +91,9 @@ func (f *fakeSources) receiveCustom(sourceID int64, answer json.RawMessage) erro
 		f.entries = map[string]datahub.Entry{}
 	}
 	at := f.now()
-	f.entries[custom.SourceKey(sourceID)] = datahub.Entry{Value: answer, FetchedAt: at, StaleAfter: at.Add(custom.PushFreshFor(time.Minute))}
-	return nil
+	for key, value := range values {
+		f.entries[key] = datahub.Entry{Value: value, FetchedAt: at, StaleAfter: at.Add(freshFor)}
+	}
 }
 
 func (f *fakeSources) Search(context.Context, string) ([]weather.Place, error) {
@@ -204,6 +222,7 @@ func newTestEnv(t *testing.T, discover func(context.Context) ([]cast.Device, err
 		Stops:                stops,
 		CustomFetcher:        &custom.Fetcher{HTTP: outbound.NewClient(5 * time.Second)},
 		ReceiveCustom:        sources.receiveCustom,
+		ReceiveHomey:         sources.receiveHomey,
 		HomeAssistant:        &homeassistant.Client{HTTP: &http.Client{Timeout: 5 * time.Second}},
 		Homey:                &homey.Client{HTTP: &http.Client{Timeout: 5 * time.Second}},
 		SettingsChanged:      func() { settingsChanges.Add(1) },

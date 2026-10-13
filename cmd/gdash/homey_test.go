@@ -1,8 +1,13 @@
 package main
 
 import (
+	"context"
 	"fmt"
+	"io"
+	"log/slog"
+	"strings"
 	"testing"
+	"time"
 
 	"github.com/stijnvandepol/gdash/internal/datahub"
 	"github.com/stijnvandepol/gdash/internal/display"
@@ -76,5 +81,61 @@ func TestHomeyKeysAreCapped(t *testing.T) {
 	fewer := homeySources(t, cfg, widgets[:5]...)[display.HomeySource]
 	if all.Version != fewer.Version {
 		t.Fatal("values beyond the cap changed the source; what is kept would grow without bound")
+	}
+}
+
+func TestHomeyThatSendsItsDataIsWaitedFor(t *testing.T) {
+	cfg := settings.Sources{HomeyPushed: true}
+	// Without widgets too: the editor lists values from the snapshot.
+	for _, got := range []map[string]datahub.Source{homeySources(t, cfg), homeySources(t, cfg, homeyValues("d1/onoff"), whoIsHome("u1"))} {
+		if len(got) != 3 {
+			t.Fatalf("sources = %v, want the snapshot, values and users", got)
+		}
+		for key, src := range got {
+			if src.Fetch != nil || src.FreshFor != 3*time.Minute {
+				t.Errorf("%s = %+v, want it pushed and fresh for three minutes", key, src)
+			}
+		}
+	}
+	polled := homeySources(t, settings.Sources{Homey: &homey.Connection{URL: "http://192.168.1.20", Key: "made-up"}}, homeyValues("d1/onoff"))
+	if polled[display.HomeySource].Version == homeySources(t, cfg)[display.HomeySource].Version {
+		t.Fatal("switching to push mode keeps the polled values")
+	}
+}
+
+func TestHomeySnapshotSurvivesARestart(t *testing.T) {
+	box, err := secret.NewBox(make([]byte, 32))
+	if err != nil {
+		t.Fatal(err)
+	}
+	cache, err := datahub.NewFileStore(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	start := func() *dataSources {
+		d := &dataSources{hub: datahub.New(cache, logger, func() {}), settings: &settings.Service{Box: box}}
+		d.hub.Configure(ctx, d.homeySources(settings.Sources{HomeyPushed: true}, nil))
+		return d
+	}
+	snapshot, err := homey.ParseSnapshot([]byte(`{"devices": [{"id": "d1", "name": "Lamp", "caps": {"onoff": {"value": true}}}],
+		"users": [{"id": "u1", "name": "Anna", "present": true}]}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := start().receiveHomey(snapshot); err != nil {
+		t.Fatal(err)
+	}
+	entries := start().hub.Entries()
+	if got := string(entries[display.HomeySource].Value); !strings.Contains(got, `"d1/onoff":{"device":"Lamp"`) {
+		t.Errorf("values after a restart = %s", got)
+	}
+	if got := string(entries[display.HomeyUsersSource].Value); got != `{"u1":true}` {
+		t.Errorf("presence after a restart = %s", got)
+	}
+	if len(entries[display.HomeySnapshotSource].Value) == 0 {
+		t.Error("the snapshot was not kept on disk")
 	}
 }

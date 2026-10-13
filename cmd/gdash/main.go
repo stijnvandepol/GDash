@@ -204,6 +204,7 @@ func serve(ctx context.Context, logger *slog.Logger) error {
 		Stops:          sources.stops,
 		CustomFetcher:  sources.custom,
 		ReceiveCustom:  sources.receiveCustom,
+		ReceiveHomey:   sources.receiveHomey,
 		TrustedProxies: cfg.trustedProxies,
 		Web:            frontend,
 		Discover:       cast.Discover,

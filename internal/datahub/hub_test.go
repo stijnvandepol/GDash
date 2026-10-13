@@ -2,6 +2,7 @@ package datahub
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"io"
 	"log/slog"
@@ -296,7 +297,7 @@ func TestPutStoresPushedValue(t *testing.T) {
 		t.Fatalf("entry before the first push = %+v, %v; want an empty one", got, ok)
 	}
 	before := changes.Load()
-	if err := h.Put("custom.source.1", []byte(`{"on":true}`)); err != nil {
+	if err := h.Put(map[string]json.RawMessage{"custom.source.1": []byte(`{"on":true}`)}); err != nil {
 		t.Fatal(err)
 	}
 	got := h.Entries()["custom.source.1"]
@@ -319,7 +320,7 @@ func TestPutStoresPushedValue(t *testing.T) {
 	if got := h.Entries()["custom.source.1"]; string(got.Value) != `{"on":true}` {
 		t.Fatalf("entry after a new interval = %+v, want the pushed value kept", got)
 	}
-	if err := h.Put("custom.source.1", []byte(`1`)); err != nil {
+	if err := h.Put(map[string]json.RawMessage{"custom.source.1": []byte(`1`)}); err != nil {
 		t.Fatal(err)
 	}
 	if got := h.Entries()["custom.source.1"]; !got.StaleAfter.Equal(fixedNow.Add(630 * time.Second)) {
@@ -334,9 +335,31 @@ func TestPutRefusesFetchedAndUnknownSources(t *testing.T) {
 	var fetches atomic.Int32
 	h.Configure(ctx, []Source{counting("custom.source.2", "a", 1, &fetches)})
 	for _, key := range []string{"custom.source.2", "custom.source.3"} {
-		if err := h.Put(key, []byte(`1`)); !errors.Is(err, ErrNotPushed) {
+		if err := h.Put(map[string]json.RawMessage{key: []byte(`1`)}); !errors.Is(err, ErrNotPushed) {
 			t.Errorf("Put(%s) = %v, want ErrNotPushed", key, err)
 		}
+	}
+}
+
+func TestPutStoresValuesTogetherOrNotAtAll(t *testing.T) {
+	h, _, changes := newTestHub(t)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	other := pushed(time.Minute)
+	other.Key = "homey.users"
+	h.Configure(ctx, []Source{pushed(time.Minute), other})
+	if err := h.Put(map[string]json.RawMessage{"custom.source.1": []byte(`1`), "unknown.key": []byte(`2`)}); !errors.Is(err, ErrNotPushed) {
+		t.Fatalf("Put with an unknown key = %v, want ErrNotPushed", err)
+	}
+	if got := h.Entries()["custom.source.1"]; len(got.Value) != 0 {
+		t.Fatalf("a refused Put stored %s", got.Value)
+	}
+	before := changes.Load()
+	if err := h.Put(map[string]json.RawMessage{"custom.source.1": []byte(`1`), "homey.users": []byte(`{}`)}); err != nil {
+		t.Fatal(err)
+	}
+	if changes.Load() != before+1 || string(h.Entries()["homey.users"].Value) != `{}` {
+		t.Fatalf("two values took %d changes", changes.Load()-before)
 	}
 }
 
@@ -345,7 +368,7 @@ func TestPushedValueSurvivesARestart(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	h.Configure(ctx, []Source{pushed(time.Minute)})
-	if err := h.Put("custom.source.1", []byte(`42`)); err != nil {
+	if err := h.Put(map[string]json.RawMessage{"custom.source.1": []byte(`42`)}); err != nil {
 		t.Fatal(err)
 	}
 	restarted := New(store, h.logger, func() {})

@@ -198,7 +198,7 @@ func TestCustomPushWithATokenOrALogin(t *testing.T) {
 
 	// An admin session may send data too, such as from a test in a browser
 	// console; the browser's CSRF check still applies to it.
-	env.advance(customPushGap)
+	env.advance(pushGap)
 	if status, body := env.do(t, "PUT", "/api/custom-sources/1/data", `[1, 2]`); status != http.StatusNoContent {
 		t.Fatalf("push with a session = %d %s", status, body)
 	}
@@ -206,7 +206,7 @@ func TestCustomPushWithATokenOrALogin(t *testing.T) {
 		t.Errorf("a push was audited: %s", auditAfter)
 	}
 
-	env.advance(customPushGap)
+	env.advance(pushGap)
 	for name, header := range map[string]string{"no credentials": "", "wrong token": "Bearer gdk_" + strings.Repeat("A", 43)} {
 		headers := map[string]string{}
 		if header != "" {
@@ -247,7 +247,7 @@ func TestCustomPushRefusals(t *testing.T) {
 	if status, body := env.bearer(t, "PUT", "/api/custom-sources/1/data", `{"n": 1}`, secret, nil); status != http.StatusNoContent {
 		t.Fatalf("first push = %d %s", status, body)
 	}
-	env.advance(customPushGap - time.Second)
+	env.advance(pushGap - time.Second)
 	status, body := env.bearer(t, "PUT", "/api/custom-sources/1/data", `{"n": 2}`, secret, nil)
 	if status != http.StatusTooManyRequests || !strings.Contains(body, "rate_limited") {
 		t.Fatalf("push within 5 seconds = %d %s, want 429", status, body)

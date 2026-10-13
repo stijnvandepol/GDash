@@ -93,8 +93,10 @@ type Sources struct {
 	Calendars []calendar.Source
 	// HomeAssistant is nil when no readable connection is set up.
 	HomeAssistant *homeassistant.Connection
-	// Homey is nil when no readable connection is set up.
+	// Homey is nil when no readable local connection is set up.
 	Homey *homey.Connection
+	// HomeyPushed is true when the Homey sends its data itself.
+	HomeyPushed bool
 }
 
 // Service reads and changes the settings.
@@ -186,11 +188,14 @@ func (s *Service) Sources(ctx context.Context) (Sources, error) {
 	} else if ok {
 		out.HomeAssistant = &conn
 	}
-	homeyConn, ok, err := s.HomeyConnection(ctx)
-	if err != nil {
+	homeySetup, ok, err := s.HomeySetup(ctx)
+	switch {
+	case err != nil:
 		s.Logger.Error("homey connection cannot be decrypted; connect again", "error", err)
-	} else if ok {
-		out.Homey = &homeyConn
+	case ok && homeySetup.Pushed:
+		out.HomeyPushed = true
+	case ok:
+		out.Homey = &homeySetup.Connection
 	}
 	return out, nil
 }

@@ -65,7 +65,7 @@ func (d *dataSources) customSources(all []custom.Source, shown []int64) []datahu
 // receiveCustom stores an answer that a pushed source sent, as its latest;
 // the hub then refreshes the screens and the rules.
 func (d *dataSources) receiveCustom(sourceID int64, answer json.RawMessage) error {
-	return d.hub.Put(custom.SourceKey(sourceID), answer)
+	return d.hub.Put(map[string]json.RawMessage{custom.SourceKey(sourceID): answer})
 }
 
 // customRules posts the announcements of Custom widget rules that start to

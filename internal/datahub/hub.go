@@ -218,21 +218,28 @@ func (h *Hub) refresh(ctx context.Context, src Source) error {
 	return nil
 }
 
-// Put stores value, which must be valid JSON, as the latest value of the
-// pushed source key, in memory and on disk, like a fetched value. It
-// returns ErrNotPushed when key is not configured as a pushed source.
-func (h *Hub) Put(key string, value json.RawMessage) error {
+// Put stores each value, which must be valid JSON, as the latest value of
+// the pushed source with its key, in memory and on disk, like a fetched
+// value. Values that arrive together, such as one Homey snapshot in three
+// forms, are stored together and announced as one change. It returns
+// ErrNotPushed, and stores nothing, when a key is not configured as a
+// pushed source.
+func (h *Hub) Put(values map[string]json.RawMessage) error {
 	h.mu.Lock()
-	running, ok := h.running[key]
-	if !ok || running.source.Fetch != nil {
-		h.mu.Unlock()
-		return ErrNotPushed
+	for key := range values {
+		if running, ok := h.running[key]; !ok || running.source.Fetch != nil {
+			h.mu.Unlock()
+			return fmt.Errorf("%w: %s", ErrNotPushed, key)
+		}
 	}
 	now := h.now()
-	entry := Entry{Value: value, FetchedAt: now, StaleAfter: now.Add(running.source.freshFor())}
-	h.entries[key] = entry
-	if err := h.store.Save(key, running.version, entry); err != nil {
-		h.logger.Warn("could not persist data", "source", key, "error", err)
+	for key, value := range values {
+		running := h.running[key]
+		entry := Entry{Value: value, FetchedAt: now, StaleAfter: now.Add(running.source.freshFor())}
+		h.entries[key] = entry
+		if err := h.store.Save(key, running.version, entry); err != nil {
+			h.logger.Warn("could not persist data", "source", key, "error", err)
+		}
 	}
 	h.mu.Unlock()
 	h.onChange()

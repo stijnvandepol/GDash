@@ -21,6 +21,7 @@ import (
 	"github.com/stijnvandepol/gdash/internal/cast"
 	"github.com/stijnvandepol/gdash/internal/casting"
 	"github.com/stijnvandepol/gdash/internal/datahub"
+	"github.com/stijnvandepol/gdash/internal/homey"
 	"github.com/stijnvandepol/gdash/internal/pairing"
 	"github.com/stijnvandepol/gdash/internal/photos"
 	"github.com/stijnvandepol/gdash/internal/ratelimit"
@@ -80,9 +81,11 @@ type Server struct {
 	// returns datahub.ErrNotPushed when the data hub does not have the
 	// source as pushed (yet).
 	ReceiveCustom func(sourceID int64, answer json.RawMessage) error
-	// customPushes allows one accepted answer per pushed source per
-	// customPushGap.
-	customPushes *ratelimit.Limiter
+	// ReceiveHomey stores a snapshot that a Homey sent; it returns
+	// datahub.ErrNotPushed when the data hub does not wait for one (yet).
+	ReceiveHomey func(snapshot homey.Snapshot) error
+	// pushes allows one accepted answer per pushed source per pushGap.
+	pushes *ratelimit.Limiter
 	// SettingsChanged is called after a data source setting changes, so
 	// the data hub fetches what is configured now.
 	SettingsChanged func()
@@ -120,6 +123,7 @@ type Server struct {
 // Handler returns the routes of the server.
 func (s *Server) Handler() http.Handler {
 	mux := http.NewServeMux()
+	s.pushes = ratelimit.New(s.Now, 1, pushGap)
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusNoContent) })
 	mux.HandleFunc("GET /{$}", s.adminPage)
 	mux.HandleFunc("GET /d/{display}", s.displayPage)
@@ -181,6 +185,7 @@ func (s *Server) Handler() http.Handler {
 	mux.Handle("DELETE /api/homey", s.requireUser(s.deleteHomey))
 	mux.Handle("GET /api/homey/capabilities", s.requireUser(s.getHomeyCapabilities))
 	mux.Handle("GET /api/homey/users", s.requireUser(s.getHomeyUsers))
+	mux.Handle("PUT /api/homey/snapshot", s.requireUserOrToken(s.putHomeySnapshot))
 	mux.Handle("GET /api/departures/stops", s.requireUser(s.getDepartureStops))
 	s.handleCustomSources(mux)
 
