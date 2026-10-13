@@ -283,13 +283,43 @@ version, reads at most 8 MB, and cuts the circle out of the box itself (haversin
 ignored, as the service sends 0 for a fuel a station does not sell. When a request fails the last complete answer
 stays and the entry is marked `failing`. The data is the ANWB's and can lag a station's own sign.
 
+Rain comes from Buienradar's `gpsgadget.buienradar.nl/data/raintext?lat=<lat>&lon=<lon>` with two decimals, which needs
+no key and answers one `VVV|HH:MM` line per five minutes for two hours, in Dutch time; the intensity is
+`10^((VVV-109)/32)` mm/h, and 0 is dry. Outside the Netherlands and Belgium (a box from 49.4 to 53.8 north and 2.4 to 7.3
+east), or when Buienradar fails or sends fewer than six readable lines, the server asks Open-Meteo for
+`minutely_15=precipitation&forecast_minutely_15=10&timezone=auto` and turns each quarter's total into mm/h for the
+quarter it covers. Every 5 minutes it asks once per distinct place rounded to two decimals, at most ten, with a
+`User-Agent` that names GDash, and reads at most 64 KB. Buienradar's data is free for non-commercial use with a credit to
+buienradar.nl, which the widget shows.
+
+Weather warnings come from MeteoAlarm's feed of the Netherlands (`feeds.meteoalarm.org/api/v1/warnings/feeds-netherlands`),
+which needs no key and holds the KNMI's CAP alerts. Every 15 minutes the server reads it once (at most 16 MB) and keeps,
+per land region (the twelve provinces and the Wadden Islands, matched by MeteoAlarm's `EMMA_ID` geocode or the area's
+name), the alerts with `status` `Actual` and `msgType` `Alert` or `Update` at awareness level 2 (yellow), 3 (orange) or 4
+(red) that have not expired. An update counts under the identifier of the first alert in its `references`, and the
+newest version wins. A widget without a region takes the region of the weather location by the nearest of a list of
+towns; outside the Netherlands it has no region and there is no entry for it. For widgets with `announce`, the server
+checks after every data change and every minute which code orange or red warnings came into effect, and posts each one
+once per identifier and level to every display for 300 seconds, with the code and region as the title and the KNMI's
+headline as the message (Dutch on a Dutch screen, else English). Warnings already in effect when the server starts, or
+when a region is first announced, are not posted. Each one is in the audit log as `weather_warning_announced`, by the
+actor `weather warning`.
+
+`GDASH_TEST_UPSTREAM`, for the end-to-end tests only, points Buienradar, Open-Meteo's rain forecast and MeteoAlarm at
+`<address>/buienradar/data/raintext`, `<address>/open-meteo/v1/forecast` and
+`<address>/meteoalarm/api/v1/warnings/feeds-netherlands`; the server refuses an address that is not on the loopback
+address.
+
 Changes apply at once: a changed source is fetched again, a removed one
 disappears from the displays. `status` has an entry per configured source by
 data key (`weather.current`, `airquality.current`, `news.default`,
-`calendar.default`, `homeassistant.default`, `departures.default`). The waste, energy price, fuel and holiday sources
-(`waste.default`, `energyprice.nl`, `fuel.default`, `holidays.nl`), the Homey sources (`homey.default` for values, `homey.users` for
-who is home) and custom sources (`custom.source.<id>`) exist only while a dashboard has a widget for them; a pushed
-custom source is there from the start, as it is never fetched.
+`calendar.default`, `homeassistant.default`, `departures.default`). These sources exist only while a dashboard has a
+widget for them:
+
+- waste `waste.default`, energy price `energyprice.nl`, fuel `fuel.default`
+- holidays `holidays.nl`, rain `rain.default`, weather warnings `warnings.default`
+- Homey `homey.default` (values) and `homey.users` (who is home)
+- custom sources `custom.source.<id>`; a pushed custom source is there from the start, as it is never fetched
 
 Place search sends the typed name to Open-Meteo's geocoding service, which
 uses GeoNames data; the coordinates can also be entered by hand.
@@ -489,12 +519,15 @@ allows, overlaps another, lacks a required setting, or has a setting its type do
 | `homey` | 4x3 | `homey.default` | `capabilities`: 1 to 8 keys `<device id>/<capability id>` such as `5f2c…/measure_temperature`, from the search (required) |
 | `homeypresence` | 4x3 | `homey.presence` | `users`: 1 to 8 `{id, label}`, a Homey user's `id` and a label of 1 to 12 characters on one line, such as initials (required); screens receive this widget without its settings |
 | `departures` | 6x4 | `departures.default` | `stop`: a stop area code such as `utrcsw`, from the stop search (required), `stopName`: 1 to 100 characters, shown as the title, `maxItems`: 1 to 20 |
+| `rain` | 5x3 | `rain.default` | `place`: a place with `name`, `latitude` and `longitude`, default the weather location |
+| `warnings` | 6x3 | `warnings.default` | `region`: `Groningen`, `Friesland`, `Drenthe`, `Overijssel`, `Flevoland`, `Gelderland`, `Utrecht`, `Noord-Holland`, `Zuid-Holland`, `Zeeland`, `Noord-Brabant`, `Limburg` or `Waddeneilanden`, default the province of the weather location, `announce`: `true` to put a code orange or red warning over every display when it starts, default `false` |
 | `fuel` | 6x4 | `fuel.default` | `place`: a place with `name`, `latitude` and `longitude`, default the weather location, `radius`: 1 to 25 km, default 5, `fuel`: `EURO95` (default), `EURO98`, `DIESEL`, `AUTOGAS` or `CNG`, `maxItems`: 1 to 10, default 5 |
 | `custom` | 4x3 | `custom.default` | `source`: the `id` of a custom source (required), `mode`: `value`, `list`, `keyValues` or `badges` (required), `title`: up to 60 characters; value mode: `path` (required), `label` (up to 40), `unit` (up to 12), `decimals` 0 to 6; list mode: `path` of the list and `fields`, 1 to 3 paths read from each item (both required); key-values and badges mode: `pairs`, 1 to 8 `{label, path}` (required); a badge is on when its value is `true`, a number other than 0, or the text `on`, `home`, `yes`, `open` or `true` in any case, and a screen only receives the labels of the badges that are on, as `badges`; `rules`: up to 6, see [Custom APIs](#custom-apis) |
 
 A setting's `kind` is `integer`, `text`, `date`, `calendar`, `entities`, `homeyCapabilities`, `homeyUsers`, `stop`,
-`place` or `choice`, or for the Custom widget `customSource`, `path`, `paths`, `pairs` and `rules`; `min` and `max` bound an integer, a text's length
-in characters, or the number of entities or items. A `choice` is one of the strings in the setting's `options`. A
+`place`, `choice` or `boolean`, or for the Custom widget `customSource`, `path`, `paths`, `pairs` and `rules`; `min`
+and `max` bound an integer, a text's length in characters, or the number of entities or items. A `choice` is one of the
+strings in the setting's `options`; a `boolean` is `true` or `false`. A
 `place` is exactly `{"name": "Oss", "latitude": 51.765, "longitude": 5.518}`: a name of 1 to 100 characters, a latitude
 from -90 to 90 and a longitude from -180 to 180 as numbers, and no other field; it is what `GET /api/places` returns
 for a result, without `region`. A Custom widget's settings are checked together, and an error names the setting, such
@@ -582,6 +615,22 @@ and follows the weather location, so no key holds its coordinates. `name` is the
 name holds it already, `price` is euro per litre (per kilogram for `CNG`) and `distanceKm` is the straight-line distance
 with one decimal. A place without a station that sells the fuel has an empty list. Without a place and without a weather
 location there is no `fuel.default` entry at all.
+
+**rain data (`rain.default`):** maps the keys of the places that a screen's own widgets show to their forecast:
+`{"51.77,5.52": {"source": "buienradar", "stepMinutes": 5, "points": [{"time": "2026-10-13T14:05:00+02:00", "mmPerHour": 0.52}]}}`.
+A key is the place rounded to two decimals; a widget without a place has the key `here` and follows the weather location.
+`source` is `buienradar` or `open-meteo`, `stepMinutes` how long each point lasts (5 or 15), and each point's `time` is
+when its step starts, written in the place's time zone, with the intensity in mm/h rounded to two decimals. Without a
+place and without a weather location there is no `rain.default` entry.
+
+**warnings data (`warnings.default`):** maps the keys of the regions that a screen's own widgets show to their
+warnings, soonest first: `{"Noord-Brabant": {"region": "Noord-Brabant", "warnings": [{"id": "2.49.0.0.528.0.NL.…_1",
+"level": "orange", "kind": "wind", "event": {"nl": "Zware windstoten", "en": "Severe Wind"}, "headline": {"nl": "…",
+"en": "…"}, "onset": "2026-10-13T12:00:00Z", "expires": "2026-10-13T22:00:00Z"}]}}`. A widget without a region has the
+key `here`, under which `region` names the province of the weather location. `level` is `yellow`, `orange` or `red`;
+`kind` is MeteoAlarm's awareness type (`wind`, `snow-ice`, `thunderstorm`, `fog`, `high-temperature`,
+`low-temperature`, `coastal-event`, `forest-fire`, `avalanches`, `rain`, `flooding`, `rain-flood`) or empty; `event` and
+`headline` are the KNMI's texts by language. A region without warnings has an empty list.
 
 **departures data (`departures.default`):** maps the stop codes that a screen's own widgets show to their next
 departures, soonest first and at most 20:

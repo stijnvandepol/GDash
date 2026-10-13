@@ -51,6 +51,8 @@ survive the internet dropping out. GDash is made for exactly that.
 | Sun | Sunrise, sunset and the length of the day | Open-Meteo |
 | Moon | The phase, how much is lit, and the next full and new moon | Computed, no network |
 | Air quality | Air quality index and pollen (Europe) | Open-Meteo |
+| Rain | Rain in the next two hours as bars, and "Rain from 14:20 (light)" | [Buienradar](https://www.buienradar.nl) (Netherlands and Belgium), elsewhere Open-Meteo; no key |
+| Weather warnings | The KNMI's code yellow, orange and red warnings for your province, optionally announced on every screen | KNMI through [MeteoAlarm](https://meteoalarm.org) (Netherlands), no key |
 | Calendar | The coming week from Google, Outlook, iCloud or Nextcloud | Secret iCal address, no OAuth |
 | Waste collection | The next pickup per kind (GFT, PMD, paper, ...) | Your municipality's iCal link |
 | Departures | Next buses, trams, metros and ferries at a stop, with delays | [OVapi](https://v0.ovapi.nl) (Netherlands), no key |
@@ -181,6 +183,7 @@ environment variables:
 | `GDASH_TRUSTED_PROXIES` | none | Addresses or CIDR ranges of reverse proxies whose `X-Forwarded-For` and `X-Forwarded-Proto` GDash trusts |
 | `GDASH_SCHOOL_HOLIDAYS_URL` | Rijksoverheid open data | Where the school holidays are read; only the end-to-end tests change it, to a stand-in |
 | `GDASH_UPDATE_CHECK` | `on` | `off` stops the daily check for a new release, whatever Settings says; apart from the data sources it is the only request GDash makes ([SECURITY.md](SECURITY.md)) |
+| `GDASH_TEST_UPSTREAM` | none | For the end-to-end tests only: an `http://` address on the loopback address, such as `http://127.0.0.1:18700`, that stands in for Buienradar, Open-Meteo's rain forecast and MeteoAlarm; any other address is refused |
 
 The network needs: TCP 8009 from GDash to the TVs, mDNS (UDP 5353) to find
 them, TCP 8420 from the TVs to GDash, and HTTPS from GDash to the internet for
@@ -277,5 +280,8 @@ web interface links to the source, as section 13 of the license asks.
 departures by [OVapi](https://v0.ovapi.nl), school holidays from the open
 data of the [Dutch government](https://opendata.rijksoverheid.nl) (CC0), electricity prices by
 [EnergyZero](https://www.energyzero.nl), fuel prices from the public data of
-the [ANWB](https://www.anwb.nl). The typefaces are under the SIL Open Font
+the [ANWB](https://www.anwb.nl), rain forecasts by
+[Buienradar.nl](https://www.buienradar.nl) (free for non-commercial use with
+this credit, which the Rain widget also shows), weather warnings by the
+[KNMI](https://www.knmi.nl) through [MeteoAlarm](https://meteoalarm.org). The typefaces are under the SIL Open Font
 License; all bundled licences are in [THIRD_PARTY_LICENSES](THIRD_PARTY_LICENSES).

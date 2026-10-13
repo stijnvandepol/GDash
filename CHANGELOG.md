@@ -7,6 +7,32 @@ the format follows [Keep a Changelog](https://keepachangelog.com).
 
 ### Added
 
+- A **Rain** widget: the rain in the next two hours at the weather location or
+  a place you choose, as a bar per five minutes and one sentence such as "Dry
+  for the next 2 hours", "Rain from 14:20 (light)" or "Rain until 15:05
+  (moderate)", in the screen's language. Light is up to 2.5 mm/h, moderate up
+  to 10, heavy above. The forecast is Buienradar's in the Netherlands and
+  Belgium, credited on the widget, and Open-Meteo's elsewhere or when
+  Buienradar fails; no key. GDash asks every 5 minutes, once per place; see
+  [docs/guide.md](docs/guide.md#rain).
+- A **Weather warnings** widget: the KNMI's code yellow, orange and red
+  warnings for a province, or the province of the weather location, from the
+  public MeteoAlarm feed, every 15 minutes. "No warnings" in a calm style, or a
+  banner per warning with the code, the kind of weather and when; red also has
+  a warning sign. With **Announce** on, a code orange or red warning that
+  starts is shown over every screen for five minutes, once per warning; see
+  [docs/guide.md](docs/guide.md#weather-warnings).
+- A `boolean` kind for widget settings, shown as a checkbox in the editor.
+- `GDASH_TEST_UPSTREAM` lets the end-to-end tests stand in for Buienradar,
+  Open-Meteo's rain forecast and MeteoAlarm on the loopback address.
+
+### Changed
+
+- The editor names each count after what the widget shows: "Headlines at
+  most" instead of "Items", and "Days ahead" for the forecast.
+
+### Fixed
+
 - A **Holidays** widget lists the coming school holidays of your region
   (North, Middle or South) and the Dutch public holidays, the soonest
   first, in the language of the screens: "Autumn holiday · Starts in 4 days
@@ -18,14 +44,6 @@ the format follows [Keep a Changelog](https://keepachangelog.com).
 - A **Moon** widget draws the moon in its current phase in the colours of
   the theme, with the phase's name, how much is lit and the next full and
   new moon. It is computed on the screen, without network.
-
-### Changed
-
-- The editor names each count after what the widget shows: "Headlines at
-  most" instead of "Items", and "Days ahead" for the forecast.
-
-### Fixed
-
 - A custom API can be sent to GDash instead of fetched, for a system that
   cannot answer requests, such as a Homey Pro (Early 2019) with HomeyScript,
   Node-RED or a Home Assistant automation. Choose "Your system sends it to

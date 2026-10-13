@@ -125,6 +125,8 @@ add calendars and feeds under Settings, Data sources, and the photos once you ad
 | Sun | Sunrise, sunset, the length of the day and how it compares with yesterday |
 | Moon | The phase of the moon, drawn, how much of it is lit, and the dates of the next full and new moon |
 | Air quality | The European air quality index in words, and the pollen in the air (Europe only) |
+| Rain | The rain in the next two hours as bars, and one sentence such as "Rain from 14:20 (light)"; see [Rain](#rain) |
+| Weather warnings | The KNMI's code yellow, orange and red warnings for a province (Netherlands); see [Weather warnings](#weather-warnings) |
 | Waste collection | The next pickup of each kind of household waste in the coming 14 days, from one of your calendars |
 | Energy price | The electricity price now, whether it is low, average or high today, today's prices per hour and the cheapest three hours (Netherlands) |
 | Calendar | The coming week from your calendars |
@@ -419,6 +421,89 @@ Good to know:
   sends the weather location, as that is rounded already.
 - The place search is the one the weather location uses (Open-Meteo, with
   data from GeoNames).
+
+## Rain
+
+The Rain widget shows whether it will rain in the next two hours: a bar for
+every five minutes, from now on the left to two hours ahead on the right, and
+one sentence in the screen's language:
+
+- "Dry for the next 2 hours";
+- "Rain from 14:20 (light)" when the first rain is still to come;
+- "Rain until 15:05 (moderate)" while it rains and a dry spell follows;
+- "Rain for the next 2 hours (heavy)" when it does not stop.
+
+The word in brackets is the heaviest moment of that spell of rain:
+
+| Word | Millimetres per hour |
+|---|---|
+| (dry) | below 0.1 |
+| light | 0.1 to 2.5 |
+| moderate | 2.5 to 10 |
+| heavy | 10 and more |
+
+A taller bar is heavier rain; a dry moment is a flat line.
+
+1. Add a **Rain** widget to a dashboard and select it.
+2. **Place**: leave it empty to use the weather location from Settings, or
+   choose another town with the place search.
+
+Good to know:
+
+- In the Netherlands and Belgium the forecast is
+  [Buienradar](https://www.buienradar.nl)'s, in steps of five minutes. Its
+  data is free for non-commercial use with a credit, so the widget always
+  shows "Buienradar.nl" under the bars. Elsewhere, or when Buienradar cannot
+  be reached, GDash uses Open-Meteo's forecast per quarter of an hour instead,
+  and the widget says "Open-Meteo.com".
+- GDash asks once every 5 minutes, once for each different place your
+  dashboards show (rounded to about 1 km), at most ten places. When neither
+  service answers, the last forecast stays on screen and "Buienradar.nl"
+  turns to the warning colour once it is more than 6 minutes old.
+- Only the place, with two decimals, and GDash's name and version are sent.
+
+## Weather warnings
+
+The Weather warnings widget shows the warnings of the
+[KNMI](https://www.knmi.nl), the Dutch weather service, for one province:
+a banner per warning with its code, what it is about and when, such as
+"Code orange Wind until 22:00", and the KNMI's own headline on a larger
+tile. Without warnings it says "No warnings for Utrecht" in a calm style.
+
+- **Code yellow** has a thin bar in the theme's warning colour, **code
+  orange** a thicker bar and a tinted banner, **code red** a stronger tint and
+  a warning sign, so it is found without telling the colours apart.
+- A warning that has been issued but not started yet shows its start and end,
+  such as "Wed 08:00 – 14:00". An expired warning disappears.
+- The headline is the KNMI's text, in Dutch on a Dutch screen and in English
+  on the others; the code and the kind of weather are in the screen's
+  language.
+
+1. Add a **Weather warnings** widget to a dashboard and select it.
+2. **Province**: leave it on "From the weather location", or choose one of the
+   twelve provinces or the Wadden Islands. GDash finds the province of the
+   weather location by the nearest of about 150 towns; within a few kilometres
+   of a provincial border, choose the province yourself to be sure.
+3. **Announce code orange and red on every screen**: when a code orange or red
+   warning starts, GDash shows it over all displays for five minutes, like an
+   announcement, with the code and province as the title and the KNMI's
+   headline as the message. Each warning is announced once; if the KNMI raises
+   it from orange to red, it is announced again. A warning that is already in
+   effect when GDash starts, or when you turn this on, is not announced. The
+   activity log records each announcement.
+
+Good to know:
+
+- The warnings come from the public MeteoAlarm feed of the Netherlands, which
+  carries the KNMI's warnings; GDash reads it once every 15 minutes while a
+  dashboard has the widget. When it cannot be reached, the last warnings stay
+  and the title turns to the warning colour once they are more than 16 minutes
+  old. The widget credits "KNMI · MeteoAlarm".
+- Only the Netherlands for now. MeteoAlarm publishes a feed in the same shape
+  for every European country, so other countries can be added with their own
+  feed address and regions.
+- Warnings for the sea, the IJsselmeer and the harbours are left out: they are
+  for shipping.
 
 ## Custom APIs
 
