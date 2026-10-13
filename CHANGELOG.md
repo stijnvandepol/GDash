@@ -52,6 +52,15 @@ the format follows [Keep a Changelog](https://keepachangelog.com).
 - A `boolean` kind for widget settings, shown as a checkbox in the editor.
 - `GDASH_TEST_UPSTREAM` lets the end-to-end tests stand in for Buienradar,
   Open-Meteo's rain forecast and MeteoAlarm on the loopback address.
+- A **Solar forecast** widget: what the household's solar panels are
+  expected to produce today, the best hour, a bar per hour for the rest of
+  the day and tomorrow's total. Set the panels up under Integrations, Solar
+  panels: tilt, direction and peak power, for one or two groups of panels,
+  at the weather location or a place of their own. GDash computes the
+  estimate from Open-Meteo's sunlight forecast on the panels' plane and a
+  performance ratio (0.85 unless you change it), or asks Forecast.Solar
+  instead; both need no key. It is refreshed every 30 minutes and is an
+  estimate from the cloud forecast, not a measurement.
 
 ### Changed
 

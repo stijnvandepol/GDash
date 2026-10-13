@@ -58,6 +58,7 @@ survive the internet dropping out. GDash is made for exactly that.
 | Departures | Next buses, trams, metros and ferries at a stop, with delays | [OVapi](https://v0.ovapi.nl) (Netherlands), no key |
 | Fuel prices | The cheapest petrol stations near a place | ANWB price data (Netherlands), no key |
 | Energy price | Today's dynamic electricity price per hour, cheapest window | [EnergyZero](https://www.energyzero.nl) (Netherlands), no key |
+| Solar forecast | What your solar panels are expected to produce today and tomorrow | Open-Meteo, or [Forecast.Solar](https://forecast.solar), no key |
 | Home Assistant | Sensors and switches, such as the temperature or a door | Your Home Assistant, read only |
 | Homey | Sensors and switches, and who is home as badges with initials | Your Homey Pro, read only, with an API key |
 | News | Headlines from up to five RSS or Atom feeds | Any feed (default: NOS) |
@@ -196,7 +197,7 @@ environment variables:
 | `GDASH_TRUSTED_PROXIES` | none | Addresses or CIDR ranges of reverse proxies whose `X-Forwarded-For` and `X-Forwarded-Proto` GDash trusts |
 | `GDASH_SCHOOL_HOLIDAYS_URL` | Rijksoverheid open data | Where the school holidays are read; only the end-to-end tests change it, to a stand-in |
 | `GDASH_UPDATE_CHECK` | `on` | `off` stops the daily check for a new release, whatever Settings says; apart from the data sources it is the only request GDash makes ([SECURITY.md](SECURITY.md)) |
-| `GDASH_TEST_UPSTREAM` | none | For the end-to-end tests only: an `http://` address on the loopback address, such as `http://127.0.0.1:18700`, that stands in for Buienradar, Open-Meteo's rain forecast and MeteoAlarm; any other address is refused |
+| `GDASH_TEST_UPSTREAM` | none | For the end-to-end tests only: an `http://` address on the loopback address, such as `http://127.0.0.1:18700`, that stands in for Buienradar, Open-Meteo's rain and solar forecasts and MeteoAlarm; any other address is refused |
 
 The network needs: TCP 8009 from GDash to the TVs, mDNS (UDP 5353) to find
 them, TCP 8420 from the TVs to GDash, and HTTPS from GDash to the internet for
@@ -292,7 +293,8 @@ web interface links to the source, as section 13 of the license asks.
 **Credits.** Weather and air quality by [Open-Meteo](https://open-meteo.com),
 departures by [OVapi](https://v0.ovapi.nl), school holidays from the open
 data of the [Dutch government](https://opendata.rijksoverheid.nl) (CC0), electricity prices by
-[EnergyZero](https://www.energyzero.nl), fuel prices from the public data of
+[EnergyZero](https://www.energyzero.nl), solar estimates optionally by
+[Forecast.Solar](https://forecast.solar), fuel prices from the public data of
 the [ANWB](https://www.anwb.nl), rain forecasts by
 [Buienradar.nl](https://www.buienradar.nl) (free for non-commercial use with
 this credit, which the Rain widget also shows), weather warnings by the

@@ -67,6 +67,8 @@ come from another site (cross-site request forgery protection).
 | `PUT /api/settings/language` `{language}` | admin | `200`; screens switch at once | `401`, `422` for a language other than `en`, `nl`, `de` or `fr` |
 | `PUT /api/settings/update-check` `{enabled}` | admin | `200 {enabled}`; turns the daily check for a new release on or off | `400` for anything but a boolean, `401`, `422` without `enabled` |
 | `DELETE /api/settings/location` | admin | `204`; weather widgets show that no location is set | `401` |
+| `PUT /api/settings/solar` `{location, arrays, performanceRatio, source}` | admin | `200` the panels, see **settings.solar** | `400`, `401`, `422` naming every invalid field, such as `arrays[0].tilt` |
+| `DELETE /api/settings/solar` | admin | `204`; solar forecast widgets say that no panels are set up | `401` |
 | `GET /api/places?name=Oss` | admin | `200 {"places": [place]}` | `401`, `422`, `502 upstream_unavailable` |
 | `POST /api/news-feeds` `{name, url}` | admin | `201` news feed | `401`, `409` at 5 feeds, `422` |
 | `DELETE /api/news-feeds/{id}` | admin | `204` | `401`, `404` |
@@ -320,8 +322,8 @@ headline as the message (Dutch on a Dutch screen, else English). Warnings alread
 when a region is first announced, are not posted. Each one is in the audit log as `weather_warning_announced`, by the
 actor `weather warning`.
 
-`GDASH_TEST_UPSTREAM`, for the end-to-end tests only, points Buienradar, Open-Meteo's rain forecast and MeteoAlarm at
-`<address>/buienradar/data/raintext`, `<address>/open-meteo/v1/forecast` and
+`GDASH_TEST_UPSTREAM`, for the end-to-end tests only, points Buienradar, Open-Meteo's rain and solar forecasts and MeteoAlarm at
+`<address>/buienradar/data/raintext`, `<address>/open-meteo/v1/forecast`, `<address>/open-meteo-solar/v1/forecast` and
 `<address>/meteoalarm/api/v1/warnings/feeds-netherlands`; the server refuses an address that is not on the loopback
 address.
 
@@ -331,7 +333,7 @@ data key (`weather.current`, `airquality.current`, `news.default`,
 `calendar.default`, `homeassistant.default`, `departures.default`). These sources exist only while a dashboard has a
 widget for them:
 
-- waste `waste.default`, energy price `energyprice.nl`, fuel `fuel.default`
+- waste `waste.default`, energy price `energyprice.nl`, solar `solar.default`, fuel `fuel.default`
 - holidays `holidays.nl`, rain `rain.default`, weather warnings `warnings.default`
 - Homey `homey.default` (values) and `homey.users` (who is home)
 - the albums `photos.immich` and `photos.synology`
@@ -526,6 +528,7 @@ allows, overlaps another, lacks a required setting, or has a setting its type do
 | `airquality` | 5x4 | `airquality.current` | |
 | `waste` | 6x4 | `waste.default` | `calendar`: the `id` of one of the calendars in the settings (required) |
 | `energyprice` | 6x4 | `energyprice.nl` | |
+| `solar` | 6x4 | `solar.default` | |
 | `news` | 6x4 | `news.default` | `maxItems`: 1 to 20 |
 | `calendar` | 6x4 | `calendar.default` | `maxItems`: 1 to 20 |
 | `text` | 4x3 | none | `text`: 1 to 300 characters, line breaks allowed (required) |
@@ -570,6 +573,12 @@ an empty `title`, which the screen fills in in its own language.
 **place:** `{"name": "Oss", "region": "North Brabant, Netherlands", "latitude": 51.765, "longitude": 5.518}`
 
 **settings.homeAssistant:** `{"url": "http://192.168.1.10:8123", "unreadable": false}`, or `null` when not connected.
+
+**settings.solar:** `{"location": null, "arrays": [{"tilt": 35, "azimuth": -10, "kwp": 4.2}], "performanceRatio": 0.85, "source": "open-meteo"}`,
+or `null` until the panels are set up. `location` is `null` for the weather location, or a place like **settings.location**.
+`arrays` holds 1 or 2 groups of panels: `tilt` a whole number of degrees from 0 (flat) to 90, `azimuth` a whole number from
+-180 to 180 (0 south, -90 east, 90 west, ±180 north, as Open-Meteo and Forecast.Solar count) and `kwp` the peak power from
+0.1 to 100. `performanceRatio` (0.5 to 1.0) scales the Open-Meteo estimate. `source` is `open-meteo` or `forecast.solar`.
 
 **settings.homey:** `{"mode": "local", "url": "http://192.168.1.20", "unreadable": false}`, `{"mode": "push", "url": "", "unreadable": false}` for a Homey that sends its data, or `null` when not connected.
 
@@ -644,6 +653,15 @@ is marked `failing`.
 `hours`. `price` is euro per kWh including VAT as EnergyZero reports it, and can be negative. `cheapest` is the cheapest
 stretch of three consecutive hours of that day (the earliest when several cost the same), `end` being when its last hour
 ends, or `null` when the day has fewer than three hours. Refreshed hourly.
+
+**solar data (`solar.default`):** `{"source": "open-meteo", "utcOffsetSeconds": 7200, "days": [{"date": "2026-10-13", "totalKWh": 14.2, "hours": [{"start": "2026-10-13T08:00:00+02:00", "kwh": 0.31}]}]}`.
+`days` holds today and tomorrow at the panels' place, in its UTC offset; `hours` run from the first to the last hour
+with production, `start` being when the hour begins. With `open-meteo` the server asks Open-Meteo for
+`hourly=global_tilted_irradiance` with each group's `tilt` and `azimuth` (one request per group, `forecast_days=2`,
+`timezone=auto`); a value is the mean over the hour before its time, and the hour's energy is value ÷ 1000 × `kwp` ×
+`performanceRatio`, summed over the groups. With `forecast.solar` it asks `api.forecast.solar/estimate/{lat}/{lon}/{tilt}/{azimuth}/{kwp}`
+per group and adds up `watt_hours_period`. Coordinates are rounded to two decimals. Refreshed every 30 minutes, only
+while a dashboard has the widget and the panels have a place; without one the server sends no entry.
 
 **entity:** `{"id": "sensor.living_room_temperature", "name": "Living room", "state": "21.4", "unit": "°C", "deviceClass": "temperature"}`.
 The `homeassistant.default` data on a screen maps the entity IDs that its own widgets show to the same object

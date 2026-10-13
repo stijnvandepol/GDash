@@ -116,7 +116,10 @@ fully trust, such as a guest's phone.
   fetched with a client that refuses link-local addresses, where cloud hosts
   serve instance metadata. Departures are fetched from OVapi over plain HTTP, because its
   HTTPS certificate belongs to another domain; the request carries no secret
-  and the answer is public timetable data.
+  and the answer is public timetable data. The solar forecast sends the
+  panels' place, rounded to about 1 km like the weather location, with
+  their tilt, direction and peak power to Open-Meteo, or to Forecast.Solar
+  when an admin chooses it.
 - **Update check, the only call home:** once a day GDash asks GitHub
   (`api.github.com/repos/stijnvandepol/gdash/releases/latest`) which
   release is the newest, to show a notice in the web interface. The request

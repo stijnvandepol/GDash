@@ -33,7 +33,7 @@ Keuken on the network". Change what it shows at any time under **Shows**.
 ## Integrations
 
 Everything GDash shows data from is under **Integrations**, apart from the
-other settings: the weather location, news feeds, calendars, Home
+other settings: the weather location, solar panels, news feeds, calendars, Home
 Assistant, Homey, photos, custom APIs and the API tokens that automations
 use. Settings keeps the language on the TVs, the test announcement and your
 account.
@@ -155,6 +155,7 @@ add calendars and feeds under Integrations, and the photos once you add photos.
 | Weather warnings | The KNMI's code yellow, orange and red warnings for a province (Netherlands); see [Weather warnings](#weather-warnings) |
 | Waste collection | The next pickup of each kind of household waste in the coming 14 days, from one of your calendars |
 | Energy price | The electricity price now, whether it is low, average or high today, today's prices per hour and the cheapest three hours (Netherlands) |
+| Solar forecast | What your solar panels are expected to produce today, the best hour, the hours still to come and tomorrow's total; see [Solar forecast](#solar-forecast) |
 | Calendar | The coming week from your calendars |
 | News | Headlines from your feeds |
 | Note | A short text for the household |
@@ -323,6 +324,52 @@ cheapest hours of tomorrow as soon as they are known. Days start and end in
 Dutch time. The figures are the prices that EnergyZero publishes, with VAT;
 a contract can add a supplier surcharge, so what you pay can differ, but
 which hours are cheap does not. The widget needs at least 6 by 4 cells.
+
+## Solar forecast
+
+The **Solar forecast** widget shows what your solar panels are expected to
+produce: today's total in large figures, such as "~14 kWh today", the hour
+with the most sun ("Peak 13:00"), a bar for every hour of today that is
+still to come with the current hour marked, and tomorrow's total. After
+sunset the bars show tomorrow's hours instead. The widget needs at least 6
+by 4 cells.
+
+Set the panels up once under **Integrations, Solar panels** (in Energy):
+
+- **Place:** the weather location, unless you search for another place,
+  such as a holiday home. It is rounded to about 1 km before it leaves your
+  server.
+- **Tilt:** the angle of the panels with the ground in degrees, 0 for flat
+  and 90 for upright. A pitched Dutch roof is often 30 to 45.
+- **Direction:** where the panels face in degrees: 0 is south, -90 east, 90
+  west and 180 north, so south-east is -45 and south-west 45. Apps that
+  count 0 to 360 from north (180 is south) differ by 180: subtract 180.
+- **Peak power:** the total of the panels in kWp, from your installer's
+  papers or the inverter app, such as 4.2 for twelve panels of 350 Wp.
+- **Panels facing another way:** a second group, such as the other side of
+  an east-west roof, with its own tilt, direction and power.
+
+**Where the estimate comes from.** By default GDash computes it itself from
+Open-Meteo, the service the weather already comes from: Open-Meteo forecasts
+the sunlight on the panels' own plane per hour (global tilted irradiance,
+from the cloud forecast), and GDash turns that into energy as sunlight ÷
+1000 W/m² × peak power × **performance ratio**. The performance ratio covers
+what is lost on the way to the meter, in the inverter, the cables, heat and
+dirt; 0.85 suits most systems. If the widget is consistently too high or
+too low on clear days, compare a few days with your inverter and adjust it
+between 0.5 and 1.0. You can also choose **Forecast.Solar**, a free service
+that models the panels itself; it allows 12 requests an hour from one
+address, and GDash asks once per group of panels every 30 minutes, so two
+groups use four.
+
+**How accurate it is.** It is an estimate from the weather forecast, not a
+measurement. On clear days it is usually close; with passing showers or
+fog the hour-by-hour bars can be far off, even when the day's total is
+roughly right, and snow on the panels, shade from trees or chimneys and a
+limit on the inverter are not known to it. The "~" in front of the figures
+says as much. The estimate is fetched every 30 minutes while a dashboard
+shows the widget; when a fetch fails the last estimate stays, and the unit
+turns to the warning colour once a refresh has been missed.
 
 ## Home Assistant
 
