@@ -7,6 +7,7 @@
   import { presenceUsers } from './homey';
   import CalendarPicker from './CalendarPicker.svelte';
   import CameraPicker from './CameraPicker.svelte';
+  import WebPagePicker from './WebPagePicker.svelte';
   import StopPicker from './StopPicker.svelte';
   import PlacePicker from './PlacePicker.svelte';
   import CastDevicePicker from './CastDevicePicker.svelte';
@@ -93,6 +94,8 @@
     <CalendarPicker selected={typeof settings[key] === 'number' ? settings[key] : undefined} onchange={(id) => set(key, id)} />
   {:else if rule.kind === 'camera'}
     <CameraPicker selected={typeof settings[key] === 'number' ? settings[key] : undefined} onchange={(id) => set(key, id)} />
+  {:else if rule.kind === 'webPage'}
+    <WebPagePicker selected={typeof settings[key] === 'number' ? settings[key] : undefined} onchange={(id) => set(key, id)} />
   {:else if rule.kind === 'stop'}
     <StopPicker code={text(key)} name={text('stopName')} onpick={pickStop} />
   {:else if rule.kind === 'place'}

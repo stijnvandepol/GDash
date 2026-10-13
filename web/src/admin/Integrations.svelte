@@ -35,6 +35,7 @@
   let photoCount = $state(0);
   let tokenCount = $state(0);
   let cameraCount = $state(0);
+  let webPageCount = $state(0);
   let widgetTypes = $state<string[] | null>(null);
   let loadError = $state('');
 
@@ -47,7 +48,7 @@
   const handle = (err: unknown) => errorMessage(err, onSessionEnded);
 
   const context = $derived<IntegrationContext | null>(
-    settings && widgetTypes ? { settings, status, sources, photoCount, tokenCount, cameraCount, widgetTypes } : null,
+    settings && widgetTypes ? { settings, status, sources, photoCount, tokenCount, cameraCount, webPageCount, widgetTypes } : null,
   );
   const available = $derived(context ? INTEGRATIONS.filter((i) => isAvailable(i, context.widgetTypes, context.settings)) : []);
   const states = $derived(context ? new Map(available.map((i) => [i.id, i.state(context)])) : new Map());
@@ -87,19 +88,20 @@
     };
   });
 
-  const fetchAll = newestOnly(() => Promise.all([api.settings(), api.customSources(), api.photos(), api.apiTokens(), api.cameras()]));
+  const fetchAll = newestOnly(() => Promise.all([api.settings(), api.customSources(), api.photos(), api.apiTokens(), api.cameras(), api.webPages()]));
 
   async function load() {
     try {
       const newest = await fetchAll();
       if (!newest) return;
-      const [current, custom, photos, tokens, cameras] = newest.value;
+      const [current, custom, photos, tokens, cameras, pages] = newest.value;
       settings = current.settings;
       status = current.status;
       sources = custom;
       photoCount = photos.length;
       tokenCount = tokens.length;
       cameraCount = cameras.cameras.length;
+      webPageCount = pages.length;
       loadError = '';
     } catch (err) {
       loadError = handle(err);

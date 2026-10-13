@@ -234,6 +234,7 @@ const en = {
   nowPlayingPaused: 'Paused',
   nowPlayingLive: 'Live',
   nowPlayingOn: '{app} on {device}',
+  webPageUnavailable: 'Web page not available',
 };
 
 export type TextKey = keyof typeof en;
@@ -463,6 +464,7 @@ export const TEXTS: Record<Language, Record<TextKey, string>> = {
     nowPlayingPaused: 'Gepauzeerd',
     nowPlayingLive: 'Live',
     nowPlayingOn: '{app} op {device}',
+    webPageUnavailable: 'Webpagina niet beschikbaar',
   },
   de,
   fr,

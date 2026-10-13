@@ -6,14 +6,38 @@ import { ensureAccess, useLaunchToken } from './pairing';
 import { t } from './i18n.svelte';
 import { isSnapshot } from './protocol';
 import { applySnapshot, display, forgetSnapshot, restoreSnapshot } from './state.svelte';
+import { shouldReloadForFrames } from './widgets/webpage';
 
 const OFFLINE_RETRY_MS = 15000;
+const FRAME_RELOAD_KEY = 'gdash.frameReloadAt';
 
 const displayId = location.pathname.split('/').filter(Boolean).pop() ?? 'default';
 
 restoreSnapshot(displayId, isSnapshot);
 mount(App, { target: document.getElementById('app')! });
+document.addEventListener('securitypolicyviolation', reloadForBlockedFrame);
 void start();
+
+/**
+ * The server lists the origins of this display's web pages in the page's
+ * policy when it loads. A page added to the dashboard later, or loaded
+ * before this screen was paired, is blocked by the browser; loading the
+ * page again lets it through, at most once per FRAME_RELOAD_GAP_MS.
+ */
+function reloadForBlockedFrame(event: SecurityPolicyViolationEvent): void {
+  if (event.effectiveDirective !== 'frame-src') return;
+  let last: number | null = null;
+  try {
+    const stored = Number(sessionStorage.getItem(FRAME_RELOAD_KEY));
+    last = stored > 0 ? stored : null;
+    if (!shouldReloadForFrames(last, Date.now())) return;
+    sessionStorage.setItem(FRAME_RELOAD_KEY, String(Date.now()));
+  } catch {
+    // Without storage there is no guard against reloading in a loop.
+    return;
+  }
+  location.reload();
+}
 
 /** Gets access to the display, then streams it. Runs again when access is lost. */
 async function start(): Promise<void> {

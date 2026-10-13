@@ -62,6 +62,9 @@ import type {
   TwoStepEnrolment,
   TwoStepStatus,
   User,
+  WebPage,
+  WebPageCheck,
+  WebPageInput,
   WidgetCatalogue,
 } from './types';
 
@@ -205,6 +208,11 @@ export const api = {
     request<CustomSource>('PUT', `/api/custom-sources/${id}/values`, values),
   deleteCustomSource: (id: number) => request<void>('DELETE', `/api/custom-sources/${id}`),
   testCustomSource: (id: number) => request<CustomTest>('POST', `/api/custom-sources/${id}/tests`),
+  webPages: () => request<{ pages: WebPage[] }>('GET', '/api/web-pages').then((r) => r.pages),
+  addWebPage: (input: WebPageInput) => request<WebPage>('POST', '/api/web-pages', input),
+  saveWebPage: (id: number, input: WebPageInput) => request<WebPage>('PUT', `/api/web-pages/${id}`, input),
+  deleteWebPage: (id: number) => request<void>('DELETE', `/api/web-pages/${id}`),
+  checkWebPage: (id: number) => request<WebPageCheck>('POST', `/api/web-pages/${id}/checks`),
   checkRule: (check: { when: string; data: unknown; value?: unknown; row?: unknown }) =>
     request<{ result?: unknown; error?: string }>('POST', '/api/custom-rule-checks', check),
   deleteDisplay: (id: string) => request<void>('DELETE', `/api/displays/${encodeURIComponent(id)}`),

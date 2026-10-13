@@ -53,6 +53,7 @@ export const WIDGETS: Record<string, WidgetInfo> = {
   news: { label: 'News', category: 'media', description: 'Headlines from your feeds', icon: 'news' },
   photos: { label: 'Photos', category: 'media', description: 'A slideshow of your photos', icon: 'photo' },
   nowplaying: { label: 'Now playing', category: 'media', description: 'What plays on your Cast speakers', icon: 'music' },
+  webpage: { label: 'Web page', category: 'media', description: 'A page from Integrations, such as Grafana', icon: 'browser' },
 };
 
 /** Names of the widget types; unknown types show their id. */
@@ -105,6 +106,7 @@ export const SETTING_LABELS: Record<string, string> = {
   announce: 'Announce code orange and red on every screen',
   fit: 'Fit',
   source: 'Photos from',
+  zoom: 'Zoom (%)',
 };
 
 /** What an optional choice says when nothing is chosen, per setting; a choice without one always has a value. */

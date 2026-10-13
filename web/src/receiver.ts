@@ -10,6 +10,9 @@ import { applySnapshot, display, restoreSnapshot } from './state.svelte';
 
 const STORAGE_ID = 'cast';
 
+// Snapshots arrive from any sender on the network (see below), so a Web
+// page widget here never opens the address one names.
+display.framesAllowed = false;
 restoreSnapshot(STORAGE_ID, isSnapshot);
 
 const context = cast.framework.CastReceiverContext.getInstance();

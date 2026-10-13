@@ -225,4 +225,5 @@ export const fr: Record<TextKey, string> = {
   nowPlayingPaused: 'En pause',
   nowPlayingLive: 'En direct',
   nowPlayingOn: '{app} sur {device}',
+  webPageUnavailable: 'Page web indisponible',
 };

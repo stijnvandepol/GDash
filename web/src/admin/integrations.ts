@@ -63,6 +63,8 @@ export interface IntegrationContext {
   tokenCount: number;
   /** How many cameras are added; 0 while the server has no cameras. */
   cameraCount: number;
+  /** How many web pages are set up for the Web page widget. */
+  webPageCount: number;
   /** The widget types this server reports. */
   widgetTypes: string[];
 }

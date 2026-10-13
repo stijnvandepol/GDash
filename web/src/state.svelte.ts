@@ -20,12 +20,19 @@ export const display = $state<{
   problem: string | null;
   /** How far the server's clock is ahead of this screen's, for expiring announcements. */
   serverOffsetMs: number;
+  /**
+   * Whether Web page widgets show their page. False on the Cast receiver:
+   * any device on the network can send it a snapshot, so it never opens an
+   * address from one.
+   */
+  framesAllowed: boolean;
 }>({
   snapshot: null,
   connection: 'connecting',
   pairingCode: null,
   problem: null,
   serverOffsetMs: 0,
+  framesAllowed: true,
 });
 
 /** Minute-resolution clock shared by widgets. One timer for the whole page. */

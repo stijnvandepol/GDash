@@ -24,6 +24,7 @@ import PresetSetup from './PresetSetup.svelte';
 import SolarSetting from './SolarSetting.svelte';
 import SourceList from './SourceList.svelte';
 import SynologySetting from './SynologySetting.svelte';
+import WebPageSetting from './WebPageSetting.svelte';
 
 // Every card on the Integrations page. Adding an integration is adding an
 // entry here: what it is, how its state reads, and the setup it opens.
@@ -335,6 +336,19 @@ const SERVICES: Integration[] = [
     },
     panel: (ctx) =>
       view(CustomSourceSetting, { status: ctx.status, onchanged: ctx.onchanged, onmanagetokens: () => ctx.onopen('apitokens'), onerror: ctx.onerror }),
+  },
+  {
+    id: 'webpages',
+    name: 'Web pages',
+    description: 'A page in a tile, such as Grafana or a Home Assistant dashboard',
+    keywords: 'iframe embed grafana kiosk uptime kuma windy buienradar url website',
+    category: 'own',
+    icon: 'browser',
+    tags: ['local'],
+    kind: 'service',
+    requires: { widget: 'webpage' },
+    state: ({ webPageCount }) => (webPageCount > 0 ? { kind: 'connected', detail: `${count(webPageCount, 'page', 'pages')}.` } : NOT_SET_UP),
+    panel: (ctx) => view(WebPageSetting, { onchanged: ctx.onchanged, onerror: ctx.onerror }),
   },
   {
     id: 'apitokens',

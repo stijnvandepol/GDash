@@ -224,4 +224,5 @@ export const de: Record<TextKey, string> = {
   nowPlayingPaused: 'Pausiert',
   nowPlayingLive: 'Live',
   nowPlayingOn: '{app} auf {device}',
+  webPageUnavailable: 'Webseite nicht verfügbar',
 };

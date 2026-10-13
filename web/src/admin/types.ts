@@ -110,6 +110,7 @@ export interface SettingRule {
     | 'stop'
     | 'place'
     | 'customSource'
+    | 'webPage'
     | 'choice'
     | 'boolean'
     | 'path'
@@ -434,4 +435,26 @@ export interface CastDevice {
   model: string;
   addr: string;
   hasScreen: boolean;
+}
+
+/** A web page set up under Settings, which a Web page widget shows in a frame. */
+export interface WebPage {
+  id: number;
+  name: string;
+  url: string;
+  /** Minutes between reloads; 0 never reloads. */
+  refreshMinutes: number;
+  /** Size in percent, 50 to 200. */
+  zoom: number;
+  allowScripts: boolean;
+}
+
+export type WebPageInput = Pick<WebPage, 'name' | 'url' | 'refreshMinutes' | 'zoom' | 'allowScripts'>;
+
+/** What a page's headers say about being shown in a frame; see internal/webpage. */
+export interface WebPageCheck {
+  status: number;
+  /** The header that forbids GDash to frame the page; absent when it may. */
+  blocked?: 'x-frame-options' | 'frame-ancestors';
+  header?: string;
 }
