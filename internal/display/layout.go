@@ -45,6 +45,8 @@ const (
 	SettingPlace = "place"
 	// SettingChoice is one of Options.
 	SettingChoice = "choice"
+	// SettingBoolean is true or false.
+	SettingBoolean = "boolean"
 )
 
 // Setting is one setting a widget type takes.
@@ -96,6 +98,8 @@ var WidgetTypes = map[string]WidgetType{
 	"holidays":          holidaysWidget,
 	"departures":        departuresWidget,
 	"fuel":              fuelWidget,
+	"rain":              rainWidget,
+	"warnings":          warningsWidget,
 	"homey":             homeyWidget,
 	HomeyPresenceWidget: homeyPresenceWidget,
 	CustomWidget:        customWidget,
@@ -266,6 +270,10 @@ func valueProblem(key string, value any, rule Setting) string {
 		return placeProblem(key, value)
 	case SettingChoice:
 		return choiceProblem(key, value, rule)
+	case SettingBoolean:
+		if _, ok := value.(bool); !ok {
+			return fmt.Sprintf("%s must be true or false", key)
+		}
 	}
 	return ""
 }

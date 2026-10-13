@@ -104,6 +104,12 @@ func narrowShared(used map[string]datahub.Entry, dashboards []Dashboard) {
 	if entry, ok := used[HolidaysSource]; ok {
 		used[HolidaysSource] = onlyKeys(entry, HolidayKeys(dashboards))
 	}
+	if entry, ok := used[RainSource]; ok {
+		used[RainSource] = onlyKeys(entry, RainKeys(dashboards))
+	}
+	if entry, ok := used[WarningsSource]; ok {
+		used[WarningsSource] = onlyKeys(entry, WarningsKeys(dashboards))
+	}
 }
 
 // entityIDs reads an entities setting: a list of distinct entity IDs, at
