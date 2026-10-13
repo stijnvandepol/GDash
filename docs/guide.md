@@ -123,6 +123,7 @@ add calendars and feeds under Settings, Data sources, and the photos once you ad
 | Weather | Now, today's range and wind |
 | Forecast | Up to seven days, with the chance of rain |
 | Sun | Sunrise, sunset, the length of the day and how it compares with yesterday |
+| Moon | The phase of the moon, drawn, how much of it is lit, and the dates of the next full and new moon |
 | Air quality | The European air quality index in words, and the pollen in the air (Europe only) |
 | Waste collection | The next pickup of each kind of household waste in the coming 14 days, from one of your calendars |
 | Energy price | The electricity price now, whether it is low, average or high today, today's prices per hour and the cheapest three hours (Netherlands) |
@@ -130,6 +131,7 @@ add calendars and feeds under Settings, Data sources, and the photos once you ad
 | News | Headlines from your feeds |
 | Note | A short text for the household |
 | Countdown | The days until a date, such as a holiday |
+| Holidays | The coming school holidays of your region and the public holidays in the Netherlands; see [Holidays](#holidays) |
 | Photos | A slideshow of your photos |
 | Home Assistant | Up to eight sensors or switches from Home Assistant |
 | Homey | Up to eight sensors or switches from a Homey Pro; see [Homey](#homey) |
@@ -183,6 +185,44 @@ A waste calendar can also be shown in the Calendar widget; that is a
 different widget and lists every event of the week. If the calendar is
 removed later, the widget says that it cannot find it, until you choose
 another. The pickups follow the calendar's own refresh, every 30 minutes.
+
+## Holidays
+
+The **Holidays** widget lists the coming school holidays and public holidays
+in the Netherlands, the soonest first, in the language of the screens:
+"Autumn holiday · Starts in 4 days (17–25 Oct)", "Christmas holiday · 19
+Dec – 3 Jan", "King's Day · Tue 27 Apr". A holiday that is on now comes
+first, in the accent colour, with when it ends: "Now, until Sunday".
+
+- **School holiday region** is North, Middle or South, as the government
+  divides the country; Middle when you do not choose. Holidays the whole
+  country shares, such as Christmas, are in every region. Look up your
+  region on rijksoverheid.nl if you are not sure; GDash does not guess it
+  from the weather location, as the borders follow municipalities.
+- **Show** is school and public holidays, school holidays only, or public
+  holidays only.
+- **Holidays at most** is how many lines, 5 when not set; a small tile shows
+  what fits.
+
+The school holidays come from the open data of the Dutch government, read
+once a day and only while a dashboard shows them; when that fails, the
+screen keeps the last list it had. Schools may move the days of the autumn,
+spring and May holidays, for which the government only gives advice; check
+with your school. The public holidays are worked out by GDash itself, with
+no network: New Year's Day, Good Friday, Easter, King's Day (27 April, or
+the Saturday before when that is a Sunday), Liberation Day, Ascension Day,
+Whitsun and Christmas. Liberation Day is listed every year, although many
+employers only give the day off once every five years. The widget needs at
+least 6 by 4 cells.
+
+## Moon
+
+The **Moon** widget needs no setting and no network: it works out the
+phase on the screen, draws the moon as it looks from the Netherlands (lit
+on the right while it grows), and says how much of it is lit and when the
+next full and new moon are. On the day of a full moon, new moon or quarter
+it says so all day. It needs at least 4 by 4 cells; a wider tile adds the
+next full and new moon.
 
 ## Energy price
 

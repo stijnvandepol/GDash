@@ -49,6 +49,7 @@ survive the internet dropping out. GDash is made for exactly that.
 | Clock | Time and date | — |
 | Weather and forecast | Now and up to seven days | [Open-Meteo](https://open-meteo.com), no key |
 | Sun | Sunrise, sunset and the length of the day | Open-Meteo |
+| Moon | The phase, how much is lit, and the next full and new moon | Computed, no network |
 | Air quality | Air quality index and pollen (Europe) | Open-Meteo |
 | Calendar | The coming week from Google, Outlook, iCloud or Nextcloud | Secret iCal address, no OAuth |
 | Waste collection | The next pickup per kind (GFT, PMD, paper, ...) | Your municipality's iCal link |
@@ -60,6 +61,7 @@ survive the internet dropping out. GDash is made for exactly that.
 | News | Headlines from up to five RSS or Atom feeds | Any feed (default: NOS) |
 | Photos | A slideshow of photos you upload | Stored on your server |
 | Note and countdown | A short text, or the days until a date | — |
+| Holidays | The coming school holidays of your region and the public holidays (Netherlands) | [Rijksoverheid open data](https://opendata.rijksoverheid.nl), no key; public holidays computed |
 | Custom API | A value, a list or labelled values from any JSON API, with rules | Any API you add: open, or with a key, token or password |
 
 The last good value of every source is kept when the internet drops, and a
@@ -177,6 +179,7 @@ environment variables:
 | `TZ` | system | Time zone for "today", for example `Europe/Amsterdam` |
 | `GDASH_CAST_APP_ID` | none | App ID of your own registered Cast receiver ([docs/receiver.md](docs/receiver.md)); without it GDash uses the public DashCast receiver |
 | `GDASH_TRUSTED_PROXIES` | none | Addresses or CIDR ranges of reverse proxies whose `X-Forwarded-For` and `X-Forwarded-Proto` GDash trusts |
+| `GDASH_SCHOOL_HOLIDAYS_URL` | Rijksoverheid open data | Where the school holidays are read; only the end-to-end tests change it, to a stand-in |
 | `GDASH_UPDATE_CHECK` | `on` | `off` stops the daily check for a new release, whatever Settings says; apart from the data sources it is the only request GDash makes ([SECURITY.md](SECURITY.md)) |
 
 The network needs: TCP 8009 from GDash to the TVs, mDNS (UDP 5353) to find
@@ -271,7 +274,8 @@ changed version to others over a network, you offer them its source too. The
 web interface links to the source, as section 13 of the license asks.
 
 **Credits.** Weather and air quality by [Open-Meteo](https://open-meteo.com),
-departures by [OVapi](https://v0.ovapi.nl), electricity prices by
+departures by [OVapi](https://v0.ovapi.nl), school holidays from the open
+data of the [Dutch government](https://opendata.rijksoverheid.nl) (CC0), electricity prices by
 [EnergyZero](https://www.energyzero.nl), fuel prices from the public data of
 the [ANWB](https://www.anwb.nl). The typefaces are under the SIL Open Font
 License; all bundled licences are in [THIRD_PARTY_LICENSES](THIRD_PARTY_LICENSES).

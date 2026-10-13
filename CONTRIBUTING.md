@@ -71,6 +71,10 @@ cd web && npm run e2e                        # about 30 seconds
 `GDASH_E2E_BINARY` points to another binary (for example a Linux build you
 copied somewhere) and `GDASH_E2E_PORT` to another port. Screenshots and traces
 of failed tests, and the server's log, end up in `web/test-results/`.
+The suite reaches no outside service: the global setup starts a stand-in for
+the school holiday feed (`web/e2e/school-holidays.ts`) and points the server
+at it with `GDASH_SCHOOL_HOLIDAYS_URL`, and the news feed it seeds is an
+address that never resolves.
 
 ### The Home Assistant app
 

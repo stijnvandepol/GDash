@@ -286,8 +286,8 @@ stays and the entry is marked `failing`. The data is the ANWB's and can lag a st
 Changes apply at once: a changed source is fetched again, a removed one
 disappears from the displays. `status` has an entry per configured source by
 data key (`weather.current`, `airquality.current`, `news.default`,
-`calendar.default`, `homeassistant.default`, `departures.default`). The waste, energy price and fuel sources
-(`waste.default`, `energyprice.nl`, `fuel.default`), the Homey sources (`homey.default` for values, `homey.users` for
+`calendar.default`, `homeassistant.default`, `departures.default`). The waste, energy price, fuel and holiday sources
+(`waste.default`, `energyprice.nl`, `fuel.default`, `holidays.nl`), the Homey sources (`homey.default` for values, `homey.users` for
 who is home) and custom sources (`custom.source.<id>`) exist only while a dashboard has a widget for them; a pushed
 custom source is there from the start, as it is never fetched.
 
@@ -475,6 +475,7 @@ allows, overlaps another, lacks a required setting, or has a setting its type do
 | `weather` | 4x4 | `weather.current` | |
 | `forecast` | 6x4 | `weather.current` | `days`: 1 to 7, default 5 |
 | `sun` | 5x4 | `weather.current` | |
+| `moon` | 4x4 | none | |
 | `airquality` | 5x4 | `airquality.current` | |
 | `waste` | 6x4 | `waste.default` | `calendar`: the `id` of one of the calendars in the settings (required) |
 | `energyprice` | 6x4 | `energyprice.nl` | |
@@ -483,6 +484,7 @@ allows, overlaps another, lacks a required setting, or has a setting its type do
 | `text` | 4x3 | none | `text`: 1 to 300 characters, line breaks allowed (required) |
 | `photos` | 4x3 | `photos.default` | `seconds`: 5 to 600 per photo, default 30 |
 | `countdown` | 4x4 | none | `label`: 1 to 60 characters, `date`: `YYYY-MM-DD` (both required) |
+| `holidays` | 6x4 | `holidays.nl` | `region`: `north`, `middle` (default) or `south`, `show`: `both` (default), `school` or `public`, `maxItems`: 1 to 20, default 5 |
 | `homeassistant` | 4x3 | `homeassistant.default` | `entities`: 1 to 8 entity IDs such as `sensor.living_room_temperature` (required) |
 | `homey` | 4x3 | `homey.default` | `capabilities`: 1 to 8 keys `<device id>/<capability id>` such as `5f2c…/measure_temperature`, from the search (required) |
 | `homeypresence` | 4x3 | `homey.presence` | `users`: 1 to 8 `{id, label}`, a Homey user's `id` and a label of 1 to 12 characters on one line, such as initials (required); screens receive this widget without its settings |
@@ -535,6 +537,19 @@ empty outside Europe and, depending on the model, outside the pollen season.
 calendar has it, which the screen shows for `other`; `date` is the local day the event starts. The server fetches the
 next 15 days of each calendar every 30 minutes, at most 60 pickups per calendar, and the screen shows the next pickup of
 each kind within 14 days. A calendar that is deleted or cannot be read is left out.
+
+**holiday data (`holidays.nl`):** `{"public": [{"kind": "christmas", "date": "2026-12-25"}], "middle": [{"kind": "autumn", "name": "Herfstvakantie", "start": "2026-10-17", "end": "2026-10-25"}]}`.
+`public` holds the Dutch public holidays from today to the end of next year, computed by the server: `kind` is
+`newYear`, `goodFriday`, `easter`, `easterMonday`, `kingsDay` (27 April, or 26 April when the 27th is a Sunday),
+`liberationDay`, `ascension`, `whitSunday`, `whitMonday`, `christmas` or `boxingDay`. `north`, `middle` and `south` hold
+the school holidays of each region that have not ended, `start` and `end` being the first and last day off; holidays
+of the whole country are in every region. `kind` is `autumn`, `christmas`, `spring`, `may`, `summer`, or `other` for a
+holiday the feed names otherwise, which the screen shows by `name`, the feed's Dutch name. A region is only there while
+a widget shows school holidays, and a screen only receives `public` and the regions its own widgets show; an empty list
+means the feed has no holiday left for it. The school holidays are read once a day from the government's open data
+(`opendata.rijksoverheid.nl/v1/infotypes/schoolholidays`, CC0, no key) with a `User-Agent` that names GDash, at most
+1 MB; the first and last days are read as Dutch days. When the read fails the last complete answer stays and the entry
+is marked `failing`.
 
 **energy price data (`energyprice.nl`):** `{"days": [{"date": "2026-10-12", "hours": [{"start": "2026-10-12T00:00:00+02:00", "price": 0.22}], "cheapest": {"start": "2026-10-12T12:00:00+02:00", "end": "2026-10-12T15:00:00+02:00", "average": 0.1767}}]}`.
 `days` holds today and, from the afternoon on, tomorrow, by Dutch calendar day (`Europe/Amsterdam`); a day has 23, 24 or 25

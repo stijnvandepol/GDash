@@ -7,6 +7,25 @@ the format follows [Keep a Changelog](https://keepachangelog.com).
 
 ### Added
 
+- A **Holidays** widget lists the coming school holidays of your region
+  (North, Middle or South) and the Dutch public holidays, the soonest
+  first, in the language of the screens: "Autumn holiday · Starts in 4 days
+  (17–25 Oct)", "King's Day · Tue 27 Apr", and "Now, until Sunday" for the
+  holiday that is on. It can show both, or only school or only public
+  holidays. The school holidays come from the government's open data once a
+  day, only while a dashboard shows them; the public holidays, Easter and
+  King's Day on a Sunday included, are worked out without network.
+- A **Moon** widget draws the moon in its current phase in the colours of
+  the theme, with the phase's name, how much is lit and the next full and
+  new moon. It is computed on the screen, without network.
+
+### Changed
+
+- The editor names each count after what the widget shows: "Headlines at
+  most" instead of "Items", and "Days ahead" for the forecast.
+
+### Fixed
+
 - A custom API can be sent to GDash instead of fetched, for a system that
   cannot answer requests, such as a Homey Pro (Early 2019) with HomeyScript,
   Node-RED or a Home Assistant automation. Choose "Your system sends it to
@@ -22,14 +41,6 @@ the format follows [Keep a Changelog](https://keepachangelog.com).
   Who's home widgets and the editor's pickers work from the last snapshot,
   which survives a restart, and mark values as old after three minutes
   without one.
-
-### Changed
-
-- The editor names each count after what the widget shows: "Headlines at
-  most" instead of "Items", and "Days ahead" for the forecast.
-
-### Fixed
-
 - After an update or restart GDash no longer says "Someone is using the TV"
   about its own dashboard: it remembers the cast it started and keeps it,
   with the restarts against the screensaver.
