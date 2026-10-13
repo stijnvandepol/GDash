@@ -40,6 +40,7 @@ import (
 	"github.com/stijnvandepol/gdash/internal/synology"
 	"github.com/stijnvandepol/gdash/internal/update"
 	"github.com/stijnvandepol/gdash/internal/weather"
+	"github.com/stijnvandepol/gdash/internal/webpage"
 )
 
 const testSetupToken = "test-setup-token"
@@ -229,6 +230,7 @@ func newTestEnv(t *testing.T, discover func(context.Context) ([]cast.Device, err
 		Places:            sources,
 		Stops:             stops,
 		CustomFetcher:     &custom.Fetcher{HTTP: outbound.NewClient(5 * time.Second)},
+		WebPageChecker:    &webpage.Checker{HTTP: outbound.NewClient(5 * time.Second)},
 		ReceiveCustom:     sources.receiveCustom,
 		ReceiveHomey:      sources.receiveHomey,
 		HomeAssistant:     &homeassistant.Client{HTTP: &http.Client{Timeout: 5 * time.Second}},

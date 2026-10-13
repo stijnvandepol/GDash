@@ -80,6 +80,8 @@ type Server struct {
 	Synology             SynologyReader
 	Stops                StopSearcher
 	CustomFetcher        CustomFetcher
+	// WebPageChecker fetches a web page for the Check button under Settings.
+	WebPageChecker WebPageChecker
 	// ReceiveCustom stores the answer that a pushed custom source sent; it
 	// returns datahub.ErrNotPushed when the data hub does not have the
 	// source as pushed (yet).
@@ -200,6 +202,7 @@ func (s *Server) Handler() http.Handler {
 	mux.Handle("PUT /api/homey/snapshot", s.requireUserOrToken(s.putHomeySnapshot))
 	mux.Handle("GET /api/departures/stops", s.requireUser(s.getDepartureStops))
 	s.handleCustomSources(mux)
+	s.handleWebPages(mux)
 
 	mux.Handle("GET /api/photos", s.requireUser(s.listPhotos))
 	mux.Handle("POST /api/photos", s.requireUser(s.postPhoto))
@@ -227,6 +230,8 @@ func (s *Server) Handler() http.Handler {
 // Google, no inline scripts. Images may be blob: URLs, which the page makes
 // itself from what it fetched from this server: a Camera widget fetches its
 // image to read when it was taken.
+// The display and preview pages add a frame-src with the origins of their
+// web pages, see withFrameSrc.
 const (
 	pageCSP    = "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: blob:; connect-src 'self'; font-src 'self'; base-uri 'none'; form-action 'none'"
 	displayCSP = pageCSP + "; frame-ancestors 'none'"
@@ -247,7 +252,12 @@ func (s *Server) displayPage(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
-	w.Header().Set("Content-Security-Policy", displayCSP)
+	origins, err := s.displayFrameOrigins(r, r.PathValue("display"))
+	if err != nil {
+		// The page still works; only its web pages stay empty.
+		s.Logger.Error("could not read the web pages of a display; they are not shown", "display", r.PathValue("display"), "error", err)
+	}
+	w.Header().Set("Content-Security-Policy", withFrameSrc(displayCSP, origins))
 	s.servePage(w, r, "display/index.html")
 }
 

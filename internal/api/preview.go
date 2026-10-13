@@ -18,7 +18,11 @@ func (s *Server) previewPage(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
-	w.Header().Set("Content-Security-Policy", previewCSP)
+	origins, err := s.previewFrameOrigins(r)
+	if err != nil {
+		s.Logger.Error("could not read the web pages for the preview; they are not shown", "error", err)
+	}
+	w.Header().Set("Content-Security-Policy", withFrameSrc(previewCSP, origins))
 	s.servePage(w, r, "preview/index.html")
 }
 

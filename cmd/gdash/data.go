@@ -35,6 +35,7 @@ import (
 	"github.com/stijnvandepol/gdash/internal/synology"
 	"github.com/stijnvandepol/gdash/internal/warnings"
 	"github.com/stijnvandepol/gdash/internal/weather"
+	"github.com/stijnvandepol/gdash/internal/webpage"
 )
 
 // dataSources keeps the data hub in line with the settings.
@@ -68,7 +69,9 @@ type dataSources struct {
 	// nowPlaying follows what plays on the Cast devices that Now playing
 	// widgets show.
 	nowPlaying *nowplaying.Watcher
-	logger     *slog.Logger
+	// pages are the web pages under Settings, read at every sync.
+	pages  *webPageList
+	logger *slog.Logger
 
 	// mu makes syncs run one at a time, so an older read of the settings
 	// can never be applied after a newer one.
@@ -85,10 +88,13 @@ func startData(ctx context.Context, cfg config, db *store.Store, svc *settings.S
 	broadcaster := display.NewBroadcaster()
 	var hub *datahub.Hub
 	var rules *customRules
+	pages := &webPageList{}
 	publisher := &display.Publisher{
-		Broadcaster:   broadcaster,
-		Views:         db.DisplayViews,
-		Data:          func() map[string]datahub.Entry { return withPhotos(hub.Entries(), album, logger) },
+		Broadcaster: broadcaster,
+		Views:       db.DisplayViews,
+		Data: func() map[string]datahub.Entry {
+			return withWebPages(withPhotos(hub.Entries(), album, logger), pages.get(), logger)
+		},
 		Language:      svc.Language,
 		Announcements: announcement.NewBoard(time.Now),
 		Now:           time.Now,
@@ -155,6 +161,7 @@ func startData(ctx context.Context, cfg config, db *store.Store, svc *settings.S
 		stops:      &departures.Directory{Source: transit, Now: time.Now, Logger: logger},
 		dashboards: db.Dashboards,
 		displays:   db.Displays,
+		pages:      pages,
 		logger:     logger,
 		energy:     energyprice.Client{BaseURL: energyprice.DefaultBaseURL, HTTP: outbound.NewClient(upstreamTimeout), Location: dutch, Now: time.Now},
 		holidays: holidays.Client{
@@ -208,6 +215,40 @@ func withPhotos(entries map[string]datahub.Entry, album *photos.Store, logger *s
 	return entries
 }
 
+// webPageList holds the web pages under Settings from one sync to the
+// next, so a publish does not read the database.
+type webPageList struct {
+	mu    sync.Mutex
+	pages []webpage.Page
+}
+
+func (l *webPageList) set(pages []webpage.Page) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	l.pages = pages
+}
+
+func (l *webPageList) get() []webpage.Page {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	return l.pages
+}
+
+// withWebPages adds the web pages under Settings to the data, for the Web
+// page widgets; each screen only receives those its own widgets show.
+func withWebPages(entries map[string]datahub.Entry, pages []webpage.Page, logger *slog.Logger) map[string]datahub.Entry {
+	if len(pages) == 0 {
+		return entries
+	}
+	entry, err := display.WebPageEntry(pages, time.Now())
+	if err != nil {
+		logger.Error("could not encode the web pages", "error", err)
+		return entries
+	}
+	entries[display.WebPageSource] = entry
+	return entries
+}
+
 // sync reads the settings and reconfigures the hub. ctx is the server's
 // lifetime: the sources it starts run until it ends.
 func (d *dataSources) sync(ctx context.Context) error {
@@ -225,6 +266,11 @@ func (d *dataSources) sync(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("read custom sources: %w", err)
 	}
+	webPages, err := d.settings.WebPages(ctx)
+	if err != nil {
+		return fmt.Errorf("read web pages: %w", err)
+	}
+	d.pages.set(webPages)
 	sources := d.build(cfg, display.EntityIDs(dashboards), display.StopCodes(dashboards))
 	sources = append(sources, d.dashboardSources(cfg, dashboards)...)
 	sources = append(sources, d.homeySources(cfg, dashboards)...)

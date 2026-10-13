@@ -40,6 +40,7 @@ import (
 	"github.com/stijnvandepol/gdash/internal/store"
 	"github.com/stijnvandepol/gdash/internal/update"
 	"github.com/stijnvandepol/gdash/internal/weather"
+	"github.com/stijnvandepol/gdash/internal/webpage"
 	"github.com/stijnvandepol/gdash/web"
 )
 
@@ -73,6 +74,10 @@ const (
 	upstreamTimeout = 15 * time.Second
 	// The update check is one small request a day; it may fail quietly.
 	updateTimeout = 10 * time.Second
+	// The Check of a web page under Settings waits this long for an answer.
+	// A web page is an address an admin typed in, so it goes through
+	// internal/outbound like a feed.
+	webPageCheckTimeout = 10 * time.Second
 	// photoListValidity only has to outlast the minute between publishes;
 	// the list is read again every time.
 	photoListValidity = time.Hour
@@ -210,6 +215,7 @@ func serve(ctx context.Context, logger *slog.Logger) error {
 		},
 		Stops:          sources.stops,
 		CustomFetcher:  sources.custom,
+		WebPageChecker: &webpage.Checker{HTTP: outbound.NewClient(webPageCheckTimeout), UserAgent: userAgent()},
 		ReceiveCustom:  sources.receiveCustom,
 		ReceiveHomey:   sources.receiveHomey,
 		TrustedProxies: cfg.trustedProxies,

@@ -64,6 +64,9 @@ const (
 	auditImmichRemoved          = "immich_removed"
 	auditSynologyConnected      = "synology_connected"
 	auditSynologyRemoved        = "synology_removed"
+	auditWebPageAdded           = "web_page_added"
+	auditWebPageChanged         = "web_page_changed"
+	auditWebPageRemoved         = "web_page_removed"
 	defaultAuditPage            = 100
 	maxAuditDetailCharacters    = 200
 )

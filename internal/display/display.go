@@ -142,6 +142,16 @@ func (v View) PagesAt(t time.Time) []Dashboard {
 	return append([]Dashboard{v.Dashboard}, v.Pages...)
 }
 
+// Dashboards returns every dashboard the display can show at some time:
+// its own, the pages it turns through and those of its schedule.
+func (v View) Dashboards() []Dashboard {
+	all := append([]Dashboard{v.Dashboard}, v.Pages...)
+	for _, slot := range v.Schedule {
+		all = append(all, slot.Dashboard)
+	}
+	return all
+}
+
 func (v View) slotAt(t time.Time) (ScheduledDashboard, bool) {
 	for _, slot := range v.Schedule {
 		if slot.Window.Contains(t) {

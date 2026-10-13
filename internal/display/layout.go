@@ -109,6 +109,7 @@ var WidgetTypes = map[string]WidgetType{
 	CustomWidget:        customWidget,
 	CameraWidget:        cameraWidget,
 	NowPlayingWidget:    nowPlayingWidget,
+	WebPageWidget:       webPageWidget,
 }
 
 // AirQualitySource is the data key of the air quality and pollen at the
@@ -273,7 +274,8 @@ func settingsProblem(w Widget, kind WidgetType) string {
 			continue
 		}
 		// These kinds have a message that says how to choose one.
-		if rule.Kind == SettingEntities || rule.Kind == SettingStop || rule.Kind == SettingHomeyCapabilities || rule.Kind == SettingHomeyUsers {
+		if rule.Kind == SettingEntities || rule.Kind == SettingStop || rule.Kind == SettingHomeyCapabilities || rule.Kind == SettingHomeyUsers ||
+			rule.Kind == SettingWebPage {
 			return valueProblem(key, nil, rule)
 		}
 		return fmt.Sprintf("a %s widget needs a %s", w.Type, key)
@@ -306,6 +308,10 @@ func valueProblem(key string, value any, rule Setting) string {
 	case SettingCamera:
 		if _, ok := recordID(value); !ok {
 			return fmt.Sprintf("%s must be the number of a camera added under Integrations", key)
+		}
+	case SettingWebPage:
+		if _, ok := recordID(value); !ok {
+			return "choose a web page added under Settings"
 		}
 	case SettingEntities:
 		if ids, ok := entityIDs(value, rule.Max); !ok || len(ids) < rule.Min {

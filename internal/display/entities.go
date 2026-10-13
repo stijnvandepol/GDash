@@ -113,6 +113,9 @@ func narrowShared(used map[string]datahub.Entry, dashboards []Dashboard) {
 	if entry, ok := used[NowPlayingSource]; ok {
 		used[NowPlayingSource] = onlyNowPlaying(entry, dashboards)
 	}
+	if entry, ok := used[WebPageSource]; ok {
+		used[WebPageSource] = onlyIDs(entry, WebPageIDs(dashboards))
+	}
 }
 
 // entityIDs reads an entities setting: a list of distinct entity IDs, at
