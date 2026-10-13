@@ -1,0 +1,35 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [5.7072, 51.6589] },
+      "properties": { "name": "VOLKEL", "wmoId": "06375", "height_above_mean_sea_level": 20.0 },
+      "id": "0-20000-0-06375"
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [5.3772, 51.4497] },
+      "properties": { "name": "EINDHOVEN AP", "wmoId": "06370", "height_above_mean_sea_level": 22.6 },
+      "id": "0-20000-0-06370"
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [5.7625, 51.1967] },
+      "properties": { "name": "Ell", "wmoId": "06377", "height_above_mean_sea_level": 30.0 },
+      "id": "0-20000-0-06377"
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-68.2817, 12.1508] },
+      "properties": { "name": "Flamingo Airport Bonaire", "wmoId": "78990" },
+      "id": "0-20000-0-78990"
+    },
+    {
+      "type": "Feature",
+      "geometry": null,
+      "properties": { "name": "Without a place" },
+      "id": "0-20000-0-00000"
+    }
+  ]
+}
