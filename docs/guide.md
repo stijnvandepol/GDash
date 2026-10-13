@@ -49,12 +49,13 @@ account.
 - **Built in · no setup** cards, such as fuel prices, departures and the
   electricity price, only need a widget: **Add to a dashboard** goes to the
   dashboards.
-- **Preset · Custom API** cards make a custom API for a known device or
-  service, such as a HomeWizard P1 meter or Tibber, see
-  [Start from a preset](#start-from-a-preset).
+- Devices and services such as a HomeWizard P1 meter, Tibber or Pi-hole have
+  cards of their own: fill in their address or token, **Test**, **Save**,
+  and they are widgets of their own in the dashboard editor, see
+  [Devices and services with a card of their own](#devices-and-services-with-a-card-of-their-own).
 
 Nothing matches? If the service has an API that answers with JSON, **Use a
-Custom API**.
+Custom API**: that card is for your own APIs.
 
 ## A screen without Cast
 
@@ -804,9 +805,12 @@ Good to know:
 
 ## Custom APIs
 
-The Custom widget shows data from any API that answers with JSON: a public
-service, a paid one with an API key, or a device on your own network. You
-set it up in the web interface; no code and no restart.
+The Custom widget shows data from your own API that answers with JSON: a
+public service, a paid one with an API key, or a device on your own network.
+You set it up in the web interface; no code and no restart. For the devices
+and services that have a card of their own, such as a HomeWizard meter or
+Pi-hole, use that card instead, see
+[below](#devices-and-services-with-a-card-of-their-own).
 
 ### Add the API
 
@@ -832,13 +836,13 @@ field empty. **Test** fetches the API once and shows the answer as a tree;
 click a value to see its path. GDash only fetches an API while a dashboard
 shows it.
 
-### Start from a preset
+### Devices and services with a card of their own
 
 For a number of devices and services GDash knows the address, the
-authentication and the values, so you only fill in what is yours. Under
-**Integrations**, the cards marked **Preset · Custom API** do this:
+authentication and the values, so you only fill in what is yours. They are
+not under Custom APIs: each has a card of its own under **Integrations**:
 
-| Preset | You fill in |
+| Card | You fill in |
 |---|---|
 | HomeWizard P1 meter, kWh meter, water meter | The meter's IP address; turn on Local API in the HomeWizard Energy app |
 | P1 Monitor, DSMR-reader | The IP address; DSMR-reader also its API key |
@@ -851,12 +855,28 @@ authentication and the values, so you only fill in what is yours. Under
 | Jellyfin, Plex | The server's address and an API key or X-Plex-Token |
 | Mealie, Todoist | The address and an API token; Todoist also a filter, such as `today` |
 
-GDash checks what you type before it saves, makes the custom API with its
-named values and asks it once, so a wrong address shows at once. A preset
-may suggest a rule for the widget, such as Power now in the warning colour
-above 3000 W. Change anything later under Custom APIs. The presets are JSON
-files in `web/src/admin/presets`; each names the documentation it was
-checked against.
+**Test** asks the device or service with what you filled in, without saving,
+and shows what each of its values says now; **Save** sets it up. The card
+then says **Connected** and when it last updated, or what fails. You can set
+one up more than once, such as two P1 meters: **Add another meter** under
+its card, and each is listed there with **Test**, **Change** and
+**Remove**. How GDash asks it (the address, the sign-in, the values it
+reads, its name and how often it refreshes) is under **Advanced**.
+
+In the dashboard editor each one that is set up is a widget of its own, by
+its name, such as **HomeWizard P1 meter** under Home or **Todoist** under
+Agenda & household. A new one starts with sensible settings, such as the
+power now in the good colour with "Exporting to the grid" while you return
+power, and its settings are by name only: what to **Show** (such as Power
+now or Meter readings), the title, which values with tick boxes, and with
+several meters which **Meter**. Rules work as for any Custom widget.
+
+Underneath, each is a custom API that keeps which card it belongs to, and
+its widget is stored as a Custom widget, so exports keep working. A custom
+API that you made from one of these before they had cards of their own is
+offered on its card: **Move it here**. The definitions are JSON files in
+`web/src/admin/presets`; each names the documentation it was checked against
+and the widgets it offers.
 
 ### Send data to GDash (push)
 
@@ -983,11 +1003,11 @@ ask for a time zone; a time without a zone counts as UTC.)
 Pi-hole 6 gives a session for its password: `POST /api/auth` with
 `{"password": "…"}` answers `{"session": {"sid": "…", "validity": 1800}}`,
 and every other request carries the session ID in the `X-FTL-SID` header.
-GDash does that for you. The quickest way is the **Pi-hole** preset under
+GDash does that for you. The quickest way is the **Pi-hole** card under
 **Integrations**: fill in the address you open Pi-hole with, such as
-`http://192.168.1.2`, and the password, and it adds the queries, the
-blocked queries and their share, the active clients and the size of the
-blocklist as named values. By hand:
+`http://192.168.1.2`, and the password, and the dashboard editor offers a
+Pi-hole widget with the blocked queries and their share, or the queries and
+the active clients. By hand, as a custom API of your own:
 
 1. In Pi-hole, under Settings, Web interface / API, make an **app
    password** and copy it, or use the password you log in with.

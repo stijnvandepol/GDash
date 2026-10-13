@@ -5,6 +5,28 @@ the format follows [Keep a Changelog](https://keepachangelog.com).
 
 ## Unreleased
 
+### Changed
+
+- The devices and services that used to be presets of a custom API, such as
+  the HomeWizard meters, Tibber, Pi-hole, Plex and Todoist, are integrations
+  of their own: their card asks only for what is yours, such as an IP
+  address or a token, with **Test** before **Save**, says whether it is
+  connected, and lists each one when you set up more than one, such as two
+  P1 meters. How GDash asks them is under Advanced. AdGuard Home, Pi-hole and
+  Speedtest Tracker are under a new Network category.
+- In the dashboard editor each device or service that is set up is a widget
+  of its own, such as HomeWizard P1 meter or Todoist, that starts with
+  sensible settings and suggested rules, with what to show and which values
+  chosen by name. It is still stored as a Custom widget, so exported
+  dashboards keep working.
+- Custom APIs, its card and its widget are for your own JSON APIs only; a
+  custom API made from a preset before can be moved under its own card.
+
+### Added
+
+- A custom source keeps the preset it was made from (`preset`), and
+  `POST /api/custom-source-tests` fetches a source once without saving it.
+
 ## 0.9.0 – 2026-10-13
 
 ### Added
