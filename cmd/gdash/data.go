@@ -30,6 +30,7 @@ import (
 	"github.com/stijnvandepol/gdash/internal/photos"
 	"github.com/stijnvandepol/gdash/internal/rain"
 	"github.com/stijnvandepol/gdash/internal/settings"
+	"github.com/stijnvandepol/gdash/internal/solar"
 	"github.com/stijnvandepol/gdash/internal/store"
 	"github.com/stijnvandepol/gdash/internal/synology"
 	"github.com/stijnvandepol/gdash/internal/warnings"
@@ -49,6 +50,7 @@ type dataSources struct {
 	immich     *immich.Client
 	synology   *synology.Client
 	energy     energyprice.Client
+	solar      solar.Client
 	departures *departures.Client
 	fuel       *fuel.Client
 	holidays   holidays.Client
@@ -163,12 +165,17 @@ func startData(ctx context.Context, cfg config, db *store.Store, svc *settings.S
 			HTTP: outbound.NewClient(upstreamTimeout), UserAgent: userAgent, Location: dutch, Now: time.Now,
 		},
 		warnings: &warnings.Client{BaseURL: warnings.DefaultBaseURL, HTTP: outbound.NewClient(upstreamTimeout), UserAgent: userAgent, Now: time.Now},
+		solar: solar.Client{
+			OpenMeteo:     solar.OpenMeteo{BaseURL: solar.DefaultOpenMeteoURL, HTTP: &http.Client{Timeout: upstreamTimeout}},
+			ForecastSolar: solar.ForecastSolar{BaseURL: solar.DefaultForecastSolarURL, HTTP: &http.Client{Timeout: upstreamTimeout}},
+		},
 	}
 	if cfg.testUpstream != "" {
-		logger.Warn("GDASH_TEST_UPSTREAM is set: rain and weather warnings come from a stand-in, not from Buienradar, Open-Meteo or MeteoAlarm", "address", cfg.testUpstream)
+		logger.Warn("GDASH_TEST_UPSTREAM is set: rain, weather warnings and the solar forecast come from a stand-in, not from Buienradar, Open-Meteo or MeteoAlarm", "address", cfg.testUpstream)
 		sources.rain.BuienradarURL = cfg.testUpstream + testBuienradarPath
 		sources.rain.OpenMeteoURL = cfg.testUpstream + testOpenMeteoPath
 		sources.warnings.BaseURL = cfg.testUpstream + testMeteoAlarmPath
+		sources.solar.OpenMeteo.BaseURL = cfg.testUpstream + testSolarPath
 	}
 	sources.nowPlaying = newNowPlaying(hub, sources)
 	if err := sources.sync(ctx); err != nil {

@@ -16,6 +16,7 @@ import (
 	"github.com/stijnvandepol/gdash/internal/rain"
 	"github.com/stijnvandepol/gdash/internal/secret"
 	"github.com/stijnvandepol/gdash/internal/settings"
+	"github.com/stijnvandepol/gdash/internal/solar"
 	"github.com/stijnvandepol/gdash/internal/weather"
 )
 
@@ -80,6 +81,26 @@ func TestHolidaysReadTheSchoolFeedOnlyWhenShown(t *testing.T) {
 	// the school holidays do.
 	if public.Version == both.Version || both.Version != south.Version {
 		t.Fatalf("versions = %q, %q and %q", public.Version, both.Version, south.Version)
+	}
+}
+
+func TestSolarIsFetchedOnlyWhenShownAndSetUp(t *testing.T) {
+	setup := &solar.Setup{Location: weather.Location{Latitude: 51.77, Longitude: 5.52}, Arrays: []solar.Array{{Tilt: 35, PeakKW: 4}}, PerformanceRatio: 0.85, Source: solar.SourceOpenMeteo}
+	widget := display.Widget{Type: "solar"}
+	if got := widgetSources(t, settings.Sources{}, widget); len(got) != 0 {
+		t.Fatalf("sources without panels = %v, want none, so the widget says to set them up", got)
+	}
+	if got := widgetSources(t, settings.Sources{Solar: setup}); len(got) != 0 {
+		t.Fatalf("sources without a solar widget = %v, want none", got)
+	}
+	got := widgetSources(t, settings.Sources{Solar: setup}, widget)[display.SolarSource]
+	if got.Interval != 30*time.Minute || got.Fetch == nil || got.Version == "" {
+		t.Fatalf("source = %+v, want one that refreshes every half hour", got)
+	}
+	changed := *setup
+	changed.Arrays = []solar.Array{{Tilt: 35, PeakKW: 5}}
+	if now := widgetSources(t, settings.Sources{Solar: &changed}, widget)[display.SolarSource]; now.Version == got.Version {
+		t.Fatal("the source did not restart when the panels changed")
 	}
 }
 

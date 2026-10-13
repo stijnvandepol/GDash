@@ -20,6 +20,7 @@ const (
 	testBuienradarPath = "/buienradar/data/raintext"
 	testOpenMeteoPath  = "/open-meteo/v1/forecast"
 	testMeteoAlarmPath = "/meteoalarm/api/v1/warnings/feeds-netherlands"
+	testSolarPath      = "/open-meteo-solar/v1/forecast"
 
 	// warningSeconds is how long a code orange or red warning stays over
 	// the dashboards: long enough to be seen when walking past.

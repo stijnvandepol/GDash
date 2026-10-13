@@ -45,7 +45,7 @@ type config struct {
 	schoolHolidaysURL string
 	// testUpstream is GDASH_TEST_UPSTREAM: a stand-in on the loopback
 	// address that the end-to-end tests run for Buienradar, Open-Meteo's
-	// rain forecast and MeteoAlarm. Empty outside tests.
+	// rain and solar forecasts and MeteoAlarm. Empty outside tests.
 	testUpstream string
 }
 

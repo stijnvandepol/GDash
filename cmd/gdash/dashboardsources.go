@@ -33,6 +33,10 @@ const (
 	// hourly refresh shows them within the hour, and the price of the
 	// current hour is read from the list, not fetched again.
 	energyPriceInterval = time.Hour
+	// A solar estimate follows the cloud forecast, which Open-Meteo updates
+	// every hour or so; every half hour keeps two arrays under
+	// Forecast.Solar's 12 free requests an hour.
+	solarInterval = 30 * time.Minute
 	// dutchTimeZone is where the price market's days start and end.
 	dutchTimeZone = "Europe/Amsterdam"
 	// Station prices change a few times a day, and the ANWB's own apps
@@ -74,6 +78,14 @@ func (d *dataSources) dashboardSources(cfg settings.Sources, dashboards []displa
 			Interval: energyPriceInterval,
 			Version:  "energyzero",
 			Fetch:    func(ctx context.Context) (any, error) { return d.energy.Prices(ctx) },
+		})
+	}
+	if setup := cfg.Solar; setup != nil && display.UsesWidget(dashboards, "solar") {
+		sources = append(sources, datahub.Source{
+			Key:      display.SolarSource,
+			Interval: solarInterval,
+			Version:  d.fingerprint(*setup),
+			Fetch:    func(ctx context.Context) (any, error) { return d.solar.Forecast(ctx, *setup) },
 		})
 	}
 	if source, ok := d.fuelSource(cfg.Location, display.FuelQueries(dashboards)); ok {

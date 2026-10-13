@@ -19,6 +19,10 @@ const WasteSource = "waste.default"
 // the Netherlands.
 const EnergyPriceSource = "energyprice.nl"
 
+// SolarSource is the data key of the solar forecast for the household's
+// panels.
+const SolarSource = "solar.default"
+
 // maxCalendarID is the largest whole number that survives the trip through
 // JSON, where every number is a float64.
 const maxCalendarID = 1<<53 - 1

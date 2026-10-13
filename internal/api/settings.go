@@ -132,6 +132,35 @@ func (s *Server) deleteLocation(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
+// putSolar handles PUT /api/settings/solar {location, arrays,
+// performanceRatio, source}: the household's solar panels, at their own
+// location or, with a null location, the weather location. 200 with the
+// panels; 422 naming every invalid field.
+func (s *Server) putSolar(w http.ResponseWriter, r *http.Request) {
+	var body settings.Solar
+	if !decodeJSON(w, r, &body) {
+		return
+	}
+	if err := s.Settings.SetSolar(r.Context(), body); err != nil {
+		s.writeSettingsError(w, "set solar panels", err)
+		return
+	}
+	s.auditUser(r, auditSolarChanged, body.Source)
+	s.SettingsChanged()
+	writeJSON(w, http.StatusOK, body)
+}
+
+// deleteSolar handles DELETE /api/settings/solar: 204.
+func (s *Server) deleteSolar(w http.ResponseWriter, r *http.Request) {
+	if err := s.Settings.ClearSolar(r.Context()); err != nil {
+		s.internalError(w, "clear solar panels", err)
+		return
+	}
+	s.auditUser(r, auditSolarRemoved, "")
+	s.SettingsChanged()
+	w.WriteHeader(http.StatusNoContent)
+}
+
 type sourceBody struct {
 	Name string `json:"name"`
 	URL  string `json:"url"`

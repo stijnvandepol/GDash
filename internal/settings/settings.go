@@ -1,6 +1,6 @@
 // Package settings manages what GDash fetches: the weather location, news
-// feeds, calendars, the Home Assistant and Homey connections and custom API
-// sources.
+// feeds, calendars, the Home Assistant and Homey connections, custom API
+// sources and the solar panels.
 // They are edited in the web interface and stored in
 // SQLite; environment variables only fill them on the very first start.
 package settings
@@ -22,6 +22,7 @@ import (
 	"github.com/stijnvandepol/gdash/internal/homey"
 	"github.com/stijnvandepol/gdash/internal/news"
 	"github.com/stijnvandepol/gdash/internal/secret"
+	"github.com/stijnvandepol/gdash/internal/solar"
 	"github.com/stijnvandepol/gdash/internal/store"
 	"github.com/stijnvandepol/gdash/internal/synology"
 	"github.com/stijnvandepol/gdash/internal/validation"
@@ -85,6 +86,8 @@ type Settings struct {
 	// UpdateCheck is whether GDash asks GitHub once a day for the latest
 	// release, to show a notice when a newer one is out.
 	UpdateCheck bool `json:"updateCheck"`
+	// Solar is nil until the solar panels are set up.
+	Solar *Solar `json:"solar"`
 }
 
 // Languages are the display languages; web/src/i18n.svelte.ts has their
@@ -107,6 +110,8 @@ type Sources struct {
 	Immich *ImmichAlbum
 	// Synology is nil when no readable shared album is set up.
 	Synology *synology.Album
+	// Solar is nil without solar panels, or without a place for them.
+	Solar *solar.Setup
 }
 
 // Service reads and changes the settings.
@@ -163,6 +168,9 @@ func (s *Service) Get(ctx context.Context) (Settings, error) {
 		return Settings{}, err
 	}
 	if out.Synology, err = s.synologyView(ctx); err != nil {
+		return Settings{}, err
+	}
+	if out.Solar, err = s.solarPanels(ctx); err != nil {
 		return Settings{}, err
 	}
 	return out, nil
@@ -225,6 +233,13 @@ func (s *Service) Sources(ctx context.Context) (Sources, error) {
 		s.Logger.Error("synology album cannot be decrypted; connect again", "error", err)
 	} else if ok {
 		out.Synology = &album
+	}
+	panels, err := s.solarPanels(ctx)
+	if err != nil {
+		return Sources{}, err
+	}
+	if out.Solar, err = solarSetup(panels, out.Location); err != nil {
+		return Sources{}, err
 	}
 	return out, nil
 }

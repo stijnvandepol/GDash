@@ -54,6 +54,34 @@ func TestLocationSetting(t *testing.T) {
 	}
 }
 
+func TestSolarSetting(t *testing.T) {
+	env := newTestEnv(t, nil)
+	if status, _ := env.do(t, "PUT", "/api/settings/solar", `{}`); status != http.StatusUnauthorized {
+		t.Fatalf("PUT /api/settings/solar without login = %d, want 401", status)
+	}
+	env.setUp(t)
+	if _, body := env.do(t, "GET", "/api/settings", ""); !strings.Contains(body, `"solar":null`) {
+		t.Fatalf("fresh settings = %s, want no solar panels", body)
+	}
+	status, body := env.do(t, "PUT", "/api/settings/solar", `{"location":null,"arrays":[{"tilt":120,"azimuth":0,"kwp":4}],"performanceRatio":0.85,"source":"open-meteo"}`)
+	if status != http.StatusUnprocessableEntity || !strings.Contains(body, `"arrays[0].tilt"`) {
+		t.Fatalf("invalid tilt = %d %s", status, body)
+	}
+	panels := `{"location":null,"arrays":[{"tilt":35,"azimuth":-10,"kwp":4.2}],"performanceRatio":0.85,"source":"forecast.solar"}`
+	if status, body = env.do(t, "PUT", "/api/settings/solar", panels); status != http.StatusOK || body != panels+"\n" {
+		t.Fatalf("set solar = %d %s", status, body)
+	}
+	if _, body = env.do(t, "GET", "/api/settings", ""); !strings.Contains(body, `"solar":`+panels) {
+		t.Fatalf("settings = %s", body)
+	}
+	if status, _ = env.do(t, "DELETE", "/api/settings/solar", ""); status != http.StatusNoContent {
+		t.Fatalf("clear = %d", status)
+	}
+	if n := env.settingsChanges.Load(); n != 2 {
+		t.Fatalf("SettingsChanged called %d times, want 2 (set, clear)", n)
+	}
+}
+
 func TestCalendarAddressNeverLeavesTheServer(t *testing.T) {
 	env := newTestEnv(t, nil)
 	env.setUp(t)

@@ -84,6 +84,7 @@ var WidgetTypes = map[string]WidgetType{
 	"airquality":  {Source: AirQualitySource, MinW: 5, MinH: 4},
 	"waste":       {Source: WasteSource, MinW: 6, MinH: 4, Settings: wasteSettings},
 	"energyprice": {Source: EnergyPriceSource, MinW: 6, MinH: 4},
+	"solar":       {Source: SolarSource, MinW: 6, MinH: 4},
 	"news":        {Source: "news.default", MinW: 6, MinH: 4, Settings: maxItems},
 	"calendar":    {Source: "calendar.default", MinW: 6, MinH: 4, Settings: maxItems},
 	"text":        {MinW: 4, MinH: 3, Settings: map[string]Setting{"text": {Kind: SettingText, Min: 1, Max: 300, Required: true}}},
