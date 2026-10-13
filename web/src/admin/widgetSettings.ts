@@ -146,6 +146,7 @@ export const CHOICE_LABELS: Record<string, string> = {
   cover: 'Fill the tile',
   uploaded: 'Uploaded photos',
   immich: 'Immich album',
+  synology: 'Synology Photos album',
 };
 
 /** How often a new Camera widget refreshes, in seconds; internal/display holds the same default. */

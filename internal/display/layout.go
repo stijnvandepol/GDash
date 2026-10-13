@@ -89,7 +89,7 @@ var WidgetTypes = map[string]WidgetType{
 	"text":        {MinW: 4, MinH: 3, Settings: map[string]Setting{"text": {Kind: SettingText, Min: 1, Max: 300, Required: true}}},
 	"photos": {Source: PhotosSource, MinW: 4, MinH: 3, Settings: map[string]Setting{
 		"seconds": {Kind: SettingInteger, Min: 5, Max: 600},
-		"source":  {Kind: SettingChoice, Options: []string{PhotosUploaded, PhotosImmich}},
+		"source":  {Kind: SettingChoice, Options: []string{PhotosUploaded, PhotosImmich, PhotosSynology}},
 	}},
 	"countdown": {MinW: 4, MinH: 4, Settings: map[string]Setting{
 		"label": {Kind: SettingText, Min: 1, Max: 60, Required: true},
@@ -126,34 +126,43 @@ const MaxEntitiesPerWidget = 8
 const PhotosSource = "photos.default"
 
 // Where a Photos widget takes its photos from: the uploaded ones, the
-// default, or the Immich album chosen under Integrations.
+// default, or the album of Immich or Synology Photos chosen under Integrations.
 const (
 	PhotosUploaded = "uploaded"
 	PhotosImmich   = "immich"
+	PhotosSynology = "synology"
 )
 
-// ImmichSource is the data key of the photos of the Immich album: the IDs
-// of a random part of its images, which screens load through the server.
-const ImmichSource = "photos.immich"
+// The data keys of the albums: a random part of each album's photos, by
+// IDs that screens load through the server.
+const (
+	ImmichSource   = "photos.immich"
+	SynologySource = "photos.synology"
+)
+
+// albumSources maps a Photos widget's source to its data key.
+var albumSources = map[string]string{PhotosImmich: ImmichSource, PhotosSynology: SynologySource}
 
 // widgetSource is the data key a widget shows: its type's, except for a
-// Photos widget that shows the Immich album.
+// Photos widget that shows an album.
 func widgetSource(w Widget) string {
-	if w.Type == "photos" && w.Settings["source"] == PhotosImmich {
-		return ImmichSource
+	if source, ok := w.Settings["source"].(string); ok && w.Type == "photos" && albumSources[source] != "" {
+		return albumSources[source]
 	}
 	return WidgetTypes[w.Type].Source
 }
 
-// UsesImmich reports whether a Photos widget on the dashboards shows the
-// Immich album, so the album is only read while a screen can show it.
-func UsesImmich(dashboards []Dashboard) bool {
-	return slices.ContainsFunc(dashboards, func(d Dashboard) bool { return slices.ContainsFunc(d.Widgets, ShowsImmich) })
+// UsesAlbum reports whether a Photos widget on the dashboards shows the
+// album with data key, so an album is only read while a screen can show it.
+func UsesAlbum(dashboards []Dashboard, key string) bool {
+	return slices.ContainsFunc(dashboards, func(d Dashboard) bool {
+		return slices.ContainsFunc(d.Widgets, func(w Widget) bool { return ShowsAlbum(w, key) })
+	})
 }
 
-// ShowsImmich reports whether w is a Photos widget that shows the Immich
-// album.
-func ShowsImmich(w Widget) bool { return widgetSource(w) == ImmichSource }
+// ShowsAlbum reports whether w is a Photos widget that shows the album
+// with data key.
+func ShowsAlbum(w Widget, key string) bool { return w.Type == "photos" && widgetSource(w) == key }
 
 var validDashboardID = regexp.MustCompile(`^[a-z0-9][a-z0-9-]{0,31}$`)
 

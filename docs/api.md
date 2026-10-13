@@ -92,6 +92,9 @@ come from another site (cross-site request forgery protection).
 | `GET /api/immich/albums` | admin | `200 {"albums": [{id, name, assetCount}]}`, owned and shared, at most 500 | `401`, `409 not_connected`, `502 upstream_unavailable` |
 | `PUT /api/immich/album` `{albumId}` | admin | `200` settings.immich | `401`, `409 not_connected`, `422` naming `albumId` for an album Immich does not list, `502 upstream_unavailable` |
 | `GET /api/immich/assets/{id}` | admin, or a screen paired with a display that shows the Immich album now | `200` the photo, Immich's `preview` size with its location and camera details removed, `Cache-Control: private, max-age=86400` | `404` for anyone else and for any ID that is not one of the album's current photos (`photos.immich`), `502 upstream_unavailable` |
+| `PUT /api/synology` `{link, password, acceptCertificate}` | admin | `200` settings.synologyPhotos with `photos`, how many photos GDash can show, after the NAS opened the album; an empty `password` keeps the stored one for the same link; with `acceptCertificate` GDash reads the certificate the NAS presents and from then on accepts only that one | `401`, `422` naming `link`, `password` (the NAS refused the link or password) or `acceptCertificate` (an untrusted certificate, or an http link) |
+| `DELETE /api/synology` | admin | `204`; Photos widgets set to Synology Photos show that it is not set up | `401` |
+| `GET /api/synology/photos/{id}` | admin, or a screen paired with a display that shows the Synology Photos album now | `200` the photo, as for Immich | `404` for anyone else and for any ID that is not one of the album's current photos (`photos.synology`), `502 upstream_unavailable` |
 | `GET /api/cameras` | admin | `200 {"cameras": [camera], "unreadable": false}`; `unreadable` is true when the cameras cannot be decrypted, and adding one then starts a new list | `401` |
 | `POST /api/cameras` `{name, url, auth}` | admin | `201` camera | `401`, `409` at 10 cameras, `422` naming each field |
 | `PUT /api/cameras/{id}` `{name, url, auth}` | admin | `200` camera; an empty `auth.secret` keeps the stored one for the same kind | `401`, `404`, `422` |
@@ -330,7 +333,7 @@ widget for them:
 - waste `waste.default`, energy price `energyprice.nl`, fuel `fuel.default`
 - holidays `holidays.nl`, rain `rain.default`, weather warnings `warnings.default`
 - Homey `homey.default` (values) and `homey.users` (who is home)
-- the Immich album `photos.immich`
+- the albums `photos.immich` and `photos.synology`
 - custom sources `custom.source.<id>`; a pushed custom source is there from the start, as it is never fetched
 
 Place search sends the typed name to Open-Meteo's geocoding service, which
@@ -524,7 +527,7 @@ allows, overlaps another, lacks a required setting, or has a setting its type do
 | `news` | 6x4 | `news.default` | `maxItems`: 1 to 20 |
 | `calendar` | 6x4 | `calendar.default` | `maxItems`: 1 to 20 |
 | `text` | 4x3 | none | `text`: 1 to 300 characters, line breaks allowed (required) |
-| `photos` | 4x3 | `photos.default`, or `photos.immich` with `source` `immich` | `seconds`: 5 to 600 per photo, default 30, `source`: `uploaded` (default) or `immich` |
+| `photos` | 4x3 | `photos.default`, or `photos.immich` or `photos.synology` with `source` `immich` or `synology` | `seconds`: 5 to 600 per photo, default 30, `source`: `uploaded` (default), `immich` or `synology` |
 | `countdown` | 4x4 | none | `label`: 1 to 60 characters, `date`: `YYYY-MM-DD` (both required) |
 | `holidays` | 6x4 | `holidays.nl` | `region`: `north`, `middle` (default) or `south`, `show`: `both` (default), `school` or `public`, `maxItems`: 1 to 20, default 5 |
 | `homeassistant` | 4x3 | `homeassistant.default` | `entities`: 1 to 8 entity IDs such as `sensor.living_room_temperature` (required) |
@@ -578,6 +581,20 @@ are refused, as the key would follow them.
 **photos data (`photos.immich`):** the IDs of up to 100 images of the chosen album, picked at random by Immich and
 shuffled, refreshed every 30 minutes, only while a Photos widget shows the album; videos are left out. A screen
 loads each from `GET /api/immich/assets/{id}`.
+
+**settings.synologyPhotos:** `{"host": "192.168.1.2:5001", "passwordSet": true, "certificate": "AB:01:…", "unreadable": false}`,
+or `null` when no album is connected; `certificate` is the SHA-256 fingerprint of the accepted certificate, or empty
+when the NAS's certificate is checked as browsers do. The link (which opens the album), its password and the
+fingerprint are sealed together. GDash calls the NAS at `{link base}/{xx}/sharing/webapi/entry.cgi`, as the
+Synology Photos page does for a share link: `SYNO.Core.Sharing.Login` (v1, `sharing_id` and the password
+JSON-quoted) for a session cookie, `SYNO.Foto.Browse.Item` `list` (v1, `additional=["thumbnail"]`, `passphrase`, header
+`X-SYNO-SHARING`) and `SYNO.Foto.Thumbnail` `get` (v2, `id`, `cache_key`, `type="unit"`, `size="xl"` or `"m"`,
+`passphrase`, `_sharing_id`). Synology does not document these for share links; they follow the open-source clients
+syno-photo-frame, MMM-SynPhotoSlideshow and py-synologydsm-api. Redirects to another host are refused.
+
+**photos data (`photos.synology`):** up to 100 photos of the shared album, at random and shuffled, refreshed every 30
+minutes while a Photos widget shows it, as `"<unit id>-<cache key>-<size>"`; videos and photos without a thumbnail
+are left out. A screen loads each from `GET /api/synology/photos/{id}`.
 
 **camera:** `{"id": 1, "name": "Front door", "url": "http://192.168.1.20:5000/api/front_door/latest.jpg", "auth": {"kind": "basic", "name": "admin", "secretSet": true}}`.
 The input has `auth: {kind, name, secret}` with the kinds of a custom source (`none`, `bearer`, `header`, `query`,

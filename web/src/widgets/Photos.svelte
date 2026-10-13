@@ -30,9 +30,9 @@
   // An album that is not set up has no entry; one being read has no value yet.
   const waiting = $derived.by(() => {
     if (source === 'uploaded') return t('photosNone');
-    if (entry === undefined) return t('immichNotSetUp');
-    if (entry.value === undefined) return t(entry.failing ? 'immichFailed' : 'immichLoading');
-    return t('immichNone');
+    if (entry === undefined) return t('albumNotSetUp');
+    if (entry.value === undefined) return t(entry.failing ? 'albumFailed' : 'albumLoading');
+    return t('albumNone');
   });
 </script>
 

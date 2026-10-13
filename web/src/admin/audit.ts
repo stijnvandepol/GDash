@@ -63,6 +63,8 @@ const ACTIONS: Record<string, string> = {
   immich_connected: 'Connected Immich at',
   immich_album_chosen: 'Chose the Immich album',
   immich_removed: 'Disconnected Immich',
+  synology_connected: 'Connected the Synology Photos album on',
+  synology_removed: 'Disconnected the Synology Photos album',
   custom_rule_announced: 'A Custom widget rule announced on',
   weather_warning_announced: 'Announced the weather warning',
 };

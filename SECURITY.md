@@ -89,6 +89,14 @@ fully trust, such as a guest's phone.
   library. The photos are not stored; their location and camera details are
   removed on the way. Requests to Immich follow redirects only to the same
   host, as the key is in a header that Go would otherwise send along.
+- **Synology Photos:** a share link opens its album, so the link, its
+  password and an accepted certificate are sealed together and never
+  returned or logged; GDash needs no account on the NAS. Screens get the
+  photos through GDash on the same terms as Immich's. A NAS's self-signed
+  certificate is only used when an admin ticks Accept this NAS's
+  certificate: GDash then pins the SHA-256 of the certificate it sees at
+  that moment and accepts no other one; it never turns certificate checks
+  off. The http link on port 5000 avoids this on a home network.
 - **Cameras:** camera images show what happens in and around the home, on
   every TV that shows a Camera widget, so put one only on screens whose
   viewers may see that. A camera's address and password or key are sealed
@@ -104,7 +112,7 @@ fully trust, such as a guest's phone.
   MB, JPEG, PNG or WebP by content, 10 seconds, redirects only to the same
   host. The web interface and display pages allow `blob:` images, which the
   Camera widget makes from what it fetched from GDash.
-- **Outgoing requests:** feeds, calendars, Home Assistant, Homey, Immich, cameras and custom APIs are
+- **Outgoing requests:** feeds, calendars, Home Assistant, Homey, Immich, Synology Photos, cameras and custom APIs are
   fetched with a client that refuses link-local addresses, where cloud hosts
   serve instance metadata. Departures are fetched from OVapi over plain HTTP, because its
   HTTPS certificate belongs to another domain; the request carries no secret

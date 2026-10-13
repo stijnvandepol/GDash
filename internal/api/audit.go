@@ -60,6 +60,8 @@ const (
 	auditImmichConnected        = "immich_connected"
 	auditImmichAlbumChosen      = "immich_album_chosen"
 	auditImmichRemoved          = "immich_removed"
+	auditSynologyConnected      = "synology_connected"
+	auditSynologyRemoved        = "synology_removed"
 	defaultAuditPage            = 100
 	maxAuditDetailCharacters    = 200
 )

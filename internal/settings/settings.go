@@ -23,6 +23,7 @@ import (
 	"github.com/stijnvandepol/gdash/internal/news"
 	"github.com/stijnvandepol/gdash/internal/secret"
 	"github.com/stijnvandepol/gdash/internal/store"
+	"github.com/stijnvandepol/gdash/internal/synology"
 	"github.com/stijnvandepol/gdash/internal/validation"
 	"github.com/stijnvandepol/gdash/internal/weather"
 )
@@ -79,6 +80,8 @@ type Settings struct {
 	Homey *Homey `json:"homey"`
 	// Immich is nil until a connection is set up.
 	Immich *Immich `json:"immich"`
+	// Synology is nil until a shared album is set up.
+	Synology *Synology `json:"synologyPhotos"`
 	// UpdateCheck is whether GDash asks GitHub once a day for the latest
 	// release, to show a notice when a newer one is out.
 	UpdateCheck bool `json:"updateCheck"`
@@ -102,6 +105,8 @@ type Sources struct {
 	HomeyPushed bool
 	// Immich is nil when no readable connection with an album is set up.
 	Immich *ImmichAlbum
+	// Synology is nil when no readable shared album is set up.
+	Synology *synology.Album
 }
 
 // Service reads and changes the settings.
@@ -155,6 +160,9 @@ func (s *Service) Get(ctx context.Context) (Settings, error) {
 		return Settings{}, err
 	}
 	if out.Immich, err = s.immichView(ctx); err != nil {
+		return Settings{}, err
+	}
+	if out.Synology, err = s.synologyView(ctx); err != nil {
 		return Settings{}, err
 	}
 	return out, nil
@@ -212,6 +220,11 @@ func (s *Service) Sources(ctx context.Context) (Sources, error) {
 	if out.Immich, err = s.immichAlbum(ctx); err != nil {
 		s.Logger.Error("immich connection cannot be decrypted; connect again", "error", err)
 		out.Immich = nil
+	}
+	if album, ok, err := s.SynologyAlbum(ctx); err != nil {
+		s.Logger.Error("synology album cannot be decrypted; connect again", "error", err)
+	} else if ok {
+		out.Synology = &album
 	}
 	return out, nil
 }

@@ -77,6 +77,7 @@ type Server struct {
 	HomeAssistant        HomeAssistantReader
 	Homey                HomeyReader
 	Immich               ImmichReader
+	Synology             SynologyReader
 	Stops                StopSearcher
 	CustomFetcher        CustomFetcher
 	// ReceiveCustom stores the answer that a pushed custom source sent; it
@@ -198,6 +199,7 @@ func (s *Server) Handler() http.Handler {
 	mux.Handle("DELETE /api/photos/{name}", s.requireUser(s.deletePhoto))
 	mux.HandleFunc("GET /api/photos/{name}", s.getPhoto)
 	s.handleImmich(mux)
+	s.handleSynology(mux)
 	s.handleCameras(mux)
 
 	mux.Handle("GET /api/cast-devices", s.requireUser(s.castDevices))

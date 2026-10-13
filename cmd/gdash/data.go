@@ -29,6 +29,7 @@ import (
 	"github.com/stijnvandepol/gdash/internal/rain"
 	"github.com/stijnvandepol/gdash/internal/settings"
 	"github.com/stijnvandepol/gdash/internal/store"
+	"github.com/stijnvandepol/gdash/internal/synology"
 	"github.com/stijnvandepol/gdash/internal/warnings"
 	"github.com/stijnvandepol/gdash/internal/weather"
 )
@@ -44,6 +45,7 @@ type dataSources struct {
 	home       *homeassistant.Client
 	homey      *homey.Client
 	immich     *immich.Client
+	synology   *synology.Client
 	energy     energyprice.Client
 	departures *departures.Client
 	fuel       *fuel.Client
@@ -136,6 +138,7 @@ func startData(ctx context.Context, cfg config, db *store.Store, svc *settings.S
 		home:       &homeassistant.Client{HTTP: outbound.NewClient(upstreamTimeout)},
 		homey:      &homey.Client{HTTP: outbound.NewClient(upstreamTimeout)},
 		immich:     &immich.Client{HTTP: outbound.NewClient(immich.Timeout)},
+		synology:   &synology.Client{},
 		departures: transit,
 		fuel:       &fuel.Client{BaseURL: fuel.DefaultBaseURL, HTTP: outbound.NewClient(upstreamTimeout), UserAgent: userAgent},
 		custom:     &custom.Fetcher{HTTP: outbound.NewClient(upstreamTimeout), UserAgent: userAgent},
@@ -208,7 +211,7 @@ func (d *dataSources) sync(ctx context.Context) error {
 	sources := d.build(cfg, display.EntityIDs(dashboards), display.StopCodes(dashboards))
 	sources = append(sources, d.dashboardSources(cfg, dashboards)...)
 	sources = append(sources, d.homeySources(cfg, dashboards)...)
-	sources = append(sources, d.immichSources(cfg, dashboards)...)
+	sources = append(sources, d.albumSources(cfg, dashboards)...)
 	d.hub.Configure(ctx, append(sources, d.customSources(customs, display.CustomSourceIDs(dashboards))...))
 	return nil
 }

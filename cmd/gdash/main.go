@@ -203,6 +203,7 @@ func serve(ctx context.Context, logger *slog.Logger) error {
 		HomeAssistant: sources.home,
 		Homey:         sources.homey,
 		Immich:        sources.immich,
+		Synology:      sources.synology,
 		Cameras: &camera.Keeper{
 			Fetcher: &camera.Fetcher{HTTP: outbound.NewClient(camera.Timeout), UserAgent: userAgent()},
 			Now:     time.Now, Logger: logger,

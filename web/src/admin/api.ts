@@ -56,6 +56,7 @@ import type {
   Settings,
   Slot,
   SourceStatus,
+  Synology,
   SystemInfo,
   TwoStepEnrolment,
   TwoStepStatus,
@@ -183,6 +184,9 @@ export const api = {
   disconnectImmich: () => request<void>('DELETE', '/api/immich'),
   immichAlbums: () => request<{ albums: ImmichAlbum[] }>('GET', '/api/immich/albums').then((r) => r.albums),
   chooseImmichAlbum: (albumId: string) => request<Immich>('PUT', '/api/immich/album', { albumId }),
+  connectSynology: (link: string, password: string, acceptCertificate: boolean) =>
+    request<Synology & { photos: number }>('PUT', '/api/synology', { link, password, acceptCertificate }),
+  disconnectSynology: () => request<void>('DELETE', '/api/synology'),
   cameras: () => request<{ cameras: Camera[]; unreadable: boolean }>('GET', '/api/cameras'),
   addCamera: (input: CameraInput) => request<Camera>('POST', '/api/cameras', input),
   saveCamera: (id: number, input: CameraInput) => request<Camera>('PUT', `/api/cameras/${id}`, input),

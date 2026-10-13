@@ -37,6 +37,7 @@ import (
 	"github.com/stijnvandepol/gdash/internal/secret"
 	"github.com/stijnvandepol/gdash/internal/settings"
 	"github.com/stijnvandepol/gdash/internal/store"
+	"github.com/stijnvandepol/gdash/internal/synology"
 	"github.com/stijnvandepol/gdash/internal/update"
 	"github.com/stijnvandepol/gdash/internal/weather"
 )
@@ -231,6 +232,7 @@ func newTestEnv(t *testing.T, discover func(context.Context) ([]cast.Device, err
 		HomeAssistant:     &homeassistant.Client{HTTP: &http.Client{Timeout: 5 * time.Second}},
 		Homey:             &homey.Client{HTTP: &http.Client{Timeout: 5 * time.Second}},
 		Immich:            &immich.Client{HTTP: outbound.NewClient(5 * time.Second)},
+		Synology:          &synology.Client{},
 		Cameras: &camera.Keeper{
 			Fetcher: &camera.Fetcher{HTTP: outbound.NewClient(5 * time.Second)}, Now: cameraClock.Now, Logger: logger,
 		},

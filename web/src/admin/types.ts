@@ -158,6 +158,8 @@ export interface Settings {
   homey: Homey | null;
   /** Null until Immich is connected; the API key never leaves the server. */
   immich: Immich | null;
+  /** Null until a Synology Photos album is connected; its link and password never leave the server. */
+  synologyPhotos: Synology | null;
   /** Whether GDash asks GitHub once a day for the latest release. */
   updateCheck: boolean;
 }
@@ -168,6 +170,17 @@ export interface Immich {
   albumId: string;
   albumName: string;
   /** True when the connection cannot be decrypted with this server's key. */
+  unreadable: boolean;
+}
+
+/** A Synology Photos album shared by link, as the web interface sees it. */
+export interface Synology {
+  /** The NAS's address and port. */
+  host: string;
+  passwordSet: boolean;
+  /** The SHA-256 fingerprint of the accepted certificate as hex pairs, or empty. */
+  certificate: string;
+  /** True when the album cannot be decrypted with this server's key. */
   unreadable: boolean;
 }
 

@@ -61,7 +61,7 @@ survive the internet dropping out. GDash is made for exactly that.
 | Home Assistant | Sensors and switches, such as the temperature or a door | Your Home Assistant, read only |
 | Homey | Sensors and switches, and who is home as badges with initials | Your Homey Pro, read only, with an API key |
 | News | Headlines from up to five RSS or Atom feeds | Any feed (default: NOS) |
-| Photos | A slideshow of photos you upload, or of an Immich album | Stored on your server, or [Immich](https://immich.app) with an API key |
+| Photos | A slideshow of photos you upload, or of an album of Immich or Synology Photos | Stored on your server, [Immich](https://immich.app) with an API key, or a Synology Photos share link |
 | Note and countdown | A short text, or the days until a date | — |
 | Holidays | The coming school holidays of your region and the public holidays (Netherlands) | [Rijksoverheid open data](https://opendata.rijksoverheid.nl), no key; public holidays computed |
 | Custom API | A value, a list or labelled values from any JSON API, with rules | Any API you add: open, or with a key, token or password |
@@ -296,5 +296,6 @@ the [ANWB](https://www.anwb.nl), rain forecasts by
 [Buienradar.nl](https://www.buienradar.nl) (free for non-commercial use with
 this credit, which the Rain widget also shows), weather warnings by the
 [KNMI](https://www.knmi.nl) through [MeteoAlarm](https://meteoalarm.org). Photo albums from
-[Immich](https://immich.app), through its API. The typefaces are under the SIL Open Font
+[Immich](https://immich.app) and Synology Photos; the Synology share-link calls follow
+[syno-photo-frame](https://github.com/Caleb9/syno-photo-frame). The typefaces are under the SIL Open Font
 License; all bundled licences are in [THIRD_PARTY_LICENSES](THIRD_PARTY_LICENSES).

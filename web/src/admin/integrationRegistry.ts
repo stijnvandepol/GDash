@@ -22,6 +22,7 @@ import LocationSetting from './LocationSetting.svelte';
 import PhotoSetting from './PhotoSetting.svelte';
 import PresetSetup from './PresetSetup.svelte';
 import SourceList from './SourceList.svelte';
+import SynologySetting from './SynologySetting.svelte';
 
 // Every card on the Integrations page. Adding an integration is adding an
 // entry here: what it is, how its state reads, and the setup it opens.
@@ -245,8 +246,6 @@ const SERVICES: Integration[] = [
       view(ImmichSetting, { connection: ctx.settings.immich, status: ctx.status['photos.immich'], onchanged: ctx.onchanged, onerror: ctx.onerror }),
   },
   {
-    // Synology Photos, as a source for the Photos widget, is being built
-    // next to Immich, in the same way.
     id: 'synologyphotos',
     name: 'Synology Photos',
     description: 'Photos from a shared album on your Synology, by its link',
@@ -256,8 +255,20 @@ const SERVICES: Integration[] = [
     tags: ['local'],
     kind: 'service',
     requires: { setting: 'synologyPhotos' },
-    state: ({ settings }) =>
-      (settings as unknown as Record<string, unknown>).synologyPhotos ? { kind: 'connected', detail: 'Set up.' } : NOT_SET_UP,
+    state: ({ settings, status }) => {
+      const album = settings.synologyPhotos;
+      if (!album) return NOT_SET_UP;
+      if (album.unreadable) return { kind: 'problem', detail: 'The album cannot be read on this server. Connect it again.' };
+      const st = sourceState(status['photos.synology'], 'Read once a Photos widget shows it.');
+      return { ...st, detail: `Shared album on ${album.host}. ${st.detail}` };
+    },
+    panel: (ctx) =>
+      view(SynologySetting, {
+        album: ctx.settings.synologyPhotos,
+        status: ctx.status['photos.synology'],
+        onchanged: ctx.onchanged,
+        onerror: ctx.onerror,
+      }),
   },
   {
     id: 'camera',

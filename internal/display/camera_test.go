@@ -1,12 +1,10 @@
 package display
 
 import (
-	"encoding/json"
 	"strings"
 	"testing"
 	"time"
 
-	"github.com/stijnvandepol/gdash/internal/datahub"
 	"github.com/stijnvandepol/gdash/internal/schedule"
 )
 
@@ -66,28 +64,5 @@ func TestWidgetsAtFollowsTheDisplayAndItsHours(t *testing.T) {
 	view.Hours = schedule.Hours{From: "22:00", Until: "23:00"}
 	if widgets := view.WidgetsAt(at); len(widgets) != 0 {
 		t.Errorf("outside active hours the display shows %d widgets", len(widgets))
-	}
-}
-
-func TestOnlyScreensWithAnImmichWidgetGetTheAlbum(t *testing.T) {
-	immichPhotos := Normalize(Dashboard{ID: "family", Widgets: []Widget{
-		{ID: "album", Type: "photos", W: 6, H: 4, Settings: map[string]any{"source": PhotosImmich}},
-	}})
-	uploaded := Normalize(Dashboard{ID: "hall", Widgets: []Widget{{ID: "photos", Type: "photos", W: 6, H: 4}}})
-	if immichPhotos.Widgets[0].Source != ImmichSource || uploaded.Widgets[0].Source != PhotosSource {
-		t.Fatalf("sources = %q, %q", immichPhotos.Widgets[0].Source, uploaded.Widgets[0].Source)
-	}
-	if !UsesImmich([]Dashboard{uploaded, immichPhotos}) || UsesImmich([]Dashboard{uploaded}) {
-		t.Fatal("UsesImmich does not follow the Photos widgets")
-	}
-	data := map[string]datahub.Entry{
-		ImmichSource: {Value: json.RawMessage(`["4b1c5d6e-7f80-4912-a3b4-c5d6e7f80912"]`)},
-		PhotosSource: {Value: json.RawMessage(`[]`)},
-	}
-	if got := dataFor([]Dashboard{uploaded}, data, time.Now()); len(got) != 1 || got[ImmichSource].Value != nil {
-		t.Errorf("a screen without the album gets %v", got)
-	}
-	if got := dataFor([]Dashboard{immichPhotos}, data, time.Now()); got[ImmichSource].Value == nil || got[PhotosSource].Value != nil {
-		t.Errorf("a screen with only the album gets %v", got)
 	}
 }

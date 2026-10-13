@@ -9,7 +9,7 @@ the format follows [Keep a Changelog](https://keepachangelog.com).
 
 - Camera widget: a still image of a camera at home, such as Frigate's latest
   image or a Reolink, Hikvision or Home Assistant snapshot, refreshed every 5
-  to 300 seconds. Cameras are added under Integrations, Cameras, with a user
+  to 300 seconds. Cameras are added under Integrations, Camera snapshots, with a user
   name and password, a token or an API key, which are stored encrypted. GDash
   fetches the image itself, once per refresh however many screens show it and
   only while one does, and only screens of a display that shows the camera can
@@ -19,6 +19,11 @@ the format follows [Keep a Changelog](https://keepachangelog.com).
   Integrations, choose an album, and set the widget to Immich album. A random
   part of up to 100 photos changes every 30 minutes; videos are left out, and
   the screens never see Immich's address or key.
+- The Photos widget can show a Synology Photos album through its share link,
+  with or without a password, so GDash needs no account on the NAS: set it up
+  under Integrations, Synology Photos. For a NAS with a self-signed
+  certificate, Accept this NAS's certificate pins the certificate it shows at
+  that moment; the http link on port 5000 works too.
 - A **Rain** widget: the rain in the next two hours at the weather location or
   a place you choose, as a bar per five minutes and one sentence such as "Dry
   for the next 2 hours", "Rain from 14:20 (light)" or "Rain until 15:05

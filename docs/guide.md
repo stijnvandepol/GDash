@@ -160,7 +160,7 @@ add calendars and feeds under Integrations, and the photos once you add photos.
 | Note | A short text for the household |
 | Countdown | The days until a date, such as a holiday |
 | Holidays | The coming school holidays of your region and the public holidays in the Netherlands; see [Holidays](#holidays) |
-| Photos | A slideshow of your uploaded photos, or of an Immich album; see [Photos from Immich](#photos-from-immich) |
+| Photos | A slideshow of your uploaded photos, or of an album of Immich or Synology Photos; see [Photos from Immich](#photos-from-immich) and [Photos from Synology Photos](#photos-from-synology-photos) |
 | Home Assistant | Up to eight sensors or switches from Home Assistant |
 | Homey | Up to eight sensors or switches from a Homey Pro; see [Homey](#homey) |
 | Who's home (Homey) | A round badge with initials for each chosen person who is home |
@@ -195,6 +195,39 @@ photo through GDash, in the size Immich makes for screens, so they never
 see Immich's address or key, and only screens of a display that shows the
 album get its photos. GDash does not store the photos; only their IDs are
 kept. It uses Immich's API as Immich v2 and v3 serve it.
+
+### Photos from Synology Photos
+
+A Photos widget can also show an album of Synology Photos on a Synology NAS,
+through the album's share link, so GDash needs no account on the NAS.
+
+1. In Synology Photos, open the album, choose **Share**, turn on **Share
+   link** and copy the link, such as `https://192.168.1.2:5001/mo/sharing/AbCd12`.
+   A password on the link is fine. Use the NAS's address on your home
+   network rather than QuickConnect.
+2. In GDash, under Integrations, Synology Photos, paste the link and
+   its password, if it has one, and press **Connect**. GDash opens the album
+   first and says how many photos it can show; the link and password are
+   stored encrypted and never shown again.
+3. In the Photos widget's settings, set **Photos from** to **Synology Photos
+   album**.
+
+**https and the NAS's certificate.** A NAS usually has a self-signed
+certificate, which GDash does not trust, just like a browser. Either use
+the http link on port 5000 (`http://192.168.1.2:5000/photo/mo/sharing/AbCd12`),
+which stays on your home network, or tick **Accept this NAS's certificate**:
+GDash then reads the certificate the NAS shows at that moment, shows its
+fingerprint, and from then on accepts exactly that certificate and no
+other. When the NAS gets a new certificate, the album stops loading;
+connect again to accept the new one. GDash never turns certificate checks
+off.
+
+As with Immich, GDash reads a random part of up to 100 photos every 30
+minutes, leaves videos out, and passes the photos to the screens itself, in
+the extra-large size Synology Photos makes; only screens of a display that
+shows the album get them, and the TVs never see the NAS's address or the
+link. Synology does not document the calls for share links; GDash makes
+the same calls as the Photos web page, as known open-source photo frames do.
 
 Every display shows the **Default** dashboard until you choose another one
 in the list at the display.
@@ -411,7 +444,7 @@ driveway.
    - Home Assistant: `http://homeassistant.local:8123/api/camera_proxy/camera.front_door`,
      with a long-lived access token as a bearer token
    A video stream (RTSP, MJPEG) does not work.
-2. Under Integrations, Cameras, press **Add a camera**, give it a
+2. Under Integrations, Camera snapshots, press **Add a camera**, give it a
    name and paste the address. Choose the authentication: none, a user name
    and password, a bearer token, an API key in a header or an API key in
    the address. The password or key is stored encrypted and never shown
