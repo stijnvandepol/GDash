@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { DepartureStop, Place, WidgetType } from './api';
-  import { CHOICE_LABELS, placeSetting, settingLabel } from './widgetSettings';
+  import { CHOICE_LABELS, CHOICE_UNSET, placeSetting, settingLabel } from './widgetSettings';
   import EntityPicker from './EntityPicker.svelte';
   import HomeyCapabilityPicker from './HomeyCapabilityPicker.svelte';
   import HomeyUserPicker from './HomeyUserPicker.svelte';
@@ -28,12 +28,14 @@
   } = $props();
 
   // The stop search stores the name beside the code, so it has no field.
-  // A place comes first: the radius and the fuel are about it.
+  // Where comes first: the radius and the fuel are about the place, and
+  // announcing is about the province.
+  const isWhere = (key: string) => key === 'place' || key === 'region';
   const keys = $derived(
     Object.keys(type.settings)
       .filter((key) => !(key === 'stopName' && 'stop' in type.settings))
       .sort()
-      .sort((a, b) => Number(b === 'place') - Number(a === 'place')),
+      .sort((a, b) => Number(isWhere(b)) - Number(isWhere(a))),
   );
 
   // The Custom widget's settings depend on each other, so it has its own form.
@@ -91,6 +93,11 @@
     <StopPicker code={text(key)} name={text('stopName')} onpick={pickStop} />
   {:else if rule.kind === 'place'}
     <PlacePicker name={placeName(key)} onpick={(place) => pickPlace(key, place)} onclear={() => set(key, undefined)} />
+  {:else if rule.kind === 'boolean'}
+    <label class="inline-label">
+      <input type="checkbox" checked={settings[key] === true} onchange={(e) => set(key, (e.target as HTMLInputElement).checked)} />
+      {settingLabel(widgetType, key)}
+    </label>
   {:else}
   <label class="inline-label">
     {settingLabel(widgetType, key)}
@@ -107,6 +114,7 @@
       />
     {:else if rule.kind === 'choice'}
       <select value={text(key)} onchange={(e) => set(key, (e.target as HTMLSelectElement).value)}>
+        {#if CHOICE_UNSET[key]}<option value="">{CHOICE_UNSET[key]}</option>{/if}
         {#each rule.options ?? [] as option (option)}
           <option value={option}>{CHOICE_LABELS[option] ?? option}</option>
         {/each}

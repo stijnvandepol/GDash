@@ -64,6 +64,18 @@ describe('defaultSettings', () => {
     expect(settingLabel('holidays', 'maxItems')).toBe('Holidays at most');
   });
 
+  it('starts a weather warnings widget quiet, on the province of the weather location', () => {
+    const warnings: WidgetType = {
+      minW: 6,
+      minH: 3,
+      settings: {
+        region: { kind: 'choice', options: ['Utrecht', 'Zeeland'], required: false },
+        announce: { kind: 'boolean', required: false },
+      },
+    };
+    expect(defaultSettings(warnings, today)).toEqual({ announce: false });
+  });
+
   it('starts a Custom widget as one value, without borrowing the countdown label', () => {
     const custom: WidgetType = {
       minW: 4,

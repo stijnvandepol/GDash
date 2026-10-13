@@ -36,6 +36,8 @@ export const WIDGETS: Record<string, WidgetInfo> = {
   sun: { label: 'Sun', category: 'weather', description: 'Sunrise and sunset today', icon: 'sun' },
   moon: { label: 'Moon', category: 'weather', description: 'The phase of the moon, and when it is full', icon: 'moon' },
   airquality: { label: 'Air quality', category: 'weather', description: 'Air quality and pollen', icon: 'air' },
+  rain: { label: 'Rain', category: 'weather', description: 'Rain expected in the coming two hours', icon: 'rain' },
+  warnings: { label: 'Weather warnings', category: 'weather', description: 'KNMI warnings for your province', icon: 'alert' },
   homeassistant: { label: 'Home Assistant', category: 'home', description: 'Sensors and switches at home', icon: 'house' },
   energyprice: { label: 'Energy price', category: 'home', description: "Today's electricity price", icon: 'bolt' },
   custom: { label: 'Custom API', category: 'home', description: 'Values from an API in Settings', icon: 'braces' },
@@ -95,8 +97,14 @@ export const SETTING_LABELS: Record<string, string> = {
   stop: 'Stop',
   radius: 'Radius (km)',
   fuel: 'Fuel',
-  region: 'School holiday region',
+  region: 'Region',
   show: 'Show',
+  announce: 'Announce code orange and red on every screen',
+};
+
+/** What an optional choice says when nothing is chosen, per setting; a choice without one always has a value. */
+export const CHOICE_UNSET: Record<string, string> = {
+  region: 'From the weather location',
 };
 
 // What "how many" counts, per widget: a setting named after what the
@@ -113,6 +121,7 @@ const ITEM_NAMES: Record<string, string> = {
 export function settingLabel(widgetType: string, key: string): string {
   if (key === 'maxItems' && ITEM_NAMES[widgetType]) return `${ITEM_NAMES[widgetType]} at most`;
   if (key === 'days' && widgetType === 'forecast') return 'Days ahead';
+  if (key === 'region') return widgetType === 'holidays' ? 'School holiday region' : widgetType === 'warnings' ? 'Province' : 'Region';
   return SETTING_LABELS[key] ?? key;
 }
 
@@ -155,14 +164,17 @@ export function defaultSettings(type: WidgetType, today = new Date()): Record<st
     // municipalities, not latitude.
     region: 'middle',
     show: 'both',
+    announce: false,
   };
   // stop and stopName stay unset until a stop is chosen: there is no sensible default.
   // A Custom widget starts as one value; its API and path are chosen in its form.
   if (type.settings.source?.kind === 'customSource') return { mode: 'value' };
   // A fuel widget without a place follows the weather location.
   const settings: Record<string, unknown> = {};
-  for (const key of Object.keys(type.settings)) {
-    if (key in defaults) settings[key] = defaults[key];
+  for (const [key, rule] of Object.entries(type.settings)) {
+    // A default choice only where the widget offers it: a holiday region is
+    // not a province.
+    if (key in defaults && (rule.kind !== 'choice' || rule.options?.includes(defaults[key] as string))) settings[key] = defaults[key];
   }
   return settings;
 }

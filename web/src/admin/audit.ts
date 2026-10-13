@@ -58,6 +58,7 @@ const ACTIONS: Record<string, string> = {
   custom_source_changed: 'Changed custom API',
   custom_source_removed: 'Removed custom API',
   custom_rule_announced: 'A Custom widget rule announced on',
+  weather_warning_announced: 'Announced the weather warning',
 };
 
 // Actions whose detail means nothing to a person, such as a photo's file name.

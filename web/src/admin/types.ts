@@ -109,6 +109,7 @@ export interface SettingRule {
     | 'place'
     | 'customSource'
     | 'choice'
+    | 'boolean'
     | 'path'
     | 'paths'
     | 'pairs'
