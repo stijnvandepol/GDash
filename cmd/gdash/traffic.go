@@ -63,14 +63,19 @@ func (d *dataSources) trafficSources(cfg settings.Sources, dashboards []display.
 		return nil
 	}
 	anwb := cfg.TrafficInfo
-	sources := []datahub.Source{{
+	trafficData := datahub.Source{
 		Key:      display.TrafficSource,
 		Interval: trafficInterval,
-		Version:  d.fingerprint(struct{ Queries, Home, ANWB any }{resolved, home, anwb}),
+		Version:  d.fingerprint(struct{ Queries, Home, ANWB, Cameras any }{resolved, home, anwb, showsCameras}),
 		Fetch: func(ctx context.Context) (any, error) {
-			return d.trafficResults(ctx, anwb, resolved, home)
+			return d.trafficResults(ctx, anwb, showsCameras, resolved, home)
 		},
-	}}
+	}
+	if showsCameras {
+		// The first refresh may wait for the first camera list.
+		trafficData.Timeout = camerasTimeout
+	}
+	sources := []datahub.Source{trafficData}
 	if showsCameras {
 		sources = append(sources, datahub.Source{
 			Key:      display.CamerasSource,
@@ -85,8 +90,10 @@ func (d *dataSources) trafficSources(cfg settings.Sources, dashboards []display.
 
 // trafficResults builds what each query shows from one national report and
 // the camera list. A failing ANWB request fails the refresh, so screens keep
-// the last good answer and mark it as old.
-func (d *dataSources) trafficResults(ctx context.Context, anwb bool, queries []traffic.Query, home *traffic.Point) (map[string]traffic.Result, error) {
+// the last good answer and mark it as old. Without a camera list yet it asks
+// for one first, so a new widget does not wait hours for its cameras; a
+// failing Overpass only leaves the cameras out.
+func (d *dataSources) trafficResults(ctx context.Context, anwb, cameras bool, queries []traffic.Query, home *traffic.Point) (map[string]traffic.Result, error) {
 	var src traffic.Sources
 	if anwb {
 		report, err := d.traffic.Fetch(ctx)
@@ -96,6 +103,12 @@ func (d *dataSources) trafficResults(ctx context.Context, anwb bool, queries []t
 		src.Report = &report
 	}
 	src.Cameras, src.CamerasLoaded = d.cameras.Cameras()
+	if cameras && !src.CamerasLoaded {
+		if _, err := d.cameras.Refresh(ctx); err != nil {
+			d.logger.Warn("could not fetch the fixed camera list; traffic widgets show it later", "error", err)
+		}
+		src.Cameras, src.CamerasLoaded = d.cameras.Cameras()
+	}
 	now := time.Now()
 	out := make(map[string]traffic.Result, len(queries))
 	for _, q := range queries {

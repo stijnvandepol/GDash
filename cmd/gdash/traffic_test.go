@@ -53,6 +53,7 @@ func trafficStandIns(t *testing.T) (*dataSources, *atomic.Int32, *atomic.Int32) 
 	}
 	d := &dataSources{
 		settings: &settings.Service{Box: box},
+		logger:   slog.New(slog.NewTextHandler(io.Discard, nil)),
 		traffic:  &traffic.Guard{Client: traffic.Client{BaseURL: anwb.URL, HTTP: anwb.Client()}, Now: time.Now},
 		cameras: &speedcameras.Store{
 			Client: speedcameras.Client{BaseURL: overpass.URL, HTTP: overpass.Client()},
@@ -78,7 +79,7 @@ func fetchAll(t *testing.T, d *dataSources, cfg settings.Sources, widgets ...dis
 }
 
 func TestTrafficIsNotAskedBeforeTheAcknowledgement(t *testing.T) {
-	d, anwbCalls, _ := trafficStandIns(t)
+	d, anwbCalls, overpassCalls := trafficStandIns(t)
 	roads := trafficOn(map[string]any{"roads": []any{"A2"}})
 	if got := fetchAll(t, d, settings.Sources{}, roads); len(got) != 0 {
 		t.Fatalf("sources while traffic info is off = %v, want none", got)
@@ -89,14 +90,13 @@ func TestTrafficIsNotAskedBeforeTheAcknowledgement(t *testing.T) {
 	if anwbCalls.Load() != 0 {
 		t.Fatalf("%d requests to the ANWB while traffic info is off", anwbCalls.Load())
 	}
-	// The cameras source ran after the traffic source here, so the
-	// widget sees them on the next refresh.
 	if _, ok := values[display.CamerasSource]; !ok {
 		t.Fatalf("values = %v, want a camera list", values)
 	}
-	result := fetchAll(t, d, settings.Sources{}, withCameras)[display.TrafficSource].(map[string]traffic.Result)["roads:A2"]
-	if result.Incidents || result.CameraCount != 2 {
-		t.Fatalf("result while traffic info is off = %+v, want two A2 cameras and no incidents", result)
+	// The first refresh fetched the camera list itself, once.
+	result := values[display.TrafficSource].(map[string]traffic.Result)["roads:A2"]
+	if result.Incidents || result.CameraCount != 2 || overpassCalls.Load() != 1 {
+		t.Fatalf("result while traffic info is off = %+v after %d queries, want two A2 cameras, no incidents, one query", result, overpassCalls.Load())
 	}
 
 	on := fetchAll(t, d, settings.Sources{TrafficInfo: true}, roads)[display.TrafficSource].(map[string]traffic.Result)["roads:A2"]
