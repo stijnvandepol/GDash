@@ -201,7 +201,7 @@ func (s *Server) displayFrameOrigins(r *http.Request, displayID string) ([]strin
 }
 
 // previewFrameOrigins returns the origins the preview page may frame: an
-// unsaved layout in the editor can show any web page under Settings, so
+// unsaved layout in the editor can show any web page under Integrations, so
 // all of them, for an admin only.
 func (s *Server) previewFrameOrigins(r *http.Request) ([]string, error) {
 	admin, err := s.isAdmin(r)

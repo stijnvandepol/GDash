@@ -1,4 +1,4 @@
-// Package webpage holds the web pages that an admin sets up under Settings
+// Package webpage holds the web pages that an admin sets up under Integrations
 // for the Web page widget: a name, an address and how a TV frames it. Only
 // these addresses ever reach a TV's frame, and only their origins reach a
 // page's Content-Security-Policy, so a dashboard can never embed an address

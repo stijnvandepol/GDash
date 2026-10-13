@@ -69,7 +69,7 @@ type dataSources struct {
 	// nowPlaying follows what plays on the Cast devices that Now playing
 	// widgets show.
 	nowPlaying *nowplaying.Watcher
-	// pages are the web pages under Settings, read at every sync.
+	// pages are the web pages under Integrations, read at every sync.
 	pages  *webPageList
 	logger *slog.Logger
 
@@ -215,7 +215,7 @@ func withPhotos(entries map[string]datahub.Entry, album *photos.Store, logger *s
 	return entries
 }
 
-// webPageList holds the web pages under Settings from one sync to the
+// webPageList holds the web pages under Integrations from one sync to the
 // next, so a publish does not read the database.
 type webPageList struct {
 	mu    sync.Mutex
@@ -234,7 +234,7 @@ func (l *webPageList) get() []webpage.Page {
 	return l.pages
 }
 
-// withWebPages adds the web pages under Settings to the data, for the Web
+// withWebPages adds the web pages under Integrations to the data, for the Web
 // page widgets; each screen only receives those its own widgets show.
 func withWebPages(entries map[string]datahub.Entry, pages []webpage.Page, logger *slog.Logger) map[string]datahub.Entry {
 	if len(pages) == 0 {

@@ -74,7 +74,7 @@ const (
 	upstreamTimeout = 15 * time.Second
 	// The update check is one small request a day; it may fail quietly.
 	updateTimeout = 10 * time.Second
-	// The Check of a web page under Settings waits this long for an answer.
+	// The Check of a web page under Integrations waits this long for an answer.
 	// A web page is an address an admin typed in, so it goes through
 	// internal/outbound like a feed.
 	webPageCheckTimeout = 10 * time.Second

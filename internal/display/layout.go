@@ -311,7 +311,7 @@ func valueProblem(key string, value any, rule Setting) string {
 		}
 	case SettingWebPage:
 		if _, ok := recordID(value); !ok {
-			return "choose a web page added under Settings"
+			return "choose a web page added under Integrations"
 		}
 	case SettingEntities:
 		if ids, ok := entityIDs(value, rule.Max); !ok || len(ids) < rule.Min {

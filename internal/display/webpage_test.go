@@ -30,9 +30,9 @@ func TestValidateWebPageWidget(t *testing.T) {
 	}{
 		{"page", webPageWidgetOn("web", map[string]any{"page": float64(2)}), ""},
 		{"page and zoom", webPageWidgetOn("web", map[string]any{"page": float64(2), "zoom": float64(150)}), ""},
-		{"no page", webPageWidgetOn("web", nil), "widgets[2]: choose a web page added under Settings"},
-		{"page as text", webPageWidgetOn("web", map[string]any{"page": "http://evil.example/"}), "choose a web page added under Settings"},
-		{"page zero", webPageWidgetOn("web", map[string]any{"page": float64(0)}), "choose a web page added under Settings"},
+		{"no page", webPageWidgetOn("web", nil), "widgets[2]: choose a web page added under Integrations"},
+		{"page as text", webPageWidgetOn("web", map[string]any{"page": "http://evil.example/"}), "choose a web page added under Integrations"},
+		{"page zero", webPageWidgetOn("web", map[string]any{"page": float64(0)}), "choose a web page added under Integrations"},
 		{"zoom too small", webPageWidgetOn("web", map[string]any{"page": float64(1), "zoom": float64(49)}), "zoom must be a whole number from 50 to 200"},
 		// The editor picks a page; it can never give an address of its own.
 		{"an address", webPageWidgetOn("web", map[string]any{"page": float64(1), "url": "http://evil.example/"}), `unknown setting "url"`},
@@ -58,7 +58,7 @@ func TestFrameOriginsAreThoseOfTheShownPagesOnly(t *testing.T) {
 	night := Dashboard{Widgets: []Widget{
 		webPageWidgetOn("b", map[string]any{"page": float64(1)}),
 		webPageWidgetOn("c", map[string]any{"page": float64(4)}),
-		// A page that was removed under Settings adds nothing.
+		// A page that was removed under Integrations adds nothing.
 		webPageWidgetOn("d", map[string]any{"page": float64(99)}),
 		// Only Web page widgets count.
 		{Type: "waste", Settings: map[string]any{"calendar": float64(2)}},

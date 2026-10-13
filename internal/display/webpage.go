@@ -13,11 +13,11 @@ import (
 const (
 	// WebPageWidget is the type of the Web page widget.
 	WebPageWidget = "webpage"
-	// WebPageSource is the data key of the web pages under Settings, by
+	// WebPageSource is the data key of the web pages under Integrations, by
 	// ID. No source fetches it: the server adds it from the settings, and
 	// each screen only receives the pages its own widgets show.
 	WebPageSource = "webpage.default"
-	// SettingWebPage is the ID of a web page under Settings.
+	// SettingWebPage is the ID of a web page under Integrations.
 	SettingWebPage = "webPage"
 )
 
@@ -84,7 +84,7 @@ func FrameOrigins(dashboards []Dashboard, pages []webpage.Page, ownOrigin string
 
 // PageOrigins returns the origins of pages, sorted and without repeats. A
 // page on GDash's own origin is left out: a frame that runs scripts with
-// its own origin could reach out of its sandbox. Settings refuses such a
+// its own origin could reach out of its sandbox. Integrations refuses such a
 // page, but GDash can be reached on more than one address.
 func PageOrigins(pages []webpage.Page, ownOrigin string) []string {
 	var origins []string
