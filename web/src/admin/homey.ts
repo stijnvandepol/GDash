@@ -1,5 +1,6 @@
 import type { HomeyCapability } from './api';
 import type { Searchable } from './entities';
+import { TOKEN_PLACEHOLDER } from './customSources';
 import { describeAge } from './status';
 
 /** Where a Homey that sends its data sends it; origin is GDash's own, such as http://192.168.1.2:8420. */
@@ -15,6 +16,7 @@ export function snapshotURL(origin: string): string {
 export function homeyScript(url: string, token: string): string {
   return `// Sends every device and who is home to GDash. Run it every minute from a Flow.
 const GDASH_URL = '${url}', TOKEN = '${token}';
+if (!TOKEN || TOKEN === '${TOKEN_PLACEHOLDER}') throw new Error('Put your GDash API token in TOKEN on the second line (GDash: Integrations, API tokens).');
 const devs = await Homey.devices.getDevices(), zones = await Homey.zones.getZones();
 let users = {};
 try { users = await Homey.users.getUsers(); } catch (e) {}
@@ -27,7 +29,12 @@ for (const d of Object.values(devs)) {
 }
 for (const u of Object.values(users)) out.users.push({ id: u.id, name: u.name, present: u.present === true, asleep: u.asleep === true });
 const r = await fetch(GDASH_URL, { method: 'PUT', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + TOKEN }, body: JSON.stringify(out) });
-if (!r.ok) throw new Error('GDash ' + r.status);
+if (!r.ok) {
+  // GDash says why, such as an API token that is not valid or was revoked.
+  let reason = '';
+  try { const body = await r.json(); reason = body.error ? ': ' + body.error.message : ''; } catch (e) {}
+  throw new Error('GDash ' + r.status + reason);
+}
 return true;`;
 }
 

@@ -123,6 +123,10 @@ describe('pushing', () => {
   });
 
   it('keeps the HomeyScript free of syntax an older Homey may not know', () => {
+    // The script is the body of an async function on the Homey; it must at least parse.
+    const AsyncFunction = Object.getPrototypeOf(async () => {}).constructor;
+    expect(() => new AsyncFunction('Homey', 'fetch', pushExamples('http://gdash', 'token').homeyScript)).not.toThrow();
+    expect(pushExamples('http://gdash', TOKEN_PLACEHOLDER).homeyScript).toContain("TOKEN === 'YOUR_API_TOKEN'");
     const { homeyScript } = pushExamples('http://gdash', 'token');
     expect(homeyScript).not.toContain('?.');
     expect(homeyScript).not.toContain('??');

@@ -37,6 +37,16 @@ describe('the HomeyScript', () => {
     expect(script).toContain("method: 'PUT'");
   });
 
+  it('parses as the body of an async function, as HomeyScript runs it', () => {
+    const AsyncFunction = Object.getPrototypeOf(async () => {}).constructor;
+    expect(() => new AsyncFunction('Homey', 'fetch', script)).not.toThrow();
+  });
+
+  it('refuses to run with the placeholder, and says why GDash refused it', () => {
+    expect(homeyScript('http://gdash', 'YOUR_API_TOKEN')).toContain("TOKEN === 'YOUR_API_TOKEN'");
+    expect(script).toContain('body.error.message');
+  });
+
   it('stays clear of syntax an older Homey may not know', () => {
     expect(script).not.toContain('?.');
     expect(script).not.toContain('??');

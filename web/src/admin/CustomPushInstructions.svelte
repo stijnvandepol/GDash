@@ -45,6 +45,12 @@
     <dd>{describePush(lastPushAt, source.intervalSeconds)}</dd>
   </dl>
   <PushToken name={source.name} ontoken={(t) => (token = t)} {onmanagetokens} {onerror} />
+  {#if token === TOKEN_PLACEHOLDER}
+    <p class="badge warn" role="note">
+      The examples below still say {TOKEN_PLACEHOLDER}. Make a token above first and copy them after, or put a token
+      from API tokens in their place; otherwise GDash answers 401.
+    </p>
+  {/if}
   <CopyText label="curl" text={examples.curl} />
   <CopyText label="HomeyScript (Homey Pro)" text={examples.homeyScript} />
   <p class="small muted">

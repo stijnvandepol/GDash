@@ -30,6 +30,12 @@
     <li>Make a Flow: When <strong>Every 1 minute</strong> (Date &amp; time), Then <strong>Run a script</strong> (HomeyScript) with that script.</li>
   </ol>
   <PushToken name="HomeyScript" ontoken={(t) => (token = t)} {onmanagetokens} {onerror} />
+  {#if token === TOKEN_PLACEHOLDER}
+    <p class="badge warn" role="note">
+      The script below still says {TOKEN_PLACEHOLDER}. Make a token above first and copy it after, or put a token
+      from API tokens in its place; otherwise GDash answers 401.
+    </p>
+  {/if}
   <CopyText label="HomeyScript" text={script} />
   <p class="small muted">
     The script sends every device and who is home to <span class="mono">{url}</span>, with PUT and the API token.

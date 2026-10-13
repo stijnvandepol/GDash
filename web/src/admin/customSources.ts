@@ -187,6 +187,7 @@ export function pushExamples(url: string, token: string): { curl: string; homeyS
   const homeyScript = `// Runs on the Homey every minute from a Flow: sends device values and who is home to GDash.
 const GDASH_URL = '${url}';
 const TOKEN = '${token}';
+if (!TOKEN || TOKEN === '${TOKEN_PLACEHOLDER}') throw new Error('Put your GDash API token in TOKEN on the third line (GDash: Integrations, API tokens).');
 const devices = await Homey.devices.getDevices();
 const zones = await Homey.zones.getZones();
 const out = { devices: {}, home: {} };
@@ -204,7 +205,12 @@ const res = await fetch(GDASH_URL, {
   headers: { 'Authorization': 'Bearer ' + TOKEN, 'Content-Type': 'application/json' },
   body: JSON.stringify(out),
 });
-if (!res.ok) throw new Error('GDash answered ' + res.status);
+if (!res.ok) {
+  // GDash says why, such as an API token that is not valid or was revoked.
+  let reason = '';
+  try { const body = await res.json(); reason = body.error ? ': ' + body.error.message : ''; } catch (e) {}
+  throw new Error('GDash answered ' + res.status + reason);
+}
 return res.status; // 204 means GDash received it`;
   const homeAssistant = `# configuration.yaml
 rest_command:
