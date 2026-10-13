@@ -23,9 +23,9 @@ const EnergyPriceSource = "energyprice.nl"
 // panels.
 const SolarSource = "solar.default"
 
-// maxCalendarID is the largest whole number that survives the trip through
+// maxRecordID is the largest whole number that survives the trip through
 // JSON, where every number is a float64.
-const maxCalendarID = 1<<53 - 1
+const maxRecordID = 1<<53 - 1
 
 var wasteSettings = map[string]Setting{"calendar": {Kind: SettingCalendar, Required: true}}
 
@@ -42,9 +42,9 @@ func number(value any) (float64, bool) {
 
 // settingID reads a setting that names a calendar or a camera under
 // Settings by its ID: a whole number from 1 up.
-func settingID(value any) (int64, bool) {
+func recordID(value any) (int64, bool) {
 	n, ok := number(value)
-	if !ok || n != math.Trunc(n) || n < 1 || n > maxCalendarID {
+	if !ok || n != math.Trunc(n) || n < 1 || n > maxRecordID {
 		return 0, false
 	}
 	return int64(n), true
@@ -57,7 +57,7 @@ func WasteCalendarIDs(dashboards []Dashboard) []int64 {
 	var ids []int64
 	for _, d := range dashboards {
 		for _, w := range d.Widgets {
-			if id, ok := settingID(w.Settings["calendar"]); ok && w.Type == "waste" {
+			if id, ok := recordID(w.Settings["calendar"]); ok && w.Type == "waste" {
 				ids = append(ids, id)
 			}
 		}
@@ -74,10 +74,11 @@ func UsesWidget(dashboards []Dashboard, widgetType string) bool {
 	})
 }
 
-// onlyCalendars narrows the waste entry to the calendars in ids, for the
-// same reason onlyKeys narrows Home Assistant: a screen receives what its
-// own widgets show and not the pickups of another dashboard's calendar.
-func onlyCalendars(entry datahub.Entry, ids []int64) datahub.Entry {
+// onlyIDs narrows an entry keyed by ID, such as the waste pickups by
+// calendar, to ids, for the same reason onlyKeys narrows Home Assistant: a
+// screen receives what its own widgets show and not the pickups of another
+// dashboard's calendar.
+func onlyIDs(entry datahub.Entry, ids []int64) datahub.Entry {
 	keys := make([]string, len(ids))
 	for i, id := range ids {
 		keys[i] = strconv.FormatInt(id, 10)

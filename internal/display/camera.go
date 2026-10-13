@@ -45,7 +45,7 @@ func (v View) WidgetsAt(t time.Time) []Widget {
 // that show it. ok is false when none does.
 func CameraRefresh(widgets []Widget, id int64) (every time.Duration, ok bool) {
 	for _, w := range widgets {
-		if shown, isID := settingID(w.Settings["camera"]); w.Type != CameraWidget || !isID || shown != id {
+		if shown, isID := recordID(w.Settings["camera"]); w.Type != CameraWidget || !isID || shown != id {
 			continue
 		}
 		seconds := DefaultCameraSeconds

@@ -300,11 +300,11 @@ func valueProblem(key string, value any, rule Setting) string {
 			return fmt.Sprintf("%s must be a date as YYYY-MM-DD", key)
 		}
 	case SettingCalendar:
-		if _, ok := settingID(value); !ok {
+		if _, ok := recordID(value); !ok {
 			return fmt.Sprintf("%s must be the number of a calendar added under Integrations", key)
 		}
 	case SettingCamera:
-		if _, ok := settingID(value); !ok {
+		if _, ok := recordID(value); !ok {
 			return fmt.Sprintf("%s must be the number of a camera added under Integrations", key)
 		}
 	case SettingEntities:
