@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { DepartureStop, Place, WidgetType } from './api';
-  import { FUEL_LABELS, placeSetting, settingLabel } from './widgetSettings';
+  import { CHOICE_LABELS, placeSetting, settingLabel } from './widgetSettings';
   import EntityPicker from './EntityPicker.svelte';
   import HomeyCapabilityPicker from './HomeyCapabilityPicker.svelte';
   import HomeyUserPicker from './HomeyUserPicker.svelte';
@@ -108,7 +108,7 @@
     {:else if rule.kind === 'choice'}
       <select value={text(key)} onchange={(e) => set(key, (e.target as HTMLSelectElement).value)}>
         {#each rule.options ?? [] as option (option)}
-          <option value={option}>{FUEL_LABELS[option] ?? option}</option>
+          <option value={option}>{CHOICE_LABELS[option] ?? option}</option>
         {/each}
       </select>
     {:else if rule.kind === 'date'}

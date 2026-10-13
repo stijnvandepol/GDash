@@ -83,6 +83,10 @@
   --accent: #b33a0b;
   --warning: #855000;
   --backdrop: none;
+  /* The moon as print draws it: the lit part open, the dark side shaded. */
+  --moon-lit: transparent;
+  --moon-shadow: var(--text-muted);
+  --moon-shadow-opacity: 0.85;
 }
 
 /*
@@ -113,6 +117,10 @@
   --accent: #9a4a1f;
   --warning: #9a4a00;
   --backdrop: none;
+  /* The moon as print draws it: the lit part open, the dark side shaded. */
+  --moon-lit: transparent;
+  --moon-shadow: var(--text-muted);
+  --moon-shadow-opacity: 0.85;
 }
 
 /*

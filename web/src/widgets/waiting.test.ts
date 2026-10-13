@@ -29,6 +29,7 @@ describe('waitingText', () => {
     expect(waitingText(undefined, 'airquality')).toBe('No location set. Choose one under Settings.');
     expect(waitingText(undefined, 'waste')).toBe('No calendar. Add one under Settings.');
     expect(waitingText(undefined, 'energyprice')).toBe('Loading the electricity price…');
+    expect(waitingText(undefined, 'holidays')).toBe('Loading holidays…');
     expect(waitingText(undefined, 'fuel')).toBe('Set a weather location under Settings, or choose a place for this widget.');
   });
 

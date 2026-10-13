@@ -64,6 +64,10 @@
   --weight-figure: 400;
   /* The face has no bold; a faked one smudges, so bold is left out. */
   --synthesis: style;
+  /* The moon as print draws it: the lit part open, the dark side shaded. */
+  --moon-lit: transparent;
+  --moon-shadow: var(--text-muted);
+  --moon-shadow-opacity: 0.85;
 }
 
 /* Neon: a synthwave night, magenta and cyan over deep violet. */

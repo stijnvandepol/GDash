@@ -18,11 +18,13 @@
   import News from './widgets/News.svelte';
   import Forecast from './widgets/Forecast.svelte';
   import Sun from './widgets/Sun.svelte';
+  import Moon from './widgets/Moon.svelte';
   import AirQuality from './widgets/AirQuality.svelte';
   import Waste from './widgets/Waste.svelte';
   import EnergyPrice from './widgets/EnergyPrice.svelte';
   import Note from './widgets/Note.svelte';
   import Countdown from './widgets/Countdown.svelte';
+  import Holidays from './widgets/Holidays.svelte';
   import Photos from './widgets/Photos.svelte';
   import HomeAssistant from './widgets/HomeAssistant.svelte';
   import Homey from './widgets/Homey.svelte';
@@ -143,6 +145,8 @@
             <Forecast entry={widget.source ? display.snapshot?.data[widget.source] : undefined} settings={widget.settings} />
           {:else if widget.type === 'sun'}
             <Sun entry={widget.source ? display.snapshot?.data[widget.source] : undefined} />
+          {:else if widget.type === 'moon'}
+            <Moon />
           {:else if widget.type === 'airquality'}
             <AirQuality entry={widget.source ? display.snapshot?.data[widget.source] : undefined} />
           {:else if widget.type === 'waste'}
@@ -153,6 +157,8 @@
             <Note settings={widget.settings} />
           {:else if widget.type === 'countdown'}
             <Countdown settings={widget.settings} />
+          {:else if widget.type === 'holidays'}
+            <Holidays entry={widget.source ? display.snapshot?.data[widget.source] : undefined} settings={widget.settings} />
           {:else if widget.type === 'photos'}
             <Photos entry={widget.source ? display.snapshot?.data[widget.source] : undefined} settings={widget.settings} />
           {:else if widget.type === 'homeassistant'}

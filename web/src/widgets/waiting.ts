@@ -8,6 +8,7 @@ export type Source =
   | 'sun'
   | 'airquality'
   | 'waste'
+  | 'holidays'
   | 'energyprice'
   | 'news'
   | 'calendar'
@@ -27,6 +28,8 @@ const TEXTS: Record<Source, { notSetUp: TextKey; failed: TextKey; loading: TextK
   airquality: { notSetUp: 'weatherNotSetUp', failed: 'airQualityFailed', loading: 'airQualityLoading' },
   // Waste pickups come from a calendar under Settings.
   waste: { notSetUp: 'calendarNotSetUp', failed: 'wasteFailed', loading: 'wasteLoading' },
+  // The holidays need no setup: until the server has read them, they are loading.
+  holidays: { notSetUp: 'holidaysLoading', failed: 'holidaysFailed', loading: 'holidaysLoading' },
   // The price needs no setup: until the server has fetched it, it is loading.
   energyprice: { notSetUp: 'energyPriceLoading', failed: 'energyPriceFailed', loading: 'energyPriceLoading' },
   news: { notSetUp: 'newsNotSetUp', failed: 'newsFailed', loading: 'newsLoading' },

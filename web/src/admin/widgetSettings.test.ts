@@ -50,6 +50,20 @@ describe('defaultSettings', () => {
     expect(defaultSettings(fuel, today)).toEqual({ radius: 5, fuel: 'EURO95', maxItems: 5 });
   });
 
+  it('starts a holidays widget on both kinds in the middle region', () => {
+    const holidays: WidgetType = {
+      minW: 6,
+      minH: 4,
+      settings: {
+        region: { kind: 'choice', options: ['north', 'middle', 'south'], required: false },
+        show: { kind: 'choice', options: ['both', 'school', 'public'], required: false },
+        maxItems: { kind: 'integer', min: 1, max: 20, required: false },
+      },
+    };
+    expect(defaultSettings(holidays, today)).toEqual({ region: 'middle', show: 'both', maxItems: 5 });
+    expect(settingLabel('holidays', 'maxItems')).toBe('Holidays at most');
+  });
+
   it('starts a Custom widget as one value, without borrowing the countdown label', () => {
     const custom: WidgetType = {
       minW: 4,
@@ -93,7 +107,7 @@ describe('paletteGroups', () => {
   it('lists every type under its category, in order', () => {
     const groups = paletteGroups(types);
     expect(groups.map((g) => g.label)).toEqual(['Time & date', 'Weather & nature', 'Home', 'Agenda & household', 'Travel', 'Media & news']);
-    expect(groups[0]!.items.map((i) => i.type)).toEqual(['clock', 'countdown']);
+    expect(groups[0]!.items.map((i) => i.type)).toEqual(['clock', 'countdown', 'holidays']);
     expect(groups.flatMap((g) => g.items)).toHaveLength(types.length);
   });
 

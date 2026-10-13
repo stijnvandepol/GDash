@@ -30,9 +30,11 @@ export interface WidgetInfo {
 export const WIDGETS: Record<string, WidgetInfo> = {
   clock: { label: 'Clock', category: 'time', description: 'The time and date, large', icon: 'clock' },
   countdown: { label: 'Countdown', category: 'time', description: 'Days left until a date', icon: 'countdown' },
+  holidays: { label: 'Holidays', category: 'time', description: 'Coming school and public holidays (NL)', icon: 'holidays' },
   weather: { label: 'Weather', category: 'weather', description: 'Temperature and sky now', icon: 'weather' },
   forecast: { label: 'Forecast', category: 'weather', description: 'The coming days at a glance', icon: 'forecast' },
   sun: { label: 'Sun', category: 'weather', description: 'Sunrise and sunset today', icon: 'sun' },
+  moon: { label: 'Moon', category: 'weather', description: 'The phase of the moon, and when it is full', icon: 'moon' },
   airquality: { label: 'Air quality', category: 'weather', description: 'Air quality and pollen', icon: 'air' },
   homeassistant: { label: 'Home Assistant', category: 'home', description: 'Sensors and switches at home', icon: 'house' },
   energyprice: { label: 'Energy price', category: 'home', description: "Today's electricity price", icon: 'bolt' },
@@ -93,6 +95,8 @@ export const SETTING_LABELS: Record<string, string> = {
   stop: 'Stop',
   radius: 'Radius (km)',
   fuel: 'Fuel',
+  region: 'School holiday region',
+  show: 'Show',
 };
 
 // What "how many" counts, per widget: a setting named after what the
@@ -102,6 +106,7 @@ const ITEM_NAMES: Record<string, string> = {
   news: 'Headlines',
   departures: 'Departures',
   fuel: 'Petrol stations',
+  holidays: 'Holidays',
 };
 
 /** The label of a setting in the editor, worded for the widget it belongs to. */
@@ -111,13 +116,19 @@ export function settingLabel(widgetType: string, key: string): string {
   return SETTING_LABELS[key] ?? key;
 }
 
-/** Names of the fuels in the editor, by the ANWB's codes. */
-export const FUEL_LABELS: Record<string, string> = {
+/** Names of the options of choice settings in the editor: the fuels by the ANWB's codes, and the holiday choices. */
+export const CHOICE_LABELS: Record<string, string> = {
   EURO95: 'Euro 95 / E10',
   EURO98: 'Euro 98',
   DIESEL: 'Diesel',
   AUTOGAS: 'LPG',
   CNG: 'CNG',
+  north: 'North',
+  middle: 'Middle',
+  south: 'South',
+  both: 'School and public holidays',
+  school: 'School holidays',
+  public: 'Public holidays',
 };
 
 const COUNTDOWN_DAYS = 30;
@@ -139,6 +150,11 @@ export function defaultSettings(type: WidgetType, today = new Date()): Record<st
     users: [],
     radius: 5,
     fuel: 'EURO95',
+    // The middle region has most schools; the editor does not guess the
+    // region from the weather location, as the borders follow
+    // municipalities, not latitude.
+    region: 'middle',
+    show: 'both',
   };
   // stop and stopName stay unset until a stop is chosen: there is no sensible default.
   // A Custom widget starts as one value; its API and path are chosen in its form.
