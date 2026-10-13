@@ -1,7 +1,6 @@
 package display
 
 import (
-	"cmp"
 	"fmt"
 	"math"
 	"slices"
@@ -109,16 +108,8 @@ func FuelQueries(dashboards []Dashboard) []fuel.Query {
 			}
 		}
 	}
-	slices.SortFunc(all, func(a, b fuel.Query) int { return cmp.Compare(a.Key(), b.Key()) })
-	return slices.CompactFunc(all, func(a, b fuel.Query) bool { return a.Key() == b.Key() })
+	return uniqueByKey(all)
 }
 
 // FuelKeys returns the keys of FuelQueries.
-func FuelKeys(dashboards []Dashboard) []string {
-	queries := FuelQueries(dashboards)
-	keys := make([]string, len(queries))
-	for i, q := range queries {
-		keys[i] = q.Key()
-	}
-	return keys
-}
+func FuelKeys(dashboards []Dashboard) []string { return keysOf(FuelQueries(dashboards)) }

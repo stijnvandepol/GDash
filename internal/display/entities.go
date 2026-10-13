@@ -1,6 +1,7 @@
 package display
 
 import (
+	"cmp"
 	"encoding/json"
 	"slices"
 	"time"
@@ -61,6 +62,25 @@ func onlyKeys(entry datahub.Entry, ids []string) datahub.Entry {
 	}
 	entry.Value = value
 	return entry
+}
+
+// keyed is a widget's query that names its part of a shared entry.
+type keyed interface{ Key() string }
+
+// keysOf returns the keys of queries, in their order.
+func keysOf[Q keyed](queries []Q) []string {
+	keys := make([]string, len(queries))
+	for i, q := range queries {
+		keys[i] = q.Key()
+	}
+	return keys
+}
+
+// uniqueByKey sorts queries by key and drops repeats, so the server asks
+// for each once.
+func uniqueByKey[Q keyed](queries []Q) []Q {
+	slices.SortFunc(queries, func(a, b Q) int { return cmp.Compare(a.Key(), b.Key()) })
+	return slices.CompactFunc(queries, func(a, b Q) bool { return a.Key() == b.Key() })
 }
 
 // narrowShared cuts the entries that hold the data of every dashboard down
