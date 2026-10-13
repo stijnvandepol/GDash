@@ -60,11 +60,37 @@ type Keeper struct {
 	TakeOver <-chan struct{}
 	// Now is the clock for how long the device shows its idle screen
 	// during a yield; nil means time.Now.
-	Now    func() time.Time
-	Logger *slog.Logger
+	Now func() time.Time
+	// Recall and Remember keep the session GDash launched across a server
+	// restart, such as an update: a keeper that starts and finds that very
+	// session on the TV takes it back instead of yielding to it. Recall
+	// returns the last remembered session ID, Remember stores a change, ""
+	// when GDash holds nothing. Both may be nil.
+	Recall   func() string
+	Remember func(sessionID string)
+	Logger   *slog.Logger
 
 	// claim is who controls the screen. Only the Run goroutine uses it.
 	claim claim
+	// remembered is the session last passed to Remember.
+	remembered string
+}
+
+// rememberSession passes the session GDash holds to Remember when it
+// changed. A receiver that takes only its first message counts once its
+// page was sent, so a restart never adopts an empty receiver.
+func (k *Keeper) rememberSession() {
+	if k.Remember == nil {
+		return
+	}
+	session := k.claim.session
+	if k.LaunchMessage != nil && !k.claim.pageSent {
+		session = ""
+	}
+	if session != k.remembered {
+		k.remembered = session
+		k.Remember(session)
+	}
 }
 
 // Run keeps the receiver alive until ctx is cancelled.

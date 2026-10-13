@@ -50,6 +50,7 @@ func (s *keeperSession) step(ctx context.Context, poll, refresh <-chan time.Time
 		}
 		if last && s.latest != nil {
 			s.keeper.claim.pageSent = true
+			s.keeper.rememberSession()
 		}
 		return nil
 	case <-poll:
@@ -94,6 +95,7 @@ type keeperSession struct {
 func (s *keeperSession) reconcile(ctx context.Context, status ReceiverStatus) error {
 	k := s.keeper
 	c := &k.claim
+	defer k.rememberSession()
 	fresh, afterGap := !c.started, !s.seen
 	c.started, s.seen = true, true
 	s.standby, s.otherInput = status.InStandby(), status.OnOtherInput()
@@ -156,6 +158,13 @@ func (s *keeperSession) claimScreen(ctx context.Context, status ReceiverStatus, 
 		return s.launch(ctx)
 	case running && c.replace:
 		c.launched(app.SessionID, s.otherInput)
+		return s.keep(ctx, app)
+	case fresh && running && k.Recall != nil && app.SessionID != "" && app.SessionID == k.Recall():
+		// GDash launched this very session before it restarted, such as for
+		// an update; its page reconnects by itself.
+		k.Logger.Info("found the receiver GDash launched before the restart; keeping it")
+		c.launched(app.SessionID, s.otherInput)
+		c.pageSent = true
 		return s.keep(ctx, app)
 	case fresh && (running || status.hasOtherApp(k.AppID)):
 		// Started with the server: GDash cannot tell whether it launched

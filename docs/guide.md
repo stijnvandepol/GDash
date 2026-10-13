@@ -723,12 +723,12 @@ one that cast last keeps it, the other waits.
 
 Some situations GDash cannot tell apart:
 
-- **When GDash starts**, for example after an update, and finds something
-  on the TV, it cannot know whether that is its own dashboard from before
-  the restart or someone else's cast, so it waits as above. A dashboard
-  that was on screen stays on and keeps updating, but is not restarted
-  against the screensaver until the TV has been off or you choose **Show
-  dashboard now**.
+- **When GDash starts**, for example after an update, it remembers which
+  cast it started itself (in `cast-sessions.json` in the data directory)
+  and keeps that dashboard on screen as before. Something else on the TV,
+  or a cast it does not recognise, such as one from before the first start
+  of this version, it leaves alone and waits as above, until the TV has
+  been off or you choose **Show dashboard now**.
 - **A TV without HDMI-CEC, or a Nest Hub,** never reports standby, so a
   wait there ends after 10 minutes of the device's idle screen, or with
   **Show dashboard now**. A Google TV that reports no apps at all does not

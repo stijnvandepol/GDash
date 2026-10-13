@@ -35,6 +35,7 @@ func newCastManager(cfg config, deps castDeps) (*casting.Manager, error) {
 	if err != nil {
 		return nil, fmt.Errorf("GDASH_ADDR %q has no port: %w", cfg.addr, err)
 	}
+	sessions := loadCastSessions(cfg.dataDir, logger)
 	runDisplay := func(ctx context.Context, d displays.Display, report func(cast.State, error), takeOver <-chan struct{}) {
 		keeper := &cast.Keeper{
 			Resolve:  resolveDevice(d.CastDeviceID),
@@ -42,6 +43,8 @@ func newCastManager(cfg config, deps castDeps) (*casting.Manager, error) {
 			Active:   activeNow(ctx, db, d.ID, logger),
 			Status:   report,
 			TakeOver: takeOver,
+			Recall:   func() string { return sessions.recall(d.ID) },
+			Remember: func(id string) { sessions.remember(d.ID, id) },
 			Logger:   logger.With("display", d.ID),
 		}
 		if cfg.castAppID != "" {

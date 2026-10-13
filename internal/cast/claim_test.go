@@ -168,6 +168,55 @@ func TestKeeperWaitsAtStartWhileTheTVIsInUse(t *testing.T) {
 	rec.waitFor(t, StateShowing)
 }
 
+func TestKeeperKeepsItsOwnReceiverAfterAServerRestart(t *testing.T) {
+	// An update restarts the server; the DashCast session it launched
+	// before still runs, and its page reconnects by itself.
+	device := newFakeDevice(t, Application{AppID: DashCastAppID, SessionID: "mine", TransportID: "web-0"})
+	keeper := newLaunchingKeeper(device, &launchCounter{}, 0)
+	keeper.Recall = func() string { return "mine" }
+	rec := startKeeper(t, keeper)
+	rec.waitFor(t, StateShowing)
+	expectLaunches(t, device, 0, "its own page is kept, not launched again")
+	if n := device.stopCount(); n != 0 {
+		t.Fatalf("stops = %d, want its own page left as it is", n)
+	}
+}
+
+func TestKeeperRemembersTheSessionItHolds(t *testing.T) {
+	device := newFakeDevice(t)
+	var mu sync.Mutex
+	var remembered []string
+	keeper := newLaunchingKeeper(device, &launchCounter{}, 0)
+	keeper.Remember = func(id string) {
+		mu.Lock()
+		defer mu.Unlock()
+		remembered = append(remembered, id)
+	}
+	last := func() []string {
+		mu.Lock()
+		defer mu.Unlock()
+		return slices.Clone(remembered)
+	}
+	rec := startKeeper(t, keeper)
+	rec.waitFor(t, StateShowing)
+	deadline := time.Now().Add(testTimeout)
+	for len(last()) == 0 || last()[len(last())-1] == "" {
+		if time.Now().After(deadline) {
+			t.Fatalf("remembered = %q, want the launched session once its page was sent", last())
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+
+	device.closeApps()
+	rec.waitFor(t, StateYielded)
+	for got := last(); got[len(got)-1] != ""; got = last() {
+		if time.Now().After(deadline) {
+			t.Fatalf("remembered = %q, want it forgotten once someone took the TV", got)
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+}
+
 func TestKeeperReturnsAfterTheTVWasSwitchedOff(t *testing.T) {
 	device := newFakeDevice(t)
 	rec := startKeeper(t, newRefreshingKeeper(device, 0))

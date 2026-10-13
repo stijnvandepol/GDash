@@ -5,6 +5,12 @@ the format follows [Keep a Changelog](https://keepachangelog.com).
 
 ## Unreleased
 
+### Fixed
+
+- After an update or restart GDash no longer says "Someone is using the TV"
+  about its own dashboard: it remembers the cast it started and keeps it,
+  with the restarts against the screensaver.
+
 ### Changed
 
 - The editor names each count after what the widget shows: "Headlines at
