@@ -47,7 +47,7 @@ survive the internet dropping out. GDash is made for exactly that.
 | Widget | Shows | Source |
 |---|---|---|
 | Clock | Time and date | — |
-| Weather and forecast | Now and up to seven days | [Open-Meteo](https://open-meteo.com), no key |
+| Weather and forecast | Now and up to seven days; now optionally as measured by the nearest KNMI station | [Open-Meteo](https://open-meteo.com), no key; [KNMI](https://dataplatform.knmi.nl) with your own free key |
 | Sun | Sunrise, sunset and the length of the day | Open-Meteo |
 | Moon | The phase, how much is lit, and the next full and new moon | Computed, no network |
 | Air quality | Air quality index and pollen (Europe) | Open-Meteo |
@@ -57,6 +57,7 @@ survive the internet dropping out. GDash is made for exactly that.
 | Waste collection | The next pickup per kind (GFT, PMD, paper, ...) | Your municipality's iCal link |
 | Departures | Next buses, trams, metros and ferries at a stop, with delays | [OVapi](https://v0.ovapi.nl) (Netherlands), no key |
 | Fuel prices | The cheapest petrol stations near a place | ANWB price data (Netherlands), no key |
+| Traffic | Jams, roadworks, mobile speed checks and fixed cameras on your roads | ANWB traffic info (unofficial, off until you turn it on) and [OpenStreetMap](https://www.openstreetmap.org) cameras |
 | Energy price | Today's dynamic electricity price per hour, cheapest window | [EnergyZero](https://www.energyzero.nl) (Netherlands), no key |
 | Solar forecast | What your solar panels are expected to produce today and tomorrow | Open-Meteo, or [Forecast.Solar](https://forecast.solar), no key |
 | Home Assistant | Sensors and switches, such as the temperature or a door | Your Home Assistant, read only |
@@ -198,7 +199,7 @@ environment variables:
 | `GDASH_TRUSTED_PROXIES` | none | Addresses or CIDR ranges of reverse proxies whose `X-Forwarded-For` and `X-Forwarded-Proto` GDash trusts |
 | `GDASH_SCHOOL_HOLIDAYS_URL` | Rijksoverheid open data | Where the school holidays are read; only the end-to-end tests change it, to a stand-in |
 | `GDASH_UPDATE_CHECK` | `on` | `off` stops the daily check for a new release, whatever Settings says; apart from the data sources it is the only request GDash makes ([SECURITY.md](SECURITY.md)) |
-| `GDASH_TEST_UPSTREAM` | none | For the end-to-end tests only: an `http://` address on the loopback address, such as `http://127.0.0.1:18700`, that stands in for Buienradar, Open-Meteo's rain and solar forecasts and MeteoAlarm; any other address is refused |
+| `GDASH_TEST_UPSTREAM` | none | For the end-to-end tests only: an `http://` address on the loopback address, such as `http://127.0.0.1:18700`, that stands in for Buienradar, Open-Meteo's rain and solar forecasts, MeteoAlarm, the ANWB's traffic list, Overpass and the KNMI; any other address is refused |
 
 The network needs: TCP 8009 from GDash to the TVs, mDNS (UDP 5353) to find
 them, TCP 8420 from the TVs to GDash, and HTTPS from GDash to the internet for
@@ -299,7 +300,10 @@ data of the [Dutch government](https://opendata.rijksoverheid.nl) (CC0), electri
 the [ANWB](https://www.anwb.nl), rain forecasts by
 [Buienradar.nl](https://www.buienradar.nl) (free for non-commercial use with
 this credit, which the Rain widget also shows), weather warnings by the
-[KNMI](https://www.knmi.nl) through [MeteoAlarm](https://meteoalarm.org). Photo albums from
+[KNMI](https://www.knmi.nl) through [MeteoAlarm](https://meteoalarm.org), traffic from the ANWB's traffic list,
+used unofficially and only when you turn it on (the data belongs to the ANWB; for your own household only),
+fixed speed cameras © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors under the ODbL, and
+station measurements by the [KNMI](https://dataplatform.knmi.nl) under CC BY 4.0. Photo albums from
 [Immich](https://immich.app) and Synology Photos; the Synology share-link calls follow
 [syno-photo-frame](https://github.com/Caleb9/syno-photo-frame). The typefaces are under the SIL Open Font
 License; all bundled licences are in [THIRD_PARTY_LICENSES](THIRD_PARTY_LICENSES).

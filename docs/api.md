@@ -83,6 +83,11 @@ come from another site (cross-site request forgery protection).
 | `DELETE /api/homey` | admin | `204`; Homey widgets show that it is not connected | `401` |
 | `GET /api/homey/capabilities` | admin | `200 {"capabilities": [capability]}`, every readable value of every device, sorted by zone, device and title | `401`, `409 not_connected` or `nothing_received`, `502 upstream_unavailable` |
 | `GET /api/homey/users` | admin | `200 {"users": [{id, name}]}`, sorted by name, without whether they are home | `401`, `409 not_connected` or `nothing_received`, `502 upstream_unavailable` (also when the key lacks View users) |
+| `GET /api/traffic` | admin | `200 {enabled, acknowledgedAt?, anwb: {state, httpStatus?, nextAttemptAt?}, data?, cameras?}`; `state` is `idle`, `ok`, `failing` or `stopped`, `data` and `cameras` are `{updatedAt?, failing}` while a Traffic widget needs them | `401` |
+| `PUT /api/traffic` `{enabled, acknowledged}` | admin | `200 {enabled, acknowledgedAt?}`; turning it on needs `acknowledged: true` and starts asking the ANWB afresh, also after a stop | `401`, `422` naming `acknowledged` |
+| `GET /api/knmi` | admin | `200 {connected, unreadable, data?}`, never the key | `401` |
+| `PUT /api/knmi` `{key}` | admin | `200 {"connected": true}` after the KNMI accepted the key | `401`, `422` naming `key` (refused, or the KNMI cannot be reached) |
+| `DELETE /api/knmi` | admin | `204`; Weather widgets show the model's values again | `401` |
 | `GET /api/departures/stops?q=utrecht+cs` | admin | `200 {"stops": [stop]}`, at most 20, best matches first | `401`, `422` naming `q` (2 to 100 characters), `502 upstream_unavailable` |
 | `GET /api/custom-sources` and the other custom API routes | admin | see [Custom APIs](#custom-apis) | |
 | `GET /api/web-pages` and the other web page routes | admin | see [Web pages](#web-pages) | |
@@ -327,6 +332,38 @@ actor `weather warning`.
 `<address>/buienradar/data/raintext`, `<address>/open-meteo/v1/forecast`, `<address>/open-meteo-solar/v1/forecast` and
 `<address>/meteoalarm/api/v1/warnings/feeds-netherlands`; the server refuses an address that is not on the loopback
 address.
+
+`GDASH_TEST_UPSTREAM`, for the end-to-end tests only, points Buienradar, Open-Meteo's rain forecast and MeteoAlarm at
+`<address>/buienradar/data/raintext`, `<address>/open-meteo/v1/forecast` and
+`<address>/meteoalarm/api/v1/warnings/feeds-netherlands`, and the ANWB, Overpass and the KNMI at `<address>/anwb/traffic`,
+`<address>/overpass/api/interpreter` and `<address>/knmi/edr`; the server refuses an address that is not on the
+loopback address.
+
+Traffic info comes from the ANWB's undocumented traffic list
+(`api.anwb.nl/traffic/traffic-info/v1/incidents/incidents-desktop`), unofficially: the ANWB forbids reusing its
+content without permission, so it is off until an admin turns it on with `PUT /api/traffic` and
+`acknowledged: true`, which is stored with its time and audited (`traffic_info_enabled`). While it is on and a
+Traffic widget is on a dashboard, the server asks once for the whole country, at most every 3 minutes for all
+widgets together, with a `User-Agent` that names GDash and its version, and reads at most 8 MB. The answer is read
+leniently: unknown fields are ignored and an odd item is left out. A jam's `distance` is in metres and `delay` in
+seconds, the national totals in kilometres and minutes (checked against a live answer). After a failure it waits 6
+minutes, doubling up to 30; after three refusals in a row (a 4xx other than 408 and 429) it stops until the switch is
+turned off and on, and `GET /api/traffic` reports `stopped`. The entry `traffic.default` holds, per widget query
+(`roads:A2,A50` or `near:25`), at most 10 jams, roadworks (on now or starting within 24 hours), speed checks and fixed
+cameras, the camera count and the national totals; a screen gets only its own queries. Fixed cameras come from the
+Overpass API (`overpass-api.de`, OpenStreetMap, ODbL): one query for the Netherlands at most once a week, kept in
+`speedcameras.json` in the data directory, retried at most every 6 hours, with a 2-minute timeout; its status is the
+entry `traffic.cameras`, which exists while a widget shows cameras.
+
+Measured weather comes from the KNMI EDR API (collection `10-minute-in-situ-meteorological-observations` on
+`api.dataplatform.knmi.nl/edr/v1`) with the household's own key, sent bare in the `Authorization`
+header as the KNMI documents. `PUT /api/knmi` tries the key on the station list first. While a Weather widget has
+`"current": "knmi"`, a key and a weather location are set, the server reads the station list once a day and every
+10 minutes asks `locations/<station>` for `ta,rh,ff` over the last hour, for the nearest station within 50 km that
+reported a temperature, trying up to three. The entry `knmi.observation` is `{station, distanceKm, observedAt,
+temperatureC, humidity, windKmh}` (null for what the station did not report; the wind converted from m/s); only
+screens with such a widget get it. The key is stored encrypted with `secret.key`, never returned, logged or put in
+an error, and is part of the source's keyed fingerprint only.
 
 Changes apply at once: a changed source is fetched again, a removed one
 disappears from the displays. `status` has an entry per configured source by

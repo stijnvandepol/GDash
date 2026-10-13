@@ -93,6 +93,23 @@ the format follows [Keep a Changelog](https://keepachangelog.com).
   Assistant and Grafana). The editor picks a page by name. The page is
   sandboxed, and a TV's page only lets in frames from the pages its own
   dashboards show. See the guide, "Web page".
+- Traffic widget: jams, roadworks and closures, mobile speed checks and fixed
+  speed cameras on up to ten roads, or within a radius of the weather
+  location. Jams, roadworks and speed checks come from the ANWB's traffic
+  list, unofficially: it is off until an admin turns on "ANWB traffic info
+  (unofficial)" under Integrations and acknowledges it is for their own household
+  only, it is asked at most once every 3 minutes for all screens, backs off
+  after failures and stops after repeated refusals, and screens say
+  "Unofficial · ANWB". Fixed cameras and average speed checks come from
+  OpenStreetMap through the Overpass API, at most once a week, and need no
+  setting.
+- Measured weather: with a free KNMI EDR API key under Integrations, KNMI
+  measured weather, a
+  Weather widget set to "Measured by KNMI" shows the temperature, humidity
+  and wind that the nearest KNMI station measured, every 10 minutes, with the
+  station and time.
+- `GDASH_TEST_UPSTREAM` also stands in for the ANWB's traffic list, Overpass
+  and the KNMI.
 - A custom API can be sent to GDash instead of fetched, for a system that
   cannot answer requests, such as a Homey Pro (Early 2019) with HomeyScript,
   Node-RED or a Home Assistant automation. Choose "Your system sends it to

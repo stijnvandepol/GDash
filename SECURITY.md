@@ -132,6 +132,16 @@ fully trust, such as a guest's phone.
   with included) or a search in the web interface. Turn the check off
   under Settings, Account, Updates, or for good with `GDASH_UPDATE_CHECK=off`.
   A development build never checks.
+- **KNMI key:** the key for the KNMI Data Platform is tried before it is
+  stored, then encrypted with the key file, never returned by the API,
+  logged, put in an error or the audit log, and only sent to the KNMI in the
+  `Authorization` header (never in an address). The cache file of the
+  measured weather is named by a keyed fingerprint, so the key cannot be read
+  from it. A key that leaked elsewhere should be revoked on the KNMI
+  Developer Portal and replaced with a new one.
+- **ANWB traffic info:** off until an admin turns it on and acknowledges that
+  the data belongs to the ANWB and is for their own household; the request
+  carries nothing about the installation but GDash's name and version.
 - **Custom APIs:** an admin can point GDash at any http or https address,
   on the internet or the LAN (a device or Home Assistant at home), so an
   admin session can make the server send requests into the home network;

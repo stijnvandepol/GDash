@@ -674,6 +674,87 @@ Good to know:
   feed address and regions.
 - Warnings for the sea, the IJsselmeer and the harbours are left out: they are
   for shipping.
+## Traffic
+
+The Traffic widget shows jams, roadworks and closures, mobile speed checks
+and fixed speed cameras on the roads you choose, or around the weather
+location.
+
+**Jams, roadworks and speed checks come from the ANWB, unofficially.** They
+are read from the traffic list that anwb.nl/verkeer itself uses. The ANWB
+publishes no API for it, and every answer says that its content belongs to
+the ANWB and may not be reused without its written permission. GDash
+therefore leaves it off until you turn it on, labels it "Unofficial · ANWB"
+on every screen, and only asks for it the way a person with the website
+open would:
+
+- It is off by default. Under **Integrations**, open **ANWB traffic info
+  (unofficial)** (under Travel), tick "I use this for my own household only; the data
+  belongs to the ANWB" and choose **Turn on**. GDash stores when you did;
+  turning it off and on asks again.
+- One request for the whole country, at most once every 3 minutes, shared by
+  every widget and screen, and only while a dashboard has a Traffic widget.
+- After a failure GDash waits 6 minutes, then 12, up to 30, and screens
+  keep the last traffic, with the title in the warning colour once it is
+  old. When the ANWB refuses three requests in a row (a 4xx answer), GDash
+  stops asking and the setting says so; turn it off and on to try again.
+- Show it on your own screens at home only. If the ANWB closes the list or
+  objects, this part of the widget stops working; nothing else in GDash
+  depends on it.
+
+**Fixed cameras come from OpenStreetMap** (© OpenStreetMap contributors,
+ODbL): speed cameras (`highway=speed_camera`) and average speed checks
+(trajectcontroles, `type=enforcement` relations), each with the A or N road
+within 30 metres. GDash asks the public Overpass API for the whole country
+in one query at most once a week, keeps the list in `speedcameras.json` in
+the data directory, and tries again at most every 6 hours while Overpass is
+down. This needs no setting and works with ANWB traffic info off; its card,
+**Speed cameras (OpenStreetMap)**, shows under Integrations, Travel. Flitsmeister
+has no public API, so its live reports are not available.
+
+1. Add a **Traffic** widget to a dashboard and select it.
+2. **Watch**: *Around the weather location* with a radius of 1 to 100 km
+   (default 25), or *My roads*: type up to ten A and N roads, such as
+   `A2, A50, N279`. A jam counts as near when its start or end is within the
+   radius; a camera or speed check when it is.
+3. **Show**: jams, roadworks and closures, mobile speed checks (ANWB), fixed
+   cameras (OpenStreetMap) and the national totals, in any combination.
+4. **Lines at most**: 1 to 10, default 5. Only the lines that fit are shown.
+
+On the screen a jam reads `A2 Born → Urmond · 5 km · +11 min`, with the
+ANWB's own Dutch description in small print under it. A closure or a delay
+of 10 minutes or more is in the warning colour and says "Closed" or the
+delay in words. Roadworks show while they are on and from 24 hours before
+they start ("Closed · from 21:00"). A speed check reads `A50 hm 53.1 · Speed
+check`, a camera `A2 Speed camera · hm 236.4 · 100 km/h` when mappers tagged
+it so. Below the list: "Fixed cameras on your roads: 3", and the national
+totals at the top when chosen ("Netherlands: 15 jams, 41 km"). With nothing
+on your roads it says "No jams on your roads".
+
+## Measured weather from the KNMI
+
+The Weather widget shows the weather model's current temperature and wind.
+With a KNMI key it can show what the nearest KNMI weather station measured
+instead, every 10 minutes, with the station and time in small print
+("Measured at Volkel 10:20 · KNMI"). The sky, today's range and the forecast
+stay the model's.
+
+1. Make an account on the [KNMI Developer Portal](https://developer.dataplatform.knmi.nl/)
+   and request an **EDR API** key under APIs. It is free; KNMI data is open
+   under CC BY 4.0. If you used a KNMI key in another project whose
+   configuration was ever shared or committed, request a new one and revoke
+   the old one: a leaked key can be used by anyone, against your limits.
+2. Under **Integrations**, open **KNMI measured weather** (under Weather &
+   nature), paste the key and choose **Save**.
+   GDash tries it first; a key the KNMI refuses is named on the field. It is
+   stored encrypted and never shown again.
+3. Select a Weather widget and set **Now** to **Measured by KNMI**.
+
+GDash looks up the KNMI stations once a day and uses the one nearest to the
+weather location that reported in the last hour, within 50 km; when a
+station is down it tries the next two. Without a key, a location or a recent
+measurement the widget shows the model's values. The KNMI allows 1000
+requests an hour per key; GDash makes about 6 to 18.
 
 ## Now playing
 
