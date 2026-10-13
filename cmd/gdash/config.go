@@ -43,6 +43,10 @@ type config struct {
 	// schoolHolidaysURL is where the school holidays are read. Only the
 	// end-to-end tests set GDASH_SCHOOL_HOLIDAYS_URL, to a stand-in.
 	schoolHolidaysURL string
+	// testUpstream is GDASH_TEST_UPSTREAM: a stand-in on the loopback
+	// address that the end-to-end tests run for Buienradar, Open-Meteo's
+	// rain forecast and MeteoAlarm. Empty outside tests.
+	testUpstream string
 }
 
 // defaultNewsFeed is the general news feed of the NOS, the Dutch public
@@ -78,6 +82,9 @@ func loadConfig(getenv func(string) string) (config, error) {
 	cfg.schoolHolidaysURL = valueOr(getenv("GDASH_SCHOOL_HOLIDAYS_URL"), holidays.DefaultSchoolURL)
 	if !isHTTPURL(cfg.schoolHolidaysURL) {
 		return config{}, fmt.Errorf("GDASH_SCHOOL_HOLIDAYS_URL %q is not an http(s) URL", cfg.schoolHolidaysURL)
+	}
+	if cfg.testUpstream, err = loopbackURL(getenv("GDASH_TEST_UPSTREAM")); err != nil {
+		return config{}, fmt.Errorf("GDASH_TEST_UPSTREAM: %w", err)
 	}
 
 	cfg.castAppID = getenv("GDASH_CAST_APP_ID")
@@ -130,6 +137,25 @@ func dataDirError(dir string, err error) error {
 	}
 	return fmt.Errorf("data directory %q is not writable%s: %w; give that user write access to it, "+
 		`see "Data directory permissions" in docs/install.md`, dir, owner, err)
+}
+
+// loopbackURL accepts an empty value or an http URL on a loopback address
+// without a path, such as "http://127.0.0.1:18700". Only a server on the
+// same machine can stand in for the real services, so the variable cannot
+// send requests anywhere else.
+func loopbackURL(value string) (string, error) {
+	if value == "" {
+		return "", nil
+	}
+	u, err := url.Parse(value)
+	if err != nil || u.Scheme != "http" || (u.Path != "" && u.Path != "/") || u.RawQuery != "" || u.User != nil {
+		return "", fmt.Errorf("%q is not an http address without a path", value)
+	}
+	host := u.Hostname()
+	if addr, err := netip.ParseAddr(host); host != "localhost" && (err != nil || !addr.IsLoopback()) {
+		return "", fmt.Errorf("%q is not on the loopback address; it is for the end-to-end tests only", value)
+	}
+	return strings.TrimSuffix(value, "/"), nil
 }
 
 // parsePrefixes reads a comma-separated list of IP addresses and CIDR

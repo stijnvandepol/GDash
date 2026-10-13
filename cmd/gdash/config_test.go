@@ -80,6 +80,20 @@ func TestLoadConfigSchoolHolidaysURL(t *testing.T) {
 	}
 }
 
+func TestLoadConfigTestUpstream(t *testing.T) {
+	for value, want := range map[string]string{
+		"":                       "",
+		"http://127.0.0.1:18700": "http://127.0.0.1:18700",
+		"http://[::1]:18700/":    "http://[::1]:18700",
+		"http://localhost:18700": "http://localhost:18700",
+	} {
+		cfg, err := loadConfig(env(map[string]string{"GDASH_TEST_UPSTREAM": value}))
+		if err != nil || cfg.testUpstream != want {
+			t.Errorf("GDASH_TEST_UPSTREAM=%q: testUpstream = %q, %v; want %q", value, cfg.testUpstream, err, want)
+		}
+	}
+}
+
 func TestWithDefaultPort(t *testing.T) {
 	if got := withDefaultPort("192.168.1.40"); got != "192.168.1.40:8009" {
 		t.Errorf("withDefaultPort(ip) = %q", got)
@@ -115,6 +129,10 @@ func TestLoadConfigErrors(t *testing.T) {
 		{"malformed app id", map[string]string{"GDASH_LATITUDE": "51", "GDASH_LONGITUDE": "5", "GDASH_CAST_APP_ID": "dashcast"}, "8-character"},
 		{"school holidays not http", map[string]string{"GDASH_SCHOOL_HOLIDAYS_URL": "file:///etc/passwd"}, "GDASH_SCHOOL_HOLIDAYS_URL"},
 		{"update check neither on nor off", map[string]string{"GDASH_UPDATE_CHECK": "false"}, "GDASH_UPDATE_CHECK"},
+		{"test upstream on the internet", map[string]string{"GDASH_TEST_UPSTREAM": "http://example.com"}, "loopback"},
+		{"test upstream on the LAN", map[string]string{"GDASH_TEST_UPSTREAM": "http://192.168.1.2:8000"}, "loopback"},
+		{"test upstream over https", map[string]string{"GDASH_TEST_UPSTREAM": "https://127.0.0.1:8000"}, "GDASH_TEST_UPSTREAM"},
+		{"test upstream with a path", map[string]string{"GDASH_TEST_UPSTREAM": "http://127.0.0.1:8000/x"}, "GDASH_TEST_UPSTREAM"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

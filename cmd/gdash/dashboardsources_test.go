@@ -13,6 +13,7 @@ import (
 	"github.com/stijnvandepol/gdash/internal/datahub"
 	"github.com/stijnvandepol/gdash/internal/display"
 	"github.com/stijnvandepol/gdash/internal/fuel"
+	"github.com/stijnvandepol/gdash/internal/rain"
 	"github.com/stijnvandepol/gdash/internal/secret"
 	"github.com/stijnvandepol/gdash/internal/settings"
 	"github.com/stijnvandepol/gdash/internal/weather"
@@ -145,6 +146,90 @@ func TestFuelSourceFetchesTheWeatherLocationForWidgetsWithoutAPlace(t *testing.T
 	lists, ok := value.(map[string][]fuel.Station)
 	if !ok || len(lists["here,3,EURO95"]) != 10 || lists["here,3,EURO95"][0].Price != 2.364 {
 		t.Fatalf("value = %+v, want the ten cheapest stations around the weather location under the key of a widget without a place", value)
+	}
+}
+
+func rainOn(settings map[string]any) display.Widget {
+	return display.Widget{ID: "rain", Type: "rain", Settings: settings}
+}
+
+func warningsOn(settings map[string]any) display.Widget {
+	return display.Widget{ID: "warnings", Type: "warnings", Settings: settings}
+}
+
+func TestRainIsFetchedOnlyForPlacesThatWidgetsShow(t *testing.T) {
+	oss := map[string]any{"name": "Oss", "latitude": 51.765, "longitude": 5.518}
+	here := settings.Sources{Location: &weather.Location{Latitude: 51.77, Longitude: 5.52}}
+
+	if got := widgetSources(t, here); got[display.RainSource].Key != "" {
+		t.Fatalf("sources without Rain widgets = %v, want no rain source", got)
+	}
+	if got := widgetSources(t, settings.Sources{}, rainOn(nil)); got[display.RainSource].Key != "" {
+		t.Fatal("a Rain widget without a place and without a weather location got a source")
+	}
+	own := widgetSources(t, settings.Sources{}, rainOn(map[string]any{"place": oss}))[display.RainSource]
+	if own.Key == "" || own.Interval != 5*time.Minute {
+		t.Fatalf("source for a chosen place = %+v, want one that refreshes every 5 minutes", own)
+	}
+	followed := widgetSources(t, here, rainOn(nil))[display.RainSource]
+	moved := widgetSources(t, settings.Sources{Location: &weather.Location{Latitude: 52.37, Longitude: 4.9}}, rainOn(nil))[display.RainSource]
+	if followed.Key == "" || followed.Version == moved.Version {
+		t.Fatal("the source did not restart when the weather location moved")
+	}
+}
+
+func TestRainSourceFetchesTheWeatherLocation(t *testing.T) {
+	body, err := os.ReadFile("../../internal/rain/testdata/buienradar-shower.txt")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var asked string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		asked = r.URL.RawQuery
+		_, _ = w.Write(body)
+	}))
+	t.Cleanup(srv.Close)
+	box, err := secret.NewBox(make([]byte, 32))
+	if err != nil {
+		t.Fatal(err)
+	}
+	loc, err := time.LoadLocation("Europe/Amsterdam")
+	if err != nil {
+		t.Fatal(err)
+	}
+	now := time.Date(2026, 10, 13, 14, 3, 0, 0, loc)
+	d := &dataSources{settings: &settings.Service{Box: box}, rain: &rain.Client{
+		BuienradarURL: srv.URL, OpenMeteoURL: srv.URL, HTTP: srv.Client(), Location: loc, Now: func() time.Time { return now },
+	}}
+	source, ok := d.rainSource(&weather.Location{Latitude: 51.77, Longitude: 5.53}, []rain.Query{{Here: true}})
+	if !ok {
+		t.Fatal("no source")
+	}
+	value, err := source.Fetch(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := value.(map[string]rain.Forecast)["here"]; got.Source != rain.SourceBuienradar || len(got.Points) != 24 || asked != "lat=51.77&lon=5.53" {
+		t.Fatalf("forecast = %+v for %q, want Buienradar's for the weather location", got, asked)
+	}
+}
+
+func TestWarningsAreFetchedForTheProvinceOfTheWeatherLocation(t *testing.T) {
+	oss := settings.Sources{Location: &weather.Location{Latitude: 51.77, Longitude: 5.53}}
+	paris := settings.Sources{Location: &weather.Location{Latitude: 48.86, Longitude: 2.35}}
+	if got := widgetSources(t, oss); got[display.WarningsSource].Key != "" {
+		t.Fatal("a warnings source without a widget")
+	}
+	if got := widgetSources(t, paris, warningsOn(nil)); got[display.WarningsSource].Key != "" {
+		t.Fatal("a weather location outside the Netherlands got a warnings source; the widget should ask for a province")
+	}
+	followed := widgetSources(t, oss, warningsOn(nil))[display.WarningsSource]
+	if followed.Key == "" || followed.Interval != 15*time.Minute {
+		t.Fatalf("source = %+v, want one that refreshes every 15 minutes", followed)
+	}
+	chosen := widgetSources(t, paris, warningsOn(map[string]any{"region": "Zeeland"}))[display.WarningsSource]
+	if chosen.Key == "" || chosen.Version == followed.Version {
+		t.Fatalf("source for a chosen province = %+v", chosen)
 	}
 }
 

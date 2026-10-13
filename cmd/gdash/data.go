@@ -25,8 +25,10 @@ import (
 	"github.com/stijnvandepol/gdash/internal/news"
 	"github.com/stijnvandepol/gdash/internal/outbound"
 	"github.com/stijnvandepol/gdash/internal/photos"
+	"github.com/stijnvandepol/gdash/internal/rain"
 	"github.com/stijnvandepol/gdash/internal/settings"
 	"github.com/stijnvandepol/gdash/internal/store"
+	"github.com/stijnvandepol/gdash/internal/warnings"
 	"github.com/stijnvandepol/gdash/internal/weather"
 )
 
@@ -44,6 +46,8 @@ type dataSources struct {
 	departures *departures.Client
 	fuel       *fuel.Client
 	holidays   holidays.Client
+	rain       *rain.Client
+	warnings   *warnings.Client
 	custom     *custom.Fetcher
 	// stops searches the stop areas for the widget editor.
 	stops *departures.Directory
@@ -76,8 +80,10 @@ func startData(ctx context.Context, cfg config, db *store.Store, svc *settings.S
 		Now:           time.Now,
 		Logger:        logger,
 	}
+	var warned *warningRules
 	refresh := func() {
 		rules.check(ctx)
+		warned.check(ctx)
 		publisher.Refresh(ctx)
 	}
 	rules = &customRules{
@@ -85,6 +91,17 @@ func startData(ctx context.Context, cfg config, db *store.Store, svc *settings.S
 		dashboards: db.Dashboards,
 		displays:   db.Displays,
 		data:       func() map[string]datahub.Entry { return hub.Entries() },
+		board:      publisher.Announcements,
+		announced:  announced(ctx, publisher),
+		audit:      db.AddAuditEvent,
+		now:        time.Now,
+		logger:     logger,
+	}
+	warned = &warningRules{
+		dashboards: db.Dashboards,
+		displays:   db.Displays,
+		data:       func() map[string]datahub.Entry { return hub.Entries() },
+		language:   svc.Language,
 		board:      publisher.Announcements,
 		announced:  announced(ctx, publisher),
 		audit:      db.AddAuditEvent,
@@ -126,6 +143,17 @@ func startData(ctx context.Context, cfg config, db *store.Store, svc *settings.S
 		holidays: holidays.Client{
 			SchoolURL: cfg.schoolHolidaysURL, HTTP: outbound.NewClient(upstreamTimeout), UserAgent: userAgent, Location: dutch, Now: time.Now,
 		},
+		rain: &rain.Client{
+			BuienradarURL: rain.DefaultBuienradarURL, OpenMeteoURL: rain.DefaultOpenMeteoURL,
+			HTTP: outbound.NewClient(upstreamTimeout), UserAgent: userAgent, Location: dutch, Now: time.Now,
+		},
+		warnings: &warnings.Client{BaseURL: warnings.DefaultBaseURL, HTTP: outbound.NewClient(upstreamTimeout), UserAgent: userAgent, Now: time.Now},
+	}
+	if cfg.testUpstream != "" {
+		logger.Warn("GDASH_TEST_UPSTREAM is set: rain and weather warnings come from a stand-in, not from Buienradar, Open-Meteo or MeteoAlarm", "address", cfg.testUpstream)
+		sources.rain.BuienradarURL = cfg.testUpstream + testBuienradarPath
+		sources.rain.OpenMeteoURL = cfg.testUpstream + testOpenMeteoPath
+		sources.warnings.BaseURL = cfg.testUpstream + testMeteoAlarmPath
 	}
 	if err := sources.sync(ctx); err != nil {
 		return nil, nil, nil, err
