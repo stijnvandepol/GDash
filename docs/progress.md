@@ -68,6 +68,8 @@ for setup on an empty data directory and served the web interface.
 
 **0.8.0** was tagged on 12 October 2026: Homey, a TV that is no longer taken back from someone using it, the widget palette and design-only editor with named values for custom APIs, badges, clearer displays and pairing, an update notice, and setup without a token in the first hour. 35 Playwright tests passed.
 
+**0.9.0** was tagged on 13 October 2026: the Integrations tab with presets, push sources (Homey Pro 2016–2019 with HomeyScript), rain, weather warnings, holidays, moon, cameras, Immich and Synology Photos albums, Now playing on Cast devices, solar forecast, web pages, traffic (unofficial ANWB, opt-in) with OpenStreetMap speed cameras, KNMI measured weather, custom APIs that log in first (Pi-hole), and GDash keeping its own dashboard on the TV after a restart. 65 Playwright tests passed. Not yet tried on real hardware: Synology share links, KNMI with a key, Now playing, Homey push.
+
 ## Checked by CI on every push
 
 gofmt, go vet, staticcheck, the Go tests with the race detector (fuzz seeds included), govulncheck, svelte-check with zero warnings, the web unit tests (Vitest), npm audit, an up-to-date THIRD_PARTY_LICENSES, a gitleaks scan of the whole history, 24 Playwright browser tests (setup, settings, backup, dashboards, styles, pairing, schedule) with axe accessibility checks in light and dark mode and a check that every button keeps 4.5:1 while hovered, and a Docker build for amd64 and arm64. The first run passed on 8 October 2026; all of it passed on 9 October 2026 after the security and design rounds.

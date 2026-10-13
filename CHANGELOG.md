@@ -5,6 +5,8 @@ the format follows [Keep a Changelog](https://keepachangelog.com).
 
 ## Unreleased
 
+## 0.9.0 – 2026-10-13
+
 ### Added
 
 - Camera widget: a still image of a camera at home, such as Frigate's latest
