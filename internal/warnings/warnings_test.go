@@ -2,6 +2,7 @@ package warnings
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -112,8 +113,8 @@ func TestClientReadsTheFeedOnceForAllRegions(t *testing.T) {
 	if here := got["here"]; here.Region != "Noord-Brabant" || len(here.Warnings) != 2 {
 		t.Errorf("here = %+v, want Noord-Brabant's two warnings", here)
 	}
-	if utrecht, ok := got["Utrecht"]; !ok || utrecht.Region != "Utrecht" || len(utrecht.Warnings) != 0 {
-		t.Errorf("Utrecht = %+v, %v; want the region with an empty list", utrecht, ok)
+	if encoded, err := json.Marshal(got["Utrecht"]); err != nil || string(encoded) != `{"region":"Utrecht","warnings":[]}` {
+		t.Errorf("Utrecht = %s, %v; want the region with an empty list", encoded, err)
 	}
 
 	if _, err := c.ForRegions(context.Background(), []Query{{Region: "Atlantis"}}); err == nil {

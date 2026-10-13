@@ -50,7 +50,13 @@ func (c Client) ForRegions(ctx context.Context, queries []Query) (map[string]Are
 	}
 	out := make(map[string]Area, len(queries))
 	for _, q := range queries {
-		out[q.Key()] = Area{Region: q.Region, Warnings: all[q.Region]}
+		// An empty list, not null: the screen tells "no warnings" from a
+		// broken answer.
+		list := all[q.Region]
+		if list == nil {
+			list = []Warning{}
+		}
+		out[q.Key()] = Area{Region: q.Region, Warnings: list}
 	}
 	return out, nil
 }
