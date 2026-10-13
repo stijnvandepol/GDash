@@ -1,4 +1,4 @@
-import { expect, openTab, test } from './fixtures';
+import { expect, openIntegration, test } from './fixtures';
 
 // A Homey Pro (Early 2019) has no API keys: its HomeyScript sends a
 // snapshot of every device and who is home to GDash instead.
@@ -15,8 +15,8 @@ const SNAPSHOT = {
 };
 
 test('a Homey that sends its data shows on a screen', async ({ adminPage: page, request, baseURL }) => {
-  await openTab(page, 'Settings');
-  const section = page.locator('section.card', { has: page.getByRole('heading', { name: 'Homey', exact: true }) });
+  const setup = await openIntegration(page, 'Homey');
+  const section = setup.locator('section.card', { has: page.getByRole('heading', { name: 'Homey', exact: true }) });
   // An earlier spec may have connected a Homey with a key.
   const change = section.getByRole('button', { name: 'Change', exact: true });
   if (await change.isVisible()) await change.click();

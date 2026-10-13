@@ -1,0 +1,54 @@
+{
+  "id": "plex",
+  "name": "Plex",
+  "description": "Who is watching what on your Plex Media Server",
+  "category": "media",
+  "icon": "play",
+  "tags": ["local"],
+  "docs": "https://developer.plex.tv/pms/",
+  "comment": "GET /status/sessions (List Sessions) answers XML unless Accept is application/json, and needs the token of the server's owner. That MediaContainer.Metadata is left out, not empty, when nothing plays is common Plex behaviour but not in the specification (unverified).",
+  "placeholders": [
+    {
+      "key": "server",
+      "label": "Address of your Plex server",
+      "kind": "origin",
+      "example": "http://192.168.1.20:32400"
+    }
+  ],
+  "source": {
+    "name": "Plex",
+    "url": "{server}/status/sessions",
+    "method": "GET",
+    "body": "",
+    "auth": { "kind": "header", "name": "X-Plex-Token" },
+    "secretHint": "The X-Plex-Token of the server's owner; Plex's support article on finding an authentication token shows where.",
+    "headers": [{ "name": "Accept", "value": "application/json", "secret": false }],
+    "intervalSeconds": 30,
+    "sample": {
+      "MediaContainer": {
+        "size": 1,
+        "Metadata": [
+          {
+            "type": "episode",
+            "title": "Pilot",
+            "grandparentTitle": "Some Show",
+            "User": { "id": "123456789", "title": "anna" },
+            "Player": { "title": "Living room", "state": "playing", "local": true }
+          }
+        ]
+      }
+    }
+  },
+  "values": [{ "name": "Streams", "path": "MediaContainer.size", "decimals": 0 }],
+  "lists": [
+    {
+      "name": "Now playing",
+      "path": "MediaContainer.Metadata",
+      "columns": [
+        { "name": "Who", "path": "User.title" },
+        { "name": "Title", "path": "title" },
+        { "name": "Show", "path": "grandparentTitle" }
+      ]
+    }
+  ]
+}

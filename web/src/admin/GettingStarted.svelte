@@ -3,7 +3,7 @@
   import { api } from './api';
   import Icon from './Icon.svelte';
 
-  let { onopen }: { onopen: (tab: 'displays' | 'dashboards' | 'settings') => void } = $props();
+  let { onopen }: { onopen: (tab: 'displays' | 'dashboards' | 'integrations') => void } = $props();
 
   // How often the steps are checked again while the card shows, so it
   // disappears soon after the last step is done on another tab.
@@ -53,12 +53,12 @@
       <li class:done={hasLocation}>
         <span class="marker" aria-hidden="true">{#if hasLocation}<Icon name="check" size={14} />{:else}1{/if}</span>
         <span class="step">Choose the location for the weather.</span>
-        {#if !hasLocation}<button class="link" onclick={() => onopen('settings')}>Open Settings</button>{/if}
+        {#if !hasLocation}<button class="link" onclick={() => onopen('integrations')}>Open Integrations</button>{/if}
       </li>
       <li class:done={hasSources}>
         <span class="marker" aria-hidden="true">{#if hasSources}<Icon name="check" size={14} />{:else}2{/if}</span>
         <span class="step">Add news feeds or calendars, if you want them.</span>
-        {#if !hasSources}<button class="link" onclick={() => onopen('settings')}>Open Settings</button>{/if}
+        {#if !hasSources}<button class="link" onclick={() => onopen('integrations')}>Open Integrations</button>{/if}
       </li>
       <li class:done={hasDashboard}>
         <span class="marker" aria-hidden="true">{#if hasDashboard}<Icon name="check" size={14} />{:else}3{/if}</span>

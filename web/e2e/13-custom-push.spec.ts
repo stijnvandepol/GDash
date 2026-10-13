@@ -1,11 +1,10 @@
-import { expect, openTab, test } from './fixtures';
+import { expect, openIntegration, test } from './fixtures';
 
 // A household's system, such as a HomeyScript, that sends its data to GDash
 // instead of serving an API.
 test('data that a system sends to GDash shows on a screen', async ({ adminPage: page, request, baseURL }) => {
-  await openTab(page, 'Settings');
-  await page.getByRole('navigation', { name: 'Settings' }).getByRole('button', { name: 'Data sources' }).click();
-  const card = page.locator('section.card').filter({ has: page.getByRole('heading', { name: 'Custom APIs', exact: true }) });
+  const setup = await openIntegration(page, 'Custom APIs');
+  const card = setup.locator('section.card').filter({ has: page.getByRole('heading', { name: 'Custom APIs', exact: true }) });
   await card.getByRole('button', { name: 'Add a custom API' }).click();
   await card.getByLabel('Your system sends it to GDash').check();
   await expect(card.getByLabel('Address', { exact: true })).toHaveCount(0);

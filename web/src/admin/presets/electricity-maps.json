@@ -1,0 +1,46 @@
+{
+  "id": "electricity-maps",
+  "name": "Electricity Maps",
+  "description": "How much CO₂ the electricity in your country causes right now",
+  "category": "energy",
+  "icon": "air",
+  "tags": ["free-key"],
+  "docs": "https://github.com/jpbede/aioelectricitymaps",
+  "comment": "v3 carbon-intensity/latest with the auth-token header, from the client library that Home Assistant uses; the official documentation refuses automated reading. api.electricitymaps.com answers without a redirect. The free key is for personal, non-commercial use; Home Assistant gives its limit as 50 requests an hour (unverified at the source), so it refreshes every 15 minutes.",
+  "placeholders": [
+    {
+      "key": "zone",
+      "label": "Zone",
+      "kind": "id",
+      "example": "NL",
+      "hint": "The country code, such as NL or BE; Electricity Maps lists the zones."
+    }
+  ],
+  "source": {
+    "name": "Carbon intensity",
+    "url": "https://api.electricitymaps.com/v3/carbon-intensity/latest?zone={zone}",
+    "method": "GET",
+    "body": "",
+    "auth": { "kind": "header", "name": "auth-token" },
+    "secretHint": "Get a free personal key at electricitymaps.com.",
+    "headers": [],
+    "intervalSeconds": 900,
+    "sample": {
+      "zone": "NL",
+      "carbonIntensity": 216,
+      "datetime": "2026-10-13T09:00:00.000Z",
+      "updatedAt": "2026-10-13T08:48:27.926Z",
+      "emissionFactorType": "lifecycle",
+      "isEstimated": true
+    }
+  },
+  "values": [{ "name": "Carbon intensity", "path": "carbonIntensity", "unit": "gCO2eq/kWh", "decimals": 0 }],
+  "lists": [],
+  "rule": {
+    "for": "Carbon intensity",
+    "summary": "show it in the good colour while the electricity is clean",
+    "when": "value < 150",
+    "tone": "ok",
+    "message": "Clean power now"
+  }
+}

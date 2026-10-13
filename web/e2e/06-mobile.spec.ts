@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { ensureAccount, expect, openTab, test } from './fixtures';
+import { ensureAccount, expect, openIntegration, openTab, test } from './fixtures';
 
 // A phone in portrait.
 test.use({ viewport: { width: 375, height: 812 } });
@@ -32,12 +32,19 @@ test.describe('mobile width', () => {
     await expectNoHorizontalScroll(page);
   });
 
-  for (const tab of ['Displays', 'Dashboards', 'Settings'] as const) {
+  for (const tab of ['Displays', 'Dashboards', 'Integrations', 'Settings'] as const) {
     test(`the ${tab} page fits`, async ({ adminPage: page }) => {
       await openTab(page, tab);
       await expectNoHorizontalScroll(page);
     });
   }
+
+  test('an open setup on the Integrations page fits', async ({ adminPage: page }) => {
+    for (const name of ['Custom APIs', 'HomeWizard P1 meter', 'Homey']) {
+      await openIntegration(page, name);
+      await expectNoHorizontalScroll(page);
+    }
+  });
 
   test('the dashboard editor fits', async ({ adminPage: page }) => {
     await openTab(page, 'Dashboards');

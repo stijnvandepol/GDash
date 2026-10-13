@@ -7,6 +7,7 @@
   import Displays from './Displays.svelte';
   import Dashboards from './Dashboards.svelte';
   import Settings from './Settings.svelte';
+  import Integrations from './Integrations.svelte';
   import GettingStarted from './GettingStarted.svelte';
   import Icon, { type IconName } from './Icon.svelte';
   import Logo from './Logo.svelte';
@@ -14,18 +15,21 @@
   import UpdateNotice from './UpdateNotice.svelte';
   import ConfirmDialog from './ConfirmDialog.svelte';
   import { toast } from './toast.svelte';
+  import { INTEGRATIONS_HASH, searchFromHash } from './integrations';
 
   type Screen = { name: 'loading' } | { name: 'error'; message: string } | { name: 'setup'; tokenRequired: boolean } | { name: 'login' } | { name: 'app'; user: User };
-  type Tab = 'displays' | 'dashboards' | 'settings';
+  type Tab = 'displays' | 'dashboards' | 'integrations' | 'settings';
 
   const TABS: { id: Tab; label: string; icon: IconName }[] = [
     { id: 'displays', label: 'Displays', icon: 'display' },
     { id: 'dashboards', label: 'Dashboards', icon: 'dashboards' },
+    { id: 'integrations', label: 'Integrations', icon: 'integrations' },
     { id: 'settings', label: 'Settings', icon: 'settings' },
   ];
 
   let screen = $state<Screen>({ name: 'loading' });
-  let tab = $state<Tab>('displays');
+  // A link to the Integrations page, with its search, opens it.
+  let tab = $state<Tab>(searchFromHash(location.hash) ? 'integrations' : 'displays');
   let system = $state<SystemInfo | null>(null);
   let menuOpen = $state(false);
   let menuElement = $state<HTMLElement>();
@@ -75,6 +79,19 @@
     toast.success('Account created. Welcome to GDash.');
   }
 
+  function openTab(next: Tab) {
+    tab = next;
+    // The Integrations page keeps its search in the address; elsewhere it
+    // would be a stale link.
+    if (next !== 'integrations' && location.hash.startsWith(INTEGRATIONS_HASH)) {
+      history.replaceState(history.state, '', location.pathname + location.search);
+    }
+  }
+
+  function followHash() {
+    if (searchFromHash(location.hash)) tab = 'integrations';
+  }
+
   function closeMenuOnOutsideClick(event: MouseEvent) {
     if (menuOpen && menuElement && !menuElement.contains(event.target as Node)) menuOpen = false;
   }
@@ -87,7 +104,7 @@
   }
 </script>
 
-<svelte:window onclick={closeMenuOnOutsideClick} onkeydown={closeMenuOnEscape} />
+<svelte:window onclick={closeMenuOnOutsideClick} onkeydown={closeMenuOnEscape} onhashchange={followHash} />
 
 <div class="shell" class:with-tabs={screen.name === 'app'}>
   {#if screen.name === 'app'}
@@ -96,7 +113,7 @@
         <span class="brand"><Logo size={30} /> GDash</span>
         <nav class="tabs" aria-label="Main">
           {#each TABS as t (t.id)}
-            <button class="tab" aria-current={tab === t.id ? 'page' : undefined} onclick={() => (tab = t.id)}>
+            <button class="tab" aria-current={tab === t.id ? 'page' : undefined} onclick={() => openTab(t.id)}>
               <Icon name={t.icon} />
               {t.label}
             </button>
@@ -137,11 +154,13 @@
         <p class="error">GDash cannot be reached: {screen.message}</p>
       {:else}
         {#if system?.update}<UpdateNotice release={system.update} />{/if}
-        <GettingStarted onopen={(next) => (tab = next)} />
+        <GettingStarted onopen={openTab} />
         {#if tab === 'displays'}
           <Displays onSessionEnded={sessionEnded} />
         {:else if tab === 'dashboards'}
           <Dashboards onSessionEnded={sessionEnded} />
+        {:else if tab === 'integrations'}
+          <Integrations onSessionEnded={sessionEnded} onadd={() => openTab('dashboards')} />
         {:else}
           <Settings onSessionEnded={sessionEnded} />
         {/if}

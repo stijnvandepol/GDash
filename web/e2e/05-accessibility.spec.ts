@@ -1,6 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
 import type { Page } from '@playwright/test';
-import { ensureAccount, expect, openTab, test } from './fixtures';
+import { ensureAccount, expect, openIntegration, openTab, test } from './fixtures';
 
 const BLOCKING_IMPACTS = ['serious', 'critical'];
 
@@ -55,10 +55,26 @@ for (const colorScheme of ['light', 'dark'] as const) {
     test('every part of Settings has no serious or critical violations', async ({ adminPage: page }) => {
       await page.emulateMedia({ colorScheme });
       await openTab(page, 'Settings');
-      for (const part of ['Data sources', 'Screens', 'Automations', 'Account']) {
+      for (const part of ['Screens', 'Account']) {
         await page.getByRole('navigation', { name: 'Settings' }).getByRole('button', { name: part }).click();
         await expectNoBlockingViolations(page);
       }
+    });
+
+    test('the Integrations page and every setup on it have no serious or critical violations', async ({ adminPage: page }) => {
+      // A dozen axe scans of a long page take longer than one journey.
+      test.slow();
+      await page.emulateMedia({ colorScheme });
+      await openTab(page, 'Integrations');
+      await expectNoBlockingViolations(page);
+      const setups = ['Weather', 'News feeds', 'Calendars', 'Home Assistant', 'Homey', 'Photos', 'Custom APIs', 'API tokens', 'HomeWizard P1 meter', 'Tibber', 'AdGuard Home'];
+      for (const name of setups) {
+        await openIntegration(page, name);
+        await expectNoBlockingViolations(page);
+      }
+      await page.getByRole('searchbox', { name: 'Search integrations' }).fill('nothing matches this');
+      await expect(page.getByRole('heading', { name: /^Nothing matches/ })).toBeVisible();
+      await expectNoBlockingViolations(page);
     });
   });
 }

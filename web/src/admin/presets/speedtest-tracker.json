@@ -1,0 +1,49 @@
+{
+  "id": "speedtest-tracker",
+  "name": "Speedtest Tracker",
+  "description": "The last speed test of your internet connection",
+  "category": "home",
+  "icon": "gauge",
+  "tags": ["local"],
+  "docs": "https://docs.speedtest-tracker.dev/api/authorization",
+  "comment": "API v1 results/latest, checked against the source (ResultResource, routes/api/v1, branch 1.x). Accept: application/json makes a refused token a JSON 401 instead of a redirect to the login page. download_bits is in bits per second, which GDash cannot scale, so the values use the text download_bits_human; its exact format is unverified. The token needs the Read results ability. The default limit is 60 requests a minute.",
+  "placeholders": [
+    {
+      "key": "server",
+      "label": "Address of Speedtest Tracker",
+      "kind": "origin",
+      "example": "http://192.168.1.20:8765"
+    }
+  ],
+  "source": {
+    "name": "Speedtest",
+    "url": "{server}/api/v1/results/latest",
+    "method": "GET",
+    "body": "",
+    "auth": { "kind": "bearer", "name": "" },
+    "secretHint": "In Speedtest Tracker, under API Tokens: make a token that can read results.",
+    "headers": [{ "name": "Accept", "value": "application/json", "secret": false }],
+    "intervalSeconds": 300,
+    "sample": {
+      "data": {
+        "id": 412,
+        "ping": 11.84,
+        "download_bits": 490000000,
+        "upload_bits": 95000000,
+        "download_bits_human": "490.00 Mbps",
+        "upload_bits_human": "95.00 Mbps",
+        "healthy": true,
+        "status": "completed",
+        "created_at": "2026-10-13 08:00:03"
+      },
+      "message": "ok"
+    }
+  },
+  "values": [
+    { "name": "Download", "path": "data.download_bits_human" },
+    { "name": "Upload", "path": "data.upload_bits_human" },
+    { "name": "Ping", "path": "data.ping", "unit": "ms", "decimals": 0 },
+    { "name": "Healthy", "path": "data.healthy" }
+  ],
+  "lists": []
+}

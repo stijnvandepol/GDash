@@ -1,7 +1,7 @@
-import { test as base, expect, type APIRequestContext, type Page } from '@playwright/test';
+import { test as base, expect, type APIRequestContext, type Locator, type Page } from '@playwright/test';
 import { ADMIN_USERNAME, adminPassword, setupToken } from './env';
 
-type Tab = 'Displays' | 'Dashboards' | 'Settings';
+type Tab = 'Displays' | 'Dashboards' | 'Integrations' | 'Settings';
 
 /** Creates the administrator account when the server has none yet. */
 export async function ensureAccount(request: APIRequestContext): Promise<void> {
@@ -44,6 +44,18 @@ function tabButton(page: Page, tab: Tab) {
 /** Opens a tab of the web interface and waits for its first heading. */
 export async function openTab(page: Page, tab: Tab): Promise<void> {
   await tabButton(page, tab).click();
-  const heading = tab === 'Settings' ? 'Weather location' : tab;
+  const heading = tab === 'Settings' ? 'Language on the TVs' : tab;
   await expect(page.getByRole('heading', { name: heading, exact: true })).toBeVisible();
+}
+
+/** Opens the Integrations page and the setup of one integration, by the name on its card; returns the setup. */
+export async function openIntegration(page: Page, name: string): Promise<Locator> {
+  await openTab(page, 'Integrations');
+  const setup = page.getByRole('region', { name: `Set up ${name}`, exact: true });
+  if (!(await setup.isVisible())) {
+    const setUp = page.getByRole('button', { name: `Set up ${name}`, exact: true });
+    await setUp.or(page.getByRole('button', { name: `Manage ${name}`, exact: true })).click();
+  }
+  await expect(setup).toBeVisible();
+  return setup;
 }

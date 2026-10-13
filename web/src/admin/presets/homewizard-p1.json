@@ -1,0 +1,53 @@
+{
+  "id": "homewizard-p1",
+  "name": "HomeWizard P1 meter",
+  "description": "Power now, electricity in and out, and gas, from the meter on your smart meter",
+  "category": "energy",
+  "icon": "bolt",
+  "tags": ["local", "no-key", "nl"],
+  "docs": "https://api-documentation.homewizard.com/docs/v1/measurement",
+  "comment": "API v1 over plain HTTP. Every field is optional and left out when the smart meter does not send it. total_gas_m3 is the older top-level gas field; whether newer firmware only reports gas under external[] is unverified. HomeWizard will phase out v1 in favour of v2 (HTTPS with a token).",
+  "placeholders": [
+    {
+      "key": "ip",
+      "label": "IP address of the P1 meter",
+      "kind": "host",
+      "example": "192.168.1.50",
+      "hint": "In the HomeWizard Energy app, under Settings, Meters, your meter: turn on Local API. The app shows the IP address there too."
+    }
+  ],
+  "source": {
+    "name": "P1 meter",
+    "url": "http://{ip}/api/v1/data",
+    "method": "GET",
+    "body": "",
+    "auth": { "kind": "none", "name": "" },
+    "headers": [],
+    "intervalSeconds": 30,
+    "sample": {
+      "smr_version": 50,
+      "meter_model": "ISKRA 2M550T-101",
+      "active_tariff": 2,
+      "total_power_import_kwh": 13779.338,
+      "total_power_export_kwh": 0,
+      "active_power_w": -543,
+      "active_power_average_w": 123,
+      "montly_power_peak_w": 1111,
+      "total_gas_m3": 2569.646
+    }
+  },
+  "values": [
+    { "name": "Power now", "path": "active_power_w", "unit": "W", "decimals": 0 },
+    { "name": "Electricity in", "path": "total_power_import_kwh", "unit": "kWh", "decimals": 1 },
+    { "name": "Electricity out", "path": "total_power_export_kwh", "unit": "kWh", "decimals": 1 },
+    { "name": "Gas", "path": "total_gas_m3", "unit": "m³", "decimals": 2 }
+  ],
+  "lists": [],
+  "rule": {
+    "for": "Power now",
+    "summary": "show Power now in the warning colour above 3000 W",
+    "when": "value > 3000",
+    "tone": "warn",
+    "message": "Using a lot of power"
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "id": "homewizard-water",
+  "name": "HomeWizard water meter",
+  "description": "Water flowing now and the total, from the meter on your water meter",
+  "category": "home",
+  "icon": "drop",
+  "tags": ["local", "no-key", "nl"],
+  "docs": "https://api-documentation.homewizard.com/docs/v1/measurement",
+  "comment": "API v1 over plain HTTP. The water meter only answers while it is powered by USB, not on batteries. total_liter_offset_m3 is left out: the documentation calls it still in development.",
+  "placeholders": [
+    {
+      "key": "ip",
+      "label": "IP address of the water meter",
+      "kind": "host",
+      "example": "192.168.1.52",
+      "hint": "The meter needs USB power. In the HomeWizard Energy app, under Settings, Meters, your meter: turn on Local API."
+    }
+  ],
+  "source": {
+    "name": "Water meter",
+    "url": "http://{ip}/api/v1/data",
+    "method": "GET",
+    "body": "",
+    "auth": { "kind": "none", "name": "" },
+    "headers": [],
+    "intervalSeconds": 30,
+    "sample": { "wifi_strength": 100, "total_liter_m3": 123.456, "active_liter_lpm": 7.2, "total_liter_offset_m3": 0 }
+  },
+  "values": [
+    { "name": "Flow", "path": "active_liter_lpm", "unit": "l/min", "decimals": 1 },
+    { "name": "Water total", "path": "total_liter_m3", "unit": "m³", "decimals": 3 }
+  ],
+  "lists": []
+}

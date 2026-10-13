@@ -1,0 +1,58 @@
+{
+  "id": "jellyfin",
+  "name": "Jellyfin",
+  "description": "Who is watching what on your Jellyfin server",
+  "category": "media",
+  "icon": "play",
+  "tags": ["local"],
+  "docs": "https://api.jellyfin.org/#tag/Session/operation/GetSessions",
+  "comment": "GET /Sessions answers with a list at the top level, so the list's path is $. Sessions where nothing plays are in it too, without NowPlayingItem; the suggested rule hides them. The key goes in the ApiKey query parameter, which Jellyfin always accepts; X-Emby-Token only works with legacy authorization switched on. That the JSON is PascalCase by default was read from the source, not traced through the formatter (unverified).",
+  "placeholders": [
+    {
+      "key": "server",
+      "label": "Address of your Jellyfin server",
+      "kind": "origin",
+      "example": "http://192.168.1.20:8096"
+    }
+  ],
+  "source": {
+    "name": "Jellyfin",
+    "url": "{server}/Sessions?activeWithinSeconds=960",
+    "method": "GET",
+    "body": "",
+    "auth": { "kind": "query", "name": "ApiKey" },
+    "secretHint": "In Jellyfin, under Dashboard, API Keys: make a key for GDash.",
+    "headers": [],
+    "intervalSeconds": 30,
+    "sample": [
+      {
+        "UserName": "anna",
+        "DeviceName": "Living room TV",
+        "Client": "Jellyfin Android TV",
+        "PlayState": { "IsPaused": false },
+        "NowPlayingItem": { "Name": "Pilot", "SeriesName": "Some Show", "Type": "Episode" }
+      },
+      { "UserName": "anna", "DeviceName": "Chrome", "Client": "Jellyfin Web", "PlayState": { "IsPaused": false } }
+    ]
+  },
+  "values": [],
+  "lists": [
+    {
+      "name": "Now playing",
+      "path": "$",
+      "columns": [
+        { "name": "Who", "path": "UserName" },
+        { "name": "Title", "path": "NowPlayingItem.Name" },
+        { "name": "Series", "path": "NowPlayingItem.SeriesName" }
+      ]
+    }
+  ],
+  "rule": {
+    "for": "Now playing",
+    "summary": "hide the sessions where nothing plays",
+    "when": "row.NowPlayingItem == null",
+    "tone": "",
+    "message": "",
+    "hide": true
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "id": "homewizard-kwh",
+  "name": "HomeWizard kWh meter",
+  "description": "Power and energy of one group or device, such as solar panels or a heat pump",
+  "category": "energy",
+  "icon": "bolt",
+  "tags": ["local", "no-key", "nl"],
+  "docs": "https://api-documentation.homewizard.com/docs/v1/measurement",
+  "comment": "API v1 over plain HTTP, the same endpoint as the P1 meter with the kWh meter's fields. The field names are from the documentation; the numbers in the sample are illustrative.",
+  "placeholders": [
+    {
+      "key": "ip",
+      "label": "IP address of the kWh meter",
+      "kind": "host",
+      "example": "192.168.1.51",
+      "hint": "In the HomeWizard Energy app, under Settings, Meters, your meter: turn on Local API."
+    }
+  ],
+  "source": {
+    "name": "kWh meter",
+    "url": "http://{ip}/api/v1/data",
+    "method": "GET",
+    "body": "",
+    "auth": { "kind": "none", "name": "" },
+    "headers": [],
+    "intervalSeconds": 30,
+    "sample": {
+      "total_power_import_kwh": 30.511,
+      "total_power_export_kwh": 85.951,
+      "active_power_w": 543,
+      "active_voltage_v": 228.472,
+      "active_current_a": 2.346
+    }
+  },
+  "values": [
+    { "name": "Power", "path": "active_power_w", "unit": "W", "decimals": 0 },
+    { "name": "Energy in", "path": "total_power_import_kwh", "unit": "kWh", "decimals": 1 },
+    { "name": "Energy out", "path": "total_power_export_kwh", "unit": "kWh", "decimals": 1 }
+  ],
+  "lists": []
+}

@@ -1,0 +1,44 @@
+{
+  "id": "mealie",
+  "name": "Mealie",
+  "description": "What is on today’s meal plan in Mealie",
+  "category": "lists",
+  "icon": "note",
+  "tags": ["local"],
+  "docs": "https://mealie.io/documentation/getting-started/api-usage/",
+  "comment": "Mealie 2.0 and later; 1.x used /api/groups/mealplans/today. Checked against the source (routes/households/controller_mealplan.py, schema/meal_plan). The answer is a list at the top level, in camelCase; recipe is null for an entry that is only a note, which has a title instead. Today is the server's day, so Mealie needs the right TZ.",
+  "placeholders": [
+    {
+      "key": "server",
+      "label": "Address of Mealie",
+      "kind": "origin",
+      "example": "http://192.168.1.20:9000"
+    }
+  ],
+  "source": {
+    "name": "Meal plan",
+    "url": "{server}/api/households/mealplans/today",
+    "method": "GET",
+    "body": "",
+    "auth": { "kind": "bearer", "name": "" },
+    "secretHint": "In Mealie, under your profile, API Tokens: make a token for GDash.",
+    "headers": [],
+    "intervalSeconds": 900,
+    "sample": [
+      { "date": "2026-10-13", "entryType": "dinner", "title": "", "text": "", "recipe": { "name": "Pasta pesto", "slug": "pasta-pesto", "totalTime": "30 min" } },
+      { "date": "2026-10-13", "entryType": "lunch", "title": "Leftovers", "text": "", "recipe": null }
+    ]
+  },
+  "values": [],
+  "lists": [
+    {
+      "name": "Today",
+      "path": "$",
+      "columns": [
+        { "name": "Meal", "path": "entryType" },
+        { "name": "Recipe", "path": "recipe.name" },
+        { "name": "Note", "path": "title" }
+      ]
+    }
+  ]
+}

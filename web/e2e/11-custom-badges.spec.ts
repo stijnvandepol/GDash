@@ -1,6 +1,6 @@
 import { createServer, type Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
-import { expect, openTab, test } from './fixtures';
+import { expect, openIntegration, openTab, test } from './fixtures';
 
 // A stand-in for a household's own API that says who is home, in the
 // shape of a Home Assistant template sensor.
@@ -67,10 +67,9 @@ test('the editor offers badges with a hint on what turns one on', async ({ admin
   await expect(page.getByRole('combobox', { name: 'Value 1', exact: true }).locator('option:checked')).toHaveText('(custom path)');
 });
 
-test('values named in Settings are chosen by name in the editor, with a rule built from them', async ({ adminPage: page }) => {
-  await openTab(page, 'Settings');
-  await page.getByRole('navigation', { name: 'Settings' }).getByRole('button', { name: 'Data sources' }).click();
-  const row = page.getByRole('listitem').filter({ hasText: 'Presence' });
+test('values named under Integrations are chosen by name in the editor, with a rule built from them', async ({ adminPage: page }) => {
+  const setup = await openIntegration(page, 'Custom APIs');
+  const row = setup.getByRole('listitem').filter({ hasText: 'Presence' });
   await row.getByRole('button', { name: 'Values' }).click();
   await page.getByRole('button', { name: 'Fetch the API now' }).click();
   await page.getByRole('button', { name: /^aanwezigheid_anna/ }).click();

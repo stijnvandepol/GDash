@@ -1,0 +1,41 @@
+{
+  "id": "quatt",
+  "name": "Quatt heat pump",
+  "description": "Heat pump output, water and room temperatures from the Quatt CIC",
+  "category": "home",
+  "icon": "house",
+  "tags": ["local", "no-key", "nl"],
+  "docs": "https://github.com/marcoboers/home-assistant-quatt",
+  "comment": "Quatt has no public documentation: the address and keys are those of the Home Assistant Quatt integration. The beta path may change with a CIC update. hp1.power is the heat it gives, hp1.powerInput the electricity it uses. hp2 only exists on a Duo. The layout of the whole answer is put together from the integration's keys, not captured (unverified).",
+  "placeholders": [
+    {
+      "key": "ip",
+      "label": "IP address of the CIC",
+      "kind": "host",
+      "example": "192.168.1.63",
+      "hint": "Without a port. If your router knows the name, cic works too."
+    }
+  ],
+  "source": {
+    "name": "Quatt",
+    "url": "http://{ip}:8080/beta/feed/data.json",
+    "method": "GET",
+    "body": "",
+    "auth": { "kind": "none", "name": "" },
+    "headers": [],
+    "intervalSeconds": 30,
+    "sample": {
+      "hp1": { "temperatureOutside": 8.5, "temperatureWaterIn": 31.2, "temperatureWaterOut": 35.9, "powerInput": 820, "power": 3450 },
+      "thermostat": { "otFtRoomSetpoint": 20.0, "otFtRoomTemperature": 19.6 },
+      "qc": { "supervisoryControlMode": 2, "flowRateFiltered": 640.0 }
+    }
+  },
+  "values": [
+    { "name": "Heat output", "path": "hp1.power", "unit": "W", "decimals": 0 },
+    { "name": "Electricity used", "path": "hp1.powerInput", "unit": "W", "decimals": 0 },
+    { "name": "Water out", "path": "hp1.temperatureWaterOut", "unit": "°C", "decimals": 1 },
+    { "name": "Outside", "path": "hp1.temperatureOutside", "unit": "°C", "decimals": 1 },
+    { "name": "Room", "path": "thermostat.otFtRoomTemperature", "unit": "°C", "decimals": 1 }
+  ],
+  "lists": []
+}

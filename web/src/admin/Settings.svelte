@@ -1,48 +1,30 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { api, type Settings, type SourceStatus } from './api';
+  import { api, type Settings } from './api';
   import { errorMessage } from './errors';
-  import { newestOnly } from './newest';
   import AccountSetting from './AccountSetting.svelte';
   import ActivityLog from './ActivityLog.svelte';
   import BackupSetting from './BackupSetting.svelte';
-  import HomeAssistantSetting from './HomeAssistantSetting.svelte';
-  import HomeySetting from './HomeySetting.svelte';
-  import CustomSourceSetting from './CustomSourceSetting.svelte';
-  import LocationSetting from './LocationSetting.svelte';
-  import PhotoSetting from './PhotoSetting.svelte';
   import AnnouncementSetting from './AnnouncementSetting.svelte';
-  import ApiTokenSetting from './ApiTokenSetting.svelte';
-  import SourceList from './SourceList.svelte';
   import TwoStepSetting from './TwoStepSetting.svelte';
   import UpdateSetting from './UpdateSetting.svelte';
 
   let { onSessionEnded }: { onSessionEnded: () => void } = $props();
 
-  // The server allows these numbers; internal/settings holds the same.
-  const MAX_NEWS_FEEDS = 5;
-  const MAX_CALENDARS = 10;
-  // A new source is fetched within seconds; reloading shows its status.
-  const STATUS_REFRESH_MS = 5_000;
-
   let settings = $state<Settings | null>(null);
-  let status = $state<Record<string, SourceStatus>>({});
   let loadError = $state('');
+  let languageError = $state('');
 
   const handle = (err: unknown) => errorMessage(err, onSessionEnded);
 
-  let languageError = $state('');
-
-  // Settings is long; it is shown in four groups, one at a time, so a
-  // household finds a setting by what it is about.
+  // The data sources live under Integrations; what is left is shown in two
+  // groups, one at a time.
   const SECTIONS = [
-    { id: 'sources', label: 'Data sources', hint: 'Weather, news, calendars, Home Assistant, Homey and custom APIs' },
-    { id: 'screens', label: 'Screens', hint: 'Language on the TVs and photos' },
-    { id: 'automations', label: 'Automations', hint: 'API tokens and announcements' },
+    { id: 'screens', label: 'Screens', hint: 'The language on the TVs and a test announcement' },
     { id: 'account', label: 'Account', hint: 'Password, two-step login, backup, updates and recent activity' },
   ] as const;
   type Section = (typeof SECTIONS)[number]['id'];
-  let section = $state<Section>('sources');
+  let section = $state<Section>('screens');
 
   async function chooseLanguage(language: string) {
     languageError = '';
@@ -54,20 +36,11 @@
     }
   }
 
-  onMount(() => {
-    void load();
-    const timer = setInterval(() => void load(), STATUS_REFRESH_MS);
-    return () => clearInterval(timer);
-  });
-
-  const fetchSettings = newestOnly(() => api.settings());
+  onMount(() => void load());
 
   async function load() {
     try {
-      const newest = await fetchSettings();
-      if (!newest) return;
-      settings = newest.value.settings;
-      status = newest.value.status;
+      settings = (await api.settings()).settings;
       loadError = '';
     } catch (err) {
       loadError = handle(err);
@@ -80,8 +53,7 @@
     <h1 class="page-title">Settings</h1>
     <p class="page-lede">{SECTIONS.find((s) => s.id === section)?.hint}.</p>
   </div>
-  <!-- A selector, like the mode switch on a device: four positions, one
-       pressed in. -->
+  <!-- A selector, like the mode switch on a device: one position pressed in. -->
   <nav class="subnav" aria-label="Settings">
     {#each SECTIONS as s, i (s.id)}
       <button class="subtab" aria-current={section === s.id ? 'page' : undefined} onclick={() => (section = s.id)}>
@@ -93,81 +65,11 @@
 </header>
 
 {#if loadError}<p class="error">{loadError}</p>{/if}
-{#if section === 'sources' || section === 'screens'}
-  {#if settings}
-    {#if section === 'sources'}
-    <LocationSetting location={settings.location} status={status['weather.current']} onchanged={load} onerror={handle} />
-
-    <SourceList
-      title="News"
-      intro="RSS or Atom feeds. With more than one, the newest headlines of all feeds are shown together."
-      items={settings.newsFeeds.map((f) => ({ id: f.id, name: f.name, detail: f.url }))}
-      status={status['news.default']}
-      max={MAX_NEWS_FEEDS}
-      namePlaceholder="NOS"
-      urlPlaceholder="https://feeds.nos.nl/nosnieuwsalgemeen"
-      onadd={async (name, url) => {
-        await api.addNewsFeed(name, url);
-        await load();
-      }}
-      onremove={async (id) => {
-        await api.deleteNewsFeed(id);
-        await load();
-      }}
-      onerror={handle}
-    />
-
-    <SourceList
-      title="Calendars"
-      intro="Paste the secret iCal address of a Google, Outlook or iCloud calendar. Anyone with it can read the calendar, so GDash stores it encrypted and never shows it again."
-      items={settings.calendars.map((c) => ({
-        id: c.id,
-        name: c.name,
-        detail: c.host,
-        warning: c.unreadable ? 'This address cannot be read on this server. Remove it and add it again.' : undefined,
-        color: c.color,
-      }))}
-      status={status['calendar.default']}
-      max={MAX_CALENDARS}
-      secret
-      namePlaceholder="Family"
-      urlPlaceholder="https://calendar.google.com/calendar/ical/…/basic.ics"
-      onadd={async (name, url) => {
-        await api.addCalendar(name, url);
-        await load();
-      }}
-      onremove={async (id) => {
-        await api.deleteCalendar(id);
-        await load();
-      }}
-      oncolor={async (id, color) => {
-        await api.setCalendarColor(id, color);
-        await load();
-      }}
-      onerror={handle}
-    />
-
-    <HomeAssistantSetting
-      connection={settings.homeAssistant}
-      status={status['homeassistant.default']}
-      onchanged={load}
-      onerror={handle}
-    />
-
-    <HomeySetting
-      connection={settings.homey}
-      status={settings.homey?.mode === 'push' ? status['homey.snapshot'] : (status['homey.default'] ?? status['homey.users'])}
-      onchanged={load}
-      onmanagetokens={() => (section = 'automations')}
-      onerror={handle}
-    />
-
-    <CustomSourceSetting {status} onchanged={load} onmanagetokens={() => (section = 'automations')} onerror={handle} />
-
-    {:else}
-    <section class="card">
-      <h2>Language on the TVs</h2>
-      <p class="muted">Days, dates, weather and other texts on the screens. This web interface stays in English.</p>
+{#if section === 'screens'}
+  <section class="card">
+    <h2>Language on the TVs</h2>
+    <p class="muted">Days, dates, weather and other texts on the screens. This web interface stays in English.</p>
+    {#if settings}
       <select
         aria-label="Language on the TVs"
         value={settings.language}
@@ -178,20 +80,13 @@
         <option value="de">Deutsch</option>
         <option value="fr">Français</option>
       </select>
-      {#if languageError}<p class="error">{languageError}</p>{/if}
-    </section>
+    {:else if !loadError}
+      <p class="muted">Loading…</p>
     {/if}
-  {:else if !loadError}
-    <p class="muted">Loading…</p>
-  {/if}
-{/if}
-
-{#if section === 'screens'}
-  <PhotoSetting onerror={handle} />
-{:else if section === 'automations'}
-  <ApiTokenSetting onerror={handle} />
+    {#if languageError}<p class="error">{languageError}</p>{/if}
+  </section>
   <AnnouncementSetting onerror={handle} />
-{:else if section === 'account'}
+{:else}
   <AccountSetting onerror={handle} />
   <TwoStepSetting onerror={handle} />
   <BackupSetting onerror={handle} />

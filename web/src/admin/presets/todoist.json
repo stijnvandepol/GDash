@@ -1,0 +1,61 @@
+{
+  "id": "todoist",
+  "name": "Todoist",
+  "description": "Your tasks for today, or any Todoist filter, as a list",
+  "category": "lists",
+  "icon": "checklist",
+  "tags": ["free-key"],
+  "docs": "https://developer.todoist.com/api/v1/",
+  "comment": "API v1, GET /api/v1/tasks/filter with a required query; the answer is paginated ({results, next_cursor}), 50 tasks by default. priority runs from 1 (normal) to 4 (urgent), the reverse of the app's p1 label. The rate limit of these endpoints is not published (unverified).",
+  "placeholders": [
+    {
+      "key": "filter",
+      "label": "Filter",
+      "kind": "text",
+      "example": "today | overdue",
+      "hint": "A Todoist filter as you type it in the app, such as today, overdue or #Household."
+    }
+  ],
+  "source": {
+    "name": "Todoist",
+    "url": "https://api.todoist.com/api/v1/tasks/filter?query={filter}",
+    "method": "GET",
+    "body": "",
+    "auth": { "kind": "bearer", "name": "" },
+    "secretHint": "In Todoist, under Settings, Integrations, Developer: copy the API token.",
+    "headers": [],
+    "intervalSeconds": 300,
+    "sample": {
+      "results": [
+        {
+          "id": "6XGgmFVcrG5RRjVr",
+          "content": "Buy milk",
+          "description": "",
+          "priority": 4,
+          "checked": false,
+          "labels": ["home"],
+          "due": { "date": "2026-10-13", "timezone": null, "string": "today", "lang": "en", "is_recurring": false }
+        }
+      ],
+      "next_cursor": null
+    }
+  },
+  "values": [],
+  "lists": [
+    {
+      "name": "Tasks",
+      "path": "results",
+      "columns": [
+        { "name": "Task", "path": "content" },
+        { "name": "Due", "path": "due.date" }
+      ]
+    }
+  ],
+  "rule": {
+    "for": "Tasks",
+    "summary": "show urgent tasks in the warning colour",
+    "when": "row.priority == 4",
+    "tone": "warn",
+    "message": ""
+  }
+}

@@ -1,0 +1,63 @@
+{
+  "id": "fronius",
+  "name": "Fronius inverter",
+  "description": "Solar power, the grid and the house, from a Fronius inverter on your network",
+  "category": "energy",
+  "icon": "sun",
+  "tags": ["local", "no-key"],
+  "docs": "https://www.fronius.com/~/downloads/Solar%20Energy/Operating%20Instructions/42%2C0410%2C2012.pdf",
+  "comment": "Solar API v1, GetPowerFlowRealtimeData, checked against the PDF and the pyfronius fixture. P_Grid is positive when power comes from the grid and negative when it goes to it; P_Load is negative while the house uses power. P_PV is null while the inverter sleeps; P_Grid and P_Load are null without a meter. E_Day is always null on GEN24, Tauro and Verto, so only the total is named. Energy is in Wh.",
+  "placeholders": [
+    {
+      "key": "ip",
+      "label": "IP address of the inverter",
+      "kind": "host",
+      "example": "192.168.1.60",
+      "hint": "The inverter's web page shows it, or your router's list of devices."
+    }
+  ],
+  "source": {
+    "name": "Fronius",
+    "url": "http://{ip}/solar_api/v1/GetPowerFlowRealtimeData.fcgi",
+    "method": "GET",
+    "body": "",
+    "auth": { "kind": "none", "name": "" },
+    "headers": [],
+    "intervalSeconds": 30,
+    "sample": {
+      "Body": {
+        "Data": {
+          "Site": {
+            "E_Day": null,
+            "E_Total": 410303.56,
+            "Meter_Location": "grid",
+            "Mode": "meter",
+            "P_Akku": null,
+            "P_Grid": -350.2,
+            "P_Load": -812.4,
+            "P_PV": 1162.6,
+            "rel_Autonomy": 100.0,
+            "rel_SelfConsumption": 69.9
+          },
+          "Version": "13"
+        }
+      },
+      "Head": { "Status": { "Code": 0, "Reason": "", "UserMessage": "" }, "Timestamp": "2026-10-13T09:00:00+00:00" }
+    }
+  },
+  "values": [
+    { "name": "Solar now", "path": "Body.Data.Site.P_PV", "unit": "W", "decimals": 0 },
+    { "name": "Grid", "path": "Body.Data.Site.P_Grid", "unit": "W", "decimals": 0 },
+    { "name": "House", "path": "Body.Data.Site.P_Load", "unit": "W", "decimals": 0 },
+    { "name": "Self-consumption", "path": "Body.Data.Site.rel_SelfConsumption", "unit": "%", "decimals": 0 },
+    { "name": "Solar total", "path": "Body.Data.Site.E_Total", "unit": "Wh", "decimals": 0 }
+  ],
+  "lists": [],
+  "rule": {
+    "for": "Grid",
+    "summary": "show Grid in the good colour while power goes back to the grid",
+    "when": "value < 0",
+    "tone": "ok",
+    "message": "Returning power"
+  }
+}

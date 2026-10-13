@@ -1,0 +1,48 @@
+{
+  "id": "tibber",
+  "name": "Tibber",
+  "description": "The electricity price of this hour on your Tibber contract",
+  "category": "energy",
+  "icon": "bolt",
+  "tags": ["free-key"],
+  "docs": "https://developer.tibber.com/docs/guides/calling-api",
+  "comment": "GraphQL over POST with a bearer token; GDash sends the User-Agent that Tibber asks for. Tibber asks to fetch prices sparingly and publishes no numeric limit, so it refreshes every 15 minutes. currentSubscription is null for a home without an active contract. The level values (VERY_CHEAP to VERY_EXPENSIVE) come from client libraries, not the guide (unverified).",
+  "placeholders": [],
+  "source": {
+    "name": "Tibber price",
+    "url": "https://api.tibber.com/v1-beta/gql",
+    "method": "POST",
+    "body": "{\"query\":\"{viewer{homes{currentSubscription{priceInfo{current{total currency level startsAt}}}}}}\"}",
+    "auth": { "kind": "bearer", "name": "" },
+    "secretHint": "Make a personal access token at developer.tibber.com, under Access Token.",
+    "headers": [],
+    "intervalSeconds": 900,
+    "sample": {
+      "data": {
+        "viewer": {
+          "homes": [
+            {
+              "currentSubscription": {
+                "priceInfo": {
+                  "current": { "total": 0.3626, "currency": "EUR", "level": "NORMAL", "startsAt": "2026-10-13T19:00:00+02:00" }
+                }
+              }
+            }
+          ]
+        }
+      }
+    }
+  },
+  "values": [
+    { "name": "Price now", "path": "data.viewer.homes[0].currentSubscription.priceInfo.current.total", "unit": "€/kWh", "decimals": 3 },
+    { "name": "Price level", "path": "data.viewer.homes[0].currentSubscription.priceInfo.current.level" }
+  ],
+  "lists": [],
+  "rule": {
+    "for": "Price level",
+    "summary": "show Price level in the warning colour when it is expensive",
+    "when": "value == \"EXPENSIVE\" or value == \"VERY_EXPENSIVE\"",
+    "tone": "warn",
+    "message": "Expensive now"
+  }
+}

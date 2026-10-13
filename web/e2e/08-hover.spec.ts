@@ -55,8 +55,11 @@ for (const colorScheme of ['light', 'dark'] as const) {
     await page.getByRole('button', { name: 'Edit', exact: true }).first().click();
     found.push(...(await lowContrastOnHover(page)));
 
+    await openTab(page, 'Integrations');
+    found.push(...(await lowContrastOnHover(page)));
+
     await openTab(page, 'Settings');
-    for (const part of ['Data sources', 'Screens', 'Automations', 'Account']) {
+    for (const part of ['Screens', 'Account']) {
       await page.getByRole('navigation', { name: 'Settings' }).getByRole('button', { name: part }).click();
       found.push(...(await lowContrastOnHover(page)));
     }

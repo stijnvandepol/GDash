@@ -1,0 +1,43 @@
+{
+  "id": "adguard-home",
+  "name": "AdGuard Home",
+  "description": "DNS queries and how many were blocked, from AdGuard Home",
+  "category": "home",
+  "icon": "shield",
+  "tags": ["local"],
+  "docs": "https://github.com/AdguardTeam/AdGuardHome/blob/master/openapi/openapi.yaml",
+  "comment": "GET /control/stats with basic authentication, from the OpenAPI file. The top_* lists are left out: each item's only key is the domain itself, which a column cannot name. dns_queries[-1] is the last hour only while time_units is hours. avg_processing_time is in seconds.",
+  "placeholders": [
+    {
+      "key": "server",
+      "label": "Address of AdGuard Home",
+      "kind": "origin",
+      "example": "http://192.168.1.2:3000"
+    }
+  ],
+  "source": {
+    "name": "AdGuard Home",
+    "url": "{server}/control/stats",
+    "method": "GET",
+    "body": "",
+    "auth": { "kind": "basic", "name": "" },
+    "secretHint": "The user name and password you log in to AdGuard Home with.",
+    "headers": [],
+    "intervalSeconds": 60,
+    "sample": {
+      "time_units": "hours",
+      "num_dns_queries": 48213,
+      "num_blocked_filtering": 6120,
+      "avg_processing_time": 0.0123,
+      "dns_queries": [1800, 2100, 1950],
+      "blocked_filtering": [220, 260, 240]
+    }
+  },
+  "values": [
+    { "name": "Queries", "path": "num_dns_queries", "decimals": 0 },
+    { "name": "Blocked", "path": "num_blocked_filtering", "decimals": 0 },
+    { "name": "Queries last hour", "path": "dns_queries[-1]", "decimals": 0 },
+    { "name": "Blocked last hour", "path": "blocked_filtering[-1]", "decimals": 0 }
+  ],
+  "lists": []
+}

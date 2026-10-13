@@ -1,6 +1,6 @@
 import { createServer, type Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
-import { expect, openTab, test } from './fixtures';
+import { expect, openIntegration, openTab, test } from './fixtures';
 
 // A stand-in for a Homey Pro's local Web API: a thermostat and a door in
 // the kitchen, and four people of whom Anna and Cas are home.
@@ -58,9 +58,9 @@ test.afterAll(async () => {
   await new Promise((resolve) => homey.close(resolve));
 });
 
-test('Homey is connected under Settings, and a wrong key is named', async ({ adminPage: page }) => {
-  await openTab(page, 'Settings');
-  const section = page.locator('section.card', { has: page.getByRole('heading', { name: 'Homey', exact: true }) });
+test('Homey is connected under Integrations, and a wrong key is named', async ({ adminPage: page }) => {
+  const setup = await openIntegration(page, 'Homey');
+  const section = setup.locator('section.card', { has: page.getByRole('heading', { name: 'Homey', exact: true }) });
   await section.getByRole('textbox', { name: 'Address' }).fill(homeyUrl);
   await section.getByRole('textbox', { name: 'API key' }).fill('not-the-key');
   await section.getByRole('button', { name: 'Connect' }).click();
