@@ -16,6 +16,8 @@ import {
   secretPlaceholder,
   suggestName,
   toInput,
+  newLogin,
+  withLogin,
 } from './customSources';
 
 const source: CustomSource = {
@@ -136,5 +138,29 @@ describe('pushing', () => {
     expect(describePush(undefined, 60)).toBe('Nothing received yet.');
     expect(describePush(at, 60, after(60))).toBe('Last data received 1 minute ago.');
     expect(describePush(at, 60, after(240))).toContain('late');
+  });
+});
+
+describe('logging in first', () => {
+  const login = { url: 'http://pi.hole/api/auth', body: '{"password": "{secret}"}', tokenPath: 'session.sid', place: 'header' as const, validityPath: 'session.validity' };
+
+  it('starts from the API address, filled in as Pi-hole 6 wants it', () => {
+    expect(newLogin('http://pi.hole:8080/api/stats/summary')).toEqual({ ...login, url: 'http://pi.hole:8080/api/auth' });
+    expect(newLogin('').url).toBe('');
+  });
+
+  it('copies the login of a stored source and never its password', () => {
+    const stored: CustomSource = { ...source, auth: { kind: 'login', name: 'X-FTL-SID', secretSet: true, login } };
+    const input = toInput(stored);
+    expect(input.auth).toEqual({ kind: 'login', name: 'X-FTL-SID', secret: '', login });
+    expect(input.auth.login).not.toBe(login);
+  });
+
+  it('sends a login only with its own kind, and no header name for a bearer token', () => {
+    const base = toInput(source);
+    expect(withLogin({ ...base, auth: { ...base.auth, login } }).auth).toEqual({ kind: 'header', name: 'X-API-Key', secret: '' });
+    const bearer = withLogin({ ...base, auth: { kind: 'login', name: 'X-FTL-SID', secret: 'pw', login: { ...login, place: 'bearer' } } });
+    expect(bearer.auth.name).toBe('');
+    expect(bearer.auth.login?.place).toBe('bearer');
   });
 });

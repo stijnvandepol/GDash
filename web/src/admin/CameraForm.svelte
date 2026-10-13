@@ -73,7 +73,8 @@
   <label>
     Authentication
     <select bind:value={form.auth.kind}>
-      {#each AUTH_KINDS as a (a.kind)}<option value={a.kind}>{a.kind === 'none' ? 'None' : a.label}</option>{/each}
+      <!-- A camera has no session to log in for; only a custom API does. -->
+      {#each AUTH_KINDS.filter((a) => a.kind !== 'login') as a (a.kind)}<option value={a.kind}>{a.kind === 'none' ? 'None' : a.label}</option>{/each}
     </select>
     {#if fieldErrors['auth.kind']}<span class="field-error">{fieldErrors['auth.kind']}</span>{/if}
   </label>

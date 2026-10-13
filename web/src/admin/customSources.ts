@@ -1,4 +1,4 @@
-import type { CustomAuthKind, CustomSource, CustomSourceInput } from './api';
+import type { CustomAuthKind, CustomLogin, CustomSource, CustomSourceInput } from './api';
 import { parsePath } from './jsonPath';
 import { describeAge } from './status';
 
@@ -20,7 +20,32 @@ export const AUTH_KINDS: { kind: CustomAuthKind; label: string; nameLabel?: stri
   { kind: 'header', label: 'API key in a header', nameLabel: 'Header name', secretLabel: 'API key' },
   { kind: 'query', label: 'API key in the address', nameLabel: 'Parameter name', secretLabel: 'API key' },
   { kind: 'basic', label: 'User name and password', nameLabel: 'User name', secretLabel: 'Password' },
+  { kind: 'login', label: 'Log in first (a session, such as Pi-hole)', secretLabel: 'Password' },
 ];
+
+export const TOKEN_PLACES: { place: CustomLogin['place']; label: string; nameLabel?: string; placeholder?: string }[] = [
+  { place: 'header', label: 'In a header', nameLabel: 'Header name', placeholder: 'X-FTL-SID' },
+  { place: 'query', label: 'In the address', nameLabel: 'Parameter name', placeholder: 'sid' },
+  { place: 'bearer', label: 'As a bearer token (Authorization: Bearer)' },
+];
+
+/** A login for the form, filled in as Pi-hole v6 wants it apart from the address. */
+export function newLogin(url: string): CustomLogin {
+  let origin = '';
+  try {
+    origin = new URL(url).origin;
+  } catch {
+    // No address yet: the login address is typed by hand.
+  }
+  return { url: origin ? `${origin}/api/auth` : '', body: '{"password": "{secret}"}', tokenPath: 'session.sid', place: 'header', validityPath: 'session.validity' };
+}
+
+/** The input to send: a login only for the kind that logs in, and no header name for a bearer token. */
+export function withLogin(input: CustomSourceInput): CustomSourceInput {
+  const { login, ...auth } = input.auth;
+  if (auth.kind !== 'login' || !login) return { ...input, auth };
+  return { ...input, auth: { ...auth, name: login.place === 'bearer' ? '' : auth.name, login: { ...login } } };
+}
 
 export const MAX_HEADERS = 10;
 // The server takes a sample of at most 48 KB.
@@ -49,7 +74,7 @@ export function toInput(source: CustomSource): CustomSourceInput {
     url: source.url,
     method: source.method,
     body: source.body,
-    auth: { kind: source.auth.kind, name: source.auth.name, secret: '' },
+    auth: { kind: source.auth.kind, name: source.auth.name, secret: '', ...(source.auth.login ? { login: { ...source.auth.login } } : {}) },
     headers: source.headers.map((h) => ({ ...h })),
     intervalSeconds: source.intervalSeconds,
     sample: source.sample ?? null,

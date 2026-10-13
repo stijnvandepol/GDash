@@ -307,7 +307,21 @@ export interface DepartureStop {
   name: string;
 }
 
-export type CustomAuthKind = 'none' | 'bearer' | 'header' | 'query' | 'basic';
+export type CustomAuthKind = 'none' | 'bearer' | 'header' | 'query' | 'basic' | 'login';
+
+/** How a custom API that wants a session is logged in to; the password is the auth secret. */
+export interface CustomLogin {
+  /** On the same host as the API's address. */
+  url: string;
+  /** JSON with {secret} where the password goes. */
+  body: string;
+  /** Where the token is in the login's answer, such as session.sid. */
+  tokenPath: string;
+  /** In a header or address parameter named by the auth name, or as a bearer token. */
+  place: 'header' | 'query' | 'bearer';
+  /** Where the answer says how many seconds the token lasts, or empty. */
+  validityPath: string;
+}
 
 /** An extra request header of a custom API; a secret one comes back without its value. */
 export interface CustomHeader {
@@ -328,7 +342,7 @@ export interface CustomSource {
   url: string;
   method: 'GET' | 'POST';
   body: string;
-  auth: { kind: CustomAuthKind; name: string; secretSet: boolean };
+  auth: { kind: CustomAuthKind; name: string; secretSet: boolean; login?: CustomLogin };
   headers: CustomHeader[];
   intervalSeconds: number;
   /** A pasted answer to design widgets against, or null. */
@@ -370,7 +384,7 @@ export interface CustomSourceInput {
   url: string;
   method: 'GET' | 'POST';
   body: string;
-  auth: { kind: CustomAuthKind; name: string; secret: string };
+  auth: { kind: CustomAuthKind; name: string; secret: string; login?: CustomLogin };
   headers: CustomHeader[];
   intervalSeconds: number;
   sample: unknown;

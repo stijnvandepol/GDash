@@ -1,6 +1,19 @@
 <script lang="ts">
-  import { api, ApiError, type CustomSource, type CustomSourceInput } from './api';
-  import { AUTH_KINDS, INTERVALS, MAX_HEADERS, emptyInput, parseSample, pushInput, sampleText, secretPlaceholder, toInput } from './customSources';
+  import { api, ApiError, type CustomAuthKind, type CustomSource, type CustomSourceInput } from './api';
+  import {
+    AUTH_KINDS,
+    INTERVALS,
+    MAX_HEADERS,
+    TOKEN_PLACES,
+    emptyInput,
+    newLogin,
+    parseSample,
+    pushInput,
+    sampleText,
+    secretPlaceholder,
+    toInput,
+    withLogin,
+  } from './customSources';
 
   let {
     source,
@@ -26,6 +39,20 @@
   let busy = $state(false);
 
   const auth = $derived(AUTH_KINDS.find((a) => a.kind === form.auth.kind) ?? AUTH_KINDS[0]!);
+  const place = $derived(TOKEN_PLACES.find((p) => p.place === form.auth.login?.place));
+  // A header or parameter name: the API key's, or where a login's token goes.
+  const nameLabel = $derived(form.auth.kind === 'login' ? place?.nameLabel : auth.nameLabel);
+  const namePlaceholder = $derived(
+    form.auth.kind === 'login' ? (place?.placeholder ?? '') : form.auth.kind === 'header' ? 'X-API-Key' : form.auth.kind === 'query' ? 'appid' : '',
+  );
+
+  function chooseAuth(kind: CustomAuthKind) {
+    form.auth.kind = kind;
+    if (kind === 'login' && !form.auth.login) {
+      form.auth.login = newLogin(form.url);
+      form.auth.name ||= 'X-FTL-SID';
+    }
+  }
 
   async function save(event: SubmitEvent) {
     event.preventDefault();
@@ -41,7 +68,7 @@
       const input =
         form.mode === 'push'
           ? pushInput({ ...form, sample: parsed.sample })
-          : { ...form, body: form.method === 'POST' ? form.body : '', sample: parsed.sample };
+          : withLogin({ ...form, body: form.method === 'POST' ? form.body : '', sample: parsed.sample });
       const saved = source ? await api.saveCustomSource(source.id, input) : await api.addCustomSource(input);
       await onsaved(saved);
     } catch (err) {
@@ -127,15 +154,54 @@
     {/if}
     <label>
       Authentication
-      <select bind:value={form.auth.kind}>
+      <select value={form.auth.kind} onchange={(e) => chooseAuth((e.currentTarget as HTMLSelectElement).value as CustomAuthKind)}>
         {#each AUTH_KINDS as a (a.kind)}<option value={a.kind}>{a.label}</option>{/each}
       </select>
       {#if fieldErrors['auth.kind']}<span class="field-error">{fieldErrors['auth.kind']}</span>{/if}
     </label>
-    {#if auth.nameLabel}
+    {#if form.auth.kind === 'login' && form.auth.login}
+      <p class="small muted">
+        For an API that gives a session token for a password, such as Pi-hole 6: GDash posts the body to the login
+        address, reads the token from the answer and sends it with every request. It logs in again when the token runs
+        out or the API refuses it. The token is kept encrypted in memory only.
+      </p>
       <label>
-        {auth.nameLabel}
-        <input bind:value={form.auth.name} autocomplete="off" spellcheck="false" placeholder={form.auth.kind === 'header' ? 'X-API-Key' : form.auth.kind === 'query' ? 'appid' : ''} />
+        Login address
+        <input bind:value={form.auth.login.url} type="url" required autocomplete="off" spellcheck="false" placeholder="http://pi.hole/api/auth" />
+        <span class="small muted">On the same host as the address above.</span>
+        {#if fieldErrors['auth.login.url']}<span class="field-error">{fieldErrors['auth.login.url']}</span>{/if}
+      </label>
+      <label>
+        Login body (JSON)
+        <textarea bind:value={form.auth.login.body} rows="2" spellcheck="false" placeholder={'{"password": "{secret}"}'}></textarea>
+        <span class="small muted">Write {'{secret}'} where the password goes; GDash fills it in when it logs in.</span>
+        {#if fieldErrors['auth.login.body']}<span class="field-error">{fieldErrors['auth.login.body']}</span>{/if}
+      </label>
+      <div class="row">
+        <label>
+          Token in the answer
+          <input bind:value={form.auth.login.tokenPath} required autocomplete="off" spellcheck="false" placeholder="session.sid" />
+          {#if fieldErrors['auth.login.tokenPath']}<span class="field-error">{fieldErrors['auth.login.tokenPath']}</span>{/if}
+        </label>
+        <label>
+          <span>Seconds it lasts <span class="muted">(optional)</span></span>
+          <input bind:value={form.auth.login.validityPath} autocomplete="off" spellcheck="false" placeholder="session.validity" />
+          {#if fieldErrors['auth.login.validityPath']}<span class="field-error">{fieldErrors['auth.login.validityPath']}</span>{/if}
+        </label>
+      </div>
+      <label>
+        Send the token
+        <select bind:value={form.auth.login.place}>
+          {#each TOKEN_PLACES as p (p.place)}<option value={p.place}>{p.label}</option>{/each}
+        </select>
+        {#if fieldErrors['auth.login.place']}<span class="field-error">{fieldErrors['auth.login.place']}</span>{/if}
+      </label>
+    {/if}
+    {#if fieldErrors['auth.login']}<span class="field-error">{fieldErrors['auth.login']}</span>{/if}
+    {#if nameLabel}
+      <label>
+        {nameLabel}
+        <input bind:value={form.auth.name} autocomplete="off" spellcheck="false" placeholder={namePlaceholder} />
         {#if fieldErrors['auth.name']}<span class="field-error">{fieldErrors['auth.name']}</span>{/if}
       </label>
     {/if}
