@@ -10,6 +10,7 @@ import (
 	"time"
 	"unicode/utf8"
 
+	"github.com/stijnvandepol/gdash/internal/cast"
 	"github.com/stijnvandepol/gdash/internal/display"
 	"github.com/stijnvandepol/gdash/internal/schedule"
 	"github.com/stijnvandepol/gdash/internal/validation"
@@ -43,9 +44,6 @@ const maxNameLength = 60
 
 // validID is the slug used in /d/<id>.
 var validID = regexp.MustCompile(`^[a-z0-9][a-z0-9-]{0,31}$`)
-
-// validCastDeviceID matches the 32 hex characters Cast devices announce.
-var validCastDeviceID = regexp.MustCompile(`^[0-9a-f]{32}$`)
 
 // Display is one physical screen.
 type Display struct {
@@ -121,7 +119,7 @@ func Validate(d Display) error {
 	if name == "" || utf8.RuneCountInString(name) > maxNameLength || name != d.Name {
 		errs.Add("name", "use 1 to 60 characters without leading or trailing spaces")
 	}
-	if d.CastDeviceID != "" && !validCastDeviceID.MatchString(d.CastDeviceID) {
+	if d.CastDeviceID != "" && !cast.ValidDeviceID(d.CastDeviceID) {
 		errs.Add("castDeviceId", "must be the 32-character device ID from Cast discovery")
 	}
 	if d.DashboardID != "" && !display.ValidDashboardID(d.DashboardID) {

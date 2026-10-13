@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"regexp"
 	"strconv"
 	"time"
 
@@ -37,6 +38,12 @@ type Device struct {
 	// which can run a Cast session but cannot show a dashboard.
 	HasScreen bool `json:"hasScreen"`
 }
+
+// validDeviceID matches the 32 hex characters Cast devices announce.
+var validDeviceID = regexp.MustCompile(`^[0-9a-f]{32}$`)
+
+// ValidDeviceID reports whether id is a device ID as discovery finds it.
+func ValidDeviceID(id string) bool { return validDeviceID.MatchString(id) }
 
 // capabilityVideoOut is bit 0 of the "ca" TXT field: the device has video
 // output.
