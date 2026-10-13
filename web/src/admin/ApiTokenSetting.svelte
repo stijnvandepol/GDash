@@ -67,8 +67,9 @@
 <section class="card">
   <h2>API tokens</h2>
   <p class="muted">
-    Let an automation, such as Home Assistant, put announcements on the TVs. Make a token per automation, so you can
-    revoke one without touching the others. A token can only send announcements, nothing else.
+    Let an automation, such as Home Assistant or a HomeyScript, put announcements on the TVs or send data for custom
+    APIs that your system sends to GDash. Make a token per automation, so you can revoke one without touching the
+    others. A token can do both of these, nothing else.
   </p>
   {#if fresh}
     <div class="fresh">

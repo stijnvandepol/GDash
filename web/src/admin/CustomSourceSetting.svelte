@@ -4,22 +4,27 @@
   import { ask } from './confirm.svelte';
   import { api, type CustomSource, type CustomTest, type SourceStatus } from './api';
   import { describeStatus } from './status';
-  import { describeInterval, describeNamed, describeSize, hostOf } from './customSources';
+  import { describeInterval, describeNamed, describePush, describeSize, hostOf, isPushLate } from './customSources';
+  import CustomPushInstructions from './CustomPushInstructions.svelte';
   import CustomSourceForm from './CustomSourceForm.svelte';
   import CustomSourceValues from './CustomSourceValues.svelte';
   import JsonTree from './JsonTree.svelte';
 
   // internal/custom allows this many sources.
   const MAX_SOURCES = 20;
+  const TIME = new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
   let {
     status,
     onchanged,
+    onmanagetokens,
     onerror,
   }: {
     /** Data hub status by key; a source's key is custom.source.<id>. */
     status: Record<string, SourceStatus>;
     onchanged: () => Promise<void>;
+    /** Opens the API tokens, which a system that sends data needs. */
+    onmanagetokens: () => void;
     onerror: (err: unknown) => string;
   } = $props();
 
@@ -29,6 +34,8 @@
   let editing = $state<'new' | number | null>(null);
   // The id of the source whose values are being named, or null.
   let naming = $state<number | null>(null);
+  // The id of the source whose sending instructions are open, or null.
+  let sending = $state<number | null>(null);
   let testing = $state<number | null>(null);
   let result = $state<{ id: number; test: CustomTest } | null>(null);
   let picked = $state('');
@@ -45,6 +52,8 @@
 
   async function saved(source: CustomSource) {
     toast.success(`${source.name} is saved.`);
+    // A new source that is sent to GDash needs its address and token next.
+    if (editing === 'new' && source.mode === 'push') sending = source.id;
     editing = null;
     await load();
     await onchanged();
@@ -63,6 +72,7 @@
     try {
       await api.deleteCustomSource(source.id);
       if (result?.id === source.id) result = null;
+      if (sending === source.id) sending = null;
       await load();
       await onchanged();
     } catch (err) {
@@ -89,27 +99,39 @@
   <h2>Custom APIs</h2>
   <p class="muted">
     Show data from any API that answers with JSON, such as a public transport, energy or weather service, or a device
-    on your network. Add the API here and name the values it should show under Values; then add a Custom API widget
-    to a dashboard and choose them by name. Only APIs that a dashboard shows are fetched.
+    on your network, or JSON that your own system, such as a Homey or Home Assistant, sends to GDash. Add it here and
+    name the values it should show under Values; then add a Custom API widget to a dashboard and choose them by name.
+    Only APIs that a dashboard shows are fetched.
   </p>
   {#if sources.length > 0}
     <ul class="list">
       {#each sources as source (source.id)}
         {@const st = status[`custom.source.${source.id}`]}
+        {@const pushed = source.mode === 'push'}
+        {@const lastPushAt = st?.updatedAt ?? source.lastPushAt}
         <li>
           <div class="grow">
             <strong>{source.name}</strong>
-            <span class="muted small">{source.method} {hostOf(source.url)} · {describeInterval(source.intervalSeconds)} · {describeNamed(source)}</span>
+            {#if pushed}
+              <span class="muted small">Sent to GDash · Expected {describeInterval(source.intervalSeconds).toLowerCase()} · {describeNamed(source)}</span>
+            {:else}
+              <span class="muted small">{source.method} {hostOf(source.url)} · {describeInterval(source.intervalSeconds)} · {describeNamed(source)}</span>
+            {/if}
             {#if source.unreadable}
               <span class="field-error">Its secrets cannot be read on this server. Edit it and enter them again.</span>
+            {:else if pushed}
+              <span class="small" class:late={isPushLate(lastPushAt, source.intervalSeconds)}>{describePush(lastPushAt, source.intervalSeconds)}</span>
             {:else if st}
               <span class="small" class:error={st.failing}>{describeStatus(st)}</span>
             {:else}
               <span class="small muted">Not fetched: no dashboard shows it.</span>
             {/if}
           </div>
+          {#if pushed}
+            <button class="link" onclick={() => (sending = sending === source.id ? null : source.id)} aria-expanded={sending === source.id}>How to send</button>
+          {/if}
           <button class="link" disabled={testing !== null} onclick={() => test(source)}>
-            {testing === source.id ? 'Testing…' : 'Test'}
+            {testing === source.id ? 'Loading…' : pushed ? 'Last data received' : 'Test'}
           </button>
           <button class="link" onclick={() => (naming = naming === source.id ? null : source.id)} aria-expanded={naming === source.id}>Values</button>
           <button class="link" onclick={() => (editing = source.id)}>Edit</button>
@@ -118,6 +140,11 @@
         {#if editing === source.id}
           <li class="form-row">
             <CustomSourceForm {source} onsaved={saved} oncancel={() => (editing = null)} {onerror} />
+          </li>
+        {/if}
+        {#if sending === source.id}
+          <li class="form-row">
+            <CustomPushInstructions {source} {lastPushAt} onclose={() => (sending = null)} {onmanagetokens} {onerror} />
           </li>
         {/if}
         {#if naming === source.id}
@@ -129,8 +156,9 @@
           <li class="form-row">
             <div class="result">
               <p class="small muted">
-                The answer ({describeSize(result.test.bytes)}){result.test.truncated ? ', shortened for this view' : ''}.
-                Click a value to see its path.
+                {result.test.receivedAt ? `The last data received, at ${TIME.format(new Date(result.test.receivedAt))}` : 'The answer'}
+                ({describeSize(result.test.bytes)}){result.test.truncated ? ', shortened for this view' : ''}. Click a value to see
+                its path.
               </p>
               {#if picked}<p class="small">Path: <code>{picked}</code></p>{/if}
               <JsonTree value={result.test.data} onpick={(path) => (picked = path)} />
@@ -154,6 +182,9 @@
 <style>
   .form-row {
     display: block;
+  }
+  .late {
+    color: var(--warning);
   }
   .result {
     display: grid;

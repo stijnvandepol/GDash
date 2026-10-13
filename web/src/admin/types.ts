@@ -230,9 +230,14 @@ export interface CustomHeader {
 }
 
 /** A JSON API set up under Settings; its secrets never leave the server. */
+/** How GDash gets a custom API's answer: it fetches it, or the household's system sends it. */
+export type CustomMode = 'fetch' | 'push';
+
 export interface CustomSource {
   id: number;
   name: string;
+  mode: CustomMode;
+  /** Empty for a source that is sent to GDash. */
   url: string;
   method: 'GET' | 'POST';
   body: string;
@@ -246,6 +251,8 @@ export interface CustomSource {
   lists: NamedList[];
   /** True when the secrets cannot be decrypted with this server's key. */
   unreadable: boolean;
+  /** When a source that is sent to GDash last sent its data; absent before the first time. */
+  lastPushAt?: string;
 }
 
 /** A value of a custom API's answer with a name, such as "Outside" at current.temperature_2m. */
@@ -272,6 +279,7 @@ export interface CustomValues {
 /** A custom API as the form sends it; an empty secret keeps the stored one. */
 export interface CustomSourceInput {
   name: string;
+  mode: CustomMode;
   url: string;
   method: 'GET' | 'POST';
   body: string;
@@ -286,6 +294,8 @@ export interface CustomTest {
   data: unknown;
   truncated: boolean;
   bytes: number;
+  /** For a source that is sent to GDash: when this, its last data, arrived. */
+  receivedAt?: string;
 }
 
 /** Whether a data source works, by data key such as "weather.current". */

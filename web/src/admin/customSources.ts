@@ -1,5 +1,6 @@
 import type { CustomAuthKind, CustomSource, CustomSourceInput } from './api';
 import { parsePath } from './jsonPath';
+import { describeAge } from './status';
 
 /** How often a custom API can be fetched; internal/custom allows 30 seconds to 24 hours. */
 export const INTERVALS: { seconds: number; label: string }[] = [
@@ -29,6 +30,7 @@ const MAX_SAMPLE_BYTES = 48 * 1024;
 export function emptyInput(): CustomSourceInput {
   return {
     name: '',
+    mode: 'fetch',
     url: '',
     method: 'GET',
     body: '',
@@ -43,6 +45,7 @@ export function emptyInput(): CustomSourceInput {
 export function toInput(source: CustomSource): CustomSourceInput {
   return {
     name: source.name,
+    mode: source.mode,
     url: source.url,
     method: source.method,
     body: source.body,
@@ -131,4 +134,85 @@ function words(key: string): string {
     .trim()
     .toLowerCase();
   return text ? text[0]!.toUpperCase() + text.slice(1) : 'Value';
+}
+
+/** The form's fields for a source that is sent to GDash: it has no request of its own. */
+export function pushInput(form: CustomSourceInput): CustomSourceInput {
+  return { ...form, url: '', method: 'GET', body: '', auth: { kind: 'none', name: '', secret: '' }, headers: [] };
+}
+
+/** Where a household's system sends the data of source id; origin is GDash's own, such as http://192.168.1.2:8420. */
+export function pushURL(origin: string, id: number): string {
+  return `${origin}/api/custom-sources/${id}/data`;
+}
+
+/** Stands in for the API token in the examples until one is made. */
+export const TOKEN_PLACEHOLDER = 'YOUR_API_TOKEN';
+
+/** Examples that send data to url with token, ready to copy. */
+export function pushExamples(url: string, token: string): { curl: string; homeyScript: string; homeAssistant: string } {
+  const curl = [
+    `curl -X PUT '${url}' \\`,
+    `  -H 'Authorization: Bearer ${token}' \\`,
+    `  -H 'Content-Type: application/json' \\`,
+    `  -d '{"outside": 12.5, "home": {"Anna": true}}'`,
+  ].join('\n');
+  // HomeyScript on a Homey Pro (Early 2019) may run an older Node.js, so
+  // this stays clear of ?. and ??.
+  const homeyScript = `// Runs on the Homey every minute from a Flow: sends device values and who is home to GDash.
+const GDASH_URL = '${url}';
+const TOKEN = '${token}';
+const devices = await Homey.devices.getDevices();
+const zones = await Homey.zones.getZones();
+const out = { devices: {}, home: {} };
+for (const d of Object.values(devices)) {
+  const values = { zone: zones[d.zone] ? zones[d.zone].name : null };
+  for (const [id, c] of Object.entries(d.capabilitiesObj || {})) values[id] = c.value;
+  out.devices[d.name] = values;
+}
+// Not every Homey version lets a script read its users.
+let users = {};
+try { users = await Homey.users.getUsers(); } catch (e) {}
+for (const u of Object.values(users)) out.home[u.name] = u.present === true;
+const res = await fetch(GDASH_URL, {
+  method: 'PUT',
+  headers: { 'Authorization': 'Bearer ' + TOKEN, 'Content-Type': 'application/json' },
+  body: JSON.stringify(out),
+});
+if (!res.ok) throw new Error('GDash answered ' + res.status);
+return res.status; // 204 means GDash received it`;
+  const homeAssistant = `# configuration.yaml
+rest_command:
+  gdash_send:
+    url: "${url}"
+    method: put
+    headers:
+      Authorization: "Bearer ${token}"
+    content_type: "application/json"
+    payload: >-
+      {"outside": {{ states('sensor.outside_temperature') | float(0) }},
+       "home": {"Anna": {{ is_state('person.anna', 'home') | tojson }}}}
+
+# automations.yaml: runs it every minute
+- alias: Send data to GDash
+  triggers:
+    - trigger: time_pattern
+      minutes: "/1"
+  actions:
+    - action: rest_command.gdash_send`;
+  return { curl, homeyScript, homeAssistant };
+}
+
+/** Whether the screens show a pushed source's data as late: none for two intervals and 30 seconds. */
+export function isPushLate(lastPushAt: string | undefined, intervalSeconds: number, now = Date.now()): boolean {
+  if (!lastPushAt) return false;
+  return now > Date.parse(lastPushAt) + (2 * intervalSeconds + 30) * 1000;
+}
+
+/** "Last data received 3 minutes ago.", and whether that is late. */
+export function describePush(lastPushAt: string | undefined, intervalSeconds: number, now = Date.now()): string {
+  if (!lastPushAt) return 'Nothing received yet.';
+  const ago = describeAge(Math.max(0, Math.round((now - Date.parse(lastPushAt)) / 60_000)));
+  const late = isPushLate(lastPushAt, intervalSeconds, now) ? ' That is late; the screens mark it as old.' : '';
+  return `Last data received ${ago}.${late}`;
 }

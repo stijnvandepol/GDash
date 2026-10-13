@@ -1,11 +1,17 @@
 import { describe, expect, it } from 'vitest';
 import type { CustomSource } from './api';
 import {
+  TOKEN_PLACEHOLDER,
   describeInterval,
   describeNamed,
+  describePush,
   describeSize,
   hostOf,
+  isPushLate,
   parseSample,
+  pushExamples,
+  pushInput,
+  pushURL,
   sampleText,
   secretPlaceholder,
   suggestName,
@@ -15,6 +21,7 @@ import {
 const source: CustomSource = {
   id: 3,
   name: 'Prices',
+  mode: 'fetch',
   url: 'https://api.example.com/v1/prices?currency=EUR',
   method: 'GET',
   body: '',
@@ -93,5 +100,41 @@ describe('describeNamed', () => {
     expect(describeNamed({ values: [{ name: 'A', path: 'a' }, { name: 'B', path: 'b' }], lists: [{ name: 'L', path: 'l', columns: [] }] })).toBe(
       '2 values · 1 list',
     );
+  });
+});
+
+describe('pushing', () => {
+  it('drops the request of a source that is sent to GDash', () => {
+    const input = pushInput({ ...toInput(source), mode: 'push', body: '{}' });
+    expect(input).toMatchObject({ mode: 'push', url: '', method: 'GET', body: '', headers: [] });
+    expect(input.auth).toEqual({ kind: 'none', name: '', secret: '' });
+    expect(input.sample).toEqual({ price: 1 });
+  });
+
+  it('fills the address and token into every example', () => {
+    const url = pushURL('http://192.168.1.2:8420', 7);
+    expect(url).toBe('http://192.168.1.2:8420/api/custom-sources/7/data');
+    for (const example of Object.values(pushExamples(url, TOKEN_PLACEHOLDER))) {
+      expect(example).toContain(url);
+      expect(example).toContain(TOKEN_PLACEHOLDER);
+    }
+  });
+
+  it('keeps the HomeyScript free of syntax an older Homey may not know', () => {
+    const { homeyScript } = pushExamples('http://gdash', 'token');
+    expect(homeyScript).not.toContain('?.');
+    expect(homeyScript).not.toContain('??');
+    expect(homeyScript).toContain("method: 'PUT'");
+  });
+
+  it('marks data as late after two intervals and 30 seconds', () => {
+    const at = '2026-10-13T08:00:00Z';
+    const after = (seconds: number) => Date.parse(at) + seconds * 1000;
+    expect(isPushLate(at, 60, after(150))).toBe(false);
+    expect(isPushLate(at, 60, after(151))).toBe(true);
+    expect(isPushLate(undefined, 60, after(1000))).toBe(false);
+    expect(describePush(undefined, 60)).toBe('Nothing received yet.');
+    expect(describePush(at, 60, after(60))).toBe('Last data received 1 minute ago.');
+    expect(describePush(at, 60, after(240))).toContain('late');
   });
 });

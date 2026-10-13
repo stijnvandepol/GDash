@@ -57,7 +57,8 @@
     try {
       const test = await api.testCustomSource(source.id);
       doc = test.data;
-      docNote = `A fresh answer (${describeSize(test.bytes)})${test.truncated ? ', shortened for this view' : ''}.`;
+      const what = test.receivedAt ? 'The last data received' : 'A fresh answer';
+      docNote = `${what} (${describeSize(test.bytes)})${test.truncated ? ', shortened for this view' : ''}.`;
     } catch (err) {
       docNote = onerror(err);
     } finally {
@@ -146,7 +147,9 @@
       {#if source.sample !== null && source.sample !== undefined}
         <button type="button" class="link" onclick={useSample}>Use the sample</button>
       {/if}
-      <button type="button" class="link" disabled={fetching} onclick={fetchNow}>{fetching ? 'Fetching…' : 'Fetch the API now'}</button>
+      <button type="button" class="link" disabled={fetching} onclick={fetchNow}>
+        {fetching ? 'Loading…' : source.mode === 'push' ? 'Last data received' : 'Fetch the API now'}
+      </button>
     </div>
     {#if docNote}<p class="small muted">{docNote}</p>{/if}
     {#if doc !== undefined}

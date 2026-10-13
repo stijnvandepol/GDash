@@ -1,6 +1,6 @@
 <script lang="ts">
   import { api, ApiError, type CustomSource, type CustomSourceInput } from './api';
-  import { AUTH_KINDS, INTERVALS, MAX_HEADERS, emptyInput, parseSample, sampleText, secretPlaceholder, toInput } from './customSources';
+  import { AUTH_KINDS, INTERVALS, MAX_HEADERS, emptyInput, parseSample, pushInput, sampleText, secretPlaceholder, toInput } from './customSources';
 
   let {
     source,
@@ -38,7 +38,10 @@
     }
     busy = true;
     try {
-      const input = { ...form, body: form.method === 'POST' ? form.body : '', sample: parsed.sample };
+      const input =
+        form.mode === 'push'
+          ? pushInput({ ...form, sample: parsed.sample })
+          : { ...form, body: form.method === 'POST' ? form.body : '', sample: parsed.sample };
       const saved = source ? await api.saveCustomSource(source.id, input) : await api.addCustomSource(input);
       await onsaved(saved);
     } catch (err) {
@@ -50,6 +53,12 @@
     } finally {
       busy = false;
     }
+  }
+
+  function chooseMode(mode: 'fetch' | 'push') {
+    form.mode = mode;
+    // A script sends every minute; an API is often asked less.
+    if (!source) form.intervalSeconds = mode === 'push' ? 60 : 300;
   }
 
   function addHeader() {
@@ -67,90 +76,110 @@
     <input bind:value={form.name} maxlength="60" required placeholder="Weather in Oss" />
     {#if fieldErrors.name}<span class="field-error">{fieldErrors.name}</span>{/if}
   </label>
-  <label>
-    Address
-    <input bind:value={form.url} type="url" required autocomplete="off" spellcheck="false" placeholder="https://api.open-meteo.com/v1/forecast?latitude=51.77&longitude=5.52&current=temperature_2m" />
-    <span class="small muted">Put an API key under Authentication, not in the address: the address is shown here.</span>
-    {#if fieldErrors.url}<span class="field-error">{fieldErrors.url}</span>{/if}
-  </label>
-  <div class="row">
+  <fieldset class="mode">
+    <legend>How does GDash get the data?</legend>
+    <label class="check"><input type="radio" name="mode" checked={form.mode === 'fetch'} onchange={() => chooseMode('fetch')} /> GDash fetches it from an address</label>
+    <label class="check"><input type="radio" name="mode" checked={form.mode === 'push'} onchange={() => chooseMode('push')} /> Your system sends it to GDash</label>
+    {#if form.mode === 'push'}
+      <span class="small muted">For a Homey, Node-RED, a Home Assistant automation or a script that cannot answer requests itself. After saving, GDash shows the address to send to and examples.</span>
+    {/if}
+    {#if fieldErrors.mode}<span class="field-error">{fieldErrors.mode}</span>{/if}
+  </fieldset>
+  {#if form.mode === 'push'}
     <label>
-      Method
-      <select bind:value={form.method}>
-        <option value="GET">GET</option>
-        <option value="POST">POST</option>
-      </select>
-      {#if fieldErrors.method}<span class="field-error">{fieldErrors.method}</span>{/if}
-    </label>
-    <label>
-      Refresh
+      Expected every
       <select bind:value={form.intervalSeconds}>
-        {#each INTERVALS as i (i.seconds)}<option value={i.seconds}>{i.label}</option>{/each}
+        {#each INTERVALS as i (i.seconds)}<option value={i.seconds}>{i.label.replace(/^Every /, '').replace('Once a day', 'day')}</option>{/each}
       </select>
+      <span class="small muted">When no data arrives for twice this and 30 seconds, the screens mark it as old.</span>
       {#if fieldErrors.intervalSeconds}<span class="field-error">{fieldErrors.intervalSeconds}</span>{/if}
     </label>
-  </div>
-  {#if form.method === 'POST'}
+  {:else}
     <label>
-      <span>JSON body <span class="muted">(optional)</span></span>
-      <textarea bind:value={form.body} rows="3" spellcheck="false" placeholder={'{"query": "…"}'}></textarea>
-      {#if fieldErrors.body}<span class="field-error">{fieldErrors.body}</span>{/if}
+      Address
+      <input bind:value={form.url} type="url" required autocomplete="off" spellcheck="false" placeholder="https://api.open-meteo.com/v1/forecast?latitude=51.77&longitude=5.52&current=temperature_2m" />
+      <span class="small muted">Put an API key under Authentication, not in the address: the address is shown here.</span>
+      {#if fieldErrors.url}<span class="field-error">{fieldErrors.url}</span>{/if}
     </label>
-  {/if}
-  <label>
-    Authentication
-    <select bind:value={form.auth.kind}>
-      {#each AUTH_KINDS as a (a.kind)}<option value={a.kind}>{a.label}</option>{/each}
-    </select>
-    {#if fieldErrors['auth.kind']}<span class="field-error">{fieldErrors['auth.kind']}</span>{/if}
-  </label>
-  {#if auth.nameLabel}
-    <label>
-      {auth.nameLabel}
-      <input bind:value={form.auth.name} autocomplete="off" spellcheck="false" placeholder={form.auth.kind === 'header' ? 'X-API-Key' : form.auth.kind === 'query' ? 'appid' : ''} />
-      {#if fieldErrors['auth.name']}<span class="field-error">{fieldErrors['auth.name']}</span>{/if}
-    </label>
-  {/if}
-  {#if auth.secretLabel}
-    <label>
-      {auth.secretLabel}
-      <!-- Not type="password", so browsers do not offer to save it. -->
-      <input bind:value={form.auth.secret} class="masked" autocomplete="off" spellcheck="false" placeholder={secretPlaceholder(source, form.auth.kind)} />
-      <span class="small muted">Stored encrypted and never shown again.</span>
-      {#if fieldErrors['auth.secret']}<span class="field-error">{fieldErrors['auth.secret']}</span>{/if}
-    </label>
-  {/if}
-
-  <fieldset>
-    <legend>Extra headers <span class="muted">(optional)</span></legend>
-    {#each form.headers as header, i (i)}
-      <div class="header-row">
-        <input bind:value={header.name} aria-label="Header name" placeholder="Accept-Language" autocomplete="off" spellcheck="false" />
-        <input
-          bind:value={header.value}
-          class:masked={header.secret}
-          aria-label="Header value"
-          autocomplete="off"
-          spellcheck="false"
-          placeholder={header.secret && source?.headers.some((h) => h.secret && h.name.toLowerCase() === header.name.toLowerCase()) ? 'Stored; leave empty to keep it' : 'nl'}
-        />
-        <label class="check"><input type="checkbox" bind:checked={header.secret} /> Secret</label>
-        <button type="button" class="link danger" onclick={() => removeHeader(i)}>Remove</button>
-      </div>
-      {#if fieldErrors[`headers[${i}].name`] || fieldErrors[`headers[${i}].value`]}
-        <span class="field-error">{fieldErrors[`headers[${i}].name`] ?? fieldErrors[`headers[${i}].value`]}</span>
-      {/if}
-    {/each}
-    {#if fieldErrors.headers}<span class="field-error">{fieldErrors.headers}</span>{/if}
-    {#if form.headers.length < MAX_HEADERS}
-      <button type="button" class="link" onclick={addHeader}>Add a header</button>
+    <div class="row">
+      <label>
+        Method
+        <select bind:value={form.method}>
+          <option value="GET">GET</option>
+          <option value="POST">POST</option>
+        </select>
+        {#if fieldErrors.method}<span class="field-error">{fieldErrors.method}</span>{/if}
+      </label>
+      <label>
+        Refresh
+        <select bind:value={form.intervalSeconds}>
+          {#each INTERVALS as i (i.seconds)}<option value={i.seconds}>{i.label}</option>{/each}
+        </select>
+        {#if fieldErrors.intervalSeconds}<span class="field-error">{fieldErrors.intervalSeconds}</span>{/if}
+      </label>
+    </div>
+    {#if form.method === 'POST'}
+      <label>
+        <span>JSON body <span class="muted">(optional)</span></span>
+        <textarea bind:value={form.body} rows="3" spellcheck="false" placeholder={'{"query": "…"}'}></textarea>
+        {#if fieldErrors.body}<span class="field-error">{fieldErrors.body}</span>{/if}
+      </label>
     {/if}
-  </fieldset>
+    <label>
+      Authentication
+      <select bind:value={form.auth.kind}>
+        {#each AUTH_KINDS as a (a.kind)}<option value={a.kind}>{a.label}</option>{/each}
+      </select>
+      {#if fieldErrors['auth.kind']}<span class="field-error">{fieldErrors['auth.kind']}</span>{/if}
+    </label>
+    {#if auth.nameLabel}
+      <label>
+        {auth.nameLabel}
+        <input bind:value={form.auth.name} autocomplete="off" spellcheck="false" placeholder={form.auth.kind === 'header' ? 'X-API-Key' : form.auth.kind === 'query' ? 'appid' : ''} />
+        {#if fieldErrors['auth.name']}<span class="field-error">{fieldErrors['auth.name']}</span>{/if}
+      </label>
+    {/if}
+    {#if auth.secretLabel}
+      <label>
+        {auth.secretLabel}
+        <!-- Not type="password", so browsers do not offer to save it. -->
+        <input bind:value={form.auth.secret} class="masked" autocomplete="off" spellcheck="false" placeholder={secretPlaceholder(source, form.auth.kind)} />
+        <span class="small muted">Stored encrypted and never shown again.</span>
+        {#if fieldErrors['auth.secret']}<span class="field-error">{fieldErrors['auth.secret']}</span>{/if}
+      </label>
+    {/if}
+
+    <fieldset>
+      <legend>Extra headers <span class="muted">(optional)</span></legend>
+      {#each form.headers as header, i (i)}
+        <div class="header-row">
+          <input bind:value={header.name} aria-label="Header name" placeholder="Accept-Language" autocomplete="off" spellcheck="false" />
+          <input
+            bind:value={header.value}
+            class:masked={header.secret}
+            aria-label="Header value"
+            autocomplete="off"
+            spellcheck="false"
+            placeholder={header.secret && source?.headers.some((h) => h.secret && h.name.toLowerCase() === header.name.toLowerCase()) ? 'Stored; leave empty to keep it' : 'nl'}
+          />
+          <label class="check"><input type="checkbox" bind:checked={header.secret} /> Secret</label>
+          <button type="button" class="link danger" onclick={() => removeHeader(i)}>Remove</button>
+        </div>
+        {#if fieldErrors[`headers[${i}].name`] || fieldErrors[`headers[${i}].value`]}
+          <span class="field-error">{fieldErrors[`headers[${i}].name`] ?? fieldErrors[`headers[${i}].value`]}</span>
+        {/if}
+      {/each}
+      {#if fieldErrors.headers}<span class="field-error">{fieldErrors.headers}</span>{/if}
+      {#if form.headers.length < MAX_HEADERS}
+        <button type="button" class="link" onclick={addHeader}>Add a header</button>
+      {/if}
+    </fieldset>
+  {/if}
 
   <label>
     <span>Sample answer <span class="muted">(optional)</span></span>
     <textarea bind:value={sample} rows="5" spellcheck="false" placeholder={'{"current": {"temperature_2m": 12.4}}'}></textarea>
-    <span class="small muted">Paste an answer from the API's documentation to design a widget without calling the API.</span>
+    <span class="small muted">{form.mode === 'push' ? 'Paste what your system will send to design a widget before it sends anything.' : "Paste an answer from the API's documentation to design a widget without calling the API."}</span>
     {#if fieldErrors.sample}<span class="field-error">{fieldErrors.sample}</span>{/if}
   </label>
 

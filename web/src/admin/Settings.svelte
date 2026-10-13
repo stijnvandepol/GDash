@@ -161,7 +161,7 @@
       onerror={handle}
     />
 
-    <CustomSourceSetting {status} onchanged={load} onerror={handle} />
+    <CustomSourceSetting {status} onchanged={load} onmanagetokens={() => (section = 'automations')} onerror={handle} />
 
     {:else}
     <section class="card">
