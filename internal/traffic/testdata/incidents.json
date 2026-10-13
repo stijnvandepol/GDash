@@ -1,0 +1,556 @@
+{
+ "success": true,
+ "copyright": "This website is owned by ANWB. The intellectual property rights, including the copyrights, in the material contained in this website and any ANWB trademarks and brands included in that material belong to ANWB and/or its licensors and/or its suppliers. No material, information, software, products or services obtained from this website may be modified, copied, licensed, reproduced, republished, sold, distributed, researched, recovered or otherwise disposed in any form, without the prior written approval of ANWB.",
+ "dateTime": "2026-10-13T08:40:00Z",
+ "roads": [
+  {
+   "road": "A1",
+   "type": "a",
+   "segments": [
+    {
+     "start": "Amersfoort",
+     "end": "Apeldoorn",
+     "roadworks": [
+      {
+       "id": 646757942,
+       "road": "A1",
+       "incidentType": "road-closed",
+       "segmentId": 3001,
+       "codeDirection": 1,
+       "type": "a",
+       "afrc": 0,
+       "from": "Stroe",
+       "fromLoc": {
+        "lat": 52.19165,
+        "lon": 5.70158
+       },
+       "to": "Stroe",
+       "toLoc": {
+        "lat": 52.19165,
+        "lon": 5.70158
+       },
+       "events": [
+        {
+         "alertC": 408,
+         "text": "De op- en afrit is dicht"
+        }
+       ],
+       "reason": "De op- en afrit is dicht. Van 18 september 2026 05:00 uur tot 22 oktober 2026 20:00 uur.",
+       "label": "closed",
+       "start": "2026-09-18T03:00:00Z",
+       "stop": "2026-10-22T18:00:00Z",
+       "category": "roadworks"
+      },
+      {
+       "id": 646450927,
+       "road": "A1",
+       "incidentType": "roadworks",
+       "segmentId": 3001,
+       "codeDirection": 1,
+       "type": "a",
+       "afrc": 0,
+       "from": "Voorthuizen",
+       "fromLoc": {
+        "lat": 52.16876,
+        "lon": 5.59499
+       },
+       "to": "Stroe",
+       "toLoc": {
+        "lat": 52.19165,
+        "lon": 5.70158
+       },
+       "events": [
+        {
+         "alertC": 701,
+         "text": "Wegwerkzaamheden"
+        }
+       ],
+       "reason": "Wegwerkzaamheden. Van 15 september 2026 05:00 uur tot 21 oktober 2026 20:00 uur.",
+       "polyline": "}cl}Hyyba@?U?u@Aw@?Q?SCg",
+       "start": "2026-09-15T03:00:00Z",
+       "stop": "2026-10-21T18:00:00Z",
+       "category": "roadworks"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "road": "A2",
+   "type": "a",
+   "segments": [
+    {
+     "start": "Eindhoven",
+     "end": "Maastricht",
+     "jams": [
+      {
+       "id": 29334467,
+       "road": "A2",
+       "incidentType": "queing-traffic",
+       "segmentId": 3102,
+       "codeDirection": 0,
+       "type": "a",
+       "afrc": 0,
+       "from": "knp. Batadorp",
+       "fromLoc": {
+        "lat": 51.48316,
+        "lon": 5.40628
+       },
+       "to": "knp. Leenderheide",
+       "toLoc": {
+        "lat": 51.40499,
+        "lon": 5.50244
+       },
+       "events": [
+        {
+         "alertC": 108,
+         "text": "Langzaam rijdend tot stilstaand verkeer",
+         "distance": 9300
+        }
+       ],
+       "reason": "Langzaam rijdend tot stilstaand verkeer.",
+       "polyline": "w}eyHil~_@DBd@^h@\\~@d@d@",
+       "distance": 9300,
+       "delay": 600,
+       "start": "2026-10-13T08:14:00Z",
+       "category": "jams"
+      },
+      {
+       "id": 29334187,
+       "road": "A2",
+       "incidentType": "stationary-traffic",
+       "segmentId": 3102,
+       "codeDirection": 0,
+       "type": "a",
+       "afrc": 0,
+       "from": "Born",
+       "fromLoc": {
+        "lat": 51.03946,
+        "lon": 5.82529
+       },
+       "to": "Urmond",
+       "toLoc": {
+        "lat": 50.99055,
+        "lon": 5.78491
+       },
+       "events": [
+        {
+         "alertC": 101,
+         "text": "Stilstaand verkeer",
+         "distance": 5400
+        },
+        {
+         "alertC": 211,
+         "text": "Kapotte auto"
+        },
+        {
+         "alertC": 501,
+         "text": "De rechterrijstrook is dicht"
+        }
+       ],
+       "reason": "Stilstaand verkeer. Kapotte auto. De rechterrijstrook is dicht.",
+       "polyline": "qxnvHcppb@ZFbAV|@Tx@VVHb",
+       "distance": 5400,
+       "delay": 660,
+       "start": "2026-10-13T07:25:30Z",
+       "category": "jams"
+      }
+     ],
+     "roadworks": [
+      {
+       "id": 651822363,
+       "road": "A2",
+       "incidentType": "road-closed",
+       "segmentId": 3102,
+       "codeDirection": 0,
+       "type": "a",
+       "afrc": 0,
+       "from": "Weert-Noord",
+       "fromLoc": {
+        "lat": 51.2763,
+        "lon": 5.66674
+       },
+       "to": "Grathem",
+       "toLoc": {
+        "lat": 51.17903,
+        "lon": 5.8468
+       },
+       "events": [
+        {
+         "alertC": 401,
+         "text": "Dicht"
+        }
+       ],
+       "reason": "Dicht. Van 16 oktober 2026 21:00 uur tot 17 oktober 2026 05:00 uur.",
+       "label": "closed",
+       "polyline": "}p~wHwroa@j@mARc@^y@Zu@^",
+       "start": "2026-10-16T19:00:00Z",
+       "stop": "2026-10-17T03:00:00Z",
+       "category": "roadworks"
+      },
+      {
+       "id": 653269844,
+       "road": "A2",
+       "incidentType": "road-closed",
+       "segmentId": 3102,
+       "codeDirection": 0,
+       "type": "a",
+       "afrc": 0,
+       "from": "Born",
+       "fromLoc": {
+        "lat": 51.03946,
+        "lon": 5.82529
+       },
+       "to": "Born",
+       "toLoc": {
+        "lat": 51.03946,
+        "lon": 5.82529
+       },
+       "events": [
+        {
+         "alertC": 406,
+         "text": "De oprit is dicht"
+        }
+       ],
+       "reason": "De oprit is dicht. Van 12 oktober 2026 05:00 uur tot 16 oktober 2026 05:00 uur.",
+       "label": "closed",
+       "start": "2026-10-12T03:00:00Z",
+       "stop": "2026-10-16T03:00:00Z",
+       "category": "roadworks"
+      }
+     ]
+    },
+    {
+     "start": "'s-Hertogenbosch",
+     "end": "Utrecht",
+     "roadworks": [
+      {
+       "id": 642850366,
+       "road": "A2",
+       "incidentType": "roadworks",
+       "segmentId": 3104,
+       "codeDirection": 1,
+       "type": "a",
+       "afrc": 0,
+       "from": "knp. Deil",
+       "fromLoc": {
+        "lat": 51.85714,
+        "lon": 5.22841
+       },
+       "to": "knp. Everdingen",
+       "toLoc": {
+        "lat": 51.9759,
+        "lon": 5.10294
+       },
+       "events": [
+        {
+         "alertC": 701,
+         "text": "Wegwerkzaamheden"
+        }
+       ],
+       "reason": "Wegwerkzaamheden. Van 7 september 2026 19:00 uur tot 14 oktober 2026 05:00 uur.",
+       "polyline": "y{m{Hmo}^g@h@m@l@q@n@IJs",
+       "start": "2026-09-07T17:00:00Z",
+       "stop": "2026-10-14T03:00:00Z",
+       "category": "roadworks"
+      }
+     ]
+    },
+    {
+     "start": "Utrecht",
+     "end": "'s-Hertogenbosch",
+     "roadworks": [
+      {
+       "id": 653416537,
+       "road": "A2",
+       "incidentType": "road-closed",
+       "segmentId": 3104,
+       "codeDirection": 0,
+       "type": "a",
+       "afrc": 0,
+       "from": "knp. Everdingen",
+       "fromLoc": {
+        "lat": 51.9759,
+        "lon": 5.10294
+       },
+       "to": "knp. Everdingen",
+       "toLoc": {
+        "lat": 51.9759,
+        "lon": 5.10294
+       },
+       "events": [
+        {
+         "alertC": 406,
+         "text": "De oprit is dicht"
+        }
+       ],
+       "reason": "De oprit is dicht. Van 13 oktober 2026 20:09 uur tot 14 oktober 2026 05:00 uur.",
+       "label": "closed",
+       "start": "2026-10-13T18:09:00Z",
+       "stop": "2026-10-14T03:00:00Z",
+       "category": "roadworks"
+      },
+      {
+       "id": 653270248,
+       "road": "A2",
+       "incidentType": "road-closed",
+       "segmentId": 3104,
+       "codeDirection": 0,
+       "type": "a",
+       "afrc": 0,
+       "from": "afrit Everdingen",
+       "fromLoc": {
+        "lat": 51.9427,
+        "lon": 5.14571
+       },
+       "to": "afrit Everdingen",
+       "toLoc": {
+        "lat": 51.9427,
+        "lon": 5.14571
+       },
+       "events": [
+        {
+         "alertC": 406,
+         "text": "De oprit is dicht"
+        }
+       ],
+       "reason": "De oprit is dicht. Van 12 oktober 2026 tot 14 oktober 2026 dagelijks tussen 20:00 uur en 05:00 uur.",
+       "label": "closed",
+       "start": "2026-10-12T18:00:00Z",
+       "stop": "2026-10-14T03:00:00Z",
+       "category": "roadworks"
+      }
+     ]
+    },
+    {
+     "start": "Maastricht",
+     "end": "Eindhoven",
+     "radars": [
+      {
+       "id": 3095348868,
+       "road": "A2",
+       "incidentType": "radar",
+       "segmentId": 3102,
+       "codeDirection": 1,
+       "type": "a",
+       "afrc": 0,
+       "from": "Urmond",
+       "fromLoc": {
+        "lat": 50.99055,
+        "lon": 5.78491
+       },
+       "to": "Born",
+       "toLoc": {
+        "lat": 51.03946,
+        "lon": 5.82529
+       },
+       "loc": {
+        "lat": 51.01177,
+        "lon": 5.80032
+       },
+       "events": [
+        {
+         "alertC": 3101,
+         "text": "Snelheidscontrole"
+        }
+       ],
+       "reason": "Bij hectometerpaal 236.1.",
+       "HM": 236.1,
+       "category": "radars"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "road": "A50",
+   "type": "a",
+   "segments": [
+    {
+     "start": "Arnhem",
+     "end": "Oss",
+     "jams": [
+      {
+       "id": 29331292,
+       "road": "A50",
+       "incidentType": "slow-traffic",
+       "segmentId": 3340,
+       "codeDirection": 0,
+       "type": "a",
+       "afrc": 0,
+       "from": "knp. Ewijk",
+       "fromLoc": {
+        "lat": 51.85812,
+        "lon": 5.71143
+       },
+       "to": "Ravenstein",
+       "toLoc": {
+        "lat": 51.78808,
+        "lon": 5.65334
+       },
+       "events": [
+        {
+         "alertC": 115,
+         "text": "Langzaam rijdend verkeer",
+         "distance": 3900
+        }
+       ],
+       "reason": "Langzaam rijdend verkeer.",
+       "polyline": "ipl{H_ewa@d@f@rAvAjAnAHJ",
+       "distance": 3900,
+       "delay": 180,
+       "start": "2026-10-13T04:25:30Z",
+       "category": "jams"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "road": "N3",
+   "type": "n",
+   "segments": [
+    {
+     "start": "Dordrecht",
+     "end": "Papendrecht",
+     "jams": [
+      {
+       "id": 28890807,
+       "road": "N3",
+       "incidentType": "road-closed",
+       "segmentId": 4440,
+       "codeDirection": 1,
+       "type": "n",
+       "afrc": 3,
+       "from": "afrit Dordrecht-Centrum",
+       "fromLoc": {
+        "lat": 51.81644,
+        "lon": 4.70783
+       },
+       "to": "Papendrecht",
+       "toLoc": {
+        "lat": 51.83113,
+        "lon": 4.70663
+       },
+       "events": [
+        {
+         "alertC": 401,
+         "text": "Dicht"
+        },
+        {
+         "alertC": 701,
+         "text": "Wegwerkzaamheden"
+        }
+       ],
+       "reason": "Dicht. Wegwerkzaamheden.",
+       "label": "closed",
+       "polyline": "odg{Hapv[_@EQ?UAU@Q?U@K?",
+       "stop": "2027-04-21T21:59:00Z",
+       "category": "jams"
+      }
+     ],
+     "roadworks": [
+      {
+       "id": 632688652,
+       "road": "N3",
+       "incidentType": "road-closed",
+       "segmentId": 4440,
+       "codeDirection": 1,
+       "type": "n",
+       "afrc": 3,
+       "from": "de Brug over de Beneden-Merwede",
+       "fromLoc": {
+        "lat": 51.82328,
+        "lon": 4.70581
+       },
+       "to": "de Brug over de Beneden-Merwede",
+       "toLoc": {
+        "lat": 51.82328,
+        "lon": 4.70581
+       },
+       "events": [
+        {
+         "alertC": 401,
+         "text": "Dicht"
+        }
+       ],
+       "reason": "Dicht. Van 17 juli 2026 23:00 uur tot 21 april 2027 00:00 uur.",
+       "label": "closed",
+       "polyline": "avg{H{hv[QJUJUJUHWHWFQDW",
+       "start": "2026-07-17T21:00:00Z",
+       "stop": "2027-04-20T22:00:00Z",
+       "category": "roadworks"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "road": "N629",
+   "type": "n",
+   "segments": [
+    {
+     "start": "Oosterhout",
+     "end": "Dongen",
+     "jams": [
+      {
+       "id": 29334405,
+       "road": "N629",
+       "incidentType": "stationary-traffic",
+       "segmentId": 6472,
+       "codeDirection": 1,
+       "type": "n",
+       "afrc": 3,
+       "from": "A27: Oosterhout",
+       "fromLoc": {
+        "lat": 51.64963,
+        "lon": 4.88231
+       },
+       "to": "Kaatsheuvel/Rijen",
+       "toLoc": {
+        "lat": 51.62898,
+        "lon": 4.91644
+       },
+       "events": [
+        {
+         "alertC": 101,
+         "text": "Stilstaand verkeer",
+         "distance": 2000
+        }
+       ],
+       "reason": "Stilstaand verkeer.",
+       "polyline": "eqfzHiyy\\@ANIXKNGNENETER",
+       "distance": 2000,
+       "delay": 480,
+       "start": "2026-10-13T08:00:00Z",
+       "category": "jams"
+      }
+     ]
+    }
+   ]
+  }
+ ],
+ "totals": {
+  "a": {
+   "distance": 39,
+   "delay": 46,
+   "count": 10
+  },
+  "n": {
+   "distance": 2,
+   "delay": 8,
+   "count": 5
+  },
+  "other": {
+   "distance": 0,
+   "delay": 0,
+   "count": 0
+  },
+  "all": {
+   "distance": 41,
+   "delay": 54,
+   "count": 15
+  }
+ },
+ "warnings": []
+}
