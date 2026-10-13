@@ -30,6 +30,7 @@
   import HomeAssistant from './widgets/HomeAssistant.svelte';
   import Homey from './widgets/Homey.svelte';
   import HomeyPresence from './widgets/HomeyPresence.svelte';
+  import Traffic from './widgets/Traffic.svelte';
   import Departures from './widgets/Departures.svelte';
   import Fuel from './widgets/Fuel.svelte';
   import Rain from './widgets/Rain.svelte';
@@ -142,7 +143,11 @@
           {#if widget.type === 'clock'}
             <Clock />
           {:else if widget.type === 'weather'}
-            <Weather entry={widget.source ? display.snapshot?.data[widget.source] : undefined} />
+            <Weather
+              entry={widget.source ? display.snapshot?.data[widget.source] : undefined}
+              settings={widget.settings}
+              measured={display.snapshot?.data['knmi.observation']}
+            />
           {:else if widget.type === 'calendar'}
             <Calendar entry={widget.source ? display.snapshot?.data[widget.source] : undefined} settings={widget.settings} />
           {:else if widget.type === 'news'}
@@ -185,6 +190,8 @@
             <Warnings entry={widget.source ? display.snapshot?.data[widget.source] : undefined} settings={widget.settings} />
           {:else if widget.type === 'camera'}
             <Camera settings={widget.settings} />
+          {:else if widget.type === 'traffic'}
+            <Traffic entry={widget.source ? display.snapshot?.data[widget.source] : undefined} settings={widget.settings} />
           {:else if widget.type === 'custom'}
             <Custom entry={widget.source ? display.snapshot?.data[widget.source] : undefined} key="{dashboard.id}/{widget.id}" />
           {:else if widget.type === 'nowplaying'}

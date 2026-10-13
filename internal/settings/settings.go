@@ -88,6 +88,10 @@ type Settings struct {
 	UpdateCheck bool `json:"updateCheck"`
 	// Solar is nil until the solar panels are set up.
 	Solar *Solar `json:"solar"`
+	// Traffic is the switch for the unofficial ANWB traffic info.
+	Traffic TrafficInfo `json:"traffic"`
+	// KNMI says whether a KNMI key is set, never the key.
+	KNMI KNMI `json:"knmi"`
 }
 
 // Languages are the display languages; web/src/i18n.svelte.ts has their
@@ -176,6 +180,12 @@ func (s *Service) Get(ctx context.Context) (Settings, error) {
 		return Settings{}, err
 	}
 	if out.Solar, err = s.solarPanels(ctx); err != nil {
+		return Settings{}, err
+	}
+	if out.Traffic, err = s.TrafficInfo(ctx); err != nil {
+		return Settings{}, err
+	}
+	if out.KNMI, err = s.KNMIView(ctx); err != nil {
 		return Settings{}, err
 	}
 	return out, nil

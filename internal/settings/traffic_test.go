@@ -29,6 +29,9 @@ func TestTrafficInfoIsOffUntilAcknowledged(t *testing.T) {
 	if src, _ := s.Sources(ctx); !src.TrafficInfo {
 		t.Fatal("Sources does not have traffic info on")
 	}
+	if got, err := s.Get(ctx); err != nil || !got.Traffic.Enabled {
+		t.Fatalf("Get traffic = %+v, %v", got.Traffic, err)
+	}
 
 	off, err := s.SetTrafficInfo(ctx, false, false)
 	if err != nil || off.Enabled || off.AcknowledgedAt == nil {
@@ -79,6 +82,9 @@ func TestKNMIKeyIsSecret(t *testing.T) {
 	}
 	if src, _ := s.Sources(ctx); src.KNMIKey != knmiKey {
 		t.Fatal("Sources does not have the key")
+	}
+	if got, err := s.Get(ctx); err != nil || !got.KNMI.Connected {
+		t.Fatalf("Get knmi = %+v, %v", got.KNMI, err)
 	}
 
 	other, _ := secret.LoadOrCreateKey(filepath.Join(t.TempDir(), "other.key"))

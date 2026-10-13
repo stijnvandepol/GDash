@@ -12,6 +12,7 @@
   import PlacePicker from './PlacePicker.svelte';
   import CastDevicePicker from './CastDevicePicker.svelte';
   import CustomWidgetSettings from './CustomWidgetSettings.svelte';
+  import TrafficWidgetSettings from './TrafficWidgetSettings.svelte';
 
   // Texts up to this length get a single-line field, longer ones a text area.
   const SINGLE_LINE_MAX = 60;
@@ -81,6 +82,8 @@
 
 {#if isCustom}
   <CustomWidgetSettings {settings} {onchange} />
+{:else if type.settings.roads?.kind === 'roads'}
+  <TrafficWidgetSettings {settings} {onchange} />
 {:else}
 {#each keys as key (key)}
   {@const rule = type.settings[key]!}

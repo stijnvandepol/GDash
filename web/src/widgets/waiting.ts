@@ -19,7 +19,8 @@ export type Source =
   | 'departures'
   | 'fuel'
   | 'rain'
-  | 'warnings';
+  | 'warnings'
+  | 'traffic';
 
 const TEXTS: Record<Source, { notSetUp: TextKey; failed: TextKey; loading: TextKey }> = {
   weather: { notSetUp: 'weatherNotSetUp', failed: 'weatherFailed', loading: 'weatherLoading' },
@@ -52,6 +53,9 @@ const TEXTS: Record<Source, { notSetUp: TextKey; failed: TextKey; loading: TextK
   // Without a province the widget takes the weather location's, which
   // must be in the Netherlands.
   warnings: { notSetUp: 'warningsNotSetUp', failed: 'warningsFailed', loading: 'warningsLoading' },
+  // The server sends no entry until ANWB traffic info is on, or a widget
+  // shows fixed cameras.
+  traffic: { notSetUp: 'trafficNotSetUp', failed: 'trafficFailed', loading: 'trafficLoading' },
 };
 
 /**

@@ -47,6 +47,7 @@ import type {
   HomeyUser,
   Immich,
   ImmichAlbum,
+  KnmiInfo,
   Location,
   NewApiToken,
   NewsFeed,
@@ -59,6 +60,7 @@ import type {
   SourceStatus,
   Synology,
   SystemInfo,
+  TrafficInfo,
   TwoStepEnrolment,
   TwoStepStatus,
   User,
@@ -198,6 +200,12 @@ export const api = {
   saveCamera: (id: number, input: CameraInput) => request<Camera>('PUT', `/api/cameras/${id}`, input),
   deleteCamera: (id: number) => request<void>('DELETE', `/api/cameras/${id}`),
   testCamera: (id: number) => request<CameraTest>('POST', `/api/cameras/${id}/tests`),
+  traffic: () => request<TrafficInfo>('GET', '/api/traffic'),
+  setTraffic: (enabled: boolean, acknowledged: boolean) =>
+    request<Pick<TrafficInfo, 'enabled' | 'acknowledgedAt'>>('PUT', '/api/traffic', { enabled, acknowledged }),
+  knmi: () => request<KnmiInfo>('GET', '/api/knmi'),
+  connectKnmi: (key: string) => request<{ connected: boolean }>('PUT', '/api/knmi', { key }),
+  disconnectKnmi: () => request<void>('DELETE', '/api/knmi'),
   departureStops: (query: string) =>
     request<{ stops: DepartureStop[] }>('GET', `/api/departures/stops?q=${encodeURIComponent(query)}`).then((r) => r.stops),
   customSources: () => request<{ sources: CustomSource[] }>('GET', '/api/custom-sources').then((r) => r.sources),

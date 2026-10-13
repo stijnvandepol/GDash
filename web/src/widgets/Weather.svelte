@@ -5,6 +5,7 @@
   import { currentLanguage, locale, t } from '../i18n.svelte';
   import { describeWeather } from './wmo';
   import WeatherIcon from './WeatherIcon.svelte';
+  import { humidityText, measuredText, readObservation, showsMeasured } from './knmi';
 
   interface WeatherReport {
     temperatureC: number;
@@ -15,12 +16,27 @@
     todayMinC: number;
   }
 
-  let { entry }: { entry: Entry | undefined } = $props();
+  let {
+    entry,
+    settings,
+    measured,
+  }: {
+    entry: Entry | undefined;
+    settings?: Record<string, unknown> | undefined;
+    /** What the nearest KNMI station measured, for a widget set to show it. */
+    measured?: Entry | undefined;
+  } = $props();
 
   const report = $derived(isReport(entry?.value) ? entry.value : undefined);
   // The server decides how old data may get; the display only compares.
   const stale = $derived(entry !== undefined && clock.now.getTime() > Date.parse(entry.staleAfter));
   const updatedAt = $derived(new Intl.DateTimeFormat(locale(), { hour: '2-digit', minute: '2-digit' }));
+  // Measured values replace the model's current ones; until they arrive, or
+  // when the KNMI fails without a last value, the model's are shown.
+  const observation = $derived(showsMeasured(settings) ? readObservation(measured?.value) : undefined);
+  const measuredStale = $derived(measured !== undefined && clock.now.getTime() > Date.parse(measured.staleAfter));
+  const temperature = $derived(observation?.temperatureC ?? report?.temperatureC ?? 0);
+  const windKmh = $derived(observation?.windKmh ?? report?.windKmh ?? 0);
 
   function isReport(v: unknown): v is WeatherReport {
     if (typeof v !== 'object' || v === null) return false;
@@ -30,15 +46,22 @@
 </script>
 
 <div class="weather">
-  {#if report && entry}
+  <!-- Measured values show on their own too, while the model is out. -->
+  {#if (report && entry) || observation}
     <div class="now">
-      <span class="temperature">{Math.round(report.temperatureC)}°</span>
-      <span class="icon"><WeatherIcon code={report.weatherCode} day={report.isDay !== false} /></span>
+      <span class="temperature">{Math.round(temperature)}°</span>
+      {#if report}<span class="icon"><WeatherIcon code={report.weatherCode} day={report.isDay !== false} /></span>{/if}
     </div>
-    <span class="description">{describeWeather(report.weatherCode, currentLanguage()) ?? t('unknownWeather')}</span>
-    <span class="range">{Math.round(report.todayMinC)}° / {Math.round(report.todayMaxC)}°</span>
-    <span class="wind">{t('wind', { speed: Math.round(report.windKmh) })}</span>
-    {#if !Number.isNaN(Date.parse(entry.fetchedAt))}
+    {#if report}
+      <span class="description">{describeWeather(report.weatherCode, currentLanguage()) ?? t('unknownWeather')}</span>
+      <span class="range">{Math.round(report.todayMinC)}° / {Math.round(report.todayMaxC)}°</span>
+    {/if}
+    <span class="wind">
+      {t('wind', { speed: Math.round(windKmh) })}{#if observation?.humidity != null}{' · '}{humidityText(observation.humidity)}{/if}
+    </span>
+    {#if observation}
+      <span class="updated measured" class:stale={measuredStale}>{measuredText(observation)} · KNMI</span>
+    {:else if entry && !Number.isNaN(Date.parse(entry.fetchedAt))}
       <span class="updated" class:stale>
         {t('updated', { time: updatedAt.format(new Date(entry.fetchedAt)) })}
       </span>
@@ -98,11 +121,17 @@
   .muted {
     color: var(--text-muted);
   }
-  /* A small tile keeps the temperature, the sky and today's range. */
+  /* A small tile keeps the temperature, the sky and today's range, and
+     where a measured temperature comes from: it says the number is not the
+     model's. */
   @container (max-height: 420px) {
     .wind,
-    .updated {
+    .updated:not(.measured) {
       display: none;
+    }
+    .measured {
+      margin-top: 12px;
+      font-size: 22px;
     }
   }
   @container (max-height: 260px) {

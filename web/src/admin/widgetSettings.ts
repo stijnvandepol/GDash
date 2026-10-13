@@ -50,6 +50,7 @@ export const WIDGETS: Record<string, WidgetInfo> = {
   text: { label: 'Note', category: 'agenda', description: 'A short note for the household', icon: 'note' },
   departures: { label: 'Departures', category: 'travel', description: 'Next buses and trains', icon: 'bus' },
   fuel: { label: 'Fuel prices', category: 'travel', description: 'The cheapest fuel nearby', icon: 'fuel' },
+  traffic: { label: 'Traffic', category: 'travel', description: 'Jams, roadworks and speed cameras on your roads', icon: 'road' },
   news: { label: 'News', category: 'media', description: 'Headlines from your feeds', icon: 'news' },
   photos: { label: 'Photos', category: 'media', description: 'A slideshow of your photos', icon: 'photo' },
   nowplaying: { label: 'Now playing', category: 'media', description: 'What plays on your Cast speakers', icon: 'music' },
@@ -101,6 +102,7 @@ export const SETTING_LABELS: Record<string, string> = {
   stop: 'Stop',
   radius: 'Radius (km)',
   fuel: 'Fuel',
+  current: 'Now',
   region: 'Region',
   show: 'Show',
   announce: 'Announce code orange and red on every screen',
@@ -122,6 +124,7 @@ const ITEM_NAMES: Record<string, string> = {
   departures: 'Departures',
   fuel: 'Petrol stations',
   holidays: 'Holidays',
+  traffic: 'Lines',
 };
 
 /** The label of a setting in the editor, worded for the widget it belongs to. */
@@ -133,7 +136,7 @@ export function settingLabel(widgetType: string, key: string): string {
   return SETTING_LABELS[key] ?? key;
 }
 
-/** Names of the options of choice settings in the editor: the fuels by the ANWB's codes, the holiday choices, and how photos and camera images fit. */
+/** Names of the options of choice settings in the editor: the fuels by the ANWB's codes, the holiday choices, how photos and camera images fit, and where the weather now comes from. */
 export const CHOICE_LABELS: Record<string, string> = {
   EURO95: 'Euro 95 / E10',
   EURO98: 'Euro 98',
@@ -151,6 +154,8 @@ export const CHOICE_LABELS: Record<string, string> = {
   uploaded: 'Uploaded photos',
   immich: 'Immich album',
   synology: 'Synology Photos album',
+  model: 'Weather model (Open-Meteo)',
+  knmi: 'Measured by KNMI',
 };
 
 /** How often a new Camera widget refreshes, in seconds; internal/display holds the same default. */
@@ -187,6 +192,9 @@ export function defaultSettings(type: WidgetType, today = new Date()): Record<st
   // stop and stopName stay unset until a stop is chosen: there is no sensible default.
   // A Custom widget starts as one value; its API and path are chosen in its form.
   if (type.settings.source?.kind === 'customSource') return { mode: 'value' };
+  // A Traffic widget starts around the weather location (internal/traffic defaults);
+  // roads replace the radius once they are typed.
+  if (type.settings.roads?.kind === 'roads') return { radius: 25, show: ['jams', 'roadworks', 'speedchecks'], maxItems: 5 };
   // A fuel widget without a place follows the weather location.
   const settings: Record<string, unknown> = {};
   for (const [key, rule] of Object.entries(type.settings)) {

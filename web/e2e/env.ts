@@ -4,6 +4,9 @@ const DEFAULT_PORT = 8435;
 
 export const ADMIN_USERNAME = 'e2e-admin';
 
+/** The made-up key that the KNMI stand-in accepts (see stand-ins.ts). */
+export const KNMI_KEY = 'e2e-made-up-knmi-key';
+
 /** The port of the test server, on the loopback address only. */
 export function port(): number {
   return Number(process.env.GDASH_E2E_PORT ?? DEFAULT_PORT);

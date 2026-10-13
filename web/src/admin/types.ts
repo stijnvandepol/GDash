@@ -113,6 +113,8 @@ export interface SettingRule {
     | 'webPage'
     | 'choice'
     | 'boolean'
+    | 'choices'
+    | 'roads'
     | 'path'
     | 'paths'
     | 'pairs'
@@ -121,7 +123,7 @@ export interface SettingRule {
   min?: number;
   max?: number;
   required: boolean;
-  /** The values a choice takes. */
+  /** The values a choice, or each of a list of choices, takes. */
   options?: string[];
 }
 
@@ -166,6 +168,10 @@ export interface Settings {
   updateCheck: boolean;
   /** Null until the solar panels are set up. */
   solar: Solar | null;
+  /** The switch for the unofficial ANWB traffic info. */
+  traffic: Pick<TrafficInfo, 'enabled' | 'acknowledgedAt'>;
+  /** Whether a KNMI key is set; the key never leaves the server. */
+  knmi: Pick<KnmiInfo, 'connected' | 'unreadable'>;
 }
 
 /** A group of panels that face the same way (internal/solar). */
@@ -383,6 +389,31 @@ export interface CustomTest {
 export interface SourceStatus {
   updatedAt?: string;
   failing: boolean;
+}
+
+/** GET /api/traffic: the switch for the unofficial ANWB traffic info and how it goes. */
+export interface TrafficInfo {
+  enabled: boolean;
+  /** When the admin last acknowledged the terms; absent if never. */
+  acknowledgedAt?: string;
+  anwb: {
+    state: 'idle' | 'ok' | 'failing' | 'stopped';
+    /** The status code of the last refusal. */
+    httpStatus?: number;
+    nextAttemptAt?: string;
+  };
+  /** Present once a Traffic widget is on a dashboard. */
+  data?: SourceStatus;
+  /** Present once a Traffic widget shows fixed cameras. */
+  cameras?: SourceStatus;
+}
+
+/** GET /api/knmi: whether a key is set; the key never leaves the server. */
+export interface KnmiInfo {
+  connected: boolean;
+  unreadable: boolean;
+  /** Present once a Weather widget shows measured values. */
+  data?: SourceStatus;
 }
 
 export interface Place extends Location {

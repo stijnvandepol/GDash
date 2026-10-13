@@ -18,6 +18,7 @@ import CustomSourceSetting from './CustomSourceSetting.svelte';
 import HomeAssistantSetting from './HomeAssistantSetting.svelte';
 import HomeySetting from './HomeySetting.svelte';
 import ImmichSetting from './ImmichSetting.svelte';
+import KnmiSetting from './KnmiSetting.svelte';
 import LocationSetting from './LocationSetting.svelte';
 import PhotoSetting from './PhotoSetting.svelte';
 import PresetSetup from './PresetSetup.svelte';
@@ -25,6 +26,7 @@ import SolarSetting from './SolarSetting.svelte';
 import SourceList from './SourceList.svelte';
 import SynologySetting from './SynologySetting.svelte';
 import WebPageSetting from './WebPageSetting.svelte';
+import TrafficSetting from './TrafficSetting.svelte';
 
 // Every card on the Integrations page. Adding an integration is adding an
 // entry here: what it is, how its state reads, and the setup it opens.
@@ -351,6 +353,37 @@ const SERVICES: Integration[] = [
     panel: (ctx) => view(WebPageSetting, { onchanged: ctx.onchanged, onerror: ctx.onerror }),
   },
   {
+    id: 'knmi',
+    name: 'KNMI measured weather',
+    description: 'What the nearest KNMI station measured, instead of the model’s temperature now',
+    keywords: 'knmi station observation temperature humidity wind edr',
+    category: 'weather',
+    icon: 'weather',
+    tags: ['free-key', 'nl'],
+    kind: 'service',
+    state: ({ settings, status }) => {
+      if (!settings.knmi.connected) return NOT_SET_UP;
+      if (settings.knmi.unreadable) return { kind: 'problem', detail: 'The key cannot be read on this server. Enter it again.' };
+      return sourceState(status['knmi.observation'], 'Used once a Weather widget is set to “Measured by KNMI”.');
+    },
+    panel: (ctx) => view(KnmiSetting, { onchanged: ctx.onchanged, onerror: ctx.onerror }),
+  },
+  {
+    id: 'traffic',
+    name: 'ANWB traffic info (unofficial)',
+    description: 'Jams, roadworks and mobile speed checks, read without the ANWB’s permission; for your own household only',
+    keywords: 'anwb verkeer file traffic jams roadworks flitser speed check',
+    category: 'travel',
+    icon: 'road',
+    tags: ['nl', 'no-key', 'unofficial'],
+    kind: 'service',
+    state: ({ settings, status }) => {
+      if (!settings.traffic.enabled) return { kind: 'idle', detail: 'Off' };
+      return sourceState(status['traffic.default'], 'On. Asked once a Traffic widget is on a dashboard.');
+    },
+    panel: (ctx) => view(TrafficSetting, { onchanged: ctx.onchanged, onerror: ctx.onerror }),
+  },
+  {
     id: 'apitokens',
     name: 'API tokens',
     description: 'Let automations send data and announcements to GDash',
@@ -452,6 +485,18 @@ const BUILT_IN: Integration[] = [
     kind: 'builtin',
     requires: { widget: 'fuel' },
     state: ({ status }) => builtinState(status['fuel.default']),
+  },
+  {
+    id: 'speedcameras',
+    name: 'Speed cameras (OpenStreetMap)',
+    description: 'Fixed speed cameras and average speed checks on your roads, © OpenStreetMap contributors',
+    keywords: 'flitspaal trajectcontrole overpass osm odbl traffic',
+    category: 'travel',
+    icon: 'road',
+    tags: ['no-key', 'nl'],
+    kind: 'builtin',
+    requires: { widget: 'traffic' },
+    state: ({ status }) => builtinState(status['traffic.cameras']),
   },
   {
     id: 'energyprice',

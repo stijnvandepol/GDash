@@ -27,6 +27,7 @@ export const TAGS = {
   local: 'Local',
   nl: 'NL',
   push: 'Push',
+  unofficial: 'Unofficial',
 } as const;
 
 export type Tag = keyof typeof TAGS;
