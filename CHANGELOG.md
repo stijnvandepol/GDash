@@ -5,6 +5,8 @@ the format follows [Keep a Changelog](https://keepachangelog.com).
 
 ## Unreleased
 
+## 0.9.2 – 2026-10-14
+
 ### Added
 
 - News sources to choose from: about 50 feeds that their publishers offer,

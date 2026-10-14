@@ -13,7 +13,7 @@ body:
     attributes:
       label: GDash version
       description: Shown in the footer of the web interface, or run `gdash version` (in Docker, `docker compose exec gdash /gdash version`).
-      placeholder: v0.9.1
+      placeholder: v0.9.2
     validations:
       required: true
   - type: dropdown
