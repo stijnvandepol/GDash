@@ -641,7 +641,9 @@ active hours, but both are required. Deleting a dashboard removes the slots that
 `theme` is one of `minimal-dark` (default), `minimal-light`, `glass`, `warm-light`, `high-contrast`, `night`, `frost`, `walnut`,
 `swiss`, `tonal`, `gilded`, `riviera`, `galaxy`, `terminal`, `parchment`, `neon`, `frost-night`, `candy`, `upside-down`, `noir`,
 `mars`, `hyperspace`, `dark-side`, `desert-planet`, `wizard-school`, `middle-realm`, `rain-city`, `time-machine`, `secret-agent`,
-`shiny-hunt`, `pocket-console`, `block-world` and `quest-menu`; `font` is empty for the theme's own typeface or one of `geist`,
+`shiny-hunt`, `pocket-console`, `block-world`, `quest-menu`,
+`de-stijl`, `delft`, `tessellation`, `bauhaus`, `starry-swirl`, `golden-mosaic`, `great-wave`, `colour-field`, `memphis`,
+`art-deco`, `risograph`, `brutalist`; `font` is empty for the theme's own typeface or one of `geist`,
 `inter`, `outfit`, `space-grotesk`, `lora`, `cormorant`, `bodoni`, `news-cycle`, `jetbrains-mono`, `im-fell`, `courier-prime`,
 `oswald`, `jersey`, `jost` and `fraunces`. An unknown theme
 or font is a `422`. A `PUT` replaces the whole dashboard: leaving `theme` or `font` out sets the default theme or the

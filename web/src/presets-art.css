@@ -1,0 +1,354 @@
+/*
+ * Style presets after art movements and abstract patterns: Dutch abstract
+ * art and Delftware, an interlocking tiling, the Bauhaus, a starry night,
+ * gold mosaic, a woodblock wave, colour fields, Memphis, art deco, a
+ * two-ink print and raw concrete. They borrow a movement's shapes and
+ * colours, never a particular work.
+ *
+ * Same rules as presets.css: only custom properties, everything drawn with
+ * gradients (no images), text at 4.5:1 or more. The art stays behind the
+ * data: it fills the backdrop between the tiles, and a motif inside a tile
+ * keeps to its padding, so no text stands on it; what spans a whole tile is
+ * a faint texture. Motifs in a tile are sized in em: a tile's font size is
+ * 16 pixels on the TV stage, a third of its 48-pixel padding, so a motif
+ * within 3em of an edge stays in the padding, and the samples in the web
+ * interface scale it with their tiles. They are drawn once (no-repeat), so
+ * a transparent border does not show a sliver of the next copy;
+ * --tile-image-2 and --tile-image-3 vary them from tile to tile.
+ */
+
+/* De Stijl: white planes between heavy black lines, here and there a plane
+   of red, blue or yellow, in a geometric sans. */
+.screen[data-theme='de-stijl'] {
+  --surface-0: #141414;
+  --surface-1: #f6f3ea;
+  --widget-border: transparent;
+  --text-primary: #141414;
+  --text-muted: #4a4a4a;
+  --accent: #1d4fa3;
+  --warning: #8a5300;
+  --backdrop: none;
+  --tile-image: linear-gradient(#d4202a, #d4202a) right top / 2em 42% no-repeat,
+    linear-gradient(#141414, #141414) right top / 2.5em calc(42% + 0.5em) no-repeat;
+  --tile-image-2: linear-gradient(#1d4fa3, #1d4fa3) left bottom / 36% 2em no-repeat,
+    linear-gradient(#141414, #141414) left bottom / calc(36% + 0.5em) 2.5em no-repeat;
+  --tile-image-3: linear-gradient(#f2c200, #f2c200) right bottom / 24% 2em no-repeat,
+    linear-gradient(#141414, #141414) right bottom / calc(24% + 0.5em) 2.5em no-repeat;
+  --font-ui: var(--face-jost);
+  --radius-scale: 0;
+  --weight-figure: 600;
+  /* The moon as print draws it: the lit part open, the dark side shaded. */
+  --moon-lit: transparent;
+  --moon-shadow: var(--text-muted);
+  --moon-shadow-opacity: 0.85;
+}
+
+/* Delft blue: white-glazed tiles with cobalt corner motifs, on a wall of
+   cobalt tiles. */
+.screen[data-theme='delft'] {
+  --surface-0: #183c86;
+  --surface-1: #f7f8fc;
+  --widget-border: #183c86;
+  --text-primary: #142f6e;
+  --text-muted: #46557d;
+  --accent: #1f56c4;
+  --warning: #8f4a00;
+  --backdrop: radial-gradient(circle at 60px 60px, #183c86 0 4px, transparent 5px 24px, rgba(225, 233, 255, 0.2) 24px 26px, transparent 27px) -60px -60px / 120px 120px,
+    radial-gradient(circle at 60px 46px, rgba(225, 233, 255, 0.3) 0 9px, transparent 10px) -60px -60px / 120px 120px,
+    radial-gradient(circle at 60px 74px, rgba(225, 233, 255, 0.3) 0 9px, transparent 10px) -60px -60px / 120px 120px,
+    radial-gradient(circle at 46px 60px, rgba(225, 233, 255, 0.3) 0 9px, transparent 10px) -60px -60px / 120px 120px,
+    radial-gradient(circle at 74px 60px, rgba(225, 233, 255, 0.3) 0 9px, transparent 10px) -60px -60px / 120px 120px,
+    radial-gradient(circle at 60px 60px, rgba(225, 233, 255, 0.16) 0 5px, transparent 6px) 0 0 / 120px 120px,
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.1) 0 2px, transparent 2px 120px),
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.1) 0 2px, transparent 2px 120px),
+    radial-gradient(ellipse at 30% 20%, #2450a6 0%, transparent 70%);
+  --tile-image: radial-gradient(circle at 0 0, #2a55ae 0 1em, transparent 1.0625em 1.375em, #2a55ae 1.375em 1.5625em, transparent 1.625em) no-repeat,
+    radial-gradient(circle at 100% 0, #2a55ae 0 1em, transparent 1.0625em 1.375em, #2a55ae 1.375em 1.5625em, transparent 1.625em) no-repeat,
+    radial-gradient(circle at 0 100%, #2a55ae 0 1em, transparent 1.0625em 1.375em, #2a55ae 1.375em 1.5625em, transparent 1.625em) no-repeat,
+    radial-gradient(circle at 100% 100%, #2a55ae 0 1em, transparent 1.0625em 1.375em, #2a55ae 1.375em 1.5625em, transparent 1.625em) no-repeat,
+    radial-gradient(circle at 2.125em 2.125em, #2a55ae 0 0.2812em, transparent 0.3438em) no-repeat,
+    radial-gradient(circle at calc(100% - 2.125em) 2.125em, #2a55ae 0 0.2812em, transparent 0.3438em) no-repeat,
+    radial-gradient(circle at 2.125em calc(100% - 2.125em), #2a55ae 0 0.2812em, transparent 0.3438em) no-repeat,
+    radial-gradient(circle at calc(100% - 2.125em) calc(100% - 2.125em), #2a55ae 0 0.2812em, transparent 0.3438em) no-repeat;
+  --font-ui: var(--face-cormorant);
+  --radius-scale: 0.1;
+  --weight-figure: 600;
+  --weight-text: 500;
+  /* The moon as print draws it: the lit part open, the dark side shaded. */
+  --moon-lit: transparent;
+  --moon-shadow: var(--text-muted);
+  --moon-shadow-opacity: 0.85;
+}
+
+/* Tessellation: blocks that tumble into one another in black, white and
+   ochre, a tiling that never ends; the tiles are plain paper. */
+.screen[data-theme='tessellation'] {
+  --surface-0: #c48a2c;
+  --surface-1: #f5f0e4;
+  --widget-border: #161411;
+  --widget-border-width: 2px;
+  --text-primary: #161411;
+  --text-muted: #4b463e;
+  --accent: #865a0b;
+  --warning: #a2341c;
+  --backdrop: linear-gradient(30deg, #161411 12%, transparent 12.5% 87%, #161411 87.5%) 0 0 / 80px 140px,
+    linear-gradient(150deg, #161411 12%, transparent 12.5% 87%, #161411 87.5%) 0 0 / 80px 140px,
+    linear-gradient(30deg, #161411 12%, transparent 12.5% 87%, #161411 87.5%) 40px 70px / 80px 140px,
+    linear-gradient(150deg, #161411 12%, transparent 12.5% 87%, #161411 87.5%) 40px 70px / 80px 140px,
+    linear-gradient(60deg, #efe9da 25%, transparent 25.5% 75%, #efe9da 75%) 0 0 / 80px 140px,
+    linear-gradient(60deg, #efe9da 25%, transparent 25.5% 75%, #efe9da 75%) 40px 70px / 80px 140px;
+  --font-ui: var(--face-space-grotesk);
+  --radius-scale: 0;
+  --weight-figure: 600;
+  /* The moon as print draws it: the lit part open, the dark side shaded. */
+  --moon-lit: transparent;
+  --moon-shadow: var(--text-muted);
+  --moon-shadow-opacity: 0.85;
+}
+
+/* Bauhaus: circles, triangles and squares in red, yellow and blue on
+   cream, in a geometric sans from the same years. */
+.screen[data-theme='bauhaus'] {
+  --surface-0: #ece2cc;
+  --surface-1: #faf6ec;
+  --widget-border: transparent;
+  --text-primary: #151515;
+  --text-muted: #4a453d;
+  --accent: #b81d2a;
+  --warning: #7a4600;
+  /* Shapes sized in percent of the screen, as wide as they are high on a
+     16:9 screen, so a sample in the web interface has the same picture. */
+  --backdrop: radial-gradient(closest-side, #c8232c 99%, transparent 100%) 4% 88% / 17% 30% no-repeat,
+    linear-gradient(45deg, transparent 50%, #f0b81c 50%) 72% 6% / 17% 30% no-repeat,
+    linear-gradient(#1f4a9a, #1f4a9a) 95% 90% / 12% 21% no-repeat;
+  --tile-image: radial-gradient(circle at 100% 100%, #c8232c 0 3.5em, transparent 3.5625em) no-repeat;
+  --tile-image-2: linear-gradient(135deg, transparent 0 calc(100% - 4em), #f0b81c calc(100% - 4em)) right bottom / 5.625em 5.625em no-repeat;
+  --tile-image-3: linear-gradient(#1f4a9a, #1f4a9a) right bottom / 2.625em 2.625em no-repeat;
+  --font-ui: var(--face-jost);
+  --radius-scale: 0;
+  --weight-figure: 600;
+  /* The moon as print draws it: the lit part open, the dark side shaded. */
+  --moon-lit: transparent;
+  --moon-shadow: var(--text-muted);
+  --moon-shadow-opacity: 0.85;
+}
+
+/* Starry swirl: a deep blue night with swirling strokes that show through
+   the tiles, and a star or the moon ringed in yellow in a tile's corner, in
+   an expressive serif. */
+.screen[data-theme='starry-swirl'] {
+  --surface-0: #0b1a3e;
+  --surface-1: rgba(8, 18, 46, 0.74);
+  --widget-border: rgba(255, 220, 110, 0.28);
+  --text-primary: #fbf3d6;
+  --text-muted: #c3cbe3;
+  --accent: #ffd75e;
+  --warning: #ffa766;
+  --measure-backdrop: #5e749b;
+  --backdrop: radial-gradient(ellipse 30% 26% at 36% 50%, transparent 0 40%, rgba(120, 165, 240, 0.3) 40% 44%, transparent 44% 50%, rgba(255, 215, 110, 0.26) 50% 53%, transparent 53% 59%, rgba(120, 165, 240, 0.24) 59% 64%, transparent 64% 71%, rgba(255, 215, 110, 0.18) 71% 74%, transparent 74% 81%, rgba(200, 220, 255, 0.16) 81% 85%, transparent 85%),
+    radial-gradient(ellipse 18% 22% at 72% 64%, transparent 0 30%, rgba(255, 215, 110, 0.26) 30% 35%, transparent 35% 44%, rgba(120, 165, 240, 0.28) 44% 50%, transparent 50% 58%, rgba(255, 215, 110, 0.18) 58% 62%, transparent 62% 70%, rgba(120, 165, 240, 0.2) 70% 75%, transparent 75%),
+    radial-gradient(ellipse 22% 18% at 12% 16%, transparent 0 40%, rgba(120, 165, 240, 0.26) 40% 47%, transparent 47% 56%, rgba(255, 215, 110, 0.16) 56% 60%, transparent 60% 68%, rgba(200, 220, 255, 0.16) 68% 73%, transparent 73%),
+    radial-gradient(ellipse 20% 30% at 90% 30%, transparent 0 44%, rgba(120, 165, 240, 0.22) 44% 50%, transparent 50% 60%, rgba(255, 215, 110, 0.16) 60% 64%, transparent 64%),
+    repeating-linear-gradient(118deg, rgba(120, 160, 235, 0.05) 0 3px, transparent 3px 11px),
+    linear-gradient(180deg, #16357a 0%, #0f2758 55%, #0a1a40 100%);
+  --tile-image: radial-gradient(circle at 100% 100%, transparent 0 2.125em, rgba(255, 215, 110, 0.16) 2.1875em 2.375em, transparent 2.4375em 2.9375em, rgba(150, 190, 255, 0.14) 3em 3.1875em, transparent 3.25em) no-repeat;
+  --tile-image-2: radial-gradient(circle at calc(100% - 1.625em) 1.625em, #ffe27a 0 0.3125em, rgba(255, 226, 122, 0.45) 0.4375em 0.625em, transparent 0.75em 0.9375em, rgba(255, 226, 122, 0.22) 1.0625em 1.25em, transparent 1.375em) no-repeat;
+  --tile-image-3: radial-gradient(circle at calc(100% - 1.75em) 1.75em, #ffe27a 0 0.75em, rgba(255, 226, 122, 0.4) 0.875em 1.0625em, transparent 1.1875em 1.3125em, rgba(255, 226, 122, 0.2) 1.4375em 1.5625em, transparent 1.625em) no-repeat;
+  --font-ui: var(--face-fraunces);
+  --radius-scale: 0.8;
+  --weight-figure: 600;
+}
+
+/* Golden mosaic: gold leaf laid in small stones with dark and bright
+   squares and spirals; the tiles are dark, edged in gold. */
+.screen[data-theme='golden-mosaic'] {
+  --surface-0: #b98a2e;
+  --surface-1: rgba(22, 16, 10, 0.95);
+  --widget-border: rgba(240, 197, 90, 0.7);
+  --widget-border-width: 2px;
+  --text-primary: #f8efd8;
+  --text-muted: #d6c29c;
+  --accent: #f0c55a;
+  --warning: #ff9e6b;
+  --measure-backdrop: #f7ecd0;
+  --backdrop: conic-gradient(from 270deg at 11px 11px, #1b140c 25%, transparent 0) 37px 61px / 108px 96px,
+    conic-gradient(from 270deg at 11px 11px, #f7ecd0 25%, transparent 0) 73px 49px / 132px 120px,
+    conic-gradient(from 270deg at 11px 11px, #2d6b5e 25%, transparent 0) 97px 13px / 156px 144px,
+    conic-gradient(from 270deg at 11px 11px, #a8321e 25%, transparent 0) 49px 121px / 180px 168px,
+    conic-gradient(from 270deg at 11px 11px, #f2cf73 25%, transparent 0) 1px 1px / 36px 48px,
+    conic-gradient(from 270deg at 11px 11px, #a87a24 25%, transparent 0) 13px 25px / 60px 36px,
+    conic-gradient(from 270deg at 11px 11px, #e6bb55 25%, transparent 0) 25px 13px / 84px 60px,
+    radial-gradient(circle, transparent 0 4px, rgba(70, 40, 5, 0.55) 5px 7px, transparent 8px 11px, rgba(70, 40, 5, 0.4) 12px 13px, transparent 14px) 0 0 / 84px 84px,
+    repeating-linear-gradient(0deg, rgba(90, 55, 10, 0.35) 0 1px, transparent 1px 12px),
+    repeating-linear-gradient(90deg, rgba(90, 55, 10, 0.35) 0 1px, transparent 1px 12px),
+    radial-gradient(ellipse at 30% 20%, #f3d47c 0%, transparent 55%),
+    radial-gradient(ellipse at 80% 85%, #e4b54e 0%, transparent 50%),
+    linear-gradient(135deg, #a8771f 0%, #d9a944 40%, #9c6b1a 70%, #c9963a 100%);
+  --tile-image: conic-gradient(from 270deg at 3px 3px, rgba(240, 197, 90, 0.11) 25%, transparent 0) 0 0 / 14px 14px;
+  --font-ui: var(--face-fraunces);
+  --radius-scale: 0.25;
+  --weight-figure: 500;
+}
+
+/* Great wave: rows of Prussian blue waves edged with foam, like a woodblock
+   print, and tiles of cream paper. */
+.screen[data-theme='great-wave'] {
+  --surface-0: #1c3a5e;
+  --surface-1: #f3ead5;
+  --widget-border: transparent;
+  --text-primary: #182f4f;
+  --text-muted: #4d5868;
+  --accent: #b23a1e;
+  --warning: #8a4b00;
+  --backdrop: radial-gradient(circle at 0 150%, #1c3a5e 0 9px, #c8d5da 9px 12px, #2b5784 12px 21px, #c8d5da 21px 24px, #1c3a5e 24px 34px, #c8d5da 34px 37px, #2b5784 37px 47px, #c8d5da 47px 50px, #1c3a5e 50px 58px, #c8d5da 58px 60px, transparent 60px) 0 0 / 120px 60px,
+    radial-gradient(circle at 100% 150%, #1c3a5e 0 9px, #c8d5da 9px 12px, #2b5784 12px 21px, #c8d5da 21px 24px, #1c3a5e 24px 34px, #c8d5da 34px 37px, #2b5784 37px 47px, #c8d5da 47px 50px, #1c3a5e 50px 58px, #c8d5da 58px 60px, transparent 60px) 0 0 / 120px 60px,
+    radial-gradient(circle at 50% 100%, #1c3a5e 0 9px, #c8d5da 9px 12px, #2b5784 12px 21px, #c8d5da 21px 24px, #1c3a5e 24px 34px, #c8d5da 34px 37px, #2b5784 37px 47px, #c8d5da 47px 50px, #1c3a5e 50px 58px, #c8d5da 58px 60px, transparent 60px) 0 0 / 120px 60px,
+    radial-gradient(circle at 0 50%, #1c3a5e 0 9px, #c8d5da 9px 12px, #2b5784 12px 21px, #c8d5da 21px 24px, #1c3a5e 24px 34px, #c8d5da 34px 37px, #2b5784 37px 47px, #c8d5da 47px 50px, #1c3a5e 50px 58px, #c8d5da 58px 60px, transparent 60px) 0 0 / 120px 60px,
+    radial-gradient(circle at 100% 50%, #1c3a5e 0 9px, #c8d5da 9px 12px, #2b5784 12px 21px, #c8d5da 21px 24px, #1c3a5e 24px 34px, #c8d5da 34px 37px, #2b5784 37px 47px, #c8d5da 47px 50px, #1c3a5e 50px 58px, #c8d5da 58px 60px, transparent 60px) 0 0 / 120px 60px;
+  --tile-image: repeating-linear-gradient(0deg, rgba(120, 90, 40, 0.035) 0 1px, transparent 1px 5px);
+  --tile-image-3: linear-gradient(#b23a1e, #b23a1e) right 1.125em top 1.125em / 1.375em 1.375em no-repeat,
+    repeating-linear-gradient(0deg, rgba(120, 90, 40, 0.035) 0 1px, transparent 1px 5px);
+  --font-ui: var(--face-lora);
+  --radius-scale: 0.2;
+  /* The moon as print draws it: the lit part open, the dark side shaded. */
+  --moon-lit: transparent;
+  --moon-shadow: var(--text-muted);
+  --moon-shadow-opacity: 0.85;
+}
+
+/* Colour field: soft stacked fields of red and plum that glow through the
+   tiles, very calm. */
+.screen[data-theme='colour-field'] {
+  --surface-0: #3a1420;
+  --surface-1: rgba(42, 12, 20, 0.55);
+  --widget-border: transparent;
+  --text-primary: #fbeee2;
+  --text-muted: #e6c6b6;
+  --accent: #ffb48c;
+  --warning: #ffd66b;
+  --measure-backdrop: #c4482e;
+  --backdrop: linear-gradient(90deg, #3a1420 0%, transparent 6% 94%, #3a1420 100%),
+    linear-gradient(180deg, transparent 0 4%, #c4482e 10% 44%, transparent 50% 54%, #6e2140 60% 92%, transparent 97%);
+  --font-ui: var(--face-inter);
+  --radius-scale: 0.15;
+  --weight-text: 350;
+}
+
+/* Memphis: squiggles, confetti and bold pastels from the eighties; white
+   tiles drawn in black, each with a shape of its own. */
+.screen[data-theme='memphis'] {
+  --surface-0: #d7f2e8;
+  --surface-1: #ffffff;
+  --widget-border: #1a1a1a;
+  --widget-border-width: 3px;
+  --text-primary: #1a1a1a;
+  --text-muted: #4d4d4d;
+  --accent: #c2185b;
+  --warning: #8a4b00;
+  --backdrop: radial-gradient(circle at 50% 0, transparent 0 13.5px, #1a1a1a 13.5px 18.5px, transparent 18.5px) 0 75px / 64px 210px,
+    radial-gradient(circle at 50% 100%, transparent 0 13.5px, #1a1a1a 13.5px 18.5px, transparent 18.5px) 32px 75px / 64px 210px,
+    linear-gradient(45deg, transparent 0 16px, #ff5d8f 16px 25px, transparent 25px) 40px 20px / 170px 150px,
+    radial-gradient(circle at 20px 20px, transparent 0 7px, #ffc93c 7px 13px, transparent 13px) 110px 60px / 230px 190px,
+    linear-gradient(135deg, #22b8c7 0 20px, transparent 20px) 170px 130px / 250px 230px,
+    radial-gradient(circle at 12px 12px, #9b7bea 0 9px, transparent 9.5px) 60px 140px / 190px 260px,
+    radial-gradient(circle, #1a1a1a 0 1.8px, transparent 2.3px) 0 0 / 36px 36px,
+    linear-gradient(160deg, #d7f2e8 0%, #f6e3f7 100%);
+  --tile-image: radial-gradient(circle at 100% 100%, #ff7aa8 0 3.25em, transparent 3.3125em) no-repeat;
+  --tile-image-2: repeating-linear-gradient(45deg, #1a1a1a 0 0.1875em, transparent 0.1875em 0.625em) right bottom / 8.125em 1.875em no-repeat;
+  --tile-image-3: radial-gradient(circle at 100% 0, #2fc4cf 0 2.75em, transparent 2.8125em) no-repeat;
+  --font-ui: var(--face-outfit);
+  --radius-scale: 0.5;
+  --weight-figure: 700;
+  /* The moon as print draws it: the lit part open, the dark side shaded. */
+  --moon-lit: transparent;
+  --moon-shadow: var(--text-muted);
+  --moon-shadow-opacity: 0.85;
+}
+
+/* Art deco: black and gold, fans in rows and a sunburst, square tiles with
+   a gold frame, in a Didone. */
+.screen[data-theme='art-deco'] {
+  --surface-0: #0b0a08;
+  --surface-1: #0f0e0b;
+  --widget-border: #c9a548;
+  --widget-border-width: 2px;
+  --text-primary: #f6eedb;
+  --text-muted: #cbb88f;
+  --accent: #d9b44a;
+  --warning: #f28c5c;
+  --backdrop: repeating-conic-gradient(from 0deg at 50% 100%, rgba(217, 180, 74, 0.1) 0 2deg, transparent 2deg 8deg),
+    radial-gradient(circle at 0 150%, #0b0a08 0 13px, #a8873a 13px 15px, #0b0a08 15px 25px, #a8873a 25px 27px, #0b0a08 27px 37px, #a8873a 37px 39px, #0b0a08 39px 46px, #a8873a 46px 48px, transparent 48px) 0 0 / 96px 48px,
+    radial-gradient(circle at 100% 150%, #0b0a08 0 13px, #a8873a 13px 15px, #0b0a08 15px 25px, #a8873a 25px 27px, #0b0a08 27px 37px, #a8873a 37px 39px, #0b0a08 39px 46px, #a8873a 46px 48px, transparent 48px) 0 0 / 96px 48px,
+    radial-gradient(circle at 50% 100%, #0b0a08 0 13px, #a8873a 13px 15px, #0b0a08 15px 25px, #a8873a 25px 27px, #0b0a08 27px 37px, #a8873a 37px 39px, #0b0a08 39px 46px, #a8873a 46px 48px, transparent 48px) 0 0 / 96px 48px,
+    radial-gradient(circle at 0 50%, #0b0a08 0 13px, #a8873a 13px 15px, #0b0a08 15px 25px, #a8873a 25px 27px, #0b0a08 27px 37px, #a8873a 37px 39px, #0b0a08 39px 46px, #a8873a 46px 48px, transparent 48px) 0 0 / 96px 48px,
+    radial-gradient(circle at 100% 50%, #0b0a08 0 13px, #a8873a 13px 15px, #0b0a08 15px 25px, #a8873a 25px 27px, #0b0a08 27px 37px, #a8873a 37px 39px, #0b0a08 39px 46px, #a8873a 46px 48px, transparent 48px) 0 0 / 96px 48px;
+  --tile-image: linear-gradient(rgba(201, 165, 72, 0.55), rgba(201, 165, 72, 0.55)) 0.625em 0.625em / calc(100% - 1.25em) 1px no-repeat,
+    linear-gradient(rgba(201, 165, 72, 0.55), rgba(201, 165, 72, 0.55)) 0.625em calc(100% - 0.625em) / calc(100% - 1.25em) 1px no-repeat,
+    linear-gradient(rgba(201, 165, 72, 0.55), rgba(201, 165, 72, 0.55)) 0.625em 0.625em / 1px calc(100% - 1.25em) no-repeat,
+    linear-gradient(rgba(201, 165, 72, 0.55), rgba(201, 165, 72, 0.55)) calc(100% - 0.625em) 0.625em / 1px calc(100% - 1.25em) no-repeat,
+    repeating-conic-gradient(from -90deg at 50% 100%, rgba(217, 180, 74, 0.05) 0 3deg, transparent 3deg 9deg);
+  --font-ui: var(--face-bodoni);
+  --radius-scale: 0;
+  --weight-figure: 500;
+  --weight-text: 500;
+}
+
+/* Risograph: two inks, fluorescent pink and blue, in halftone dots and
+   solid shapes a little out of register, on paper. */
+.screen[data-theme='risograph'] {
+  --surface-0: #f1ece1;
+  --surface-1: #f8f4eb;
+  --widget-border: rgba(255, 72, 176, 0.9);
+  --widget-border-width: 2px;
+  --text-primary: #24459a;
+  --text-muted: #4b5ea0;
+  --accent: #c8177a;
+  --warning: #8a4b00;
+  --backdrop: radial-gradient(closest-side, rgba(255, 72, 176, 0.8) 99%, transparent 100%) 84% 22% / 25% 44% no-repeat,
+    radial-gradient(closest-side, rgba(0, 120, 191, 0.75) 99%, transparent 100%) 70% 40% / 20% 36% no-repeat,
+    linear-gradient(100deg, #f1ece1 0 35%, rgba(241, 236, 225, 0) 75%),
+    radial-gradient(circle, rgba(0, 120, 191, 0.5) 0 2px, transparent 2.5px) 0 0 / 9px 9px,
+    radial-gradient(circle, rgba(255, 72, 176, 0.55) 0 2.5px, transparent 3px) 3px 4px / 11px 11px;
+  --tile-image-2: radial-gradient(circle at 100% 100%, rgba(255, 72, 176, 0.85) 0 2.5em, transparent 2.5625em) no-repeat,
+    radial-gradient(circle at calc(100% - 0.5em) calc(100% - 0.375em), rgba(0, 120, 191, 0.7) 0 2.5em, transparent 2.5625em) no-repeat;
+  --font-ui: var(--face-jost);
+  --radius-scale: 0.3;
+  --weight-figure: 600;
+  /* The moon as print draws it: the lit part open, the dark side shaded. */
+  --moon-lit: transparent;
+  --moon-shadow: var(--text-muted);
+  --moon-shadow-opacity: 0.85;
+}
+
+/* Brutalist: raw concrete with board joints and tie holes, slabs for
+   tiles, heavy type. */
+.screen[data-theme='brutalist'] {
+  --surface-0: #8e8b86;
+  --surface-1: #d3d0ca;
+  --widget-border: transparent;
+  --text-primary: #121212;
+  --text-muted: #3d3b38;
+  --accent: #9e240c;
+  --warning: #7a4400;
+  --backdrop: radial-gradient(circle, #45423e 0 8px, rgba(0, 0, 0, 0.22) 8px 11px, transparent 12px) 60px 60px / 240px 120px,
+    repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.14) 0 2px, rgba(255, 255, 255, 0.06) 2px 3px, transparent 3px 120px),
+    repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.1) 0 2px, transparent 2px 240px),
+    repeating-radial-gradient(circle at 13% 27%, rgba(0, 0, 0, 0.07) 0 1px, transparent 1px 4px),
+    repeating-radial-gradient(circle at 71% 63%, rgba(255, 255, 255, 0.07) 0 1px, transparent 1px 5px),
+    radial-gradient(ellipse at 20% 30%, rgba(255, 255, 255, 0.14) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 75%, rgba(0, 0, 0, 0.14) 0%, transparent 50%);
+  --tile-image: radial-gradient(circle at 1.375em 1.375em, #5f5b56 0 0.4375em, rgba(0, 0, 0, 0.12) 0.4375em 0.5625em, transparent 0.625em) no-repeat,
+    radial-gradient(circle at calc(100% - 1.375em) 1.375em, #5f5b56 0 0.4375em, rgba(0, 0, 0, 0.12) 0.4375em 0.5625em, transparent 0.625em) no-repeat,
+    radial-gradient(circle at 1.375em calc(100% - 1.375em), #5f5b56 0 0.4375em, rgba(0, 0, 0, 0.12) 0.4375em 0.5625em, transparent 0.625em) no-repeat,
+    radial-gradient(circle at calc(100% - 1.375em) calc(100% - 1.375em), #5f5b56 0 0.4375em, rgba(0, 0, 0, 0.12) 0.4375em 0.5625em, transparent 0.625em) no-repeat,
+    radial-gradient(ellipse at 25% 15%, rgba(255, 255, 255, 0.2) 0%, transparent 60%) no-repeat,
+    radial-gradient(ellipse at 85% 90%, rgba(0, 0, 0, 0.05) 0%, transparent 55%) no-repeat;
+  --font-ui: var(--face-space-grotesk);
+  --radius-scale: 0;
+  --weight-figure: 700;
+  --weight-text: 500;
+  /* The moon as print draws it: the lit part open, the dark side shaded. */
+  --moon-lit: transparent;
+  --moon-shadow: var(--text-muted);
+  --moon-shadow-opacity: 0.85;
+}

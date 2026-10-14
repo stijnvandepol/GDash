@@ -20,6 +20,14 @@ the format follows [Keep a Changelog](https://keepachangelog.com).
 
 - An integration's setup closes when you click outside it or press Escape,
   instead of staying open until its own Close.
+- Twelve styles after art movements and patterns, in a new Art & abstract
+  section of the style picker: De Stijl, Delft blue, Tessellation, Bauhaus,
+  Starry swirl, Golden mosaic, Great wave, Colour field, Memphis, Art deco,
+  Risograph and Brutalist. Each has its own palette, typeface, tile shape
+  and backdrop, drawn in CSS without pictures; the art stays in the backdrop
+  and the margins of the tiles, so every text keeps 4.5:1 contrast. Some
+  vary their motif from tile to tile, such as De Stijl's red, blue and
+  yellow planes.
 - Two typefaces to choose per dashboard, Jost (geometric) and Fraunces (an
   expressive serif), both under the SIL Open Font License and shipped with
   GDash.

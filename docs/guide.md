@@ -148,7 +148,20 @@ add calendars and feeds under Integrations, and the photos once you add photos.
   (grass and dirt in square blocks) and Quest menu (deep blue menu windows
   over an old map). They borrow no names, logos or symbols. Each theme has
   its own typeface; under **Typeface** you can pick another of the thirteen
-  for this dashboard. All of them ship with
+  for this dashboard. All of them ship with Under Art & abstract, twelve after art movements and patterns, with
+  the art in the backdrop and in the margins of the tiles, never under the
+  text: De Stijl (white planes, black lines and a plane of red, blue or
+  yellow), Delft blue (white glaze and cobalt, every tile with corner
+  motifs), Tessellation (tumbling blocks in black, white and ochre), Bauhaus
+  (circle, triangle and square in the primary colours), Starry swirl (a deep
+  blue night with swirling strokes), Golden mosaic (gold leaf in small
+  stones), Great wave (rows of waves in Prussian blue around cream paper),
+  Colour field (soft fields of red and plum, very calm), Memphis
+  (squiggles and confetti from the eighties), Art deco (black and gold
+  fans), Risograph (pink and blue ink in halftone dots) and Brutalist (raw
+  concrete). Some vary their motif from tile to tile. Each theme has its own
+  typeface; under **Typeface** you can pick another of the thirteen for this
+  dashboard. All of them ship with
   GDash and work offline. Under **After sunset** the dashboard can switch to
   another theme between sunset and sunrise, for instance Frost to Frost
   night, Minimal light to Minimal dark or Warm light to Night; the typeface

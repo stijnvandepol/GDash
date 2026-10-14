@@ -82,7 +82,10 @@ screen marks data that has gone stale.
   inspired by films and series (Galaxy, Terminal, Parchment, Neon, Upside
   down, Noir, Mars, Hyperspace, Dark side, Desert planet, Wizard school,
   Middle realm, Rain city, Time machine, Agent 00) and styles inspired by
-  games (Shiny hunt, Pocket console, Block world, Quest menu).
+  games (Shiny hunt, Pocket console, Block world, Quest menu), and styles
+  after art movements and patterns (De Stijl, Delft blue, Tessellation,
+  Bauhaus, Starry swirl, Golden mosaic, Great wave, Colour field, Memphis,
+  Art deco, Risograph, Brutalist), all drawn in CSS with the art behind the data.
 - **Thirteen typefaces** that ship with GDash, chosen per dashboard.
 - **A night style** that takes over after sunset at your location.
 - Texts on the TV in **English, Dutch, German or French**.

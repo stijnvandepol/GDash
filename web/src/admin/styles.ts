@@ -8,6 +8,7 @@ export const GROUPS = [
   { id: 'character', name: 'Character', note: 'Wood, gold, glass and paper, each with a typeface of its own.' },
   { id: 'screen', name: 'Film and series', note: 'Inspired by a film or a series, without its names or logos.' },
   { id: 'games', name: 'Games', note: 'Inspired by video games, without their names, characters or logos.' },
+  { id: 'art', name: 'Art & abstract', note: 'After art movements and patterns; the art stays behind the data.' },
 ] as const;
 
 export type GroupId = (typeof GROUPS)[number]['id'];
@@ -73,6 +74,19 @@ export const THEMES: Record<string, ThemeInfo> = {
   'pocket-console': { name: 'Pocket console', group: 'games', note: 'The four greens of a handheld from 1989, in a pixel face.', font: 'jersey' },
   'block-world': { name: 'Block world', group: 'games', note: 'Grass and dirt in square blocks, like a world built by hand.', font: 'jersey' },
   'quest-menu': { name: 'Quest menu', group: 'games', note: 'Deep blue menu windows over an old map, as in a fantasy adventure.', font: 'news-cycle' },
+  // Art & abstract presets of presets-art.css.
+  'de-stijl': { name: 'De Stijl', group: 'art', note: 'White planes, black lines and the three primaries.', font: 'jost' },
+  delft: { name: 'Delft blue', group: 'art', note: 'White glaze and cobalt, each tile with corner motifs.', font: 'cormorant' },
+  tessellation: { name: 'Tessellation', group: 'art', note: 'Tumbling blocks in black, white and ochre.', font: 'space-grotesk' },
+  bauhaus: { name: 'Bauhaus', group: 'art', note: 'Circle, triangle and square in red, yellow and blue.', font: 'jost' },
+  'starry-swirl': { name: 'Starry swirl', group: 'art', note: 'A deep blue night with swirls and ringed stars.', font: 'fraunces' },
+  'golden-mosaic': { name: 'Golden mosaic', group: 'art', note: 'Gold leaf in small stones around dark tiles.', font: 'fraunces' },
+  'great-wave': { name: 'Great wave', group: 'art', note: 'Prussian blue waves and cream paper, like a woodblock print.', font: 'lora' },
+  'colour-field': { name: 'Colour field', group: 'art', note: 'Soft fields of red and plum glowing through. Very calm.', font: 'inter' },
+  memphis: { name: 'Memphis', group: 'art', note: 'Squiggles, confetti and pastels from the eighties.', font: 'outfit' },
+  'art-deco': { name: 'Art deco', group: 'art', note: 'Black and gold, fans and a sunburst, gold frames.', font: 'bodoni' },
+  risograph: { name: 'Risograph', group: 'art', note: 'Pink and blue ink in halftone dots, a little off register.', font: 'jost' },
+  brutalist: { name: 'Brutalist', group: 'art', note: 'Raw concrete with board joints and heavy type.', font: 'space-grotesk' },
 };
 
 export const FONTS: Record<FontId, string> = {

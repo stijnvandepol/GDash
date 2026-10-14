@@ -10,6 +10,9 @@ var Themes = []string{
 	// Film, series and game presets (web/src/presets-film.css).
 	"hyperspace", "dark-side", "desert-planet", "wizard-school", "middle-realm", "rain-city", "time-machine",
 	"secret-agent", "shiny-hunt", "pocket-console", "block-world", "quest-menu",
+	// Art & abstract presets (web/src/presets-art.css).
+	"de-stijl", "delft", "tessellation", "bauhaus", "starry-swirl", "golden-mosaic", "great-wave", "colour-field",
+	"memphis", "art-deco", "risograph", "brutalist",
 }
 
 // Fonts are the typefaces a dashboard can choose instead of its theme's own;
