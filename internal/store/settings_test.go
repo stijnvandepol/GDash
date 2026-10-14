@@ -147,7 +147,9 @@ func TestMigrationMakesTheCalendarsOfWasteWidgetsWasteCalendars(t *testing.T) {
 	// shown by a Waste collection widget, the third by a widget on another
 	// dashboard that names it, and the first by none.
 	old := &Store{db: db}
-	if err := old.migrate(ctx, path, scripts[:len(scripts)-1]); err != nil {
+	// 0026_waste_calendars.sql is the 26th migration: stop just before it.
+	const wasteMigration = 25
+	if err := old.migrate(ctx, path, scripts[:wasteMigration]); err != nil {
 		t.Fatal(err)
 	}
 	for _, statement := range []string{
@@ -181,7 +183,7 @@ func TestMigrationMakesTheCalendarsOfWasteWidgetsWasteCalendars(t *testing.T) {
 	if news, _ := s.Sources(ctx, SourceNews); len(news) != 1 || news[0].Purpose != "" {
 		t.Fatalf("news after the migration = %+v", news)
 	}
-	if _, err := os.Stat(fmt.Sprintf("%s.bak-v%d", path, len(scripts)-1)); err != nil {
+	if _, err := os.Stat(fmt.Sprintf("%s.bak-v%d", path, wasteMigration)); err != nil {
 		t.Fatalf("no backup before the migration: %v", err)
 	}
 }

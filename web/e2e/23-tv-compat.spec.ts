@@ -72,7 +72,7 @@ function snapshot() {
       'homey.presence': entry({ [`${DASHBOARD}/home`]: ['SV', 'EM'] }, now),
       weather: entry({ temperatureC: 14.6, isDay: true, weatherCode: 3, windKmh: 18, todayMaxC: 16, todayMinC: 9 }, now),
       'knmi.observation': entry({ station: 'Volkel', observedAt: new Date(now - 10 * 60_000).toISOString(), temperatureC: 14.2, humidity: 81, windKmh: 16 }, now),
-      news: entry({ title: 'NOS Nieuws', items: headlines.map((title, i) => ({ title, published: new Date(now - i * HOUR).toISOString() })) }, now),
+      news: entry({ '1': { name: 'NOS Nieuws', items: headlines.map((title, i) => ({ title, published: new Date(now - i * HOUR).toISOString() })) } }, now),
       'custom.default': entry({ [`${DASHBOARD}/power`]: { state: 'ok', mode: 'value', title: 'Stroom', value: 1234, unit: ' W', label: 'Verbruik nu' } }, now),
     },
   };
