@@ -5,6 +5,8 @@ the format follows [Keep a Changelog](https://keepachangelog.com).
 
 ## Unreleased
 
+## 0.9.3 – 2026-10-14
+
 ### Added
 
 - Twelve more styles inspired by films, series and games, each with its own
