@@ -7,6 +7,7 @@ export const GROUPS = [
   { id: 'essentials', name: 'Essentials', note: 'Calm and readable in any room.' },
   { id: 'character', name: 'Character', note: 'Wood, gold, glass and paper, each with a typeface of its own.' },
   { id: 'screen', name: 'Film and series', note: 'Inspired by a film or a series, without its names or logos.' },
+  { id: 'games', name: 'Games', note: 'Inspired by video games, without their names, characters or logos.' },
 ] as const;
 
 export type GroupId = (typeof GROUPS)[number]['id'];
@@ -31,7 +32,9 @@ export type FontId =
   | 'news-cycle'
   | 'jetbrains-mono'
   | 'im-fell'
-  | 'courier-prime';
+  | 'courier-prime'
+  | 'oswald'
+  | 'jersey';
 
 export const THEMES: Record<string, ThemeInfo> = {
   'minimal-dark': { name: 'Minimal dark', group: 'essentials', note: 'Graphite with a signal orange. Calm on any TV.', font: 'geist' },
@@ -55,6 +58,19 @@ export const THEMES: Record<string, ThemeInfo> = {
   'upside-down': { name: 'Upside down', group: 'screen', note: 'Red letters glowing on black, in a small town in the eighties.', font: 'bodoni' },
   noir: { name: 'Noir', group: 'screen', note: 'Black and white with film grain, typed out.', font: 'courier-prime' },
   mars: { name: 'Mars', group: 'screen', note: 'Rust-red dust and a low sun.', font: 'space-grotesk' },
+  // Film, series and game presets of presets-film.css.
+  hyperspace: { name: 'Hyperspace', group: 'screen', note: 'Star lines streaking out at the jump to light speed, in the spirit of space-opera sagas.', font: 'oswald' },
+  'dark-side': { name: 'Dark side', group: 'screen', note: 'Black armour and crimson light, square tiles with glowing red edges.', font: 'oswald' },
+  'desert-planet': { name: 'Desert planet', group: 'screen', note: 'Dunes under a dusk-purple sky, wide-set letters and spice orange.', font: 'outfit' },
+  'wizard-school': { name: 'Wizard school', group: 'screen', note: 'A castle hall by candlelight: burgundy, night blue and gold leaf.', font: 'lora' },
+  'middle-realm': { name: 'Middle realm', group: 'screen', note: 'An elven wood in deep green and pale gold, with a flowing serif.', font: 'cormorant' },
+  'rain-city': { name: 'Rain city', group: 'screen', note: 'Rain through teal and orange signs in a city of the future.', font: 'space-grotesk' },
+  'time-machine': { name: 'Time machine', group: 'screen', note: 'Brushed steel, amber readouts and two trails of fire, as in the eighties.', font: 'jetbrains-mono' },
+  'secret-agent': { name: 'Agent 00', group: 'screen', note: 'Black tie, white letters set wide and rings like a barrel, in the spirit of spy films.', font: 'inter' },
+  'shiny-hunt': { name: 'Shiny hunt', group: 'games', note: 'Pastel and full of sparkles, for the rare monster that shines.', font: 'outfit' },
+  'pocket-console': { name: 'Pocket console', group: 'games', note: 'The four greens of a handheld from 1989, in a pixel face.', font: 'jersey' },
+  'block-world': { name: 'Block world', group: 'games', note: 'Grass and dirt in square blocks, like a world built by hand.', font: 'jersey' },
+  'quest-menu': { name: 'Quest menu', group: 'games', note: 'Deep blue menu windows over an old map, as in a fantasy adventure.', font: 'news-cycle' },
 };
 
 export const FONTS: Record<FontId, string> = {
@@ -69,6 +85,8 @@ export const FONTS: Record<FontId, string> = {
   'jetbrains-mono': 'JetBrains Mono',
   'im-fell': 'IM Fell',
   'courier-prime': 'Courier Prime',
+  oswald: 'Oswald',
+  jersey: 'Jersey 10',
 };
 
 /**

@@ -7,7 +7,7 @@ import { FONTS, THEMES } from './admin/styles';
 // one (the spot of its backdrop that is worst for the text), else over
 // --surface-0.
 
-const css = ['./themes.css', './presets.css', './presets-screen.css'].map((f) => readFileSync(new URL(f, import.meta.url), 'utf8')).join('\n');
+const css = ['./themes.css', './presets.css', './presets-screen.css', './presets-film.css'].map((f) => readFileSync(new URL(f, import.meta.url), 'utf8')).join('\n');
 
 /** The custom properties of each theme, by name. */
 function themes(): Map<string, Record<string, string>> {

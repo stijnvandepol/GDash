@@ -44,3 +44,43 @@ test('a style and a typeface are picked in the editor, saved, and shown on the T
     .poll(() => screen.evaluate((el) => getComputedStyle(el).fontFamily))
     .toContain('Bodoni Moda');
 });
+
+test('the film and game styles are listed in their groups, and a preview draws them in their own typeface', async ({ adminPage: page }) => {
+  await openTab(page, 'Dashboards');
+  await page.getByLabel('Name').fill('E2E Games');
+  await page.getByRole('button', { name: 'Create and edit' }).click();
+  await page.getByRole('button', { name: 'Clock', exact: true }).click();
+  await page.getByRole('button', { name: /^Style/ }).click();
+  const picker = page.getByRole('dialog', { name: 'Style' });
+  const section = (name: string) => picker.locator(`.section-head:has(> h3:text-is("${name}")) + .themes`);
+  for (const name of ['Hyperspace', 'Dark side', 'Desert planet', 'Wizard school', 'Middle realm', 'Rain city', 'Time machine', 'Agent 00']) {
+    await expect(section('Film and series').getByRole('radio', { name: new RegExp(`^${name}`) })).toBeAttached();
+  }
+  await expect(section('Games').getByRole('radio')).toHaveCount(4);
+  for (const name of ['Shiny hunt', 'Pocket console', 'Block world', 'Quest menu']) {
+    await expect(section('Games').getByRole('radio', { name: new RegExp(`^${name}`) })).toBeAttached();
+  }
+  await section('Games').getByText('Pocket console', { exact: true }).click();
+  await expect(picker.getByText('The theme’s own, Jersey 10')).toBeVisible();
+  await picker.getByRole('button', { name: 'Done' }).click();
+  await page.getByRole('button', { name: 'Save' }).click();
+  await expect(page.getByText('Saved. Screens showing this dashboard update now.')).toBeVisible();
+
+  for (const [theme, family] of [
+    ['pocket-console', 'Jersey 10'],
+    ['hyperspace', 'Oswald Variable'],
+  ] as const) {
+    const saved = await page.request.put('/api/dashboards/e2e-games', {
+      data: { name: 'E2E Games', theme, widgets: [{ id: 'clock', type: 'clock', x: 0, y: 0, w: 8, h: 4 }] },
+    });
+    expect(saved.ok(), await saved.text()).toBe(true);
+    await page.goto('/preview/e2e-games');
+    const screen = page.locator('main.screen');
+    await expect(screen).toHaveAttribute('data-theme', theme);
+    await expect.poll(() => screen.evaluate((el) => getComputedStyle(el).fontFamily)).toContain(family);
+    // The face itself has loaded, so the clock is not drawn in a fallback.
+    await expect
+      .poll(() => page.evaluate((f) => [...document.fonts].some((face) => face.family.replace(/["']/g, '') === f && face.status === 'loaded'), family))
+      .toBe(true);
+  }
+});

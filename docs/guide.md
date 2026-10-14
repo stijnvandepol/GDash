@@ -123,7 +123,7 @@ add calendars and feeds under Integrations, and the photos once you add photos.
   panel then shows them, and **← Add widgets** goes back. The editor is
   about how a dashboard looks: addresses, keys and the values an API gives
   are set up under Integrations.
-- **Style:** the Style button opens a gallery of twenty-one themes in three
+- **Style:** the Style button opens a gallery of thirty-three themes in four
   groups, each shown as a small screen. Minimal dark (the default, best for OLED screens),
   Minimal light and Warm light for bright rooms, Glass, High contrast for
   reading from across the room or with poor eyesight, and Night, dim amber
@@ -135,9 +135,20 @@ add calendars and feeds under Integrations, and the photos once you add photos.
   pink, the roundest of all). Under Film and series: Galaxy (a field of
   stars and yellow letters), Terminal (green phosphor), Parchment (aged
   paper and ink), Neon (a synthwave night), Upside down (red letters
-  glowing on black), Noir (black and white, typed out) and Mars (rust-red
-  dust). Each theme has its own typeface; under **Typeface** you can pick
-  another of the eleven for this dashboard. All of them ship with
+  glowing on black), Noir (black and white, typed out), Mars (rust-red
+  dust), Hyperspace (star lines streaking out from the middle, gold),
+  Dark side (black and crimson, square tiles with glowing red edges), Desert
+  planet (dunes under a dusk-purple sky, wide-set letters), Wizard school
+  (burgundy and night blue by candlelight, gold corner pieces), Middle realm
+  (an elven wood in green and pale gold, a flowing serif), Rain city (rain
+  through teal and orange signs), Time machine (brushed steel and amber
+  readouts) and Agent 00 (black tie, thin wide-set letters, rings like a
+  barrel). Under Games: Shiny hunt (pastel, sparkles and a red band), Pocket
+  console (the four greens of a 1989 handheld in a pixel face), Block world
+  (grass and dirt in square blocks) and Quest menu (deep blue menu windows
+  over an old map). They borrow no names, logos or symbols. Each theme has
+  its own typeface; under **Typeface** you can pick another of the thirteen
+  for this dashboard. All of them ship with
   GDash and work offline. Under **After sunset** the dashboard can switch to
   another theme between sunset and sunrise, for instance Frost to Frost
   night, Minimal light to Minimal dark or Warm light to Night; the typeface

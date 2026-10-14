@@ -7,7 +7,7 @@
  * Besides colours a theme sets its typeface, the shape of its tiles
  * (--radius-scale, 0 for square corners), a texture on each tile
  * (--tile-image) and a glow on text (--text-glow). The style presets are
- * in presets.css and presets-screen.css.
+ * in presets.css, presets-screen.css and presets-film.css.
  *
  * Every text colour reaches 4.5:1 (WCAG AA) on its tile, muted text and the
  * warning colour included; themes.test.ts measures it. A theme whose tiles
@@ -17,6 +17,7 @@
 @import './fonts.css';
 @import './presets.css';
 @import './presets-screen.css';
+@import './presets-film.css';
 
 /* What every theme starts from. */
 .screen {
@@ -31,6 +32,8 @@
   --face-jetbrains-mono: 'JetBrains Mono Variable', ui-monospace, monospace;
   --face-im-fell: 'IM Fell English', Georgia, serif;
   --face-courier-prime: 'Courier Prime', 'Courier New', monospace;
+  --face-oswald: 'Oswald Variable', 'Arial Narrow', sans-serif;
+  --face-jersey: 'Jersey 10', 'Arial Narrow', sans-serif;
   --font-ui: var(--face-geist);
   --font-display: var(--font-ui);
   --radius-scale: 1;
@@ -195,4 +198,10 @@
 }
 .screen[data-theme][data-font='courier-prime'] {
   --font-ui: var(--face-courier-prime);
+}
+.screen[data-theme][data-font='oswald'] {
+  --font-ui: var(--face-oswald);
+}
+.screen[data-theme][data-font='jersey'] {
+  --font-ui: var(--face-jersey);
 }

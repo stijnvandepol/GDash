@@ -5,6 +5,17 @@ the format follows [Keep a Changelog](https://keepachangelog.com).
 
 ## Unreleased
 
+### Added
+
+- Twelve more styles inspired by films, series and games, each with its own
+  colours, typeface, tile shape and a pattern drawn without images. Under
+  Film and series: Hyperspace, Dark side, Desert planet, Wizard school,
+  Middle realm, Rain city, Time machine and Agent 00; in a new Games group:
+  Shiny hunt, Pocket console, Block world and Quest menu. They borrow no
+  names, logos or symbols, and every text colour reaches 4.5:1.
+- Two typefaces to choose per dashboard: Oswald, a condensed sans, and
+  Jersey 10, a pixel face (both SIL Open Font License).
+
 ### Fixed
 
 - An integration's setup closes when you click outside it or press Escape,

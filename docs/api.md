@@ -639,9 +639,11 @@ active hours, but both are required. Deleting a dashboard removes the slots that
 
 **dashboard:** `{"id": "default", "name": "Default", "columns": 24, "rows": 14, "theme": "minimal-dark", "font": "", "nightTheme": "", "widgets": [widget]}`.
 `theme` is one of `minimal-dark` (default), `minimal-light`, `glass`, `warm-light`, `high-contrast`, `night`, `frost`, `walnut`,
-`swiss`, `tonal`, `gilded`, `riviera`, `galaxy`, `terminal`, `parchment`, `neon`, `frost-night`, `candy`, `upside-down`, `noir` and
-`mars`; `font` is empty for the theme's own typeface or one of `geist`, `inter`, `outfit`, `space-grotesk`, `lora`, `cormorant`, `bodoni`,
-`news-cycle`, `jetbrains-mono`, `im-fell` and `courier-prime`. An unknown theme
+`swiss`, `tonal`, `gilded`, `riviera`, `galaxy`, `terminal`, `parchment`, `neon`, `frost-night`, `candy`, `upside-down`, `noir`,
+`mars`, `hyperspace`, `dark-side`, `desert-planet`, `wizard-school`, `middle-realm`, `rain-city`, `time-machine`, `secret-agent`,
+`shiny-hunt`, `pocket-console`, `block-world` and `quest-menu`; `font` is empty for the theme's own typeface or one of `geist`,
+`inter`, `outfit`, `space-grotesk`, `lora`, `cormorant`, `bodoni`, `news-cycle`, `jetbrains-mono`, `im-fell`, `courier-prime`,
+`oswald` and `jersey`. An unknown theme
 or font is a `422`. A `PUT` replaces the whole dashboard: leaving `theme` or `font` out sets the default theme or the
 theme's own typeface. The grid size and
 every widget's `source` are set by the server; values sent by a client are ignored.

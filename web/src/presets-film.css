@@ -1,0 +1,325 @@
+/*
+ * More style presets inspired by films, series and games: a jump to light
+ * speed, a dark lord's fortress, a desert world at dusk, a candle-lit castle
+ * school, an elven forest, a rainy city of the future, a time-travelling car,
+ * a spy in a tuxedo, the hunt for a rare monster, a pocket console of 1989, a
+ * world of blocks and the menus of a fantasy quest. Same rules as presets.css:
+ * only custom properties, patterns drawn with gradients (no images), text at
+ * 4.5:1 or more, and no names, logos, symbols or typefaces of the originals.
+ *
+ * A pattern sized in pixels is drawn the same on every screen; the tile
+ * ornaments are capped with min() so they stay small on the editor's
+ * thumbnails.
+ */
+
+/* Hyperspace: the jump to light speed, star lines streaking out from the
+   middle of a black-blue sky, gold for what stands out. */
+.screen[data-theme='hyperspace'] {
+  --surface-0: #03050d;
+  --surface-1: rgba(5, 9, 22, 0.86);
+  --widget-border: rgba(232, 196, 104, 0.32);
+  --text-primary: #f2f5ff;
+  --text-muted: #a9b4cc;
+  --accent: #e8c468;
+  --warning: #ff9f43;
+  --backdrop: radial-gradient(circle at 50% 50%, #03050d 0%, rgba(3, 5, 13, 0.92) 10%, rgba(3, 5, 13, 0.35) 38%, transparent 70%),
+    repeating-conic-gradient(from 2deg at 50% 50%, rgba(205, 222, 255, 0.2) 0deg 0.25deg, transparent 0.3deg 6.1deg),
+    repeating-conic-gradient(from 0deg at 50% 50%, rgba(170, 200, 255, 0.12) 0deg 0.18deg, transparent 0.22deg 3.7deg),
+    radial-gradient(ellipse at 50% 50%, rgba(60, 100, 230, 0.2) 0%, transparent 65%),
+    linear-gradient(180deg, #050a1c 0%, #03050d 100%);
+  --measure-backdrop: #2c3a63;
+  --tile-image: linear-gradient(180deg, rgba(232, 196, 104, 0.08) 0%, transparent 28%);
+  --font-ui: var(--face-oswald);
+  --tracking: 0.03em;
+  --radius-scale: 0.25;
+  --weight-figure: 300;
+}
+
+/* Dark side: black armour and crimson light, square tiles whose edges glow
+   red, and diagonal plating. */
+.screen[data-theme='dark-side'] {
+  --surface-0: #050304;
+  --surface-1: rgba(11, 6, 8, 0.92);
+  --widget-border: #b0102a;
+  --widget-border-width: 2px;
+  --text-primary: #f4eeee;
+  --text-muted: #bfaeb0;
+  --accent: #ff3b4e;
+  --warning: #ffb02e;
+  --backdrop: radial-gradient(ellipse at 50% 118%, rgba(200, 10, 34, 0.42) 0%, transparent 58%),
+    repeating-linear-gradient(135deg, rgba(200, 16, 46, 0.07) 0 2px, transparent 2px 26px),
+    repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.025) 0 1px, transparent 1px 78px),
+    linear-gradient(180deg, #0c0708 0%, #050304 100%);
+  --measure-backdrop: #3a0610;
+  /* A cut corner top left and bottom right, and the edges lit from inside. */
+  --tile-image: linear-gradient(135deg, #b0102a 0, #b0102a 18px, transparent 18px),
+    linear-gradient(315deg, #b0102a 0, #b0102a 18px, transparent 18px),
+    linear-gradient(90deg, rgba(225, 20, 48, 0.2) 0%, transparent 2.5%, transparent 97.5%, rgba(225, 20, 48, 0.2) 100%),
+    linear-gradient(180deg, rgba(225, 20, 48, 0.2) 0%, transparent 4.5%, transparent 95.5%, rgba(225, 20, 48, 0.2) 100%);
+  --text-glow: 0 0 0.45em rgba(220, 16, 40, 0.4);
+  --font-ui: var(--face-oswald);
+  --tracking: 0.01em;
+  --radius-scale: 0;
+  --weight-figure: 600;
+}
+
+/* Desert planet: dunes under a dusk-purple sky, letters spaced as wide as the
+   horizon, and the orange of a precious spice. */
+.screen[data-theme='desert-planet'] {
+  --surface-0: #2a1640;
+  --surface-1: rgba(30, 15, 42, 0.8);
+  --widget-border: rgba(243, 214, 170, 0.22);
+  --text-primary: #f6e4c4;
+  --text-muted: #d4b896;
+  --accent: #ff9445;
+  --warning: #ffd66e;
+  --backdrop: radial-gradient(ellipse 70% 26% at 18% 100%, #9c6a3c 0%, #9c6a3c 62%, transparent 64%),
+    radial-gradient(ellipse 80% 22% at 85% 100%, #b07a46 0%, #b07a46 60%, transparent 62%),
+    repeating-linear-gradient(174deg, rgba(255, 228, 186, 0.07) 0 2px, transparent 2px 15px) 0 100% / 100% 36% no-repeat,
+    radial-gradient(ellipse 60% 30% at 50% 64%, rgba(255, 150, 70, 0.55) 0%, transparent 70%),
+    linear-gradient(180deg, #1c0f33 0%, #3d1c4f 32%, #7a3550 52%, #c2683b 62%, #c9915a 70%, #a8744a 100%);
+  --measure-backdrop: #d39a5f;
+  --tile-image: linear-gradient(180deg, rgba(255, 148, 69, 0.07) 0%, transparent 40%);
+  --font-ui: var(--face-outfit);
+  --tracking: 0.05em;
+  --radius-scale: 0.2;
+  --weight-figure: 300;
+}
+
+/* Wizard school: a castle hall by candlelight, burgundy tiles framed in gold
+   leaf on a night-blue lattice of leaded windows. */
+.screen[data-theme='wizard-school'] {
+  --surface-0: #0d1330;
+  --surface-1: rgba(58, 13, 26, 0.92);
+  --widget-border: rgba(214, 178, 96, 0.55);
+  --text-primary: #f7ecd4;
+  --text-muted: #dcc5a2;
+  --accent: #e8c56c;
+  --warning: #ff9f6b;
+  --backdrop: radial-gradient(circle at 12% 14%, rgba(255, 196, 110, 0.22) 0%, transparent 9%),
+    radial-gradient(circle at 37% 6%, rgba(255, 196, 110, 0.16) 0%, transparent 7%),
+    radial-gradient(circle at 66% 11%, rgba(255, 196, 110, 0.2) 0%, transparent 8%),
+    radial-gradient(circle at 90% 5%, rgba(255, 196, 110, 0.15) 0%, transparent 7%),
+    repeating-linear-gradient(60deg, rgba(232, 197, 108, 0.05) 0 1px, transparent 1px 44px),
+    repeating-linear-gradient(-60deg, rgba(232, 197, 108, 0.05) 0 1px, transparent 1px 44px),
+    linear-gradient(180deg, #1a1b44 0%, #0d1330 55%, #20091a 100%);
+  --measure-backdrop: #453a4e;
+  /* Gold corner pieces: an arm along the top and one down the side of each
+     corner. */
+  --tile-image: linear-gradient(#d6b260, #d6b260) left min(12px, 3%) top min(12px, 4%) / min(40px, 9%) 2px no-repeat,
+    linear-gradient(#d6b260, #d6b260) left min(12px, 3%) top min(12px, 4%) / 2px min(40px, 14%) no-repeat,
+    linear-gradient(#d6b260, #d6b260) right min(12px, 3%) top min(12px, 4%) / min(40px, 9%) 2px no-repeat,
+    linear-gradient(#d6b260, #d6b260) right min(12px, 3%) top min(12px, 4%) / 2px min(40px, 14%) no-repeat,
+    linear-gradient(#d6b260, #d6b260) left min(12px, 3%) bottom min(12px, 4%) / min(40px, 9%) 2px no-repeat,
+    linear-gradient(#d6b260, #d6b260) left min(12px, 3%) bottom min(12px, 4%) / 2px min(40px, 14%) no-repeat,
+    linear-gradient(#d6b260, #d6b260) right min(12px, 3%) bottom min(12px, 4%) / min(40px, 9%) 2px no-repeat,
+    linear-gradient(#d6b260, #d6b260) right min(12px, 3%) bottom min(12px, 4%) / 2px min(40px, 14%) no-repeat,
+    radial-gradient(ellipse at 50% 0%, rgba(255, 190, 100, 0.1) 0%, transparent 60%);
+  --text-glow: 0 0 0.6em rgba(255, 186, 90, 0.16);
+  --font-ui: var(--face-lora);
+  --radius-scale: 0.2;
+  --weight-text: 500;
+}
+
+/* Middle realm: an elven wood, light falling in soft shafts through deep
+   green, pale gold and a flowing serif. */
+.screen[data-theme='middle-realm'] {
+  --surface-0: #0b1d16;
+  --surface-1: rgba(13, 36, 27, 0.8);
+  --widget-border: rgba(216, 198, 132, 0.3);
+  --text-primary: #f3eedb;
+  --text-muted: #cbc5a5;
+  --accent: #dcc57e;
+  --warning: #f5ae6c;
+  --backdrop: radial-gradient(ellipse at 8% -10%, rgba(240, 228, 170, 0.12) 0%, transparent 45%),
+    repeating-conic-gradient(from 112deg at 6% -18%, rgba(240, 228, 170, 0.06) 0deg 2.2deg, transparent 2.6deg 7.4deg),
+    radial-gradient(ellipse at 50% 112%, rgba(180, 206, 160, 0.16) 0%, transparent 58%),
+    linear-gradient(170deg, #173a2b 0%, #0e2a1f 45%, #081812 100%);
+  --measure-backdrop: #33503f;
+  --tile-image: radial-gradient(ellipse at 50% 0%, rgba(220, 197, 126, 0.09) 0%, transparent 62%);
+  --font-ui: var(--face-cormorant);
+  --tracking: 0.01em;
+  --radius-scale: 0.9;
+  --weight-figure: 500;
+  --weight-text: 500;
+}
+
+/* Rain city: a wet night in a city of the future, rain slanting through teal
+   and orange signs that smear into the street below. */
+.screen[data-theme='rain-city'] {
+  --surface-0: #061117;
+  --surface-1: rgba(6, 17, 23, 0.78);
+  --widget-border: rgba(0, 196, 196, 0.34);
+  --text-primary: #e6f4f4;
+  --text-muted: #a2c3c7;
+  --accent: #ff8a3d;
+  --warning: #ffd25a;
+  --backdrop: repeating-linear-gradient(103deg, rgba(170, 225, 235, 0.07) 0 1px, transparent 1px 11px),
+    repeating-linear-gradient(101deg, rgba(170, 225, 235, 0.04) 0 1px, transparent 1px 29px),
+    repeating-linear-gradient(90deg, rgba(0, 210, 210, 0.08) 0 3px, transparent 3px 23px, rgba(255, 128, 50, 0.08) 23px 26px, transparent 26px 61px) 0 100% / 100% 34% no-repeat,
+    linear-gradient(0deg, rgba(255, 120, 45, 0.16) 0%, transparent 34%),
+    radial-gradient(ellipse at 82% 0%, rgba(255, 112, 40, 0.28) 0%, transparent 50%),
+    radial-gradient(ellipse at 8% 22%, rgba(0, 190, 200, 0.2) 0%, transparent 48%),
+    linear-gradient(180deg, #0b2230 0%, #061117 60%, #0a1418 100%);
+  --measure-backdrop: #4a3a2a;
+  --tile-image: repeating-linear-gradient(103deg, rgba(170, 225, 235, 0.035) 0 1px, transparent 1px 13px),
+    linear-gradient(180deg, rgba(0, 210, 210, 0.07) 0%, transparent 32%, transparent 78%, rgba(255, 128, 50, 0.07) 100%);
+  --text-glow: 0 0 0.35em rgba(0, 210, 210, 0.22);
+  --font-ui: var(--face-space-grotesk);
+  --radius-scale: 0.4;
+}
+
+/* Time machine: brushed steel and a chrome horizon, amber readouts glowing in
+   their panels, and two trails of fire left on the road. */
+.screen[data-theme='time-machine'] {
+  --surface-0: #15181c;
+  --surface-1: rgba(9, 9, 11, 0.92);
+  --widget-border: rgba(206, 214, 224, 0.5);
+  --widget-border-width: 2px;
+  --text-primary: #ff9a3c;
+  --text-muted: #c4cad3;
+  --accent: #4dff9a;
+  --warning: #ffe066;
+  --backdrop: linear-gradient(0deg, transparent 7%, rgba(255, 110, 20, 0.85) 7.3%, rgba(255, 200, 80, 0.9) 7.5%, rgba(255, 110, 20, 0.85) 7.7%, transparent 8.2%, transparent 11%, rgba(255, 110, 20, 0.85) 11.3%, rgba(255, 200, 80, 0.9) 11.5%, rgba(255, 110, 20, 0.85) 11.7%, transparent 12.2%),
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.03) 0 1px, transparent 1px 3px),
+    linear-gradient(180deg, #23272d 0%, #3b414a 44%, #9aa3ad 49.5%, #2a2e34 50.5%, #15181c 100%);
+  --measure-backdrop: #9aa3ad;
+  --tile-image: linear-gradient(180deg, rgba(255, 255, 255, 0.07) 0%, transparent 10%, transparent 92%, rgba(255, 255, 255, 0.04) 100%);
+  --text-glow: 0 0 0.3em rgba(255, 120, 20, 0.45);
+  --font-ui: var(--face-jetbrains-mono);
+  /* A mono face is wide; a little tighter keeps words in their tiles. */
+  --tracking: -0.04em;
+  --radius-scale: 0.15;
+  --weight-figure: 700;
+}
+
+/* Agent 00: black tie and white shirt, thin wide-set letters, and rings
+   like the inside of a barrel in one corner. */
+.screen[data-theme='secret-agent'] {
+  --surface-0: #000000;
+  --surface-1: rgba(10, 10, 10, 0.8);
+  --widget-border: rgba(255, 255, 255, 0.2);
+  --text-primary: #ffffff;
+  --text-muted: #b6b6b6;
+  --accent: #e2cb92;
+  --warning: #ff6f5e;
+  --backdrop: radial-gradient(circle at 84% 62%, rgba(255, 255, 255, 0.5) 0, rgba(255, 255, 255, 0.5) 7px, transparent 8px),
+    radial-gradient(circle at 84% 62%, transparent 0, transparent 30%, #000000 48%),
+    repeating-radial-gradient(circle at 84% 62%, transparent 0 34px, rgba(255, 255, 255, 0.1) 34px 37px, transparent 37px 52px),
+    radial-gradient(circle at 84% 62%, #1a1a1a 0%, #000000 40%);
+  --measure-backdrop: #2a2a2a;
+  --tile-image: linear-gradient(118deg, rgba(255, 255, 255, 0.05) 0%, transparent 38%);
+  --font-ui: var(--face-inter);
+  --tracking: 0.035em;
+  --radius-scale: 0.1;
+  --weight-figure: 300;
+  --weight-text: 300;
+}
+
+/* Shiny hunt: a pastel meadow full of tiny sparkles, white cards with a red
+   band and round, friendly letters, for the rare one that shines. */
+.screen[data-theme='shiny-hunt'] {
+  --surface-0: #e6e4fb;
+  --surface-1: rgba(255, 255, 255, 0.88);
+  --widget-border: rgba(255, 255, 255, 0.95);
+  --text-primary: #1d2140;
+  --text-muted: #4a4f70;
+  --accent: #d0213a;
+  --warning: #8a4f00;
+  /* Four-pointed sparkles: two thin crossed ellipses each, tiled at sizes
+     that do not line up, so they seem scattered. */
+  --backdrop: radial-gradient(3px 16px at 34px 46px, #f2b705 0%, transparent 100%) 0 0 / 173px 151px,
+    radial-gradient(16px 3px at 34px 46px, #f2b705 0%, transparent 100%) 0 0 / 173px 151px,
+    radial-gradient(2.5px 11px at 121px 103px, #ffffff 0%, transparent 100%) 0 0 / 173px 151px,
+    radial-gradient(11px 2.5px at 121px 103px, #ffffff 0%, transparent 100%) 0 0 / 173px 151px,
+    radial-gradient(2.5px 12px at 77px 19px, #ff6f9c 0%, transparent 100%) 0 0 / 211px 197px,
+    radial-gradient(12px 2.5px at 77px 19px, #ff6f9c 0%, transparent 100%) 0 0 / 211px 197px,
+    radial-gradient(ellipse at 15% 0%, #fde2f0 0%, transparent 55%),
+    radial-gradient(ellipse at 90% 100%, #d4f5e6 0%, transparent 60%),
+    linear-gradient(160deg, #e9e4fb 0%, #dceefc 100%);
+  --measure-backdrop: #c9dcf5;
+  --tile-image: linear-gradient(180deg, #d0213a 0, #d0213a 6px, transparent 6px),
+    radial-gradient(3px 18px at calc(100% - 30px) 36px, #f2b705 0%, transparent 100%),
+    radial-gradient(18px 3px at calc(100% - 30px) 36px, #f2b705 0%, transparent 100%);
+  --font-ui: var(--face-outfit);
+  --radius-scale: 1.25;
+  --weight-figure: 700;
+  --weight-text: 500;
+  /* The moon as print draws it: the lit part open, the dark side shaded. */
+  --moon-lit: transparent;
+  --moon-shadow: var(--text-muted);
+  --moon-shadow-opacity: 0.85;
+}
+
+/* Pocket console: the four greens of a handheld screen from 1989, a grid of
+   pixels and blocky windows in a pixel face. */
+.screen[data-theme='pocket-console'] {
+  --surface-0: #8bac0f;
+  --surface-1: #0f380f;
+  --widget-border: #306230;
+  --widget-border-width: 4px;
+  --text-primary: #9bbc0f;
+  --text-muted: #8bac0f;
+  --accent: #c9e05a;
+  --warning: #e3f2a6;
+  --dot-tint: var(--text-muted);
+  --backdrop: repeating-linear-gradient(0deg, rgba(15, 56, 15, 0.12) 0 1px, transparent 1px 6px),
+    repeating-linear-gradient(90deg, rgba(15, 56, 15, 0.12) 0 1px, transparent 1px 6px),
+    radial-gradient(ellipse at 50% 40%, #9bbc0f 0%, #8bac0f 70%);
+  /* An inner frame, like a game's text box. */
+  --tile-image: linear-gradient(#306230, #306230) 8px 8px / calc(100% - 16px) 3px no-repeat,
+    linear-gradient(#306230, #306230) 8px calc(100% - 8px) / calc(100% - 16px) 3px no-repeat,
+    linear-gradient(#306230, #306230) 8px 8px / 3px calc(100% - 16px) no-repeat,
+    linear-gradient(#306230, #306230) calc(100% - 8px) 8px / 3px calc(100% - 16px) no-repeat;
+  --font-ui: var(--face-jersey);
+  /* The face has one weight; a faked bold would smear its pixels. */
+  --radius-scale: 0;
+  --weight-figure: 400;
+  --synthesis: none;
+}
+
+/* Block world: a world built of blocks: a strip of grass on top of every
+   tile of dirt, and a pixel face. */
+.screen[data-theme='block-world'] {
+  --surface-0: #6fa8e8;
+  --surface-1: #5b3d26;
+  --widget-border: #3b2615;
+  --widget-border-width: 3px;
+  --text-primary: #fff6e6;
+  --text-muted: #e4cfaf;
+  --accent: #9be05a;
+  --warning: #ffd84a;
+  --backdrop: linear-gradient(180deg, #8cc4f2 0%, #6fa8e8 100%) 0 0 / 100% 38% no-repeat,
+    repeating-conic-gradient(#6aa121 0 25%, #5e9419 0 50%) 0 40% / 32px 32px repeat-x,
+    repeating-conic-gradient(#7a5233 0 25%, #6c4729 0 50%) 0 0 / 32px 32px;
+  --tile-image: repeating-linear-gradient(90deg, #5fa02a 0 16px, #4f8a20 16px 32px) 0 0 / 100% 14px no-repeat,
+    repeating-linear-gradient(90deg, #5fa02a 0 8px, transparent 8px 24px, #4f8a20 24px 32px) 0 14px / 100% 8px no-repeat,
+    repeating-conic-gradient(rgba(0, 0, 0, 0.1) 0 25%, transparent 0 50%) 0 0 / 16px 16px;
+  --font-ui: var(--face-jersey);
+  /* The face has one weight; a faked bold would smear its pixels. */
+  --radius-scale: 0;
+  --weight-figure: 400;
+  --synthesis: none;
+}
+
+/* Quest menu: the menus of a fantasy adventure, deep blue windows with a
+   white frame laid over an old map of the realm. */
+.screen[data-theme='quest-menu'] {
+  --surface-0: #d9c294;
+  --surface-1: #18257a;
+  --widget-border: #f4f1e6;
+  --widget-border-width: 3px;
+  --text-primary: #ffffff;
+  --text-muted: #c9d2ff;
+  --accent: #ffd75e;
+  --warning: #ffab6b;
+  --backdrop: repeating-linear-gradient(0deg, rgba(110, 80, 40, 0.12) 0 1px, transparent 1px 72px),
+    repeating-linear-gradient(90deg, rgba(110, 80, 40, 0.12) 0 1px, transparent 1px 72px),
+    radial-gradient(ellipse at 30% 35%, rgba(120, 150, 90, 0.28) 0%, transparent 30%),
+    radial-gradient(ellipse at 72% 62%, rgba(90, 130, 170, 0.3) 0%, transparent 28%),
+    radial-gradient(ellipse at 50% 50%, #ead6aa 0%, #c9ad78 100%);
+  --tile-image: linear-gradient(180deg, rgba(90, 120, 255, 0.35) 0%, transparent 70%);
+  --font-ui: var(--face-news-cycle);
+  --radius-scale: 0.5;
+  --weight-figure: 700;
+}
