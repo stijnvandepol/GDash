@@ -208,7 +208,8 @@ func presenceEntry(dashboards []Dashboard, data map[string]datahub.Entry) (datah
 
 // screenDashboard returns d as a screen receives it: Who's home widgets
 // without the users they look for, whose labels the screen gets from
-// HomeyPresenceSource for those who are home only.
+// HomeyPresenceSource for those who are home only. Their title settings
+// stay, as the screen draws the title.
 func screenDashboard(d Dashboard) Dashboard {
 	if !slices.ContainsFunc(d.Widgets, func(w Widget) bool { return w.Type == HomeyPresenceWidget }) {
 		return d
@@ -216,12 +217,27 @@ func screenDashboard(d Dashboard) Dashboard {
 	widgets := make([]Widget, len(d.Widgets))
 	for i, w := range d.Widgets {
 		if w.Type == HomeyPresenceWidget {
-			w.Settings = nil
+			w.Settings = titleSettings(w.Settings)
 		}
 		widgets[i] = w
 	}
 	d.Widgets = widgets
 	return d
+}
+
+// titleSettings returns only the title settings of settings, or nil when
+// it has none.
+func titleSettings(settings map[string]any) map[string]any {
+	var kept map[string]any
+	for _, key := range []string{SettingTitle, SettingHideTitle} {
+		if v, ok := settings[key]; ok {
+			if kept == nil {
+				kept = map[string]any{}
+			}
+			kept[key] = v
+		}
+	}
+	return kept
 }
 
 // screenDashboards applies screenDashboard to each of list.

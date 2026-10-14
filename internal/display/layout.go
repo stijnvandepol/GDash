@@ -58,6 +58,8 @@ type Setting struct {
 	Required bool `json:"required"`
 	// Options are the values a choice takes.
 	Options []string `json:"options,omitempty"`
+	// OneLine refuses a line break in a text, which a note may have.
+	OneLine bool `json:"-"`
 }
 
 // WidgetType describes a kind of widget: where its data comes from, how
@@ -73,9 +75,35 @@ type WidgetType struct {
 
 var maxItems = map[string]Setting{"maxItems": {Kind: SettingInteger, Min: 1, Max: 20}}
 
+// The settings every widget takes: a title of its own instead of the one
+// the screen shows by default, or none at all.
+const (
+	SettingTitle     = "title"
+	SettingHideTitle = "hideTitle"
+	maxTitleLength   = 40
+)
+
+// withTitles adds the title settings to every widget type. A type that has
+// a title setting of its own, as the Custom widget does, keeps it.
+func withTitles(types map[string]WidgetType) map[string]WidgetType {
+	for name, kind := range types {
+		settings := maps.Clone(kind.Settings)
+		if settings == nil {
+			settings = map[string]Setting{}
+		}
+		if _, own := settings[SettingTitle]; !own {
+			settings[SettingTitle] = Setting{Kind: SettingText, Min: 1, Max: maxTitleLength, OneLine: true}
+		}
+		settings[SettingHideTitle] = Setting{Kind: SettingBoolean}
+		kind.Settings = settings
+		types[name] = kind
+	}
+	return types
+}
+
 // WidgetTypes is the catalogue of widgets. A widget's data source follows
 // from its type, so a dashboard cannot point a widget at arbitrary data.
-var WidgetTypes = map[string]WidgetType{
+var WidgetTypes = withTitles(map[string]WidgetType{
 	"clock":       {MinW: 4, MinH: 3},
 	"weather":     weatherWidget,
 	"forecast":    {Source: WeatherSource, MinW: 6, MinH: 4, Settings: map[string]Setting{"days": {Kind: SettingInteger, Min: 1, Max: 7}}},
@@ -111,7 +139,7 @@ var WidgetTypes = map[string]WidgetType{
 	CameraWidget:        cameraWidget,
 	NowPlayingWidget:    nowPlayingWidget,
 	WebPageWidget:       webPageWidget,
-}
+})
 
 // AirQualitySource is the data key of the air quality and pollen at the
 // weather location.
@@ -300,7 +328,7 @@ func valueProblem(key string, value any, rule Setting) string {
 	case SettingText:
 		text, ok := value.(string)
 		n := utf8.RuneCountInString(text)
-		if !ok || n < rule.Min || n > rule.Max || strings.TrimSpace(text) == "" || hasControl(text) {
+		if !ok || n < rule.Min || n > rule.Max || strings.TrimSpace(text) == "" || hasControl(text) || (rule.OneLine && strings.Contains(text, "\n")) {
 			return fmt.Sprintf("%s must be %d to %d characters of text", key, rule.Min, rule.Max)
 		}
 	case SettingDate:

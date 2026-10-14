@@ -107,8 +107,11 @@ func TestDashboardRoutesNeedLoginAndWidgetTypesAreListed(t *testing.T) {
 	}
 	env.setUp(t)
 	status, body := env.do(t, "GET", "/api/widget-types", "")
-	if status != http.StatusOK || !strings.Contains(body, `"calendar":{"minW":6,"minH":4,"settings":{"maxItems":{"kind":"integer","min":1,"max":20,"required":false}}}`) ||
-		!strings.Contains(body, `"clock":{"minW":4,"minH":3,"settings":{}}`) || !strings.Contains(body, `"columns":24`) || !strings.Contains(body, `"glass"`) {
+	// Every type takes a title of its own, or none.
+	titles := `"hideTitle":{"kind":"boolean","required":false}`
+	title := `"title":{"kind":"text","min":1,"max":40,"required":false}`
+	if status != http.StatusOK || !strings.Contains(body, `"calendar":{"minW":6,"minH":4,"settings":{`+titles+`,"maxItems":{"kind":"integer","min":1,"max":20,"required":false},`+title+`}}`) ||
+		!strings.Contains(body, `"clock":{"minW":4,"minH":3,"settings":{`+titles+`,`+title+`}}`) || !strings.Contains(body, `"columns":24`) || !strings.Contains(body, `"glass"`) {
 		t.Fatalf("widget types = %d %s", status, body)
 	}
 }

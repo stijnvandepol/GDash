@@ -81,7 +81,9 @@ type Rule struct {
 // evaluated for every row.
 func (r Rule) perRow(mode string) bool { return mode == ModeList && r.When.Reads("row") }
 
-var widgetKeys = []string{"source", "mode", "title", "path", "label", "unit", "decimals", "fields", "pairs", "rules"}
+// hideTitle is the setting every widget type takes (internal/display); the
+// screen reads it, so it is only checked here.
+var widgetKeys = []string{"source", "mode", "title", "hideTitle", "path", "label", "unit", "decimals", "fields", "pairs", "rules"}
 
 // ParseWidget reads a Custom widget's settings as a dashboard stores them,
 // with numbers as float64. It returns a *validation.Error whose field names
@@ -106,6 +108,11 @@ func ParseWidget(settings map[string]any) (Widget, error) {
 	w.Title = optionalText(&errs, settings, "title", maxTitle)
 	w.Label = optionalText(&errs, settings, "label", maxLabel)
 	w.Unit = optionalText(&errs, settings, "unit", maxUnit)
+	if v, set := settings["hideTitle"]; set {
+		if _, ok := v.(bool); !ok {
+			errs.Add("hideTitle", "use true or false")
+		}
+	}
 	if v, set := settings["decimals"]; set {
 		n, ok := wholeNumber(v, 0, MaxDecimals)
 		if !ok {

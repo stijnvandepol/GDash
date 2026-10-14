@@ -57,6 +57,13 @@ func TestValidateDashboard(t *testing.T) {
 		{"maxItems too big", func(d *Dashboard) { d.Widgets[1].Settings["maxItems"] = float64(50) }, "widgets[1]: maxItems must be a whole number"},
 		{"maxItems fraction", func(d *Dashboard) { d.Widgets[1].Settings["maxItems"] = 2.5 }, "widgets[1]: maxItems must be a whole number"},
 		{"maxItems text", func(d *Dashboard) { d.Widgets[1].Settings["maxItems"] = "5" }, "widgets[1]: maxItems must be a whole number"},
+		{"a title of its own", func(d *Dashboard) { d.Widgets[0].Settings = map[string]any{"title": "Keukenklok"} }, ""},
+		{"no title", func(d *Dashboard) { d.Widgets[1].Settings["hideTitle"] = true }, ""},
+		{"title too long", func(d *Dashboard) { d.Widgets[0].Settings = map[string]any{"title": strings.Repeat("t", 41)} }, "widgets[0]: title must be 1 to 40 characters"},
+		{"blank title", func(d *Dashboard) { d.Widgets[0].Settings = map[string]any{"title": "   "} }, "widgets[0]: title must be 1 to 40 characters"},
+		{"title on two lines", func(d *Dashboard) { d.Widgets[0].Settings = map[string]any{"title": "a\nb"} }, "widgets[0]: title must be 1 to 40 characters"},
+		{"title with a control character", func(d *Dashboard) { d.Widgets[0].Settings = map[string]any{"title": "a\x07b"} }, "widgets[0]: title must be"},
+		{"hideTitle text", func(d *Dashboard) { d.Widgets[1].Settings["hideTitle"] = "yes" }, "widgets[1]: hideTitle must be true or false"},
 		{"note", func(d *Dashboard) { d.Widgets = append(d.Widgets, note("Bins out tonight\nBring a coat")) }, ""},
 		{"empty note", func(d *Dashboard) { d.Widgets = append(d.Widgets, note("   ")) }, "widgets[2]: text must be 1 to 300 characters"},
 		{"note with control character", func(d *Dashboard) { d.Widgets = append(d.Widgets, note("bell\a")) }, "widgets[2]: text must be"},
@@ -114,6 +121,29 @@ func TestValidateDashboard(t *testing.T) {
 				t.Fatalf("errors = %q, want %q", got, tt.want)
 			}
 		})
+	}
+}
+
+func TestEveryWidgetTakesATitle(t *testing.T) {
+	for name, kind := range WidgetTypes {
+		if kind.Settings[SettingTitle].Kind != SettingText || kind.Settings[SettingHideTitle].Kind != SettingBoolean {
+			t.Errorf("%s widget: settings %v lack title or hideTitle", name, kind.Settings)
+		}
+	}
+	// The Custom widget keeps its own, longer, title.
+	if got := WidgetTypes[CustomWidget].Settings[SettingTitle].Max; got != 60 {
+		t.Errorf("Custom title max = %d, want its own 60", got)
+	}
+	// The types that share a settings map, such as maxItems, are not changed through it.
+	if _, shared := maxItems[SettingTitle]; shared {
+		t.Error("withTitles changed the shared maxItems settings")
+	}
+	d := valid()
+	d.Widgets = append(d.Widgets, Widget{ID: "home", Type: CustomWidget, X: 0, Y: 5, W: 4, H: 3, Settings: map[string]any{
+		"source": float64(1), "mode": "value", "path": "a", "title": strings.Repeat("t", 60), "hideTitle": true,
+	}})
+	if err := ValidateDashboard(d); err != nil {
+		t.Fatalf("a Custom widget with a 60 character title and no title shown: %s", fields(err))
 	}
 }
 

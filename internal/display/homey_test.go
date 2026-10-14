@@ -110,6 +110,16 @@ func TestPreviewLeavesOutTheUsersToo(t *testing.T) {
 	}
 }
 
+func TestScreensKeepTheTitleOfWhoIsHome(t *testing.T) {
+	w := whoIsHome("u1", "AN")
+	w.Settings["title"] = "Thuis"
+	w.Settings["hideTitle"] = false
+	got := screenDashboard(Dashboard{Widgets: []Widget{w}}).Widgets[0].Settings
+	if len(got) != 2 || got["title"] != "Thuis" || got["hideTitle"] != false {
+		t.Fatalf("settings on the screen = %v, want the title settings without the users", got)
+	}
+}
+
 func TestHomeyWidgetSettings(t *testing.T) {
 	valid := []Widget{
 		homeyValues("d1/measure_temperature", "d1/alarm_motion.hall"),

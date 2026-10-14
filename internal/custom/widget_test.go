@@ -54,6 +54,7 @@ func TestParseWidgetNamesTheSetting(t *testing.T) {
 		`{"source": 1, "mode": "value", "path": "a", "decimals": 7}`:                                     "decimals",
 		`{"source": 1, "mode": "value", "path": "a", "unit": "far too long a unit"}`:                     "unit",
 		`{"source": 1, "mode": "value", "path": "a", "title": "two\nlines"}`:                             "title",
+		`{"source": 1, "mode": "value", "path": "a", "hideTitle": "yes"}`:                                "hideTitle",
 		`{"source": 1, "mode": "list", "path": "a"}`:                                                     "fields",
 		`{"source": 1, "mode": "list", "path": "a", "fields": ["a", "b", "c", "d"]}`:                     "fields",
 		`{"source": 1, "mode": "list", "path": "a", "fields": ["a", "("]}`:                               "fields[1]",
