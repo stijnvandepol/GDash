@@ -643,7 +643,7 @@ active hours, but both are required. Deleting a dashboard removes the slots that
 `mars`, `hyperspace`, `dark-side`, `desert-planet`, `wizard-school`, `middle-realm`, `rain-city`, `time-machine`, `secret-agent`,
 `shiny-hunt`, `pocket-console`, `block-world` and `quest-menu`; `font` is empty for the theme's own typeface or one of `geist`,
 `inter`, `outfit`, `space-grotesk`, `lora`, `cormorant`, `bodoni`, `news-cycle`, `jetbrains-mono`, `im-fell`, `courier-prime`,
-`oswald` and `jersey`. An unknown theme
+`oswald`, `jersey`, `jost` and `fraunces`. An unknown theme
 or font is a `422`. A `PUT` replaces the whole dashboard: leaving `theme` or `font` out sets the default theme or the
 theme's own typeface. The grid size and
 every widget's `source` are set by the server; values sent by a client are ignored.

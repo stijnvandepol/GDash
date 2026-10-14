@@ -18,4 +18,5 @@ var Fonts = []string{
 	"geist", "inter", "outfit", "space-grotesk", "lora", "cormorant", "bodoni", "news-cycle", "jetbrains-mono", "im-fell",
 	"courier-prime",
 	"oswald", "jersey",
+	"jost", "fraunces",
 }

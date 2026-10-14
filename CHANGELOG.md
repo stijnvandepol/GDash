@@ -20,6 +20,9 @@ the format follows [Keep a Changelog](https://keepachangelog.com).
 
 - An integration's setup closes when you click outside it or press Escape,
   instead of staying open until its own Close.
+- Two typefaces to choose per dashboard, Jost (geometric) and Fraunces (an
+  expressive serif), both under the SIL Open Font License and shipped with
+  GDash.
 
 ## 0.9.2 – 2026-10-14
 

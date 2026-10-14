@@ -34,7 +34,9 @@ export type FontId =
   | 'im-fell'
   | 'courier-prime'
   | 'oswald'
-  | 'jersey';
+  | 'jersey'
+  | 'jost'
+  | 'fraunces';
 
 export const THEMES: Record<string, ThemeInfo> = {
   'minimal-dark': { name: 'Minimal dark', group: 'essentials', note: 'Graphite with a signal orange. Calm on any TV.', font: 'geist' },
@@ -87,6 +89,8 @@ export const FONTS: Record<FontId, string> = {
   'courier-prime': 'Courier Prime',
   oswald: 'Oswald',
   jersey: 'Jersey 10',
+  jost: 'Jost',
+  fraunces: 'Fraunces',
 };
 
 /**

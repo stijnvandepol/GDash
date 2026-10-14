@@ -34,6 +34,8 @@
   --face-courier-prime: 'Courier Prime', 'Courier New', monospace;
   --face-oswald: 'Oswald Variable', 'Arial Narrow', sans-serif;
   --face-jersey: 'Jersey 10', 'Arial Narrow', sans-serif;
+  --face-jost: 'Jost Variable', Futura, system-ui, sans-serif;
+  --face-fraunces: 'Fraunces Variable', Georgia, serif;
   --font-ui: var(--face-geist);
   --font-display: var(--font-ui);
   --radius-scale: 1;
@@ -209,4 +211,10 @@
 }
 .screen[data-theme][data-font='jersey'] {
   --font-ui: var(--face-jersey);
+}
+.screen[data-theme][data-font='jost'] {
+  --font-ui: var(--face-jost);
+}
+.screen[data-theme][data-font='fraunces'] {
+  --font-ui: var(--face-fraunces);
 }
