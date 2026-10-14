@@ -29,6 +29,7 @@ export type * from './types';
 import type {
   ApiToken,
   Calendar,
+  CalendarTest,
   Camera,
   CameraInput,
   CameraTest,
@@ -181,6 +182,8 @@ export const api = {
   deleteNewsFeed: (id: number) => request<void>('DELETE', `/api/news-feeds/${id}`),
   addCalendar: (name: string, url: string) => request<Calendar>('POST', '/api/calendars', { name, url }),
   addWasteCalendar: (name: string, url: string) => request<Calendar>('POST', '/api/calendars', { name, url, purpose: 'waste' }),
+  /** Reads a calendar now, without storing it: the first events of the next 30 days. */
+  testCalendar: (url: string) => request<CalendarTest>('POST', '/api/calendar-tests', { url }),
   /** Reads a waste calendar now, without storing it: the pickups of the next 8 weeks. */
   testWasteCalendar: (url: string) =>
     request<{ pickups: Pickup[] }>('POST', '/api/waste-calendar-tests', { url }).then((r) => r.pickups),

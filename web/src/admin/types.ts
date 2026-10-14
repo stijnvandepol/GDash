@@ -200,6 +200,24 @@ export interface Calendar {
   unreadable: boolean;
 }
 
+/** One event a calendar test found, as the TV receives it. */
+export interface CalendarEvent {
+  title: string;
+  /** An RFC 3339 time, or a date for an all-day event. */
+  start: string;
+  end: string;
+  allDay: boolean;
+}
+
+/** What a test of a calendar address found in the next 30 days. */
+export interface CalendarTest {
+  /** The calendar's own name, or empty. */
+  name: string;
+  count: number;
+  /** The first few events. */
+  events: CalendarEvent[];
+}
+
 export interface Settings {
   location: Location | null;
   newsFeeds: NewsFeed[];

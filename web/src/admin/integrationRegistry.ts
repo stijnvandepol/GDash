@@ -14,6 +14,7 @@ import {
 } from './integrations';
 import { PRESETS, madeFrom, ownSources, sourcesFrom, type Preset } from './presets';
 import ApiTokenSetting from './ApiTokenSetting.svelte';
+import CalendarSetting from './CalendarSetting.svelte';
 import CameraSetting from './CameraSetting.svelte';
 import CustomSourceSetting from './CustomSourceSetting.svelte';
 import HomeAssistantSetting from './HomeAssistantSetting.svelte';
@@ -166,34 +167,11 @@ const SERVICES: Integration[] = [
       return { ...st, detail: `${count(calendars, 'calendar', 'calendars')}. ${st.detail}` };
     },
     panel: (ctx) =>
-      view(SourceList, {
-        title: 'Calendars',
-        intro:
-          'For the Calendar widget: paste the secret iCal address of a Google, Outlook or iCloud calendar. Anyone with it can read the calendar, so GDash stores it encrypted and never shows it again. A waste collection calendar goes under Waste collection.',
-        items: ctx.settings.calendars.map((c) => ({
-          id: c.id,
-          name: c.name,
-          detail: c.host,
-          warning: c.unreadable ? 'This address cannot be read on this server. Remove it and add it again.' : undefined,
-          color: c.color,
-        })),
+      view(CalendarSetting, {
+        calendars: ctx.settings.calendars,
         status: ctx.status['calendar.default'],
         max: MAX_CALENDARS,
-        secret: true,
-        namePlaceholder: 'Family',
-        urlPlaceholder: 'https://calendar.google.com/calendar/ical/…/basic.ics',
-        onadd: async (name, url) => {
-          await api.addCalendar(name, url);
-          await ctx.onchanged();
-        },
-        onremove: async (id) => {
-          await api.deleteCalendar(id);
-          await ctx.onchanged();
-        },
-        oncolor: async (id, color) => {
-          await api.setCalendarColor(id, color);
-          await ctx.onchanged();
-        },
+        onchanged: ctx.onchanged,
         onerror: ctx.onerror,
       }),
   },

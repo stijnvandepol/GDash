@@ -47,6 +47,24 @@ the format follows [Keep a Changelog](https://keepachangelog.com).
   brightness from sunset to sunrise, at the same moment as the style after
   sunset, or between set hours. The guide says honestly what saves energy:
   a lot on an OLED TV, little on an LCD TV.
+- Calendars under Integrations has a **Test** button that reads a pasted
+  address and shows the first events of the next 30 days before you add it,
+  and short guides for Google Calendar (the secret address in iCal format),
+  Outlook and Microsoft 365 (a published calendar's ICS link) and iCloud (a
+  public calendar's webcal link). Links that open a web page, such as
+  Google's embed or browser address or Outlook's HTML link, are recognised
+  as you paste them, with what to copy instead, and a failed test explains
+  the usual cause, such as Google's 404 for the public address of a private
+  calendar. `POST /api/calendar-tests`.
+- A Google calendar with years of history no longer fails as "larger than
+  the limit": GDash reads a calendar while it downloads, keeps only the
+  recurring events and those around the coming days, and reads up to 64 MB
+  (was 10 MB held in memory).
+- Events in an Outlook or Exchange calendar with a Windows time zone name,
+  such as "W. Europe Standard Time", no longer go missing; a zone GDash does
+  not know counts in the server's time zone instead of hiding the event.
+- An address that answers with a web page instead of a calendar says so,
+  instead of a parser error quoting the page.
 
 ## 0.9.2 – 2026-10-14
 

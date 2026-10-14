@@ -32,6 +32,7 @@
     onerror,
     help,
     test,
+    hint,
     results,
     children,
     formTitle,
@@ -59,6 +60,8 @@
     help?: Snippet;
     /** A Test button before Add, given the address as typed. */
     test?: Snippet<[string]>;
+    /** Advice under the address field, given the address as typed. */
+    hint?: Snippet<[string]>;
     /** Shown under the form, such as what a test found. */
     results?: Snippet;
   } = $props();
@@ -167,6 +170,7 @@
         />
         {#if fieldErrors.url}<span class="field-error">{fieldErrors.url}</span>{/if}
       </label>
+      {@render hint?.(url.trim())}
       {#if test}
         <div class="inline">
           {@render test(url.trim())}

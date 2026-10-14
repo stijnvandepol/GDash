@@ -16,7 +16,9 @@ disappears when the basics are done.
    such as NOS, NU.nl or your regional broadcaster (see [News](#news)), and add the secret
    iCal address of each calendar you want on the screen. In Google Calendar
    it is under the calendar's settings, "Secret address in iCal format"; in
-   Outlook under "Publish a calendar"; in iCloud under "Public calendar".
+   Outlook under "Publish a calendar"; in iCloud under "Public calendar";
+   see [Calendars](#calendars) for the steps, and **Test** shows what GDash
+   finds before you add it.
    GDash stores the address encrypted and never shows it again. Each
    calendar gets its own colour on the TV, so you can see whose appointment
    it is; choose another one next to the calendar. The pickup dates of your
@@ -320,6 +322,68 @@ kept in `internal/news/catalogue.json`, and each was fetched once to check
 that it answers with recent headlines before it was added. A publisher can
 move or stop a feed; such a source then fails under Integrations, and you
 can remove it and add its new address as your own.
+
+## Calendars
+
+The Calendar widget shows the coming week from the calendars under
+**Integrations, Calendars**. GDash reads a calendar by its **iCal address**
+(also called ICS or webcal): a link that the calendar service makes for
+other apps. The address of the calendar's web page does not work. Paste the
+address, press **Test** to see the first events of the next 30 days, and
+**Add** it. GDash stores it encrypted and never shows it again, because
+anyone who has it can read the calendar.
+
+**Google Calendar**
+
+1. Open [Google Calendar](https://calendar.google.com) on a computer; the
+   phone app does not show the address.
+2. Open **Settings** (the gear), and under **Settings for my calendars**
+   click the calendar.
+3. Under **Integrate calendar**, copy the **Secret address in iCal format**.
+   It looks like
+   `https://calendar.google.com/calendar/ical/…/private-…/basic.ics`.
+
+The secret address works while the calendar stays private; there is no need
+to make it public. **Reset** beside it makes a new one and stops the old
+one. The **Public address in iCal format** only works for a calendar that is
+made public: for a private calendar Google answers it with "404 Not Found".
+When the line is missing in a work or school account (Google Workspace), its
+administrator changed the sharing settings; ask them. The setup recognises
+the links that do not work, such as the address of the page in the browser
+(`calendar.google.com/calendar/r`), the "Embed code" address
+(`calendar/embed?src=…`) and a link to add a calendar (`?cid=…`), and says
+what to copy instead. GDash reads every calendar again every 10 minutes.
+
+**Outlook and Microsoft 365**
+
+1. Open Outlook on the web: [outlook.live.com](https://outlook.live.com/calendar/)
+   for a personal account, or your organisation's Outlook.
+2. Open **Settings, Calendar, Shared calendars**. Under **Publish a
+   calendar**, choose the calendar and **Can view all details**, then
+   **Publish**.
+3. Copy the **ICS** link. The HTML link beside it opens a web page.
+
+An organisation can turn publishing off; then the section is missing.
+Outlook writes Windows names for time zones, such as "W. Europe Standard
+Time"; GDash reads the common ones, and counts an event in a zone it does
+not know in the server's time zone.
+
+**iCloud**
+
+1. On an iPhone or iPad, open **Calendar**, tap **Calendars** and the ⓘ
+   beside the calendar. On a Mac, Control-click the calendar.
+2. Turn on **Public Calendar** and copy the link. It starts with `webcal://`,
+   which GDash reads over https.
+
+A public iCloud calendar can be read by anyone who has the link.
+
+**Other calendars**, such as Nextcloud, Proton Calendar or Fastmail: look
+for a link named iCal, ICS, webcal or subscribe.
+
+When a calendar cannot be read, the Calendars card says so and the widget
+keeps showing what it last read. A calendar with years of history is fine:
+GDash reads up to 64 MB of a calendar and keeps only the recurring events and
+those around the coming days.
 
 ## Waste collection
 

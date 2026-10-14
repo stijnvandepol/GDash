@@ -13,8 +13,8 @@ import (
 // kind of a calendar that collects some kinds once a month.
 const wasteTestDays = 56
 
-// CalendarReader reads one calendar once, for the Test button of the waste
-// collection setup.
+// CalendarReader reads one calendar once, for the Test buttons of the
+// calendar and waste collection setups.
 type CalendarReader interface {
 	Read(ctx context.Context, src calendar.Source, days int) ([]calendar.Event, error)
 }
@@ -40,7 +40,9 @@ func (s *Server) postWasteCalendarTest(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		// The error never holds the address; see calendar.withoutURL.
 		s.Logger.Warn("waste calendar test failed", "error", err)
-		writeError(w, http.StatusBadGateway, "fetch_failed", "The calendar could not be read: "+err.Error()+". Check that you copied the whole link.")
+		// fetch_failed for every failure, as this endpoint always answered.
+		_, message := calendarFailure(err)
+		writeError(w, http.StatusBadGateway, codeFetchFailed, message)
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"pickups": waste.Pickups(events)})

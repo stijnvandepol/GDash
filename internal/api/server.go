@@ -84,7 +84,7 @@ type Server struct {
 	Traffic TrafficGuard
 	// KNMI tries a KNMI key before it is stored.
 	KNMI KNMIChecker
-	// Calendars reads a waste calendar for the Test button.
+	// Calendars reads a calendar or a waste calendar for its Test button.
 	Calendars     CalendarReader
 	CustomFetcher CustomFetcher
 	// WebPageChecker fetches a web page for the Check button under Settings.
@@ -204,6 +204,7 @@ func (s *Server) Handler() http.Handler {
 	mux.Handle("POST /api/calendars", s.requireUser(s.postCalendar))
 	mux.Handle("PATCH /api/calendars/{id}", s.requireUser(s.patchCalendar))
 	mux.Handle("DELETE /api/calendars/{id}", s.requireUser(s.deleteCalendar))
+	mux.Handle("POST /api/calendar-tests", s.requireUser(s.postCalendarTest))
 	mux.Handle("POST /api/waste-calendar-tests", s.requireUser(s.postWasteCalendarTest))
 	mux.Handle("GET /api/places", s.requireUser(s.getPlaces))
 	mux.Handle("PUT /api/homeassistant", s.requireUser(s.putHomeAssistant))

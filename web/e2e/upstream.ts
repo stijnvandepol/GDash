@@ -9,7 +9,8 @@ import { solarAnswer } from './solar-stand-in';
 // A stand-in for Buienradar, MeteoAlarm and Open-Meteo's solar forecast,
 // so the Rain, Weather warnings and Solar forecast widgets show data
 // without the internet, for a municipality's waste calendar, which a test
-// pastes into the Waste collection setup, and for the ANWB's traffic list,
+// pastes into the Waste collection setup, for the secret iCal address of a
+// Google calendar, which a test pastes into Calendars, and for the ANWB's traffic list,
 // the Overpass API and the KNMI, which answer with the Go tests' recorded
 // answers. The
 // server is pointed here with GDASH_TEST_UPSTREAM (cmd/gdash/config.go);
@@ -117,7 +118,74 @@ function wasteCalendar(now: number): string {
   return ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//E2E Afvalkalender//NL', ...events, 'END:VCALENDAR', ''].join('\r\n');
 }
 
+/** Where the Google stand-in serves a secret iCal address, %40 and all, as Google writes it. */
+export const GOOGLE_CALENDAR_PATH = '/calendar/ical/family.e2e%40gmail.com/private-0123456789abcdef/basic.ics';
+
+/**
+ * A family calendar as Google's secret iCal address serves it: its time
+ * zone, a weekly lesson since last year with its reminder, a dentist
+ * tomorrow at half past eight Dutch time with notes, and a meeting from
+ * years back.
+ */
+function googleCalendar(now: number): string {
+  const lessonStart = icalDay(now, -365);
+  return [
+    'BEGIN:VCALENDAR',
+    'PRODID:-//Google Inc//Google Calendar 70.9054//EN',
+    'VERSION:2.0',
+    'CALSCALE:GREGORIAN',
+    'METHOD:PUBLISH',
+    'X-WR-CALNAME:Gezin',
+    'X-WR-TIMEZONE:Europe/Amsterdam',
+    'BEGIN:VTIMEZONE',
+    'TZID:Europe/Amsterdam',
+    'BEGIN:DAYLIGHT',
+    'TZOFFSETFROM:+0100',
+    'TZOFFSETTO:+0200',
+    'DTSTART:19700329T020000',
+    'RRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=-1SU',
+    'END:DAYLIGHT',
+    'BEGIN:STANDARD',
+    'TZOFFSETFROM:+0200',
+    'TZOFFSETTO:+0100',
+    'DTSTART:19701025T030000',
+    'RRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=-1SU',
+    'END:STANDARD',
+    'END:VTIMEZONE',
+    'BEGIN:VEVENT',
+    `DTSTART;TZID=Europe/Amsterdam:${lessonStart}T190000`,
+    `DTEND;TZID=Europe/Amsterdam:${lessonStart}T200000`,
+    'RRULE:FREQ=WEEKLY',
+    'UID:e2e-lesson@google.com',
+    'SUMMARY:Zwemles',
+    'BEGIN:VALARM',
+    'ACTION:DISPLAY',
+    'TRIGGER:-P0DT0H30M0S',
+    'END:VALARM',
+    'END:VEVENT',
+    'BEGIN:VEVENT',
+    `DTSTART;TZID=Europe/Amsterdam:${icalDay(now, 1)}T083000`,
+    `DTEND;TZID=Europe/Amsterdam:${icalDay(now, 1)}T091500`,
+    'UID:e2e-dentist@google.com',
+    'DESCRIPTION:Bring the insurance card. A long note that Google folds at se',
+    ' venty-five octets.',
+    'SUMMARY:Tandarts',
+    'END:VEVENT',
+    'BEGIN:VEVENT',
+    'DTSTART:20150612T080000Z',
+    'DTEND:20150612T090000Z',
+    'UID:e2e-long-ago@google.com',
+    'SUMMARY:Overleg 2015',
+    'END:VEVENT',
+    'END:VCALENDAR',
+    '',
+  ].join('\r\n');
+}
+
 function answer(path: string, now: number): { type: string; body: string } | undefined {
+  if (path === GOOGLE_CALENDAR_PATH) return { type: 'text/calendar; charset=UTF-8', body: googleCalendar(now) };
+  // What Google answers for its embed and browser addresses: a web page.
+  if (path === '/calendar/embed') return { type: 'text/html; charset=utf-8', body: '<!doctype html><html><head><title>Google Calendar</title></head></html>' };
   if (path.startsWith('/news/')) {
     const body = newsFeed(path.slice('/news/'.length), now);
     return body === undefined ? undefined : { type: 'application/rss+xml', body };
