@@ -36,7 +36,7 @@
 >
   {#each boxes as box (box.id)}
     <span class="box" style:left="{box.left}%" style:top="{box.top}%" style:width="{box.width}%" style:height="{box.height}%">
-      <span>{labels ? box.label : ''}</span>
+      <span class="tile"><span class="label">{labels ? box.label : ''}</span></span>
     </span>
   {/each}
 </div>
@@ -57,7 +57,7 @@
     box-sizing: border-box;
     padding: 1px;
   }
-  .box > span {
+  .tile {
     display: grid;
     place-items: center;
     width: 100%;
@@ -66,6 +66,19 @@
     color: var(--text-muted);
     border: min(var(--widget-border-width, 1px), 2px) solid var(--widget-border);
     border-radius: calc(4px * var(--radius-scale, 1));
+    /* A TV tile's 16 pixels on a 1920-pixel screen, for motifs sized in em. */
+    font-size: calc(100cqw / 120);
+    overflow: hidden;
+  }
+  /* Every second and third tile in its theme's variant, as on a screen. */
+  .box:nth-child(3n + 2) > .tile {
+    --tile-image: var(--tile-image-2);
+  }
+  .box:nth-child(3n) > .tile {
+    --tile-image: var(--tile-image-3);
+  }
+  .label {
+    max-width: 100%;
     font-size: max(9px, 3.4cqw);
     overflow: hidden;
     text-overflow: ellipsis;

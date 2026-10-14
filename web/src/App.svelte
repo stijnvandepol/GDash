@@ -259,6 +259,14 @@
     contain: size;
     container-type: size;
   }
+  /* A theme can give every second and third tile a variant of its texture
+     (themes.css), so a motif changes across the screen. */
+  .widget:nth-of-type(3n + 2) {
+    --tile-image: var(--tile-image-2);
+  }
+  .widget:nth-of-type(3n) {
+    --tile-image: var(--tile-image-3);
+  }
   .message {
     position: absolute;
     inset: 0;

@@ -53,6 +53,12 @@
     border: min(var(--widget-border-width, 1px), 2px) solid var(--widget-border);
     border-radius: calc(3cqw * var(--radius-scale, 1));
     overflow: hidden;
+    /* A third of the padding, as on a TV, for motifs sized in em. */
+    font-size: calc(4cqw / 3);
+  }
+  /* The second tile in its variant, as on a screen. */
+  .weather {
+    --tile-image: var(--tile-image-2);
   }
   .figure {
     font-size: 13cqw;

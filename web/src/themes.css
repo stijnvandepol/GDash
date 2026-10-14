@@ -38,6 +38,11 @@
   --font-display: var(--font-ui);
   --radius-scale: 1;
   --tile-image: none;
+  /* Every second and third tile of a dashboard takes these instead, so a
+     theme can vary a motif across the screen; by default they are the
+     same texture. */
+  --tile-image-2: var(--tile-image);
+  --tile-image-3: var(--tile-image);
   --text-glow: none;
   /* Lining figures: old-style ones, the default of some serifs, sink below
      the line and are harder to read from across a room. */
