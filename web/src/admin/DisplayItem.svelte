@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { Dashboard, Display } from './api';
+  import type { Dashboard, DimAtNight, Display, ScreenCare, ScreenCareChanges } from './api';
   import { castTone, describeAge, describeCast, describeScreensaver } from './status';
   import { describeBrowser, describeScreenSize, describeVisibility, screenWarnings } from './screenReports';
   import { DEFAULT_DASHBOARD_ID, describeHours, describeScreens } from './displays';
@@ -15,11 +15,14 @@
     dashboards,
     textSizes,
     screensaverChoices,
+    screenCareChoices,
+    dimChoices,
     grid,
     tvName,
     ondashboard,
     ontextscale,
     onscreensaver,
+    onscreencare,
     onschedule,
     onpair,
     onunpair,
@@ -34,6 +37,9 @@
     textSizes: [number, string][];
     /** Screensaver restart intervals in minutes, with their label. */
     screensaverChoices: [number, string][];
+    /** Screen care settings and dimming modes, with their label. */
+    screenCareChoices: [ScreenCare, string][];
+    dimChoices: [DimAtNight, string][];
     /** The TV grid, to draw the dashboard; null until it is known. */
     grid: { columns: number; rows: number } | null;
     /** The name of the display's Cast device; empty when it was not found. */
@@ -41,6 +47,7 @@
     ondashboard: (id: string) => void;
     ontextscale: (percent: number) => void;
     onscreensaver: (minutes: number) => void;
+    onscreencare: (changes: ScreenCareChanges) => void;
     onschedule: () => void;
     /** Approves the code a screen shows; rejects when it is wrong. */
     onpair: (code: string) => Promise<void>;
@@ -150,7 +157,51 @@
           </select>
         </label>
       {/if}
+      <!-- OLED care and dimming work on any theme, on this screen only. -->
+      <label>
+        Screen care
+        <select
+          aria-label="Screen care for {d.name}"
+          aria-describedby="care-{d.id}"
+          value={d.screenCare}
+          onchange={(e) => onscreencare({ screenCare: (e.target as HTMLSelectElement).value as ScreenCare })}>
+          {#each screenCareChoices as [value, label] (value)}
+            <option {value}>{label}</option>
+          {/each}
+        </select>
+      </label>
+      <label>
+        Dim at night
+        <select
+          aria-label="Dim {d.name} at night"
+          aria-describedby="care-{d.id}"
+          value={d.dimAtNight}
+          onchange={(e) => onscreencare({ dimAtNight: (e.target as HTMLSelectElement).value as DimAtNight })}>
+          {#each dimChoices as [value, label] (value)}
+            <option {value}>{label}</option>
+          {/each}
+        </select>
+      </label>
+      {#if d.dimAtNight === 'hours'}
+        <div class="dim-hours">
+          <label>
+            Dim from
+            <input type="time" aria-label="Dim {d.name} from" value={d.dimFrom}
+              onchange={(e) => onscreencare({ dimFrom: (e.target as HTMLInputElement).value })} />
+          </label>
+          <label>
+            until
+            <input type="time" aria-label="Dim {d.name} until" value={d.dimUntil}
+              onchange={(e) => onscreencare({ dimUntil: (e.target as HTMLInputElement).value })} />
+          </label>
+        </div>
+      {/if}
     </div>
+    <p id="care-{d.id}" class="muted small care-hint">
+      {#if d.screenCare === 'oled'}OLED care: the dashboard drifts slowly, borders and titles are dimmed and the screen is black for a second every hour.{/if}
+      {#if d.dimAtNight === 'sunset'}Dims to 60 % at the same moment as a dashboard’s style after sunset; it needs a weather location.{:else if d.dimAtNight === 'hours'}Dims to 60 % between these hours.{/if}
+      {#if d.screenCare === 'off' && d.dimAtNight === 'off'}For an OLED TV: care against burn-in, and less light at night.{/if}
+    </p>
 
     {#if needsScreen || connecting}
       <PairScreen {address} onpair={pair} {onerror} oncancel={needsScreen ? undefined : () => (connecting = false)}>
@@ -327,6 +378,17 @@
     .fields {
       grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
     }
+  }
+  .dim-hours {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--s-3);
+  }
+  .dim-hours input {
+    width: auto;
+  }
+  .care-hint {
+    margin: calc(-1 * var(--s-1)) 0 0;
   }
   .shows {
     font-weight: 650;

@@ -80,8 +80,22 @@ type Display struct {
 	// ScreensaverMinutes is how often the receiver on a Cast device is
 	// restarted to keep the dashboard in front of the TV's screensaver, one
 	// of ScreensaverIntervals; 0 is never.
-	ScreensaverMinutes int       `json:"screensaverMinutes"`
-	CreatedAt          time.Time `json:"createdAt"`
+	ScreensaverMinutes int `json:"screensaverMinutes"`
+	// ScreenCare is what the screen does for its panel, one of
+	// display.ScreenCares.
+	ScreenCare string `json:"screenCare"`
+	// DimAtNight is when the screen is dimmed, one of display.DimModes.
+	// DimFrom and DimUntil are the hours for display.DimDuringHours, as
+	// HH:MM; they are kept when another mode is chosen.
+	DimAtNight string    `json:"dimAtNight"`
+	DimFrom    string    `json:"dimFrom"`
+	DimUntil   string    `json:"dimUntil"`
+	CreatedAt  time.Time `json:"createdAt"`
+}
+
+// Dimming returns when the display is dimmed.
+func (d Display) Dimming() display.Dimming {
+	return display.Dimming{Mode: d.DimAtNight, Hours: schedule.Hours{From: d.DimFrom, Until: d.DimUntil}}
 }
 
 // Slot shows a dashboard during part of the day, such as a morning
@@ -160,7 +174,26 @@ func Validate(d Display) error {
 	if !slices.Contains(ScreensaverIntervals, d.ScreensaverMinutes) {
 		errs.Add("screensaverMinutes", "choose 5, 10, 15 or 30 minutes, or 0 for never")
 	}
+	if !slices.Contains(display.ScreenCares, d.ScreenCare) {
+		errs.Add("screenCare", "choose off or oled")
+	}
+	if !slices.Contains(display.DimModes, d.DimAtNight) {
+		errs.Add("dimAtNight", "choose off, sunset or hours")
+	}
+	if msg := dimHoursProblem(d); msg != "" {
+		errs.Add("dimFrom", msg)
+	}
 	return errs.Err()
+}
+
+// dimHoursProblem checks the hours to dim in: two different times when the
+// display dims by the clock, else two times or none.
+func dimHoursProblem(d Display) string {
+	hours := schedule.Hours{From: d.DimFrom, Until: d.DimUntil}
+	if hours.Validate() != nil || (d.DimAtNight == display.DimDuringHours && hours.Always()) {
+		return "use two different times as HH:MM"
+	}
+	return ""
 }
 
 func rotationProblem(ids []string, seconds int) string {

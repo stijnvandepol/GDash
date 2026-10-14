@@ -8,6 +8,7 @@
   import { msUntilExpiry, visibleAnnouncement } from './announcement';
   import AnnouncementBanner from './AnnouncementBanner.svelte';
   import { containerFallback } from './compat';
+  import { REFRESH_MS, driftAt, msToNextRefresh } from './screenCare';
 
   // Spacing of theme.css in design pixels. A larger text size draws the
   // stage smaller and these with it, so only the text grows.
@@ -98,7 +99,29 @@
     [-6, -3],
     [4, -6],
   ];
-  const shift = $derived(SHIFTS[Math.floor(clock.now.getTime() / 60000 / SHIFT_EVERY_MINUTES) % SHIFTS.length] ?? [0, 0]);
+  // OLED care drifts further and slowly instead; see screenCare.ts.
+  const care = $derived(display.snapshot?.screenCare === 'oled');
+  const shift = $derived(
+    care ? driftAt(clock.now.getTime()) : (SHIFTS[Math.floor(clock.now.getTime() / 60000 / SHIFT_EVERY_MINUTES) % SHIFTS.length] ?? [0, 0]),
+  );
+
+  // With OLED care the screen is black for a second every hour, by one
+  // timer to the next refresh.
+  let refreshing = $state(false);
+  $effect(() => {
+    if (!care) return;
+    let end: ReturnType<typeof setTimeout> | undefined;
+    let timer = setTimeout(function refresh() {
+      refreshing = true;
+      end = setTimeout(() => (refreshing = false), REFRESH_MS);
+      timer = setTimeout(refresh, msToNextRefresh(Date.now()));
+    }, msToNextRefresh(Date.now()));
+    return () => {
+      clearTimeout(timer);
+      clearTimeout(end);
+      refreshing = false;
+    };
+  });
 
   /** The display this page shows, from its address /d/<id>. */
   function pairingDisplayId(): string {
@@ -108,7 +131,7 @@
 
 <svelte:window bind:innerWidth bind:innerHeight />
 
-<main class="screen" data-theme={dashboard?.theme ?? 'minimal-dark'} data-font={dashboard?.font || undefined}>
+<main class="screen" class:care data-theme={dashboard?.theme ?? 'minimal-dark'} data-font={dashboard?.font || undefined}>
   {#if asleep}
     <!-- Outside active hours: nothing lit, so the TV can idle and OLED pixels rest. -->
   {:else if display.problem}
@@ -223,6 +246,14 @@
   {#if display.connection === 'offline' && !asleep}
     <div class="offline" title={t('offline')}></div>
   {/if}
+  <!-- Over everything, the offline dot too: dimmed at night, black for the
+       hourly refresh unless a message is showing. -->
+  {#if display.snapshot?.dimmed && !asleep}
+    <div class="veil dim"></div>
+  {/if}
+  {#if refreshing && !announcement && !asleep}
+    <div class="veil refresh"></div>
+  {/if}
 </main>
 
 <style>
@@ -328,6 +359,68 @@
   }
   .muted {
     color: var(--text-muted);
+  }
+  /*
+   * OLED care. The stage glides to each new spot of its drift over the
+   * minute until the next, and its brightness breathes 10 % over six
+   * minutes, in steps too small to see: both are drawn by the compositor,
+   * the steps keep the screen from repainting every frame. What never
+   * changes, tile borders, titles and labels, is at 70 %, and the clock's
+   * colon is never lit fully for long.
+   */
+  .care .stage {
+    transition: transform 60s linear;
+    animation: care-breathe 6min steps(72) infinite;
+  }
+  .care .widget {
+    position: relative;
+    border-color: transparent;
+  }
+  .care .widget::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border: var(--widget-border-width) solid var(--widget-border);
+    border-radius: inherit;
+    opacity: 0.7;
+    pointer-events: none;
+  }
+  .care :global(.widget > * > .title),
+  .care :global(.widget > * > h2),
+  .care :global(.widget .label) {
+    opacity: 0.7;
+  }
+  .care :global(.time .sep) {
+    animation: care-colon 4s ease-in-out infinite;
+  }
+  @keyframes care-breathe {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.9;
+    }
+  }
+  @keyframes care-colon {
+    0%,
+    100% {
+      opacity: 0.45;
+    }
+    50% {
+      opacity: 0.85;
+    }
+  }
+  .veil {
+    position: absolute;
+    inset: 0;
+    background: #000;
+    pointer-events: none;
+  }
+  /* Dim at night: 60 % brightness. A veil rather than a filter, which old
+     TV browsers draw slowly over a whole screen. */
+  .dim {
+    opacity: 0.4;
   }
   .offline {
     position: absolute;

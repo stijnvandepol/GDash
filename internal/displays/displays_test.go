@@ -8,7 +8,7 @@ import (
 )
 
 func TestValidate(t *testing.T) {
-	valid := Display{ID: "keuken", Name: "Keuken TV", CastDeviceID: "e542c41e4d94baa86e46f36dfdebf26e", TextScale: 100}
+	valid := Display{ID: "keuken", Name: "Keuken TV", CastDeviceID: "e542c41e4d94baa86e46f36dfdebf26e", TextScale: 100, ScreenCare: "off", DimAtNight: "off"}
 	tests := []struct {
 		name       string
 		change     func(*Display)
@@ -48,6 +48,16 @@ func TestValidate(t *testing.T) {
 		{"no screensaver restarts", func(d *Display) { d.ScreensaverMinutes = 0 }, nil},
 		{"restarts every 5 minutes", func(d *Display) { d.ScreensaverMinutes = 5 }, nil},
 		{"odd screensaver interval", func(d *Display) { d.ScreensaverMinutes = 20 }, []string{"screensaverMinutes"}},
+		{"oled care", func(d *Display) { d.ScreenCare = "oled" }, nil},
+		{"unknown screen care", func(d *Display) { d.ScreenCare = "plasma" }, []string{"screenCare"}},
+		{"no screen care at all", func(d *Display) { d.ScreenCare = "" }, []string{"screenCare"}},
+		{"dim after sunset", func(d *Display) { d.DimAtNight = "sunset" }, nil},
+		{"dim during hours", func(d *Display) { d.DimAtNight, d.DimFrom, d.DimUntil = "hours", "22:00", "07:00" }, nil},
+		{"dim during hours without them", func(d *Display) { d.DimAtNight = "hours" }, []string{"dimFrom"}},
+		{"dim during one time", func(d *Display) { d.DimAtNight, d.DimFrom = "hours", "22:00" }, []string{"dimFrom"}},
+		{"hours kept while dimming is off", func(d *Display) { d.DimFrom, d.DimUntil = "22:00", "07:00" }, nil},
+		{"invalid hours kept while dimming is off", func(d *Display) { d.DimFrom, d.DimUntil = "25:00", "07:00" }, []string{"dimFrom"}},
+		{"unknown dim mode", func(d *Display) { d.DimAtNight = "always" }, []string{"dimAtNight"}},
 		{"everything wrong", func(d *Display) { d.ID = ""; d.Name = ""; d.CastDeviceID = "x" }, []string{"id", "name", "castDeviceId"}},
 	}
 	for _, tt := range tests {

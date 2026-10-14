@@ -1,10 +1,12 @@
 package api
 
 import (
+	"cmp"
 	"errors"
 	"net/http"
 
 	"github.com/stijnvandepol/gdash/internal/casting"
+	"github.com/stijnvandepol/gdash/internal/display"
 	"github.com/stijnvandepol/gdash/internal/displays"
 	"github.com/stijnvandepol/gdash/internal/schedule"
 	"github.com/stijnvandepol/gdash/internal/screenreport"
@@ -52,8 +54,9 @@ func (s *Server) listDisplays(w http.ResponseWriter, r *http.Request) {
 }
 
 // createDisplay handles POST /api/displays {id, name, castDeviceId,
-// dashboardId, activeFrom, activeUntil, schedule, screensaverMinutes}: 201
-// with the display (screensaverMinutes 15 when absent), 409
+// dashboardId, activeFrom, activeUntil, schedule, screensaverMinutes,
+// screenCare, dimAtNight, dimFrom, dimUntil}: 201 with the display
+// (screensaverMinutes 15, screenCare and dimAtNight "off" when absent), 409
 // when the id is taken or the limit reached, 422 for invalid fields or a
 // dashboard that does not exist. An empty dashboardId means the default
 // dashboard.
@@ -70,7 +73,11 @@ func (s *Server) createDisplay(w http.ResponseWriter, r *http.Request) {
 		RotateSeconds int             `json:"rotateSeconds"`
 		TextScale     int             `json:"textScale"`
 		// Screensaver is a pointer: 0 is a choice (never), absent the default.
-		ScreensaverMinutes *int `json:"screensaverMinutes"`
+		ScreensaverMinutes *int   `json:"screensaverMinutes"`
+		ScreenCare         string `json:"screenCare"`
+		DimAtNight         string `json:"dimAtNight"`
+		DimFrom            string `json:"dimFrom"`
+		DimUntil           string `json:"dimUntil"`
 	}
 	if !decodeJSON(w, r, &body) {
 		return
@@ -80,7 +87,8 @@ func (s *Server) createDisplay(w http.ResponseWriter, r *http.Request) {
 		Hours:    schedule.Hours{From: body.ActiveFrom, Until: body.ActiveUntil},
 		Schedule: displays.NormalizeSchedule(body.Schedule), CreatedAt: s.Now().UTC(),
 		Rotation: displays.NormalizeRotation(body.Rotation), RotateSeconds: body.RotateSeconds,
-		TextScale: body.TextScale,
+		TextScale: body.TextScale, ScreenCare: cmp.Or(body.ScreenCare, display.ScreenCareOff),
+		DimAtNight: cmp.Or(body.DimAtNight, display.DimOff), DimFrom: body.DimFrom, DimUntil: body.DimUntil,
 	}
 	if d.TextScale == 0 {
 		d.TextScale = defaultTextScale
@@ -103,7 +111,8 @@ func (s *Server) createDisplay(w http.ResponseWriter, r *http.Request) {
 }
 
 // updateDisplay handles PATCH /api/displays/{display} {name?, castDeviceId?,
-// dashboardId?, activeFrom?, activeUntil?, schedule?, screensaverMinutes?};
+// dashboardId?, activeFrom?, activeUntil?, schedule?, screensaverMinutes?,
+// screenCare?, dimAtNight?, dimFrom?, dimUntil?};
 // an empty dashboardId
 // means the default dashboard, empty active hours mean always on, and a
 // schedule replaces the whole day plan. It changes only the fields present
@@ -122,7 +131,11 @@ func (s *Server) updateDisplay(w http.ResponseWriter, r *http.Request) {
 		TextScale     *int             `json:"textScale"`
 		// ScreensaverMinutes is how often the receiver on the Cast device
 		// is restarted against the TV's screensaver; 0 is never.
-		ScreensaverMinutes *int `json:"screensaverMinutes"`
+		ScreensaverMinutes *int    `json:"screensaverMinutes"`
+		ScreenCare         *string `json:"screenCare"`
+		DimAtNight         *string `json:"dimAtNight"`
+		DimFrom            *string `json:"dimFrom"`
+		DimUntil           *string `json:"dimUntil"`
 	}
 	if !decodeJSON(w, r, &body) {
 		return
@@ -162,6 +175,7 @@ func (s *Server) updateDisplay(w http.ResponseWriter, r *http.Request) {
 	if body.ScreensaverMinutes != nil {
 		d.ScreensaverMinutes = *body.ScreensaverMinutes
 	}
+	applyScreenCare(&d, body.ScreenCare, body.DimAtNight, body.DimFrom, body.DimUntil)
 	if err := displays.Validate(d); err != nil {
 		writeValidationError(w, validation.Fields(err))
 		return
@@ -173,6 +187,23 @@ func (s *Server) updateDisplay(w http.ResponseWriter, r *http.Request) {
 	s.auditUser(r, auditDisplayUpdated, d.ID)
 	s.DisplaysChanged()
 	writeJSON(w, http.StatusOK, d)
+}
+
+// applyScreenCare changes the screen care and dimming of d by the fields of
+// a PATCH that are present.
+func applyScreenCare(d *displays.Display, care, dim, from, until *string) {
+	if care != nil {
+		d.ScreenCare = *care
+	}
+	if dim != nil {
+		d.DimAtNight = *dim
+	}
+	if from != nil {
+		d.DimFrom = *from
+	}
+	if until != nil {
+		d.DimUntil = *until
+	}
 }
 
 // deleteDisplay handles DELETE /api/displays/{display}: 204, or 404.

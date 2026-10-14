@@ -2,7 +2,7 @@
   import { toast } from './toast.svelte';
   import { ask } from './confirm.svelte';
   import { onMount } from 'svelte';
-  import { api, ApiError, type CastDevice, type Dashboard, type Display } from './api';
+  import { api, ApiError, type CastDevice, type Dashboard, type DimAtNight, type Display, type ScreenCare, type ScreenCareChanges } from './api';
   import { errorMessage } from './errors';
   import { newestOnly } from './newest';
   import ScheduleEditor from './ScheduleEditor.svelte';
@@ -128,6 +128,34 @@
     }
   }
 
+  // What a screen can do for its panel (internal/display.ScreenCares and
+  // DimModes).
+  const SCREEN_CARE_CHOICES: [ScreenCare, string][] = [
+    ['off', 'Off'],
+    ['oled', 'OLED care'],
+  ];
+  const DIM_CHOICES: [DimAtNight, string][] = [
+    ['off', 'Off'],
+    ['sunset', 'From sunset to sunrise'],
+    ['hours', 'Between set hours'],
+  ];
+  // The hours offered the first time a display dims by the clock.
+  const DEFAULT_DIM_HOURS = { dimFrom: '22:00', dimUntil: '07:00' };
+
+  /** Changes how a display looks after its screen; a refusal names the field. */
+  async function chooseScreenCare(d: Display, changes: ScreenCareChanges) {
+    const firstHours = changes.dimAtNight === 'hours' && !d.dimFrom && !d.dimUntil;
+    try {
+      await api.updateDisplay(d.id, firstHours ? { ...DEFAULT_DIM_HOURS, ...changes } : changes);
+      await load();
+    } catch (err) {
+      rowError =
+        err instanceof ApiError
+          ? (err.fieldMessage('screenCare') ?? err.fieldMessage('dimAtNight') ?? err.fieldMessage('dimFrom') ?? err.message)
+          : handle(err);
+    }
+  }
+
   async function chooseTextScale(d: Display, textScale: number) {
     try {
       await api.updateDisplay(d.id, { textScale });
@@ -222,11 +250,14 @@
               {dashboards}
               textSizes={TEXT_SIZES}
               screensaverChoices={SCREENSAVER_CHOICES}
+              screenCareChoices={SCREEN_CARE_CHOICES}
+              dimChoices={DIM_CHOICES}
               {grid}
               tvName={deviceNames.get(d.castDeviceId) ?? ''}
               ondashboard={(id) => chooseDashboard(d, id)}
               ontextscale={(percent) => chooseTextScale(d, percent)}
               onscreensaver={(minutes) => chooseScreensaver(d, minutes)}
+              onscreencare={(changes) => chooseScreenCare(d, changes)}
               onschedule={() => (scheduleId = d.id)}
               onpair={(code) => pair(d, code)}
               onunpair={() => unpair(d)}

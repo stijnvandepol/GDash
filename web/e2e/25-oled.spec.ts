@@ -2,10 +2,10 @@ import { mkdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { expect, openTab, test } from './fixtures';
 
-// The OLED and night presets in the style picker. The presets are also
-// drawn on a realistic dashboard at 1920x1080, one picture each and a
-// contact sheet of all of them, for a look by eye; the data is answered
-// here, so they do not depend on any service.
+// The OLED and night presets in the style picker, and OLED care and dimming
+// on a display. The presets are also drawn on a realistic dashboard at
+// 1920x1080, one picture each and a contact sheet of all of them, for a look
+// by eye; the data is answered here, so they do not depend on any service.
 
 const OLED_THEMES: [string, string][] = [
   ['void', 'Void'],
@@ -60,6 +60,62 @@ test('the style picker marks each theme for OLED and can show only the OLED-frie
   await expect(picker.getByRole('radio', { name: /^Ember/ })).toBeChecked();
   await picker.getByLabel('Only OLED-friendly').uncheck();
   await expect(themes.getByText('Walnut', { exact: true })).toBeVisible();
+});
+
+test('a display with OLED care and dimming draws both on its TV page', async ({ adminPage: page, browser, baseURL }) => {
+  const types = (await (await page.request.get('/api/widget-types')).json()) as WidgetTypes;
+  const clock = types.types.clock!;
+  const board = await page.request.post('/api/dashboards', {
+    data: { id: 'e2e-oled-board', name: 'E2E OLED board', theme: 'void', widgets: [{ id: 'clock', type: 'clock', x: 0, y: 0, w: clock.minW, h: clock.minH }] },
+  });
+  expect(board.status()).toBe(201);
+  const created = await page.request.post('/api/displays', { data: { id: 'e2e-bedroom', name: 'E2E Bedroom', dashboardId: 'e2e-oled-board' } });
+  expect(created.status()).toBe(201);
+  expect(await created.json()).toMatchObject({ screenCare: 'off', dimAtNight: 'off' });
+
+  const screen = await browser.newContext({ baseURL });
+  try {
+    const tv = await screen.newPage();
+    await tv.goto('/d/e2e-bedroom');
+    const code = tv.getByText(/^[A-Z0-9]{4}-[A-Z0-9]{4}$/);
+    await expect(code).toBeVisible();
+    const paired = await page.request.post('/api/displays/e2e-bedroom/pairings', { data: { code: await code.textContent() } });
+    expect(paired.ok()).toBe(true);
+    const main = tv.locator('main.screen');
+    await expect(tv.locator('.clock .time')).toBeVisible({ timeout: 20_000 });
+    await expect(main).not.toHaveClass(/\bcare\b/);
+    await expect(tv.locator('.veil.dim')).toHaveCount(0);
+
+    await page.reload();
+    await openTab(page, 'Displays');
+    const row = page.getByRole('listitem').filter({ hasText: 'E2E Bedroom' });
+    await row.getByLabel('Screen care for E2E Bedroom').selectOption({ label: 'OLED care' });
+    await expect(row).toContainText('the dashboard drifts slowly');
+    await expect(main).toHaveClass(/\bcare\b/);
+    // The colon is apart, for care to keep it from being lit fully all day.
+    await expect(tv.locator('.clock .time .sep')).toHaveText(':');
+
+    // Dimming by the clock, in the hour around now on the server's clock,
+    // which is this machine's.
+    await row.getByLabel('Dim E2E Bedroom at night').selectOption({ label: 'Between set hours' });
+    const hhmm = (ms: number) => new Date(ms).toTimeString().slice(0, 5);
+    await row.getByLabel('Dim E2E Bedroom from').fill(hhmm(Date.now() - HOUR));
+    await row.getByLabel('Dim E2E Bedroom from').blur();
+    await expect.poll(async () => ((await (await page.request.get('/api/displays')).json()) as { displays: { id: string; dimFrom: string }[] }).displays.find((d) => d.id === 'e2e-bedroom')?.dimFrom).toBe(hhmm(Date.now() - HOUR));
+    await row.getByLabel('Dim E2E Bedroom until').fill(hhmm(Date.now() + HOUR));
+    await row.getByLabel('Dim E2E Bedroom until').blur();
+    await expect(tv.locator('.veil.dim')).toBeVisible();
+    await mkdir(SCREENS, { recursive: true });
+    await row.screenshot({ path: path.join(SCREENS, 'display-settings.png') });
+    await expect.poll(() => tv.locator('.veil.dim').evaluate((el) => getComputedStyle(el).opacity)).toBe('0.4');
+
+    await row.getByLabel('Dim E2E Bedroom at night').selectOption({ label: 'Off' });
+    await row.getByLabel('Screen care for E2E Bedroom').selectOption({ label: 'Off' });
+    await expect(tv.locator('.veil.dim')).toHaveCount(0);
+    await expect(main).not.toHaveClass(/\bcare\b/);
+  } finally {
+    await screen.close();
+  }
 });
 
 function localDate(ms: number): string {

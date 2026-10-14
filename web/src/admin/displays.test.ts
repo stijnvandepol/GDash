@@ -16,6 +16,10 @@ function display(changes: Partial<Display> = {}): Display {
     rotateSeconds: 0,
     textScale: 100,
     screensaverMinutes: 15,
+    screenCare: 'off',
+    dimAtNight: 'off',
+    dimFrom: '',
+    dimUntil: '',
     ...changes,
   };
 }

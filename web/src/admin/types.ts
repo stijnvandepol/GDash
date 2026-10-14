@@ -32,11 +32,22 @@ export interface Display {
   textScale: number;
   /** How often the receiver on a Cast device is restarted against the TV's screensaver, in minutes; 0 is never. */
   screensaverMinutes: number;
+  /** What the screen does for its panel: "off", or "oled" against burn-in. */
+  screenCare: ScreenCare;
+  /** When the screen is dimmed to 60 %: "off", "sunset" (until sunrise) or "hours" (dimFrom to dimUntil, HH:MM). */
+  dimAtNight: DimAtNight;
+  dimFrom: string;
+  dimUntil: string;
   /** What GDash last found on the Cast device; only in the display list. */
   cast?: CastStatus;
   /** What the display's screens last reported about their browsers, newest first; only in the display list. */
   screenReports?: ReceivedScreenReport[];
 }
+
+export type ScreenCare = 'off' | 'oled';
+export type DimAtNight = 'off' | 'sunset' | 'hours';
+/** A change to how a display looks after its screen. */
+export type ScreenCareChanges = Partial<Pick<Display, 'screenCare' | 'dimAtNight' | 'dimFrom' | 'dimUntil'>>;
 
 /** A screen's report about its browser as the display list carries it. */
 export interface ReceivedScreenReport extends ScreenReport {

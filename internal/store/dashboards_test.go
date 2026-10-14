@@ -91,7 +91,8 @@ func TestDisplayDashboards(t *testing.T) {
 		t.Fatal(err)
 	}
 	kitchen := displays.Display{ID: "kitchen", Name: "Kitchen", DashboardID: "morning", CreatedAt: created,
-		Hours: schedule.Hours{From: "06:30", Until: "23:00"}}
+		Hours: schedule.Hours{From: "06:30", Until: "23:00"}, ScreenCare: display.ScreenCareOLED,
+		DimAtNight: display.DimDuringHours, DimFrom: "22:00", DimUntil: "07:00"}
 	hall := displays.Display{ID: "hall", Name: "Hall", CreatedAt: created}
 	for _, d := range []displays.Display{kitchen, hall} {
 		if err := s.CreateDisplay(ctx, d); err != nil {
@@ -107,6 +108,10 @@ func TestDisplayDashboards(t *testing.T) {
 	}
 	if got["kitchen"].Dashboard.ID != "morning" || got["hall"].Dashboard.ID != display.DefaultID {
 		t.Fatalf("DisplayViews = kitchen:%s hall:%s", got["kitchen"].Dashboard.ID, got["hall"].Dashboard.ID)
+	}
+	wantDimming := display.Dimming{Mode: display.DimDuringHours, Hours: schedule.Hours{From: "22:00", Until: "07:00"}}
+	if got["kitchen"].ScreenCare != display.ScreenCareOLED || got["kitchen"].Dimming != wantDimming {
+		t.Fatalf("kitchen care = %q, dimming %+v", got["kitchen"].ScreenCare, got["kitchen"].Dimming)
 	}
 
 	// Deleting a dashboard sends its displays back to the default.

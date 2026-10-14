@@ -4,10 +4,13 @@
 
   const time = $derived(new Intl.DateTimeFormat(locale(), { hour: '2-digit', minute: '2-digit' }));
   const date = $derived(new Intl.DateTimeFormat(locale(), { weekday: 'long', day: 'numeric', month: 'long' }));
+  // The separators apart, so OLED care can keep the colon from being lit
+  // in the same place all day (App.svelte).
+  const parts = $derived(time.formatToParts(clock.now));
 </script>
 
 <div class="clock">
-  <time class="time">{time.format(clock.now)}</time>
+  <time class="time">{#each parts as part, i (i)}{#if part.type === 'literal'}<span class="sep">{part.value}</span>{:else}{part.value}{/if}{/each}</time>
   <span class="date">{date.format(clock.now)}</span>
 </div>
 
@@ -26,6 +29,11 @@
     letter-spacing: -0.015em;
     font-variant-numeric: tabular-nums;
     color: var(--text-primary);
+  }
+  /* A box of the time's own line height, not the taller box of the face
+     that a plain inline element has. */
+  .sep {
+    display: inline-block;
   }
   .date {
     margin-top: 12px;

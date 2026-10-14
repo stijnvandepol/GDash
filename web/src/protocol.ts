@@ -54,6 +54,10 @@ export interface Snapshot {
   pageSeconds?: number;
   /** Text size in percent; see stage.ts. */
   textScale?: number;
+  /** "oled" when the screen looks after an OLED panel; see screenCare.ts. */
+  screenCare?: string;
+  /** True while the dashboard is drawn at 60 % brightness, at night. */
+  dimmed?: boolean;
   /** Absent when there is none; see announcement.ts. */
   announcement?: Announcement;
 }

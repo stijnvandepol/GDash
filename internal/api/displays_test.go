@@ -197,6 +197,41 @@ func TestDisplayScreensaverSetting(t *testing.T) {
 	}
 }
 
+func TestDisplayScreenCareAndDimming(t *testing.T) {
+	env := newTestEnv(t, nil)
+	env.setUp(t)
+	status, body := env.do(t, "POST", "/api/displays", `{"id":"keuken","name":"Keuken"}`)
+	if status != http.StatusCreated || !strings.Contains(body, `"screenCare":"off"`) || !strings.Contains(body, `"dimAtNight":"off"`) {
+		t.Fatalf("create = %d %s; want screen care and dimming off", status, body)
+	}
+	if status, body = env.do(t, "POST", "/api/displays", `{"id":"slaapkamer","name":"Slaapkamer","screenCare":"oled","dimAtNight":"sunset"}`); status != http.StatusCreated ||
+		!strings.Contains(body, `"screenCare":"oled"`) || !strings.Contains(body, `"dimAtNight":"sunset"`) {
+		t.Fatalf("create with care = %d %s", status, body)
+	}
+	if status, body = env.do(t, "PATCH", "/api/displays/keuken", `{"screenCare":"oled"}`); status != http.StatusOK || !strings.Contains(body, `"screenCare":"oled"`) {
+		t.Fatalf("oled care = %d %s", status, body)
+	}
+	if status, body = env.do(t, "PATCH", "/api/displays/keuken", `{"dimAtNight":"hours","dimFrom":"22:30","dimUntil":"06:45"}`); status != http.StatusOK ||
+		!strings.Contains(body, `"dimFrom":"22:30"`) || !strings.Contains(body, `"screenCare":"oled"`) {
+		t.Fatalf("dim during hours = %d %s; want the hours, with the care kept", status, body)
+	}
+	if status, body = env.do(t, "PATCH", "/api/displays/keuken", `{"dimFrom":"","dimUntil":""}`); status != http.StatusUnprocessableEntity || !strings.Contains(body, `"field":"dimFrom"`) {
+		t.Fatalf("dim during no hours = %d %s", status, body)
+	}
+	if status, body = env.do(t, "PATCH", "/api/displays/keuken", `{"screenCare":"plasma"}`); status != http.StatusUnprocessableEntity || !strings.Contains(body, `"field":"screenCare"`) {
+		t.Fatalf("unknown care = %d %s", status, body)
+	}
+	if status, body = env.do(t, "PATCH", "/api/displays/keuken", `{"dimAtNight":"always"}`); status != http.StatusUnprocessableEntity || !strings.Contains(body, `"field":"dimAtNight"`) {
+		t.Fatalf("unknown dimming = %d %s", status, body)
+	}
+	if status, body = env.do(t, "PATCH", "/api/displays/keuken", `{"dimAtNight":"off"}`); status != http.StatusOK || !strings.Contains(body, `"dimUntil":"06:45"`) {
+		t.Fatalf("dimming off = %d %s; want the hours kept for next time", status, body)
+	}
+	if _, body = env.do(t, "GET", "/api/displays", ""); !strings.Contains(body, `"screenCare":"oled"`) || !strings.Contains(body, `"dimFrom":"22:30"`) {
+		t.Fatalf("list = %s, want the stored settings", body)
+	}
+}
+
 func TestNewDisplayShowsTheChosenDashboard(t *testing.T) {
 	env := newTestEnv(t, nil)
 	env.setUp(t)

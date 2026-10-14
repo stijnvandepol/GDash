@@ -54,6 +54,7 @@ import type {
   NewsCatalogue,
   NewsFeed,
   PendingLogin,
+  ScreenCareChanges,
   Photo,
   Place,
   Settings,
@@ -163,7 +164,7 @@ export const api = {
       rotateSeconds?: number;
       textScale?: number;
       screensaverMinutes?: number;
-    },
+    } & ScreenCareChanges,
   ) =>
     request<Display>('PATCH', `/api/displays/${encodeURIComponent(id)}`, changes),
   settings: () => request<{ settings: Settings; status: Record<string, SourceStatus> }>('GET', '/api/settings'),

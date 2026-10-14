@@ -96,6 +96,12 @@ type Snapshot struct {
 	// TextScale is the text size in percent; the screen draws the stage
 	// smaller by that factor, so everything on it looks larger.
 	TextScale int `json:"textScale"`
+	// ScreenCare is one of ScreenCares: "oled" has the screen look after
+	// an OLED panel.
+	ScreenCare string `json:"screenCare"`
+	// Dimmed has the screen draw the dashboard at 60 % brightness, at night
+	// as the display's Dimming says.
+	Dimmed bool `json:"dimmed"`
 	// Announcement is shown over the dashboard until its ExpiresAt, which
 	// the screen compares with ServerTime. Absent when there is none and
 	// outside active hours.
@@ -114,6 +120,10 @@ type View struct {
 	PageSeconds int
 	// TextScale is the display's text size in percent.
 	TextScale int
+	// ScreenCare is one of ScreenCares.
+	ScreenCare string
+	// Dimming is when the display is drawn dimmed.
+	Dimming Dimming
 	// Announcement is the message to show over the dashboard now, if any.
 	Announcement *announcement.Announcement
 }
@@ -208,7 +218,7 @@ func (b *Broadcaster) Publish(now time.Time, views map[string]View, data map[str
 		msg, err := json.Marshal(Snapshot{
 			Type: "snapshot", Version: b.version, ServerTime: now, Active: active,
 			Dashboard: screenDashboard(dashboard), Data: used, Language: language, Pages: screenDashboards(pages), PageSeconds: seconds,
-			TextScale: view.TextScale, Announcement: shown,
+			TextScale: view.TextScale, ScreenCare: view.ScreenCare, Dimmed: active && view.Dimming.At(now, night), Announcement: shown,
 		})
 		if err != nil {
 			return fmt.Errorf("encode snapshot for display %s: %w", displayID, err)

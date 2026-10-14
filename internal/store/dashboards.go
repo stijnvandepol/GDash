@@ -161,7 +161,10 @@ func (s *Store) DisplayViews(ctx context.Context) (map[string]display.View, erro
 		if !ok {
 			continue
 		}
-		v := display.View{Dashboard: dashboard, Hours: d.Hours, PageSeconds: d.RotateSeconds, TextScale: d.TextScale}
+		v := display.View{
+			Dashboard: dashboard, Hours: d.Hours, PageSeconds: d.RotateSeconds, TextScale: d.TextScale,
+			ScreenCare: d.ScreenCare, Dimming: d.Dimming(),
+		}
 		for _, id := range d.Rotation {
 			if b, ok := byID[id]; ok {
 				v.Pages = append(v.Pages, b)
