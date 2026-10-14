@@ -33,3 +33,17 @@ describe('the Waste collection and Calendars cards', () => {
     expect(card('waste').panel).toBeDefined();
   });
 });
+
+describe('weatherLocation', () => {
+  it('marks the cards that use the weather location', () => {
+    const users = INTEGRATIONS.filter((i) => i.weatherLocation?.(context({}).settings)).map((i) => i.id);
+    expect(users).toEqual(expect.arrayContaining(['airquality', 'sun', 'rain', 'fuel', 'warnings', 'solar', 'knmi', 'traffic', 'speedcameras']));
+    expect(users).not.toContain('weather');
+    expect(users).not.toContain('moon');
+  });
+
+  it('leaves solar panels with a place of their own out', () => {
+    const own = context({ solar: { location: { name: 'Uden', latitude: 51.66, longitude: 5.62 } } as Settings['solar'] });
+    expect(card('solar').weatherLocation?.(own.settings)).toBeNull();
+  });
+});

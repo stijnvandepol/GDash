@@ -7,11 +7,14 @@
   let {
     location,
     status,
+    usedBy,
     onchanged,
     onerror,
   }: {
     location: Location | null;
     status: SourceStatus | undefined;
+    /** The other integrations that take this place, by name. */
+    usedBy: string[];
     onchanged: () => Promise<void>;
     onerror: (err: unknown) => string;
   } = $props();
@@ -58,6 +61,11 @@
     }
   }
 
+  /** "A, B and C". */
+  function list(items: string[]): string {
+    return items.length < 2 ? items.join('') : `${items.slice(0, -1).join(', ')} and ${items[items.length - 1]}`;
+  }
+
   /** A coordinate as typed, with a comma or a point as decimal separator. */
   function coordinate(text: string): number {
     return Number(text.trim().replace(',', '.'));
@@ -75,7 +83,7 @@
   }
 
   async function clear() {
-    const message = 'Weather, forecast, sun and air quality widgets then show that no location is set.';
+    const message = 'Weather, forecast, sun and air quality widgets then show that no location is set, and widgets that follow it without a place of their own stop.';
     if (!(await ask({ title: 'Remove the location?', message, action: 'Remove' }))) return;
     try {
       await api.clearLocation();
@@ -90,6 +98,10 @@
 
 <section class="card">
   <h2>Weather location</h2>
+  <p class="small muted">
+    For the Weather and Forecast widgets{usedBy.length > 0 ? `, and used by ${list(usedBy)}` : ''}. Rain, fuel,
+    traffic and warnings widgets and the solar panels can have a place of their own instead.
+  </p>
   {#if location && !editing}
     <p>
       <strong>{location.name}</strong>

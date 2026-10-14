@@ -65,6 +65,14 @@ test.describe('integrations', () => {
     await page.reload();
     await openIntegration(page, 'Weather');
     await expect(section.getByText('(52.10, 5.20)')).toBeVisible();
+
+    // The cards that use the place say so and lead back to it; the setup lists them.
+    await expect(section).toContainText(/and used by .*Rain radar/);
+    await setup.getByRole('button', { name: 'Close Weather' }).click();
+    const rain = page.getByRole('listitem').filter({ has: page.getByRole('heading', { name: 'Rain radar', exact: true }) });
+    await expect(rain).toContainText('Uses your weather location: E2E Home');
+    await rain.getByRole('button', { name: 'Change the weather location, for Rain radar' }).click();
+    await expect(setup).toBeVisible();
   });
 
   test('a news feed can be added and stays in the list', async ({ adminPage: page }) => {

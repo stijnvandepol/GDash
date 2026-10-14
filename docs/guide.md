@@ -41,6 +41,12 @@ waste collection, Home Assistant, Homey, photos, custom APIs and the API
 tokens that automations use. Settings keeps the language on the TVs, the
 test announcement and your account.
 
+A card that uses the weather location of the **Weather** card says so, such
+as "Uses your weather location: Oss · Change", and the Weather card's setup
+lists every card that uses it. Rain, fuel prices, traffic and weather
+warnings widgets, and the solar panels, can have a place of their own
+instead. Photos come from three cards, one per source: **Uploaded photos**,
+**Immich** and **Synology Photos**; a Photos widget chooses one of them.
 
 - **Search** finds a service by its name, what it shows, its category or a
   label, such as "solar", "train" or "no key". The search stays in the

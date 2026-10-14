@@ -215,12 +215,28 @@
       <ul class="grid">
         {#each group.items as item (item.id)}
           {@const state = states.get(item.id)!}
+          {@const uses = context.settings && item.weatherLocation?.(context.settings)}
           <li class="item {item.kind}" class:on={state.kind !== 'idle'} class:open={open === item.id}>
             <div class="top">
               <span class="glyph"><Icon name={item.icon} size={20} /></span>
               <div class="text">
                 <h3 class="name" id="name-{item.id}">{item.name}</h3>
                 <p class="description">{item.description}</p>
+                {#if uses}
+                  {@const place = context.settings.location}
+                  <p class="uses">
+                    {#if place}
+                      Uses your weather location: <strong>{place.name}</strong>
+                    {:else if uses === 'needs'}
+                      Needs your weather location
+                    {:else}
+                      Uses your weather location, which is not set
+                    {/if}
+                    · <button type="button" class="link" onclick={() => openSetup('weather')}
+                      >{place ? 'Change' : 'Set it'}<span class="sr-only"> the weather location, for {item.name}</span></button
+                    >
+                  </p>
+                {/if}
               </div>
             </div>
             {#if item.tags.length > 0}
@@ -430,6 +446,22 @@
     color: var(--muted);
     font-size: var(--fs-sm);
     line-height: 1.4;
+  }
+  /* What it shares with another card: a quiet line, with the way there. */
+  .uses {
+    margin-top: var(--s-1);
+    color: var(--text-soft);
+    font-size: var(--fs-xs);
+    line-height: 1.5;
+  }
+  .uses strong {
+    font-weight: 600;
+    color: var(--text);
+  }
+  .uses button {
+    min-height: 0;
+    padding: 0;
+    font-size: inherit;
   }
   .tags {
     list-style: none;

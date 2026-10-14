@@ -1,11 +1,12 @@
 import type { Component } from 'svelte';
-import { api } from './api';
+import { api, type Settings } from './api';
 import { describeSnapshot, isSnapshotLate } from './homey';
 import { isPushLate } from './customSources';
 import {
   NOT_SET_UP,
   builtinState,
   count,
+  isAvailable,
   sourceState,
   type CatalogueEntry,
   type IntegrationContext,
@@ -56,13 +57,27 @@ export interface Integration extends CatalogueEntry {
   state: (ctx: IntegrationContext) => IntegrationState;
   /** The setup it opens; a built-in source has none. */
   panel?: (ctx: PanelContext) => PanelView;
+  /**
+   * Whether it uses the weather location of the Weather card, which its
+   * card then names: it needs it, or uses it unless a widget picks its own
+   * place, or not now (null).
+   */
+  weatherLocation?: (settings: Settings) => 'needs' | 'default' | null;
 }
+
+const NEEDS_IT = () => 'needs' as const;
+const BY_DEFAULT = () => 'default' as const;
 
 // The server allows this number; internal/settings holds the same.
 const MAX_CALENDARS = 10;
 
 const NEEDS_LOCATION: IntegrationState = { kind: 'idle', detail: 'Built in · needs the weather location' };
 const NOT_FETCHED = 'Fetched once a dashboard shows it.';
+
+/** The names of the available cards that use the weather location, for the Weather card. */
+function locationUsers(ctx: IntegrationContext): string[] {
+  return INTEGRATIONS.filter((i) => i.weatherLocation && isAvailable(i, ctx.widgetTypes, ctx.settings)).map((i) => i.name);
+}
 
 const SERVICES: Integration[] = [
   {
@@ -80,7 +95,13 @@ const SERVICES: Integration[] = [
       return { ...st, detail: `${settings.location.name}. ${st.detail}` };
     },
     panel: (ctx) =>
-      view(LocationSetting, { location: ctx.settings.location, status: ctx.status['weather.current'], onchanged: ctx.onchanged, onerror: ctx.onerror }),
+      view(LocationSetting, {
+        location: ctx.settings.location,
+        status: ctx.status['weather.current'],
+        usedBy: locationUsers(ctx),
+        onchanged: ctx.onchanged,
+        onerror: ctx.onerror,
+      }),
   },
   {
     id: 'solar',
@@ -92,6 +113,7 @@ const SERVICES: Integration[] = [
     tags: ['no-key'],
     kind: 'service',
     requires: { widget: 'solar' },
+    weatherLocation: (settings) => (settings.solar?.location ? null : 'default'),
     state: ({ settings, status }) => {
       const panels = settings.solar;
       if (!panels) return NOT_SET_UP;
@@ -226,7 +248,7 @@ const SERVICES: Integration[] = [
   {
     id: 'homey',
     name: 'Homey',
-    description: 'Device values and who is home, from a Homey Pro of any year',
+    description: 'Device values and who is home, from a Homey Pro of any year, for the Homey and Who’s home widgets',
     keywords: 'athom homeyscript presence',
     category: 'home',
     icon: 'people',
@@ -253,8 +275,8 @@ const SERVICES: Integration[] = [
   },
   {
     id: 'photos',
-    name: 'Photos',
-    description: 'A slideshow of photos you upload; they stay on this server',
+    name: 'Uploaded photos',
+    description: 'Photos you upload for the Photos widget; they stay on this server',
     keywords: 'pictures slideshow upload',
     category: 'media',
     icon: 'photo',
@@ -266,8 +288,8 @@ const SERVICES: Integration[] = [
   {
     id: 'immich',
     name: 'Immich',
-    description: 'Photos from an album on your own Immich server',
-    keywords: 'photos album self-hosted',
+    description: 'An album on your own Immich server, for the Photos widget',
+    keywords: 'photos album self-hosted pictures slideshow',
     category: 'media',
     icon: 'photo',
     tags: ['local'],
@@ -287,8 +309,8 @@ const SERVICES: Integration[] = [
   {
     id: 'synologyphotos',
     name: 'Synology Photos',
-    description: 'Photos from a shared album on your Synology, by its link',
-    keywords: 'photos album nas dsm diskstation shared link',
+    description: 'A shared album on your Synology, by its link, for the Photos widget',
+    keywords: 'photos album nas dsm diskstation shared link pictures slideshow',
     category: 'media',
     icon: 'photo',
     tags: ['local'],
@@ -371,6 +393,7 @@ const SERVICES: Integration[] = [
     icon: 'weather',
     tags: ['free-key', 'nl'],
     kind: 'service',
+    weatherLocation: NEEDS_IT,
     state: ({ settings, status }) => {
       if (!settings.knmi.connected) return NOT_SET_UP;
       if (settings.knmi.unreadable) return { kind: 'problem', detail: 'The key cannot be read on this server. Enter it again.' };
@@ -387,6 +410,7 @@ const SERVICES: Integration[] = [
     icon: 'road',
     tags: ['nl', 'no-key', 'unofficial'],
     kind: 'service',
+    weatherLocation: BY_DEFAULT,
     state: ({ settings, status }) => {
       if (!settings.traffic.enabled) return { kind: 'idle', detail: 'Off' };
       return sourceState(status['traffic.default'], 'On. Asked once a Traffic widget is on a dashboard.');
@@ -396,8 +420,8 @@ const SERVICES: Integration[] = [
   {
     id: 'apitokens',
     name: 'API tokens',
-    description: 'Let automations send data and announcements to GDash',
-    keywords: 'token automation announcement bearer home assistant homeyscript push',
+    description: 'Keys your own automations use to push announcements, custom API data or a Homey’s data to GDash',
+    keywords: 'token automation announcement bearer home assistant homeyscript push key',
     category: 'own',
     icon: 'key',
     tags: ['push'],
@@ -422,6 +446,7 @@ const BUILT_IN: Integration[] = [
     tags: ['no-key'],
     kind: 'builtin',
     requires: { widget: 'airquality' },
+    weatherLocation: NEEDS_IT,
     state: ({ settings, status }) => (settings.location ? builtinState(status['airquality.current']) : NEEDS_LOCATION),
   },
   {
@@ -434,6 +459,7 @@ const BUILT_IN: Integration[] = [
     tags: ['no-key'],
     kind: 'builtin',
     requires: { widget: 'sun' },
+    weatherLocation: NEEDS_IT,
     state: ({ settings }) => (settings.location ? builtinState(undefined) : NEEDS_LOCATION),
   },
   {
@@ -446,7 +472,9 @@ const BUILT_IN: Integration[] = [
     tags: ['no-key', 'nl'],
     kind: 'builtin',
     requires: { widget: 'rain' },
-    state: ({ settings, status }) => (settings.location ? builtinState(status['rain.default']) : NEEDS_LOCATION),
+    // A Rain widget can pick its own place.
+    weatherLocation: BY_DEFAULT,
+    state: ({ status }) => builtinState(status['rain.default']),
   },
   {
     id: 'warnings',
@@ -458,6 +486,8 @@ const BUILT_IN: Integration[] = [
     tags: ['no-key', 'nl'],
     kind: 'builtin',
     requires: { widget: 'warnings' },
+    // Its province, unless a widget picks one.
+    weatherLocation: BY_DEFAULT,
     state: ({ status }) => builtinState(status['warnings.default']),
   },
   {
@@ -494,6 +524,7 @@ const BUILT_IN: Integration[] = [
     tags: ['no-key', 'nl'],
     kind: 'builtin',
     requires: { widget: 'fuel' },
+    weatherLocation: BY_DEFAULT,
     state: ({ status }) => builtinState(status['fuel.default']),
   },
   {
@@ -506,6 +537,8 @@ const BUILT_IN: Integration[] = [
     tags: ['no-key', 'nl'],
     kind: 'builtin',
     requires: { widget: 'traffic' },
+    // The radius around home, unless a widget watches roads.
+    weatherLocation: BY_DEFAULT,
     state: ({ status }) => builtinState(status['traffic.cameras']),
   },
   {

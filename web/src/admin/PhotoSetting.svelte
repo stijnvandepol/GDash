@@ -63,7 +63,7 @@
 </script>
 
 <section class="card">
-  <h2>Photos</h2>
+  <h2>Uploaded photos</h2>
   <p class="muted">
     For the Photos widget. Photos stay on this server and only go to paired screens. JPEG, PNG or WebP, up to 8 MB
     each, at most {MAX_PHOTOS}.

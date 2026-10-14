@@ -36,6 +36,11 @@ the format follows [Keep a Changelog](https://keepachangelog.com).
   moves to the Waste collection card by itself when you upgrade.
 - The Waste collection widget recognises the collection of Christmas trees
   (kerstbomen), with a red dot.
+- Cards that use the weather location say so, such as "Uses your weather
+  location: Oss · Change", and the Weather card's setup lists them.
+- The Photos card is called Uploaded photos, and it, Immich and Synology
+  Photos each say that they are a source of the Photos widget; the API
+  tokens and Homey cards say what they are for.
 
 ### Fixed
 
