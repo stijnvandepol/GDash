@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { ScreenReport } from './api';
-import { describeBrowser, describeScreenSize, screenWarnings } from './screenReports';
+import { describeBrowser, describeScreenSize, describeVisibility, screenWarnings } from './screenReports';
 
 const MODERN = {
   containerUnits: true,
@@ -19,6 +19,7 @@ const MODERN = {
 
 function report(change: Partial<ScreenReport> = {}): ScreenReport {
   return {
+    reason: 'connected',
     userAgent: 'Mozilla/5.0',
     viewport: { width: 1280, height: 720 },
     devicePixelRatio: 1.5,
@@ -28,6 +29,7 @@ function report(change: Partial<ScreenReport> = {}): ScreenReport {
     fontsLoaded: true,
     firstRenderMs: 1800,
     errors: [],
+    visibility: [],
     ...change,
   };
 }
@@ -102,5 +104,17 @@ describe('screenWarnings', () => {
     expect(screenWarnings(report({ firstRenderMs: null }))).toEqual([
       'The screen had not drawn a dashboard yet when it reported, for example because the display was asleep.',
     ]);
+  });
+});
+
+describe('describeVisibility', () => {
+  it('lists the changes with their time on the screen', () => {
+    // TZ is Europe/Amsterdam in the test run.
+    const visibility = [
+      { state: 'blur' as const, at: '2026-10-14T09:50:01Z' },
+      { state: 'hidden' as const, at: '2026-10-14T09:50:03Z' },
+      { state: 'visible' as const, at: '2026-10-14T09:50:40Z' },
+    ];
+    expect(describeVisibility(report({ visibility }))).toBe('blur 11:50:01 · hidden 11:50:03 · visible 11:50:40');
   });
 });

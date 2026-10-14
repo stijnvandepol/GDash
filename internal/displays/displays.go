@@ -36,6 +36,16 @@ const (
 // small screen in a kitchen shows it larger.
 var TextScales = []int{100, 125, 150, 200}
 
+// ScreensaverIntervals are how often, in minutes, a Cast display's receiver
+// may be restarted to stay in front of the TV's screensaver; 0 is never.
+// Google TV lets its owner start the screensaver after 5, 15 or 30 minutes
+// and more, so the interval should be below the TV's.
+var ScreensaverIntervals = []int{0, 5, 10, 15, 30}
+
+// DefaultScreensaverMinutes stays ahead of the 19 minutes after which a
+// Google TV at home put its screensaver over the dashboard.
+const DefaultScreensaverMinutes = 15
+
 // MaxSlots bounds the day plan of one display. Morning, afternoon, evening
 // and a weekend-style exception fit easily.
 const MaxSlots = 6
@@ -66,8 +76,12 @@ type Display struct {
 	Rotation      []string `json:"rotation"`
 	RotateSeconds int      `json:"rotateSeconds"`
 	// TextScale is the display's text size in percent, one of TextScales.
-	TextScale int       `json:"textScale"`
-	CreatedAt time.Time `json:"createdAt"`
+	TextScale int `json:"textScale"`
+	// ScreensaverMinutes is how often the receiver on a Cast device is
+	// restarted to keep the dashboard in front of the TV's screensaver, one
+	// of ScreensaverIntervals; 0 is never.
+	ScreensaverMinutes int       `json:"screensaverMinutes"`
+	CreatedAt          time.Time `json:"createdAt"`
 }
 
 // Slot shows a dashboard during part of the day, such as a morning
@@ -142,6 +156,9 @@ func Validate(d Display) error {
 	}
 	if !slices.Contains(TextScales, d.TextScale) {
 		errs.Add("textScale", "choose 100, 125, 150 or 200 percent")
+	}
+	if !slices.Contains(ScreensaverIntervals, d.ScreensaverMinutes) {
+		errs.Add("screensaverMinutes", "choose 5, 10, 15 or 30 minutes, or 0 for never")
 	}
 	return errs.Err()
 }

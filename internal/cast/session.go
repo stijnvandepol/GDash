@@ -14,7 +14,7 @@ import (
 var startupResends = []time.Duration{2 * time.Second, 5 * time.Second}
 
 // step waits for the next event of the session and handles it.
-func (s *keeperSession) step(ctx context.Context, poll, refresh <-chan time.Time) error {
+func (s *keeperSession) step(ctx context.Context, poll <-chan time.Time) error {
 	select {
 	case <-ctx.Done():
 		return ctx.Err()
@@ -37,8 +37,15 @@ func (s *keeperSession) step(ctx context.Context, poll, refresh <-chan time.Time
 			return s.sendLatest()
 		}
 		return nil
-	case <-refresh:
-		return s.restart(ctx)
+	case <-s.refresh.C:
+		// Whether or not the receiver may be restarted now, the next try
+		// is a whole interval away.
+		s.keeper.refreshFrom = s.keeper.now()
+		err := s.restart(ctx, RestartPeriodic)
+		s.armRefresh()
+		return err
+	case <-s.keeper.Hidden:
+		return s.restartHidden(ctx)
 	case <-s.keeper.TakeOver:
 		s.keeper.claim.force = true
 		return s.syncStatus(ctx)
@@ -61,8 +68,35 @@ func (s *keeperSession) step(ctx context.Context, poll, refresh <-chan time.Time
 	}
 }
 
+// armRefresh sets the periodic restart to refreshEvery after the keeper's
+// refreshFrom, or turns it off for an interval of 0.
+func (s *keeperSession) armRefresh() {
+	s.refresh.Stop()
+	if s.refreshEvery <= 0 {
+		return
+	}
+	s.refresh.Reset(max(0, s.keeper.refreshFrom.Add(s.refreshEvery).Sub(s.keeper.now())))
+}
+
+// restartHidden follows a report from the page on the TV that it is
+// hidden. Right after a launch it is the receiver's own page going away,
+// or a TV that covers it again; neither is restarted.
+func (s *keeperSession) restartHidden(ctx context.Context) error {
+	k := s.keeper
+	if since := k.now().Sub(k.launchedAt); !k.launchedAt.IsZero() && since < minHiddenRestartGap {
+		k.Logger.Info("the screen reported it is hidden; not restarting so soon after the last launch", "since_launch", since.Round(time.Second))
+		return nil
+	}
+	return s.restart(ctx, RestartHidden)
+}
+
 // syncStatus asks the device for its current state and reconciles.
+// It also follows a changed Refresh setting.
 func (s *keeperSession) syncStatus(ctx context.Context) error {
+	if every := s.keeper.refreshInterval(s.device); every != s.refreshEvery {
+		s.refreshEvery = every
+		s.armRefresh()
+	}
 	status, err := s.client.Status(ctx)
 	if err != nil {
 		return err
@@ -73,6 +107,7 @@ func (s *keeperSession) syncStatus(ctx context.Context) error {
 type keeperSession struct {
 	keeper    *Keeper
 	client    *Client
+	device    Device
 	messages  <-chan []byte
 	localIP   string
 	deviceIP  string
@@ -87,6 +122,10 @@ type keeperSession struct {
 	latest    []byte
 	resend    *time.Timer
 	resendIdx int
+	// refresh fires the periodic restart, refreshEvery after the keeper's
+	// refreshFrom: the last launch or the last try.
+	refresh      *time.Timer
+	refreshEvery time.Duration
 }
 
 // reconcile follows a fresh status of the device: it notices when someone
@@ -207,12 +246,15 @@ func (s *keeperSession) rest(ctx context.Context, app Application, running bool)
 }
 
 // restart stops the receiver and launches it again, against the Google TV
-// screensaver. It asks the device first, because the last status poll can
-// be 30 seconds old, and restarts only GDash's own session while nothing
-// else is on the TV (see claim.mayRestart): launching while the TV sleeps
-// would switch it on through HDMI-CEC.
-func (s *keeperSession) restart(ctx context.Context) error {
+// screensaver; reason is RestartPeriodic or RestartHidden. It asks the
+// device first, because the last status poll can be 30 seconds old, and
+// restarts only GDash's own session while nothing else is on the TV (see
+// claim.mayRestart): launching while the TV sleeps would switch it on
+// through HDMI-CEC, and a TV someone took over is theirs.
+func (s *keeperSession) restart(ctx context.Context, reason string) error {
+	k := s.keeper
 	if s.transport == "" {
+		k.Logger.Info("not restarting the receiver: GDash is not connected to its own receiver", "reason", reason)
 		return nil
 	}
 	status, err := s.client.Status(ctx)
@@ -222,15 +264,21 @@ func (s *keeperSession) restart(ctx context.Context) error {
 	if err := s.reconcile(ctx, status); err != nil {
 		return err
 	}
-	k := s.keeper
 	if s.transport == "" || !k.claim.mayRestart(status, k.AppID) {
+		k.Logger.Info("not restarting the receiver: the TV is asleep, on another input or in use", "reason", reason)
 		return nil
 	}
-	k.Logger.Info("restarting receiver to keep it in front of the screensaver")
+	k.Logger.Info("restarting receiver to keep it in front of the screensaver", "reason", reason)
 	if err := s.stop(ctx, k.claim.session); err != nil {
 		return err
 	}
-	return s.launch(ctx)
+	if err := s.launch(ctx); err != nil {
+		return err
+	}
+	if k.Restarted != nil {
+		k.Restarted(reason)
+	}
+	return nil
 }
 
 // stop ends an app session on the device. A session GDash holds is marked
@@ -259,6 +307,10 @@ func (s *keeperSession) launch(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+	// Every launch puts a fresh page on screen; the periodic restart counts
+	// from it.
+	k.launchedAt, k.refreshFrom = k.now(), k.now()
+	s.armRefresh()
 	k.claim.launched(app.SessionID, s.otherInput)
 	return s.connect(app, true)
 }

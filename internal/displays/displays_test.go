@@ -45,6 +45,9 @@ func TestValidate(t *testing.T) {
 		}, []string{"rotation"}},
 		{"larger text", func(d *Display) { d.TextScale = 150 }, nil},
 		{"odd text size", func(d *Display) { d.TextScale = 130 }, []string{"textScale"}},
+		{"no screensaver restarts", func(d *Display) { d.ScreensaverMinutes = 0 }, nil},
+		{"restarts every 5 minutes", func(d *Display) { d.ScreensaverMinutes = 5 }, nil},
+		{"odd screensaver interval", func(d *Display) { d.ScreensaverMinutes = 20 }, []string{"screensaverMinutes"}},
 		{"everything wrong", func(d *Display) { d.ID = ""; d.Name = ""; d.CastDeviceID = "x" }, []string{"id", "name", "castDeviceId"}},
 	}
 	for _, tt := range tests {

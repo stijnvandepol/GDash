@@ -179,8 +179,9 @@ your home network no setup token is needed in that first hour.
 | Nest Hub | The same, as a Cast device | 8 hours, and an hour of style changes |
 | Any browser, kiosk, Fire TV, tablet or Raspberry Pi | Opens `/d/<display>` and pairs with a code | Chromium (in the browser tests) |
 
-GDash restarts the cast every 15 minutes, because Google TV covers a running
-cast with its screensaver after about 19 minutes. It waits when another app
+GDash restarts the cast every 15 minutes (5, 10 or 30 per display, or off),
+because Google TV covers a running cast with its screensaver after about 19
+minutes, and at once when the page on the TV says it was covered. It waits when another app
 such as YouTube is on screen, and when someone takes the TV away from the
 dashboard it waits until the TV has been switched off. The dashboard shifts
 a few pixels every three minutes to protect OLED screens.

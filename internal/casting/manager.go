@@ -22,10 +22,9 @@ const reconcileInterval = time.Minute
 // a Cast device, and remembers what each keeper last reported.
 type Manager struct {
 	List func(ctx context.Context) ([]displays.Display, error)
-	// RunDisplay keeps one display on its Cast device until ctx ends,
-	// passing every state it finds to report. Each value on takeOver is an
-	// admin's request to show the dashboard on the TV now.
-	RunDisplay func(ctx context.Context, d displays.Display, report func(cast.State, error), takeOver <-chan struct{})
+	// RunDisplay keeps one display on its Cast device until ctx ends; see
+	// Keep for what it reports and hears.
+	RunDisplay func(ctx context.Context, d displays.Display, keep Keep)
 	// Now is the clock for Status.Since; nil means time.Now.
 	Now    func() time.Time
 	Logger *slog.Logger
@@ -36,6 +35,21 @@ type Manager struct {
 	mu        sync.Mutex
 	statuses  map[string]Status
 	takeOvers map[string]chan struct{}
+	hiddens   map[string]chan struct{}
+}
+
+// Keep connects one display's keeper to the manager.
+type Keep struct {
+	// Report receives every state the keeper finds.
+	Report func(cast.State, error)
+	// Restarted is called after every restart of a running receiver, with
+	// cast.RestartPeriodic or cast.RestartHidden.
+	Restarted func(reason string)
+	// TakeOver delivers an admin's request to show the dashboard on the TV
+	// now.
+	TakeOver <-chan struct{}
+	// Hidden delivers a report of the page on the TV that it is hidden.
+	Hidden <-chan struct{}
 }
 
 // Status is what the keeper of a display last reported.
@@ -48,6 +62,14 @@ type Status struct {
 	// Reason sorts an unreachable device's problem for the web interface:
 	// ReasonNotFound or ReasonNoAnswer. Empty in the other states.
 	Reason string `json:"reason,omitempty"`
+	// RestartedAt is when the keeper last restarted the receiver to keep it
+	// in front of the screensaver, and RestartReason why: cast.RestartPeriodic
+	// or cast.RestartHidden. Absent until it first did.
+	RestartedAt   *time.Time `json:"restartedAt,omitempty"`
+	RestartReason string     `json:"restartReason,omitempty"`
+	// HiddenAt is when the page on the TV last reported that it is hidden,
+	// such as by the TV's screensaver.
+	HiddenAt *time.Time `json:"hiddenAt,omitempty"`
 }
 
 // Reasons a device is unreachable.
@@ -90,18 +112,63 @@ func (m *Manager) reporter(displayID string) func(cast.State, error) {
 		}
 		m.mu.Lock()
 		defer m.mu.Unlock()
-		if current, ok := m.statuses[displayID]; ok && current.State == state && current.Problem == problem {
+		current, ok := m.statuses[displayID]
+		if ok && current.State == state && current.Problem == problem {
 			return
-		}
-		now := time.Now
-		if m.Now != nil {
-			now = m.Now
 		}
 		if m.statuses == nil {
 			m.statuses = map[string]Status{}
 		}
-		m.statuses[displayID] = Status{State: state, Since: now(), Problem: problem, Reason: reasonFor(state, err)}
+		m.statuses[displayID] = Status{
+			State: state, Since: m.now(), Problem: problem, Reason: reasonFor(state, err),
+			RestartedAt: current.RestartedAt, RestartReason: current.RestartReason, HiddenAt: current.HiddenAt,
+		}
 	}
+}
+
+func (m *Manager) now() time.Time {
+	if m.Now != nil {
+		return m.Now()
+	}
+	return time.Now()
+}
+
+// restarted records a restart of one display's receiver.
+func (m *Manager) restarted(displayID string) func(reason string) {
+	return func(reason string) {
+		m.mu.Lock()
+		defer m.mu.Unlock()
+		status, ok := m.statuses[displayID]
+		if !ok {
+			return
+		}
+		at := m.now()
+		status.RestartedAt, status.RestartReason = &at, reason
+		m.statuses[displayID] = status
+	}
+}
+
+// ScreenHidden passes a report of the page on a display's TV that it is
+// hidden to the display's keeper, which restarts the receiver when the TV
+// is free (see cast.Keeper.Hidden). It reports false when the display has
+// no running keeper. It never blocks.
+func (m *Manager) ScreenHidden(displayID string) bool {
+	m.mu.Lock()
+	hidden, ok := m.hiddens[displayID]
+	if status, known := m.statuses[displayID]; ok && known {
+		at := m.now()
+		status.HiddenAt = &at
+		m.statuses[displayID] = status
+	}
+	m.mu.Unlock()
+	if !ok {
+		return false
+	}
+	select {
+	case hidden <- struct{}{}:
+	default:
+	}
+	return true
 }
 
 // TakeOver asks the keeper of a display to show the dashboard on its TV now,
@@ -122,16 +189,16 @@ func (m *Manager) TakeOver(displayID string) bool {
 	return true
 }
 
-// track makes a display's keeper reachable for TakeOver.
-func (m *Manager) track(displayID string) <-chan struct{} {
-	request := make(chan struct{}, 1)
+// track makes a display's keeper reachable for TakeOver and ScreenHidden.
+func (m *Manager) track(displayID string) Keep {
+	takeOver, hidden := make(chan struct{}, 1), make(chan struct{}, 1)
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	if m.takeOvers == nil {
-		m.takeOvers = map[string]chan struct{}{}
+		m.takeOvers, m.hiddens = map[string]chan struct{}{}, map[string]chan struct{}{}
 	}
-	m.takeOvers[displayID] = request
-	return request
+	m.takeOvers[displayID], m.hiddens[displayID] = takeOver, hidden
+	return Keep{Report: m.reporter(displayID), Restarted: m.restarted(displayID), TakeOver: takeOver, Hidden: hidden}
 }
 
 func (m *Manager) forget(displayID string) {
@@ -139,6 +206,7 @@ func (m *Manager) forget(displayID string) {
 	defer m.mu.Unlock()
 	delete(m.statuses, displayID)
 	delete(m.takeOvers, displayID)
+	delete(m.hiddens, displayID)
 }
 
 type running struct {
@@ -212,10 +280,10 @@ func (m *Manager) reconcile(ctx context.Context, active map[string]running) {
 		}
 		keeperCtx, cancel := context.WithCancel(ctx)
 		done := make(chan struct{})
-		takeOver := m.track(d.ID)
+		keep := m.track(d.ID)
 		go func() {
 			defer close(done)
-			m.RunDisplay(keeperCtx, d, m.reporter(d.ID), takeOver)
+			m.RunDisplay(keeperCtx, d, keep)
 		}()
 		active[id] = running{castDeviceID: d.CastDeviceID, cancel: cancel, done: done}
 	}

@@ -349,7 +349,13 @@ server is fine.
 
 **The dashboard disappears after about 19 minutes on Google TV.** The
 screensaver covers the cast. GDash restarts the cast every 15 minutes
-against this; if it still happens, check the server log for cast errors.
+against this, and at once when the page on the TV says it was covered. If
+the screensaver still comes, choose a shorter interval at the display,
+under **Keep in front of the screensaver**, below the time after which the
+TV starts its screensaver (Google TV: Settings, System, Ambient mode). The
+display list says when GDash last restarted the cast and when the screen
+was last hidden; the server log has a line for every restart, with
+`reason=periodic` or `reason=hidden`, and for every restart it skipped.
 
 **The calendar says it cannot be read on this server.** The database was
 moved without its `secret.key`. Remove the calendar and add it again under

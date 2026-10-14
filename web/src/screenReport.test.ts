@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Features } from './compat';
-import { buildReport, createErrorLog, plainText, rejectionMessage, scriptSource } from './screenReport';
+import { buildReport, createErrorLog, createVisibilityLog, plainText, rejectionMessage, scriptSource } from './screenReport';
 
 const FEATURES: Features = {
   containerUnits: false,
@@ -63,6 +63,7 @@ describe('rejectionMessage', () => {
 describe('buildReport', () => {
   it('rounds the measurements and keeps them within the limits the server takes', () => {
     const report = buildReport({
+      reason: 'connected',
       userAgent: 'Chrome/87 CrKey/1.56',
       width: 1280.4,
       height: 719.6,
@@ -73,8 +74,10 @@ describe('buildReport', () => {
       fontsLoaded: true,
       firstRenderMs: 2412.7,
       errors: [],
+      visibility: [{ state: 'hidden', at: '2026-10-14T09:50:03.000Z' }],
     });
     expect(report).toEqual({
+      reason: 'connected',
       userAgent: 'Chrome/87 CrKey/1.56',
       viewport: { width: 1280, height: 720 },
       devicePixelRatio: 1.5,
@@ -84,12 +87,25 @@ describe('buildReport', () => {
       fontsLoaded: true,
       firstRenderMs: 2413,
       errors: [],
+      visibility: [{ state: 'hidden', at: '2026-10-14T09:50:03.000Z' }],
     });
   });
 
   it('keeps a missing render time and caps a very long one', () => {
-    const base = { userAgent: '', width: 0, height: 0, devicePixelRatio: 0, stageScale: 1, features: FEATURES, compat: false, fontsLoaded: false, errors: [] };
+    const base = { reason: 'hidden' as const, visibility: [], userAgent: '', width: 0, height: 0, devicePixelRatio: 0, stageScale: 1, features: FEATURES, compat: false, fontsLoaded: false, errors: [] };
     expect(buildReport({ ...base, firstRenderMs: null })).toMatchObject({ userAgent: 'unknown', viewport: { width: 1, height: 1 }, devicePixelRatio: 1, firstRenderMs: null });
     expect(buildReport({ ...base, firstRenderMs: 9e9 }).firstRenderMs).toBe(3_600_000);
+  });
+});
+
+describe('createVisibilityLog', () => {
+  it('keeps the last ten changes, oldest first', () => {
+    const log = createVisibilityLog();
+    const start = Date.parse('2026-10-14T09:50:00Z');
+    for (let i = 0; i < 12; i++) log.add(i % 2 === 0 ? 'hidden' : 'visible', new Date(start + i * 1000));
+    const events = log.list();
+    expect(events).toHaveLength(10);
+    expect(events[0]).toEqual({ state: 'hidden', at: '2026-10-14T09:50:02.000Z' });
+    expect(events[9]).toEqual({ state: 'visible', at: '2026-10-14T09:50:11.000Z' });
   });
 });

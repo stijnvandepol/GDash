@@ -12,6 +12,7 @@ import (
 	"net/http/cookiejar"
 	"net/http/httptest"
 	"path/filepath"
+	"slices"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -66,7 +67,23 @@ type fakeSources struct {
 	cast    map[string]casting.Status
 	// takeOvers are the displays whose TV an admin took back.
 	takeOvers []string
-	now       func() time.Time
+	// hidden are the displays whose TV reported its page hidden.
+	hidden []string
+	now    func() time.Time
+}
+
+// ScreenHidden plays the cast manager taking a hidden report.
+func (f *fakeSources) ScreenHidden(displayID string) bool {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.hidden = append(f.hidden, displayID)
+	return true
+}
+
+func (f *fakeSources) hiddenDisplays() []string {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return slices.Clone(f.hidden)
 }
 
 // receiveCustom plays the data hub taking a pushed answer: two intervals
@@ -252,6 +269,7 @@ func newTestEnv(t *testing.T, discover func(context.Context) ([]cast.Device, err
 		Announcements:        board,
 		AnnouncementsChanged: func(time.Time) { announced.Add(1) },
 		ScreenReports:        screenreport.NewBoard(now),
+		ScreenHidden:         sources.ScreenHidden,
 		SourceStatus:         sources.Entries,
 		Data:                 sources.Entries,
 		Version:              "v1.2.3",

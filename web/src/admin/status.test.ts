@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { castTone, describeCast, describeStatus } from './status';
+import { castTone, describeCast, describeScreensaver, describeStatus } from './status';
 
 const now = Date.parse('2026-10-09T10:00:00Z');
 
@@ -69,5 +69,24 @@ describe('castTone', () => {
     expect(castTone({ state: 'unreachable', since })).toBe('bad');
     expect(castTone({ state: 'standby', since })).toBe('');
     expect(castTone(undefined)).toBe('');
+  });
+});
+
+describe('describeScreensaver', () => {
+  // TZ is Europe/Amsterdam in the test run.
+  const since = '2026-10-14T08:51:00Z';
+
+  it('says when GDash last restarted the receiver and why, and when the screen was hidden', () => {
+    expect(describeScreensaver({ state: 'showing', since, restartedAt: '2026-10-14T09:52:00Z', restartReason: 'periodic' })).toEqual([
+      'Restarted against the screensaver at 11:52',
+    ]);
+    expect(
+      describeScreensaver({ state: 'showing', since, restartedAt: '2026-10-14T09:52:00Z', restartReason: 'hidden', hiddenAt: '2026-10-14T09:51:55Z' }),
+    ).toEqual(['Restarted against the screensaver at 11:52, because the screen was hidden', 'The screen was last hidden at 11:51']);
+  });
+
+  it('says nothing before the first restart', () => {
+    expect(describeScreensaver({ state: 'showing', since })).toEqual([]);
+    expect(describeScreensaver(undefined)).toEqual([]);
   });
 });

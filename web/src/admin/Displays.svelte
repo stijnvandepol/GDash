@@ -109,6 +109,25 @@
     [200, '200 %'],
   ];
 
+  // How often the receiver is restarted against the screensaver
+  // (internal/displays.ScreensaverIntervals).
+  const SCREENSAVER_CHOICES: [number, string][] = [
+    [5, 'Every 5 minutes'],
+    [10, 'Every 10 minutes'],
+    [15, 'Every 15 minutes'],
+    [30, 'Every 30 minutes'],
+    [0, 'Off'],
+  ];
+
+  async function chooseScreensaver(d: Display, screensaverMinutes: number) {
+    try {
+      await api.updateDisplay(d.id, { screensaverMinutes });
+      await load();
+    } catch (err) {
+      rowError = err instanceof ApiError ? (err.fieldMessage('screensaverMinutes') ?? err.message) : handle(err);
+    }
+  }
+
   async function chooseTextScale(d: Display, textScale: number) {
     try {
       await api.updateDisplay(d.id, { textScale });
@@ -202,10 +221,12 @@
               display={d}
               {dashboards}
               textSizes={TEXT_SIZES}
+              screensaverChoices={SCREENSAVER_CHOICES}
               {grid}
               tvName={deviceNames.get(d.castDeviceId) ?? ''}
               ondashboard={(id) => chooseDashboard(d, id)}
               ontextscale={(percent) => chooseTextScale(d, percent)}
+              onscreensaver={(minutes) => chooseScreensaver(d, minutes)}
               onschedule={() => (scheduleId = d.id)}
               onpair={(code) => pair(d, code)}
               onunpair={() => unpair(d)}

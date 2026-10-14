@@ -1384,6 +1384,24 @@ Choose **Schedule** at a display:
   display's own, for example the overview, then the calendar, then the news,
   each for 30 seconds. During a time slot only the slot's dashboard shows.
 
+## The screensaver of a Google TV
+
+A Google TV puts its screensaver over a dashboard that runs too long
+without anyone touching the remote. GDash therefore restarts the dashboard
+on the TV every 15 minutes, which takes a few seconds. When the TV's
+screensaver starts earlier, choose a shorter interval at the display under
+**Keep in front of the screensaver**: every 5, 10, 15 or 30 minutes, or
+off. Choose one below the time after which the TV starts its screensaver,
+which Google TV sets under Settings, System, Ambient mode.
+
+The dashboard page also tells GDash the moment it is covered, and GDash then
+restarts it at once, within a few seconds. It does so only while the
+dashboard is what the TV shows: not while the TV sleeps, shows another
+input, or someone casts or watches something else, and not more than once
+every 2 minutes. The display list says when GDash last restarted the
+dashboard and when the screen was last hidden, so you can see whether it
+works.
+
 ## When the TV looks different from the preview
 
 A TV draws the dashboard with its own built-in browser, and the one in a
@@ -1392,7 +1410,8 @@ your computer. Every screen therefore reports what its browser can do. Under
 **Displays**, open **What the screen reports** at the display. Per screen it
 names the browser, such as *Chrome 87 (Cast)*, the screen size, how large
 the dashboard is drawn, and in plain words what that browser lacks and what
-GDash does about it, plus any script errors the page ran into. The report
+GDash does about it, plus any script errors the page ran into and when the
+page was last hidden or shown. The report
 arrives a few seconds after the dashboard is on screen and again after the
 screen reconnects; after a restart of GDash it is back within a minute or
 so.

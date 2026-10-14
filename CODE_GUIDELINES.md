@@ -252,7 +252,8 @@ Known oddities:   - Plain HTTP on the LAN, against "All transport is TLS". A TV 
                     mode, level M, versions 1-10) are written here instead of adding dependencies; both are
                     tested against published vectors.
                   - The keeper retries forever with backoff (a supervisor for a TV that is off for hours), restarts
-                    the cast every 15 minutes (9 on a Nest Hub) against the Google TV screensaver, see
+                    the cast every 15 minutes by default (a display setting; at most 9 on a Nest Hub) and when the
+                    page on the TV reports it is hidden, against the Google TV screensaver, see
                     docs/progress.md, and its tests use short real timers (50 to 300 ms): timing is under test.
                   - internal/departures fetches OVapi over plain HTTP, against "All transport is TLS": the HTTPS
                     address of v0.ovapi.nl serves a certificate for another domain. Public timetable data, no

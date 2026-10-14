@@ -8,7 +8,7 @@ import { isSnapshot } from './protocol';
 import { applySnapshot, display, forgetSnapshot, restoreSnapshot } from './state.svelte';
 import { shouldReloadForFrames } from './widgets/webpage';
 import { compat, detectFeatures, startCompat } from './compat';
-import { buildReport, createErrorLog, rejectionMessage, scriptSource, sendReport } from './screenReport';
+import { buildReport, createErrorLog, createVisibilityLog, rejectionMessage, scriptSource, sendReport, type ReportReason } from './screenReport';
 import { stageFor } from './stage';
 
 const OFFLINE_RETRY_MS = 15000;
@@ -16,6 +16,9 @@ const FRAME_RELOAD_KEY = 'gdash.frameReloadAt';
 // The screen reports when it has drawn the dashboard and after every
 // reconnect, at most once per REPORT_GAP_MS; the server limits it too.
 const REPORT_GAP_MS = 60_000;
+// A page that is hidden says so at once, so the server can put the
+// dashboard back in front of a screensaver; at most once per HIDDEN_GAP_MS.
+const HIDDEN_GAP_MS = 30_000;
 const RENDER_WAIT_MS = 30_000;
 const FONT_WAIT_MS = 10_000;
 const POLL_MS = 500;
@@ -25,7 +28,16 @@ const displayId = location.pathname.split('/').filter(Boolean).pop() ?? 'default
 const errors = createErrorLog();
 window.addEventListener('error', (event) => errors.add(event.message, scriptSource(event.filename, event.lineno, event.colno)));
 window.addEventListener('unhandledrejection', (event) => errors.add(rejectionMessage(event.reason), ''));
+const visibility = createVisibilityLog();
+document.addEventListener('visibilitychange', () => {
+  const hidden = document.visibilityState === 'hidden';
+  visibility.add(hidden ? 'hidden' : 'visible', new Date());
+  if (hidden) void reportHidden();
+});
+window.addEventListener('blur', () => visibility.add('blur', new Date()));
+window.addEventListener('focus', () => visibility.add('focus', new Date()));
 let lastReportAt = -Infinity;
+let lastHiddenAt = -Infinity;
 
 startCompat();
 restoreSnapshot(displayId, isSnapshot);
@@ -118,7 +130,19 @@ async function reportScreen(): Promise<void> {
   lastReportAt = Date.now();
   await rendered();
   await Promise.race([document.fonts.ready, delay(FONT_WAIT_MS)]);
-  const report = buildReport({
+  await sendReport(displayId, measure('connected'));
+}
+
+/** Tells the server at once that the page was hidden, such as by a screensaver. */
+async function reportHidden(): Promise<void> {
+  if (Date.now() - lastHiddenAt < HIDDEN_GAP_MS) return;
+  lastHiddenAt = Date.now();
+  await sendReport(displayId, measure('hidden'));
+}
+
+function measure(reason: ReportReason) {
+  return buildReport({
+    reason,
     userAgent: navigator.userAgent,
     width: innerWidth,
     height: innerHeight,
@@ -129,6 +153,6 @@ async function reportScreen(): Promise<void> {
     fontsLoaded: document.fonts.status === 'loaded',
     firstRenderMs: display.firstRenderMs,
     errors: errors.list(),
+    visibility: visibility.list(),
   });
-  await sendReport(displayId, report);
 }

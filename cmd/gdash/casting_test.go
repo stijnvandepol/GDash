@@ -2,16 +2,29 @@ package main
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stijnvandepol/gdash/internal/cast"
 )
 
-func TestRefreshInterval(t *testing.T) {
-	if got := refreshInterval(cast.Device{Model: "Google Nest Hub"}); got != nestHubRefreshInterval {
-		t.Errorf("Nest Hub refresh = %v", got)
+func TestDeviceRefreshInterval(t *testing.T) {
+	tests := []struct {
+		model   string
+		minutes int
+		want    time.Duration
+	}{
+		{"Chromecast HD", 15, 15 * time.Minute},
+		{"Chromecast HD", 5, 5 * time.Minute},
+		{"Chromecast HD", 0, 0},
+		// A Nest Hub closes a receiver without media after about 10 minutes.
+		{"Google Nest Hub", 15, nestHubRefreshInterval},
+		{"Google Nest Hub", 0, nestHubRefreshInterval},
+		{"Google Nest Hub", 5, 5 * time.Minute},
 	}
-	if got := refreshInterval(cast.Device{Model: "Chromecast HD"}); got != defaultRefreshInterval {
-		t.Errorf("Chromecast HD refresh = %v", got)
+	for _, tt := range tests {
+		if got := deviceRefreshInterval(cast.Device{Model: tt.model}, tt.minutes); got != tt.want {
+			t.Errorf("%s at %d minutes: refresh = %v, want %v", tt.model, tt.minutes, got, tt.want)
+		}
 	}
 }
 

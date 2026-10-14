@@ -16,6 +16,7 @@ const tv: Display = {
   rotation: [],
   rotateSeconds: 0,
   textScale: 100,
+  screensaverMinutes: 15,
 };
 
 describe('deviceChoices', () => {

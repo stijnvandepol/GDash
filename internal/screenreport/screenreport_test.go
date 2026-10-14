@@ -19,6 +19,7 @@ func intPtr(n int) *int { return &n }
 // chromecast is a report as a Chromecast HD with an older Cast runtime sends it.
 func chromecast() Report {
 	return Report{
+		Reason:           ReasonConnected,
 		UserAgent:        "Mozilla/5.0 (Linux; Android 12.0; Build/STTL.240206.002) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Safari/537.36 CrKey/1.56.500000 DeviceType/AndroidTV",
 		Viewport:         Viewport{Width: 1280, Height: 720},
 		DevicePixelRatio: 1.5,
@@ -28,6 +29,7 @@ func chromecast() Report {
 		FontsLoaded:      true,
 		FirstRenderMs:    intPtr(2400),
 		Errors:           []ScriptError{{Message: "TypeError: x is not a function", Source: "/assets/App-abc.js:1:200"}},
+		Visibility:       []VisibilityEvent{{State: "blur", At: start}, {State: "hidden", At: start.Add(time.Second)}},
 	}
 }
 
@@ -38,8 +40,10 @@ func TestValidateAcceptsAReport(t *testing.T) {
 	r := chromecast()
 	r.FirstRenderMs = nil
 	r.Errors = nil
+	r.Visibility = nil
+	r.Reason = ReasonHidden
 	if err := Validate(r); err != nil {
-		t.Fatalf("Validate without a render time and errors: %v", err)
+		t.Fatalf("Validate of a hidden report without a render time, errors and changes: %v", err)
 	}
 }
 
@@ -49,6 +53,11 @@ func TestValidateRejects(t *testing.T) {
 		change func(*Report)
 		field  string
 	}{
+		{"no reason", func(r *Report) { r.Reason = "" }, "reason"},
+		{"an unknown reason", func(r *Report) { r.Reason = "bored" }, "reason"},
+		{"too many visibility changes", func(r *Report) { r.Visibility = make([]VisibilityEvent, MaxVisibilityEvents+1) }, "visibility"},
+		{"an unknown visibility state", func(r *Report) { r.Visibility = []VisibilityEvent{{State: "minimized", At: start}} }, "visibility[0]"},
+		{"a visibility change without a time", func(r *Report) { r.Visibility = []VisibilityEvent{{State: "hidden"}} }, "visibility[0]"},
 		{"no user agent", func(r *Report) { r.UserAgent = "" }, "userAgent"},
 		{"long user agent", func(r *Report) { r.UserAgent = strings.Repeat("a", maxUserAgentLength+1) }, "userAgent"},
 		{"user agent with a line break", func(r *Report) { r.UserAgent = "Chrome\nEvil" }, "userAgent"},

@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { Dashboard, Display } from './api';
-  import { castTone, describeAge, describeCast } from './status';
-  import { describeBrowser, describeScreenSize, screenWarnings } from './screenReports';
+  import { castTone, describeAge, describeCast, describeScreensaver } from './status';
+  import { describeBrowser, describeScreenSize, describeVisibility, screenWarnings } from './screenReports';
   import { DEFAULT_DASHBOARD_ID, describeHours, describeScreens } from './displays';
   import Icon from './Icon.svelte';
   import DashboardThumb from './DashboardThumb.svelte';
@@ -14,10 +14,12 @@
     display: d,
     dashboards,
     textSizes,
+    screensaverChoices,
     grid,
     tvName,
     ondashboard,
     ontextscale,
+    onscreensaver,
     onschedule,
     onpair,
     onunpair,
@@ -30,12 +32,15 @@
     dashboards: Dashboard[];
     /** Text sizes in percent, with their label. */
     textSizes: [number, string][];
+    /** Screensaver restart intervals in minutes, with their label. */
+    screensaverChoices: [number, string][];
     /** The TV grid, to draw the dashboard; null until it is known. */
     grid: { columns: number; rows: number } | null;
     /** The name of the display's Cast device; empty when it was not found. */
     tvName: string;
     ondashboard: (id: string) => void;
     ontextscale: (percent: number) => void;
+    onscreensaver: (minutes: number) => void;
     onschedule: () => void;
     /** Approves the code a screen shows; rejects when it is wrong. */
     onpair: (code: string) => Promise<void>;
@@ -57,6 +62,7 @@
   const needsScreen = $derived(!isCast && screens === 0);
   let connecting = $state(false);
   const reports = $derived(d.screenReports ?? []);
+  const screensaver = $derived(isCast ? describeScreensaver(d.cast) : []);
 
   function reportedAgo(receivedAt: string): string {
     return describeAge(Math.max(0, Math.round((Date.now() - Date.parse(receivedAt)) / 60_000)));
@@ -102,6 +108,7 @@
     <p class="muted meta">
       {describeHours(d)}{#if isCast && screens > 0}{' · '}{describeScreens(d)}{/if}
     </p>
+    {#each screensaver as line (line)}<p class="muted meta">{line}</p>{/each}
 
     <div class="fields">
       <label class="shows">
@@ -128,6 +135,21 @@
           {/each}
         </select>
       </label>
+      {#if isCast}
+        <!-- Google TV covers a running cast with its screensaver; restarting
+             the receiver, a few seconds of reloading, keeps it away. -->
+        <label>
+          Keep in front of the screensaver
+          <select
+            aria-label="Keep {d.name} in front of the screensaver"
+            value={d.screensaverMinutes}
+            onchange={(e) => onscreensaver(Number((e.target as HTMLSelectElement).value))}>
+            {#each screensaverChoices as [value, label] (value)}
+              <option {value}>{label}</option>
+            {/each}
+          </select>
+        </label>
+      {/if}
     </div>
 
     {#if needsScreen || connecting}
@@ -172,6 +194,7 @@
               <span class="muted">on {report.screen === 'cast' ? tv : 'a paired screen'}, {reportedAgo(report.receivedAt)}</span>
             </p>
             <p class="small">{describeScreenSize(report)}</p>
+            {#if report.visibility.length > 0}<p class="small">Visibility: {describeVisibility(report)}</p>{/if}
             {#if warnings.length > 0}
               <ul class="small warnings">
                 {#each warnings as warning (warning)}<li>{warning}</li>{/each}

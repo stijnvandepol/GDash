@@ -36,16 +36,18 @@ func newCastManager(cfg config, deps castDeps) (*casting.Manager, error) {
 		return nil, fmt.Errorf("GDASH_ADDR %q has no port: %w", cfg.addr, err)
 	}
 	sessions := loadCastSessions(cfg.dataDir, logger)
-	runDisplay := func(ctx context.Context, d displays.Display, report func(cast.State, error), takeOver <-chan struct{}) {
+	runDisplay := func(ctx context.Context, d displays.Display, keep casting.Keep) {
 		keeper := &cast.Keeper{
-			Resolve:  resolveDevice(d.CastDeviceID),
-			Refresh:  refreshInterval,
-			Active:   activeNow(ctx, db, d.ID, logger),
-			Status:   report,
-			TakeOver: takeOver,
-			Recall:   func() string { return sessions.recall(d.ID) },
-			Remember: func(id string) { sessions.remember(d.ID, id) },
-			Logger:   logger.With("display", d.ID),
+			Resolve:   resolveDevice(d.CastDeviceID),
+			Refresh:   refreshInterval(ctx, db, d.ID, logger),
+			Active:    activeNow(ctx, db, d.ID, logger),
+			Status:    keep.Report,
+			Restarted: keep.Restarted,
+			TakeOver:  keep.TakeOver,
+			Hidden:    keep.Hidden,
+			Recall:    func() string { return sessions.recall(d.ID) },
+			Remember:  func(id string) { sessions.remember(d.ID, id) },
+			Logger:    logger.With("display", d.ID),
 		}
 		if cfg.castAppID != "" {
 			keeper.AppID, keeper.Namespace = cfg.castAppID, display.CastNamespace
@@ -100,21 +102,37 @@ func resolveDevice(deviceID string) func(ctx context.Context) (cast.Device, erro
 	}
 }
 
-const (
-	// Google TV put its screensaver over a running cast after 19 minutes
-	// in a test at home; 15 minutes stays ahead of it.
-	defaultRefreshInterval = 15 * time.Minute
-	// Nest Hubs close a receiver without media after about 10 minutes.
-	nestHubRefreshInterval = 9 * time.Minute
-)
+// Nest Hubs close a receiver without media after about 10 minutes, whatever
+// the display's screensaver setting.
+const nestHubRefreshInterval = 9 * time.Minute
 
-// refreshInterval is how often the receiver is restarted on a device. Each
-// restart reloads the screen for a few seconds.
-func refreshInterval(d cast.Device) time.Duration {
-	if strings.Contains(d.Model, "Nest Hub") {
+// refreshInterval reads, on every call, how often the display's receiver is
+// restarted to stay in front of the screensaver (displays.Display
+// ScreensaverMinutes), so a change applies without restarting the keeper.
+// When the display cannot be read the last value stays: a database hiccup
+// must not turn the restarts off.
+func refreshInterval(ctx context.Context, db *store.Store, displayID string, logger *slog.Logger) func(cast.Device) time.Duration {
+	last := displays.DefaultScreensaverMinutes
+	return func(device cast.Device) time.Duration {
+		d, err := db.Display(ctx, displayID)
+		if err != nil {
+			logger.Warn("could not read the screensaver setting; keeping the last one", "display", displayID, "error", err)
+		} else {
+			last = d.ScreensaverMinutes
+		}
+		return deviceRefreshInterval(device, last)
+	}
+}
+
+// deviceRefreshInterval is how often the receiver is restarted on a device
+// for a setting in minutes, 0 being never. Each restart reloads the screen
+// for a few seconds.
+func deviceRefreshInterval(device cast.Device, minutes int) time.Duration {
+	every := time.Duration(minutes) * time.Minute
+	if strings.Contains(device.Model, "Nest Hub") && (every == 0 || every > nestHubRefreshInterval) {
 		return nestHubRefreshInterval
 	}
-	return defaultRefreshInterval
+	return every
 }
 
 // displayURL is the display page as the TV reaches it: through the address

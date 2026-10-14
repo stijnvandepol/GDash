@@ -176,6 +176,27 @@ func TestDisplayTextScale(t *testing.T) {
 	}
 }
 
+func TestDisplayScreensaverSetting(t *testing.T) {
+	env := newTestEnv(t, nil)
+	env.setUp(t)
+	status, body := env.do(t, "POST", "/api/displays", `{"id":"keuken","name":"Keuken"}`)
+	if status != http.StatusCreated || !strings.Contains(body, `"screensaverMinutes":15`) {
+		t.Fatalf("create = %d %s; want restarts every 15 minutes", status, body)
+	}
+	if status, body = env.do(t, "POST", "/api/displays", `{"id":"hal","name":"Hal","screensaverMinutes":0}`); status != http.StatusCreated || !strings.Contains(body, `"screensaverMinutes":0`) {
+		t.Fatalf("create without restarts = %d %s", status, body)
+	}
+	if status, body = env.do(t, "PATCH", "/api/displays/keuken", `{"screensaverMinutes":5}`); status != http.StatusOK || !strings.Contains(body, `"screensaverMinutes":5`) {
+		t.Fatalf("every 5 minutes = %d %s", status, body)
+	}
+	if status, body = env.do(t, "PATCH", "/api/displays/keuken", `{"screensaverMinutes":7}`); status != http.StatusUnprocessableEntity || !strings.Contains(body, `"field":"screensaverMinutes"`) {
+		t.Fatalf("every 7 minutes = %d %s", status, body)
+	}
+	if _, body = env.do(t, "GET", "/api/displays", ""); !strings.Contains(body, `"screensaverMinutes":5`) {
+		t.Fatalf("list = %s, want the stored setting", body)
+	}
+}
+
 func TestNewDisplayShowsTheChosenDashboard(t *testing.T) {
 	env := newTestEnv(t, nil)
 	env.setUp(t)

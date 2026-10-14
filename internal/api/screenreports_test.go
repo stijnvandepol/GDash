@@ -3,12 +3,15 @@ package api
 import (
 	"encoding/json"
 	"net/http"
+	"net/netip"
+	"slices"
 	"strings"
 	"testing"
 )
 
 // screenReport is a report as the display page sends it.
 const screenReport = `{
+	"reason": "connected",
 	"userAgent": "Mozilla/5.0 (X11; Linux armv7l) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.120 Safari/537.36 CrKey/1.56.500000 DeviceType/Chromecast",
 	"viewport": {"width": 1280, "height": 720},
 	"devicePixelRatio": 1.5,
@@ -18,8 +21,12 @@ const screenReport = `{
 	"compat": true,
 	"fontsLoaded": true,
 	"firstRenderMs": 2400,
-	"errors": [{"message": "TypeError: x is not a function", "source": "/assets/App-abc.js:1:200"}]
+	"errors": [{"message": "TypeError: x is not a function", "source": "/assets/App-abc.js:1:200"}],
+	"visibility": [{"state": "hidden", "at": "2026-10-08T16:59:00Z"}, {"state": "visible", "at": "2026-10-08T16:59:30Z"}]
 }`
+
+// hiddenReport is the report a page sends the moment it is hidden.
+var hiddenReport = strings.Replace(screenReport, `"reason": "connected"`, `"reason": "hidden"`, 1)
 
 type listedReports struct {
 	Displays []struct {
@@ -184,5 +191,47 @@ func TestDeletingADisplayForgetsItsReports(t *testing.T) {
 	env.createKitchen(t)
 	if reports := reportsOf(t, env, "keuken").Displays[0].ScreenReports; len(reports) != 0 {
 		t.Fatalf("a new display with the same id has reports %+v", reports)
+	}
+}
+
+func TestHiddenReportOfTheCastTVReachesItsKeeper(t *testing.T) {
+	env := newTestEnv(t, nil)
+	env.setUp(t)
+	env.createKitchen(t)
+	launch, err := env.pairing.NewLaunchToken("keuken", netip.MustParseAddr("127.0.0.1"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	castTV := tv()
+	if status, body := post(t, castTV, env.srv.URL+"/api/display-sessions", `{"launchToken":"`+launch+`"}`); status != http.StatusCreated {
+		t.Fatalf("launch exchange = %d %s", status, body)
+	}
+	url := env.srv.URL + "/api/displays/keuken/screen-reports"
+
+	if status, body := post(t, castTV, url, screenReport); status != http.StatusNoContent {
+		t.Fatalf("report = %d %s", status, body)
+	}
+	if got := env.sources.hiddenDisplays(); len(got) != 0 {
+		t.Fatalf("hidden after a connected report = %v, want none", got)
+	}
+	if status, body := post(t, castTV, url, hiddenReport); status != http.StatusNoContent {
+		t.Fatalf("hidden report = %d %s", status, body)
+	}
+	if got := env.sources.hiddenDisplays(); !slices.Equal(got, []string{"keuken"}) {
+		t.Fatalf("hidden = %v, want the kitchen's keeper told", got)
+	}
+
+	// A tablet paired with a code is hidden when someone puts it away:
+	// nothing for the keeper.
+	if status, body := post(t, pairedScreen(t, env), url, hiddenReport); status != http.StatusNoContent {
+		t.Fatalf("hidden report of a tablet = %d %s", status, body)
+	}
+	if got := env.sources.hiddenDisplays(); len(got) != 1 {
+		t.Fatalf("hidden = %v, want only the TV's report passed on", got)
+	}
+
+	reports := reportsOf(t, env, "keuken").Displays[0].ScreenReports
+	if len(reports) != 2 {
+		t.Fatalf("reports = %+v, want the TV and the tablet", reports)
 	}
 }

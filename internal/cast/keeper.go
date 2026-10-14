@@ -17,6 +17,21 @@ const (
 	// A session that lasted this long was healthy, so the next failure
 	// starts again at the minimum retry delay.
 	healthySessionLength = time.Minute
+	// minHiddenRestartGap is how long after a launch a report that the
+	// page is hidden does not restart the receiver: stopping the receiver
+	// hides its own page, and a TV that keeps covering it is not restarted
+	// more often than this.
+	minHiddenRestartGap = 2 * time.Minute
+)
+
+// Why the keeper restarts a receiver that runs, for the log and the web
+// interface.
+const (
+	// RestartPeriodic: the Refresh interval passed.
+	RestartPeriodic = "periodic"
+	// RestartHidden: the page on the TV reported that it is hidden, such as
+	// by a screensaver.
+	RestartHidden = "hidden"
 )
 
 // Keeper keeps a receiver app on screen on one Cast device and sends it
@@ -49,8 +64,17 @@ type Keeper struct {
 	// Refresh returns how often the receiver is stopped and started again,
 	// or 0 for never. Google TV covers a running cast with its screensaver
 	// after about 19 minutes while still reporting the app as running; on
-	// real hardware a restart brought the dashboard back.
+	// real hardware a restart brought the dashboard back. It is read again
+	// with every status, so a changed setting applies within 30 seconds.
 	Refresh func(Device) time.Duration
+	// Hidden delivers a report of the page on the TV that it is hidden,
+	// such as by the TV's screensaver. The keeper then restarts its own
+	// receiver at once, under the same rules as the periodic restart, but
+	// not within minHiddenRestartGap of its last launch.
+	Hidden <-chan struct{}
+	// Restarted, if set, is called after every restart of a receiver that
+	// ran, with RestartPeriodic or RestartHidden. It must not block.
+	Restarted func(reason string)
 	// Status, if set, receives every state the keeper finds, for the web
 	// interface. It must not block.
 	Status func(State, error)
@@ -74,6 +98,11 @@ type Keeper struct {
 	claim claim
 	// remembered is the session last passed to Remember.
 	remembered string
+	// refreshFrom is when the periodic restart last launched or tried to,
+	// launchedAt when the keeper last launched the receiver. They outlast a
+	// connection; only the Run goroutine uses them.
+	refreshFrom time.Time
+	launchedAt  time.Time
 }
 
 // rememberSession passes the session GDash holds to Remember when it
@@ -131,31 +160,36 @@ func (k *Keeper) session(ctx context.Context) error {
 	sessionCtx, cancel := context.WithCancel(ctx)
 	defer cancel()
 	s := &keeperSession{
-		keeper:   k,
-		client:   client,
-		localIP:  ReachableIP(device.Addr, client.LocalIP()),
-		deviceIP: hostOf(device.Addr),
-		resend:   time.NewTimer(0),
+		keeper:       k,
+		client:       client,
+		device:       device,
+		localIP:      ReachableIP(device.Addr, client.LocalIP()),
+		deviceIP:     hostOf(device.Addr),
+		resend:       time.NewTimer(0),
+		refresh:      time.NewTimer(time.Hour),
+		refreshEvery: k.refreshInterval(device),
+	}
+	// The periodic restart counts on across a reconnect: a connection that
+	// drops more often than the interval must not put it off for good. A
+	// keeper that has not launched yet counts from now.
+	if k.refreshFrom.IsZero() {
+		k.refreshFrom = k.now()
 	}
 	if k.Messages != nil {
 		s.messages = k.Messages(sessionCtx)
 	}
 	<-s.resend.C
 	defer s.resend.Stop()
+	s.armRefresh()
+	defer s.refresh.Stop()
 
 	if err := s.syncStatus(ctx); err != nil {
 		return err
 	}
 	poll := time.NewTicker(statusPollInterval)
 	defer poll.Stop()
-	var refresh <-chan time.Time
-	if every := k.refreshInterval(device); every > 0 {
-		ticker := time.NewTicker(every)
-		defer ticker.Stop()
-		refresh = ticker.C
-	}
 	for {
-		if err := s.step(ctx, poll.C, refresh); err != nil {
+		if err := s.step(ctx, poll.C); err != nil {
 			return err
 		}
 	}

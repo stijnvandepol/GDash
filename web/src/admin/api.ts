@@ -162,6 +162,7 @@ export const api = {
       rotation?: string[];
       rotateSeconds?: number;
       textScale?: number;
+      screensaverMinutes?: number;
     },
   ) =>
     request<Display>('PATCH', `/api/displays/${encodeURIComponent(id)}`, changes),

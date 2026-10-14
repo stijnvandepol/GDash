@@ -23,6 +23,9 @@ const (
 	MaxBodyBytes = 8 << 10
 	// MaxErrors is how many script errors one report may carry.
 	MaxErrors = 5
+	// MaxVisibilityEvents is how many changes of the page's visibility and
+	// focus one report may carry.
+	MaxVisibilityEvents = 10
 
 	maxUserAgentLength = 512
 	maxMessageLength   = 300
@@ -72,8 +75,30 @@ type ScriptError struct {
 	Source  string `json:"source"`
 }
 
+// Why a screen reports.
+const (
+	// ReasonConnected: the page connected to the server, at load or after
+	// a reconnect.
+	ReasonConnected = "connected"
+	// ReasonHidden: the page just became hidden, such as by the TV's
+	// screensaver.
+	ReasonHidden = "hidden"
+)
+
+// visibilityStates are the changes a page records: its visibility and
+// whether its window has the focus.
+var visibilityStates = []string{"hidden", "visible", "blur", "focus"}
+
+// VisibilityEvent is one change of the page's visibility or focus.
+type VisibilityEvent struct {
+	State string    `json:"state"`
+	At    time.Time `json:"at"`
+}
+
 // Report is what a screen sends about itself.
 type Report struct {
+	// Reason is ReasonConnected or ReasonHidden.
+	Reason           string   `json:"reason"`
 	UserAgent        string   `json:"userAgent"`
 	Viewport         Viewport `json:"viewport"`
 	DevicePixelRatio float64  `json:"devicePixelRatio"`
@@ -87,6 +112,9 @@ type Report struct {
 	// screen; nil when it has not been drawn, for example at night.
 	FirstRenderMs *int          `json:"firstRenderMs"`
 	Errors        []ScriptError `json:"errors"`
+	// Visibility holds the last changes of the page's visibility and focus,
+	// oldest first.
+	Visibility []VisibilityEvent `json:"visibility"`
 }
 
 // Received is a report as the server keeps it.
@@ -102,6 +130,9 @@ type Received struct {
 // listing every invalid field.
 func Validate(r Report) error {
 	var errs validation.Collector
+	if r.Reason != ReasonConnected && r.Reason != ReasonHidden {
+		errs.Add("reason", "use connected or hidden")
+	}
 	checkText(&errs, "userAgent", r.UserAgent, 1, maxUserAgentLength)
 	if r.Viewport.Width < 1 || r.Viewport.Width > maxViewportPixels || r.Viewport.Height < 1 || r.Viewport.Height > maxViewportPixels {
 		errs.Add("viewport", fmt.Sprintf("use a width and height from 1 to %d", maxViewportPixels))
@@ -121,6 +152,15 @@ func Validate(r Report) error {
 		for i, e := range r.Errors {
 			checkText(&errs, fmt.Sprintf("errors[%d].message", i), e.Message, 1, maxMessageLength)
 			checkText(&errs, fmt.Sprintf("errors[%d].source", i), e.Source, 0, maxSourceLength)
+		}
+	}
+	if len(r.Visibility) > MaxVisibilityEvents {
+		errs.Add("visibility", fmt.Sprintf("send at most %d changes", MaxVisibilityEvents))
+	} else {
+		for i, e := range r.Visibility {
+			if !slices.Contains(visibilityStates, e.State) || e.At.IsZero() {
+				errs.Add(fmt.Sprintf("visibility[%d]", i), "use a state of hidden, visible, blur or focus and the time it happened")
+			}
 		}
 	}
 	return errs.Err()
@@ -161,7 +201,7 @@ func (b *Board) Allow(displayID, screenKey string) bool {
 // as Received.Screen names it. A display keeps its newest
 // maxScreensPerDisplay screens.
 func (b *Board) Put(displayID, screenKey, screen string, r Report) {
-	r.Errors = slices.Clone(r.Errors)
+	r.Errors, r.Visibility = slices.Clone(r.Errors), slices.Clone(r.Visibility)
 	b.mu.Lock()
 	defer b.mu.Unlock()
 	screens := b.byDisplay[displayID]
@@ -190,7 +230,7 @@ func (b *Board) For(displayID string) []Received {
 	out := slices.AppendSeq(make([]Received, 0, len(screens)), maps.Values(screens))
 	slices.SortFunc(out, func(a, c Received) int { return c.ReceivedAt.Compare(a.ReceivedAt) })
 	for i := range out {
-		out[i].Errors = slices.Clone(out[i].Errors)
+		out[i].Errors, out[i].Visibility = slices.Clone(out[i].Errors), slices.Clone(out[i].Visibility)
 	}
 	return out
 }

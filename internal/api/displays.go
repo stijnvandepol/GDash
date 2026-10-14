@@ -52,7 +52,8 @@ func (s *Server) listDisplays(w http.ResponseWriter, r *http.Request) {
 }
 
 // createDisplay handles POST /api/displays {id, name, castDeviceId,
-// dashboardId, activeFrom, activeUntil, schedule}: 201 with the display, 409
+// dashboardId, activeFrom, activeUntil, schedule, screensaverMinutes}: 201
+// with the display (screensaverMinutes 15 when absent), 409
 // when the id is taken or the limit reached, 422 for invalid fields or a
 // dashboard that does not exist. An empty dashboardId means the default
 // dashboard.
@@ -68,6 +69,8 @@ func (s *Server) createDisplay(w http.ResponseWriter, r *http.Request) {
 		Rotation      []string        `json:"rotation"`
 		RotateSeconds int             `json:"rotateSeconds"`
 		TextScale     int             `json:"textScale"`
+		// Screensaver is a pointer: 0 is a choice (never), absent the default.
+		ScreensaverMinutes *int `json:"screensaverMinutes"`
 	}
 	if !decodeJSON(w, r, &body) {
 		return
@@ -81,6 +84,10 @@ func (s *Server) createDisplay(w http.ResponseWriter, r *http.Request) {
 	}
 	if d.TextScale == 0 {
 		d.TextScale = defaultTextScale
+	}
+	d.ScreensaverMinutes = displays.DefaultScreensaverMinutes
+	if body.ScreensaverMinutes != nil {
+		d.ScreensaverMinutes = *body.ScreensaverMinutes
 	}
 	if err := displays.Validate(d); err != nil {
 		writeValidationError(w, validation.Fields(err))
@@ -96,7 +103,8 @@ func (s *Server) createDisplay(w http.ResponseWriter, r *http.Request) {
 }
 
 // updateDisplay handles PATCH /api/displays/{display} {name?, castDeviceId?,
-// dashboardId?, activeFrom?, activeUntil?, schedule?}; an empty dashboardId
+// dashboardId?, activeFrom?, activeUntil?, schedule?, screensaverMinutes?};
+// an empty dashboardId
 // means the default dashboard, empty active hours mean always on, and a
 // schedule replaces the whole day plan. It changes only the fields present
 // and answers 200 with the display. The id is fixed, because it is part of
@@ -112,6 +120,9 @@ func (s *Server) updateDisplay(w http.ResponseWriter, r *http.Request) {
 		Rotation      *[]string        `json:"rotation"`
 		RotateSeconds *int             `json:"rotateSeconds"`
 		TextScale     *int             `json:"textScale"`
+		// ScreensaverMinutes is how often the receiver on the Cast device
+		// is restarted against the TV's screensaver; 0 is never.
+		ScreensaverMinutes *int `json:"screensaverMinutes"`
 	}
 	if !decodeJSON(w, r, &body) {
 		return
@@ -147,6 +158,9 @@ func (s *Server) updateDisplay(w http.ResponseWriter, r *http.Request) {
 	}
 	if body.TextScale != nil {
 		d.TextScale = *body.TextScale
+	}
+	if body.ScreensaverMinutes != nil {
+		d.ScreensaverMinutes = *body.ScreensaverMinutes
 	}
 	if err := displays.Validate(d); err != nil {
 		writeValidationError(w, validation.Fields(err))

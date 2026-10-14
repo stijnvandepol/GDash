@@ -57,9 +57,12 @@ fully trust, such as a guest's phone.
 - **Screen reports:** a paired screen tells the server about its own
   browser, so an admin can see why a TV draws a dashboard differently: the
   user agent, the screen size and pixel ratio, which CSS features it has,
-  whether the fonts loaded, how long the first dashboard took, and up to 5
+  whether the fonts loaded, how long the first dashboard took, up to 5
   script errors as a one-line message with the script's path, line and
-  column. Nothing about the household and no page address, so no launch
+  column, and when the page was last hidden, shown, focused or not. A
+  hidden report of the TV GDash casts to can make GDash restart its own
+  dashboard there, under the rules that never take a TV from someone using
+  it, and not more than once every 2 minutes. Nothing about the household and no page address, so no launch
   token. Only a screen paired with that display can report, with its own
   display cookie, at most 10 times in 10 minutes and 8 KB at a time; every
   field is checked for type, length and range. The server keeps only each

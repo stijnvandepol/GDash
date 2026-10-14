@@ -15,6 +15,7 @@ function display(changes: Partial<Display> = {}): Display {
     rotation: [],
     rotateSeconds: 0,
     textScale: 100,
+    screensaverMinutes: 15,
     ...changes,
   };
 }

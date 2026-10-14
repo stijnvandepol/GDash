@@ -27,16 +27,19 @@ func newRecorder() *recorder {
 	return &recorder{running: map[string]string{}, events: make(chan string, 32)}
 }
 
-func (r *recorder) run(ctx context.Context, d displays.Display, report func(cast.State, error), takeOver <-chan struct{}) {
-	report(cast.StateShowing, nil)
+func (r *recorder) run(ctx context.Context, d displays.Display, keep Keep) {
+	keep.Report(cast.StateShowing, nil)
 	r.mu.Lock()
 	r.running[d.ID] = d.CastDeviceID
 	r.mu.Unlock()
 	r.events <- "start " + d.ID
 	for running := true; running; {
 		select {
-		case <-takeOver:
+		case <-keep.TakeOver:
 			r.events <- "take over " + d.ID
+		case <-keep.Hidden:
+			keep.Restarted(cast.RestartHidden)
+			r.events <- "hidden " + d.ID
 		case <-ctx.Done():
 			running = false
 		}
@@ -208,5 +211,35 @@ func TestManagerPassesTakeOverToTheDisplaysKeeper(t *testing.T) {
 			t.Fatal("TakeOver still reaches the keeper of a removed display")
 		}
 		time.Sleep(10 * time.Millisecond)
+	}
+}
+
+func TestManagerPassesHiddenScreensAndRecordsRestarts(t *testing.T) {
+	clock := time.Date(2026, 10, 14, 11, 52, 0, 0, time.UTC)
+	list := &fakeList{}
+	list.set(displays.Display{ID: "kitchen", CastDeviceID: "aaa"})
+	rec := newRecorder()
+	m := &Manager{List: list.get, RunDisplay: rec.run, Now: func() time.Time { return clock }, Logger: slog.New(slog.NewTextHandler(io.Discard, nil))}
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	go m.Run(ctx)
+	rec.expect(t, "start kitchen")
+
+	if !m.ScreenHidden("kitchen") {
+		t.Fatal("ScreenHidden(kitchen) = false for a running keeper")
+	}
+	rec.expect(t, "hidden kitchen")
+	got := m.Statuses()["kitchen"]
+	if got.HiddenAt == nil || !got.HiddenAt.Equal(clock) || got.RestartedAt == nil || !got.RestartedAt.Equal(clock) || got.RestartReason != cast.RestartHidden {
+		t.Fatalf("status = %+v, want hidden and restarted at 11:52 for the hidden screen", got)
+	}
+	if m.ScreenHidden("unknown") {
+		t.Fatal("ScreenHidden = true for a display without a keeper")
+	}
+
+	// A change of state keeps when the receiver was last restarted.
+	m.reporter("kitchen")(cast.StateStandby, nil)
+	if got := m.Statuses()["kitchen"]; got.State != cast.StateStandby || got.RestartedAt == nil || got.HiddenAt == nil {
+		t.Fatalf("status after standby = %+v, want the restart and hidden times kept", got)
 	}
 }

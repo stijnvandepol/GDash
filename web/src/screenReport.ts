@@ -12,6 +12,7 @@ const MAX_USER_AGENT = 512;
 const MAX_MESSAGE = 300;
 const MAX_SOURCE = 200;
 const MAX_FIRST_RENDER_MS = 3_600_000;
+const MAX_VISIBILITY_EVENTS = 10;
 
 export interface ScriptError {
   message: string;
@@ -19,7 +20,18 @@ export interface ScriptError {
   source: string;
 }
 
+/** A change of the page's visibility or focus. */
+export interface VisibilityEvent {
+  state: 'hidden' | 'visible' | 'blur' | 'focus';
+  /** When it happened, as an ISO time. */
+  at: string;
+}
+
+/** Why a screen reports: it connected, or its page was just hidden. */
+export type ReportReason = 'connected' | 'hidden';
+
 export interface ScreenReport {
+  reason: ReportReason;
   userAgent: string;
   viewport: { width: number; height: number };
   devicePixelRatio: number;
@@ -30,6 +42,8 @@ export interface ScreenReport {
   fontsLoaded: boolean;
   firstRenderMs: number | null;
   errors: ScriptError[];
+  /** The last changes of the page's visibility and focus, oldest first. */
+  visibility: VisibilityEvent[];
 }
 
 /** Text in one line without control characters, cut to max characters. */
@@ -66,6 +80,20 @@ export function createErrorLog() {
   };
 }
 
+/** The last MAX_VISIBILITY_EVENTS changes of the page's visibility and focus. */
+export function createVisibilityLog() {
+  const events: VisibilityEvent[] = [];
+  return {
+    add(state: VisibilityEvent['state'], at: Date): void {
+      events.push({ state, at: at.toISOString() });
+      if (events.length > MAX_VISIBILITY_EVENTS) events.shift();
+    },
+    list(): VisibilityEvent[] {
+      return events.map((e) => ({ ...e }));
+    },
+  };
+}
+
 /** A message for a rejected promise, whatever it was rejected with. */
 export function rejectionMessage(reason: unknown): string {
   if (reason instanceof Error) return `${reason.name}: ${reason.message}`;
@@ -74,6 +102,7 @@ export function rejectionMessage(reason: unknown): string {
 
 /** What the page measured, before it is cut to the limits the server takes. */
 export interface Measured {
+  reason: ReportReason;
   userAgent: string;
   width: number;
   height: number;
@@ -84,12 +113,14 @@ export interface Measured {
   fontsLoaded: boolean;
   firstRenderMs: number | null;
   errors: ScriptError[];
+  visibility: VisibilityEvent[];
 }
 
 /** The report for what the page measured, within the server's limits. */
 export function buildReport(m: Measured): ScreenReport {
   const round = (n: number, digits: number) => Math.round(n * 10 ** digits) / 10 ** digits;
   return {
+    reason: m.reason,
     userAgent: plainText(m.userAgent, MAX_USER_AGENT) || 'unknown',
     viewport: { width: Math.max(1, Math.round(m.width)), height: Math.max(1, Math.round(m.height)) },
     devicePixelRatio: round(m.devicePixelRatio, 3) || 1,
@@ -99,16 +130,22 @@ export function buildReport(m: Measured): ScreenReport {
     fontsLoaded: m.fontsLoaded,
     firstRenderMs: m.firstRenderMs === null ? null : Math.min(MAX_FIRST_RENDER_MS, Math.max(0, Math.round(m.firstRenderMs))),
     errors: m.errors.slice(0, MAX_ERRORS),
+    visibility: m.visibility.slice(-MAX_VISIBILITY_EVENTS),
   };
 }
 
-/** Sends a report for the display this screen shows. A failure only costs the report. */
+/**
+ * Sends a report for the display this screen shows. A failure only costs
+ * the report. keepalive lets a report that the page is hidden arrive also
+ * when the TV suspends or closes the page right after.
+ */
 export async function sendReport(displayId: string, report: ScreenReport): Promise<void> {
   try {
     const response = await fetch(`/api/displays/${encodeURIComponent(displayId)}/screen-reports`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(report),
+      keepalive: true,
     });
     // 401: an admin previewing in a browser, which has no screen to report.
     if (!response.ok && response.status !== 401) console.warn(`gdash: the screen report was refused (${response.status})`);

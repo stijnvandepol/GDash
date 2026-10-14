@@ -13,7 +13,7 @@ import (
 // Displays returns all displays ordered by name.
 func (s *Store) Displays(ctx context.Context) ([]displays.Display, error) {
 	rows, err := s.db.QueryContext(ctx,
-		"SELECT id, name, cast_device_id, dashboard_id, active_from, active_until, rotate_seconds, text_scale, created_at FROM displays ORDER BY name LIMIT ?", displays.MaxDisplays)
+		"SELECT id, name, cast_device_id, dashboard_id, active_from, active_until, rotate_seconds, text_scale, screensaver_minutes, created_at FROM displays ORDER BY name LIMIT ?", displays.MaxDisplays)
 	if err != nil {
 		return nil, fmt.Errorf("list displays: %w", err)
 	}
@@ -55,7 +55,7 @@ func withSlots(slots []displays.Slot) []displays.Slot {
 
 // Display returns one display, or ErrNotFound.
 func (s *Store) Display(ctx context.Context, id string) (displays.Display, error) {
-	row := s.db.QueryRowContext(ctx, "SELECT id, name, cast_device_id, dashboard_id, active_from, active_until, rotate_seconds, text_scale, created_at FROM displays WHERE id = ?", id)
+	row := s.db.QueryRowContext(ctx, "SELECT id, name, cast_device_id, dashboard_id, active_from, active_until, rotate_seconds, text_scale, screensaver_minutes, created_at FROM displays WHERE id = ?", id)
 	d, err := scanDisplay(row)
 	if errors.Is(err, sql.ErrNoRows) {
 		return displays.Display{}, ErrNotFound
@@ -95,8 +95,8 @@ func (s *Store) CreateDisplay(ctx context.Context, d displays.Display) error {
 		return err
 	}
 	_, err = tx.ExecContext(ctx,
-		"INSERT INTO displays (id, name, cast_device_id, dashboard_id, active_from, active_until, rotate_seconds, text_scale, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-		d.ID, d.Name, d.CastDeviceID, nullable(d.DashboardID), d.From, d.Until, d.RotateSeconds, d.TextScale, formatTime(d.CreatedAt))
+		"INSERT INTO displays (id, name, cast_device_id, dashboard_id, active_from, active_until, rotate_seconds, text_scale, screensaver_minutes, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+		d.ID, d.Name, d.CastDeviceID, nullable(d.DashboardID), d.From, d.Until, d.RotateSeconds, d.TextScale, d.ScreensaverMinutes, formatTime(d.CreatedAt))
 	if err != nil {
 		if isUniqueViolation(err) {
 			return fmt.Errorf("%w: display %q", ErrConflict, d.ID)
@@ -124,8 +124,8 @@ func (s *Store) UpdateDisplay(ctx context.Context, d displays.Display) error {
 		return err
 	}
 	res, err := tx.ExecContext(ctx,
-		"UPDATE displays SET name = ?, cast_device_id = ?, dashboard_id = ?, active_from = ?, active_until = ?, rotate_seconds = ?, text_scale = ? WHERE id = ?",
-		d.Name, d.CastDeviceID, nullable(d.DashboardID), d.From, d.Until, d.RotateSeconds, d.TextScale, d.ID)
+		"UPDATE displays SET name = ?, cast_device_id = ?, dashboard_id = ?, active_from = ?, active_until = ?, rotate_seconds = ?, text_scale = ?, screensaver_minutes = ? WHERE id = ?",
+		d.Name, d.CastDeviceID, nullable(d.DashboardID), d.From, d.Until, d.RotateSeconds, d.TextScale, d.ScreensaverMinutes, d.ID)
 	if err != nil {
 		return fmt.Errorf("update display: %w", err)
 	}
@@ -181,7 +181,7 @@ func scanDisplay(row scanner) (displays.Display, error) {
 	var d displays.Display
 	var created string
 	var dashboard sql.NullString
-	if err := row.Scan(&d.ID, &d.Name, &d.CastDeviceID, &dashboard, &d.From, &d.Until, &d.RotateSeconds, &d.TextScale, &created); err != nil {
+	if err := row.Scan(&d.ID, &d.Name, &d.CastDeviceID, &dashboard, &d.From, &d.Until, &d.RotateSeconds, &d.TextScale, &d.ScreensaverMinutes, &created); err != nil {
 		return displays.Display{}, err
 	}
 	d.DashboardID = dashboard.String

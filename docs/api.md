@@ -49,8 +49,8 @@ come from another site (cross-site request forgery protection).
 | `DELETE /api/api-tokens/{id}` | admin | `204`; automations that use it get `401` from then on | `401`, `404` |
 | `POST /api/announcements` `{message, title?, seconds?, displays?}` | API token or admin | `201 {title?, message, expiresAt, displays}` | `400`, `401 invalid_token` or `not_logged_in`, `422`, `429 rate_limited` |
 | `GET /api/displays` | admin | `200 {"displays": [display + pairedScreens + cast? + screenReports]}`; `pairedScreens` counts the screens paired with a code, never the TV a cast keeper opened; `screenReports` is what the display's screens last said about their browsers, newest first, see [Screen reports](#screen-reports) | `401` |
-| `POST /api/displays` `{id, name, castDeviceId, dashboardId?, activeFrom?, activeUntil?, schedule?}` | admin | `201` display | `401`, `409 conflict`, `422` (also for an unknown dashboard) |
-| `PATCH /api/displays/{id}` `{name?, castDeviceId?, dashboardId?, activeFrom?, activeUntil?, schedule?, rotation?, rotateSeconds?, textScale?}` | admin | `200` display | `401`, `404 not_found`, `422` (also for an unknown dashboard) |
+| `POST /api/displays` `{id, name, castDeviceId, dashboardId?, activeFrom?, activeUntil?, schedule?, screensaverMinutes?}` | admin | `201` display | `401`, `409 conflict`, `422` (also for an unknown dashboard) |
+| `PATCH /api/displays/{id}` `{name?, castDeviceId?, dashboardId?, activeFrom?, activeUntil?, schedule?, rotation?, rotateSeconds?, textScale?, screensaverMinutes?}` | admin | `200` display | `401`, `404 not_found`, `422` (also for an unknown dashboard) |
 | `DELETE /api/displays/{id}` | admin | `204` | `401`, `404 not_found` |
 | `POST /api/displays/{id}/cast-takeovers` | admin | `204`: the display's cast keeper shows the dashboard on the TV within seconds, also over what someone is watching, and stops waiting (`yielded`); recorded in the audit log as `cast_taken_over`. Not while the TV is in standby or outside active hours | `401`, `404 not_found`, `409 not_cast` (no Cast device) or `not_connected` (GDash is still connecting to the TV) |
 | `GET /api/widget-types` | admin | `200 {columns, rows, themes, fonts, types: {name: {minW, minH, settings: {key: {kind, min?, max?, required}}}}}` | `401` |
@@ -114,7 +114,7 @@ come from another site (cross-site request forgery protection).
 | `GET /api/now-playing/artwork/{id}` | admin, or a paired screen whose display was sent this cover in its `nowplaying.default` data | `200` the cover (JPEG, PNG, WebP or GIF, at most 2 MB), `Cache-Control: private, max-age=600` | `404`, also for anyone else, a cover of something that no longer plays and one that could not be fetched |
 | `GET /api/cast-devices` | admin | `200 {"devices": [device]}` | `401`, `500 discovery_failed` |
 | `GET /api/displays/{id}/events` | paired screen or admin | `text/event-stream`, `snapshot` events | `401 not_paired`, `404` for an invalid id |
-| `POST /api/displays/{id}/screen-reports` with a [screen report](#screen-reports) | a screen paired with that display; not an admin | `204`; kept in memory as the screen's last report | `400`, `401 not_paired`, `403 other_display`, `404` for an invalid id, `413 too_large` above 8 KB, `422` naming every invalid field, `429 rate_limited` above 10 reports per screen in 10 minutes (with `Retry-After`) |
+| `POST /api/displays/{id}/screen-reports` with a [screen report](#screen-reports) | a screen paired with that display; not an admin | `204`; kept in memory as the screen's last report; a `hidden` report of the TV a cast keeper opened makes the keeper restart the receiver when the TV is free | `400`, `401 not_paired`, `403 other_display`, `404` for an invalid id, `413 too_large` above 8 KB, `422` naming every invalid field, `429 rate_limited` above 10 reports per screen in 10 minutes (with `Retry-After`) |
 | `POST /api/pairing-requests` `{displayId}` | no | `201 {code, pollToken, expiresAt}` | `404`, `429 rate_limited` |
 | `POST /api/display-sessions` `{pollToken}` or `{launchToken}` | no | `201 {displayId}`, sets `gdash_display`; `202` while pending | `400`, `401 invalid_token` |
 | `GET /api/display-sessions/current` | paired screen | `200 {displayId}` | `401 not_paired` |
@@ -180,20 +180,24 @@ within that time. Deleting a display unpairs all its screens, the TV as well.
 
 A TV's built-in browser is hard to inspect, so every display page tells the
 server about its own browser: once it has drawn the dashboard, and again
-after it reconnects, at most once a minute. The server keeps the last report
+after it reconnects, at most once a minute (`reason` `connected`), and at
+once when the page becomes hidden, such as by the TV's screensaver, at most
+once per 30 seconds (`reason` `hidden`). The server keeps the last report
 of each screen in memory, never in the database, for at most 5 screens per
 display; a restart, unpairing the screens or deleting the display forgets
 them. `GET /api/displays` lists them per display as `screenReports`, and the
 Displays page shows them under **What the screen reports**.
 
 ```json
-{"userAgent": "Mozilla/5.0 (Linux; Android 12.0; …) Chrome/87.0.4280.141 Safari/537.36 CrKey/1.56.500000 DeviceType/AndroidTV",
+{"reason": "connected",
+ "userAgent": "Mozilla/5.0 (Linux; Android 12.0; …) Chrome/87.0.4280.141 Safari/537.36 CrKey/1.56.500000 DeviceType/AndroidTV",
  "viewport": {"width": 1280, "height": 720}, "devicePixelRatio": 1.5, "stageScale": 0.6667,
  "features": {"containerUnits": false, "containerQueries": false, "where": true, "has": false, "colorMix": false,
               "aspectRatio": true, "flexGap": true, "inset": true, "lineClamp": true, "textWrap": false,
               "nesting": false, "cascadeLayers": false},
  "compat": true, "fontsLoaded": true, "firstRenderMs": 2400,
- "errors": [{"message": "TypeError: x is not a function", "source": "/assets/App-abc.js:1:200"}]}
+ "errors": [{"message": "TypeError: x is not a function", "source": "/assets/App-abc.js:1:200"}],
+ "visibility": [{"state": "hidden", "at": "2026-10-14T09:50:03Z"}, {"state": "visible", "at": "2026-10-14T09:50:40Z"}]}
 ```
 
 `userAgent` is 1 to 512 characters; `viewport` is the page's size in CSS
@@ -206,8 +210,17 @@ had loaded, `firstRenderMs` the milliseconds from loading the page until the
 dashboard was first on screen (0 to 3600000, or `null` when nothing was
 drawn, for example outside active hours). `errors` holds at most 5 uncaught
 script errors: a `message` of 1 to 300 characters and a `source` of up to 200,
-the script's path with line and column, never the page's address. Texts are
-one line without control characters. In the list each report also has
+the script's path with line and column, never the page's address.
+`visibility` holds the last 10 changes of the page's visibility (`hidden`,
+`visible`) and of its window's focus (`blur`, `focus`), oldest first, each
+with its time. Texts are one line without control characters.
+
+A `hidden` report from the TV a cast keeper opened (not from a screen
+paired with a code) goes to that display's keeper. When a fresh status of
+the Cast device shows GDash's own receiver, nothing else, an awake TV and
+the Cast device's input, the keeper restarts the receiver at once, which
+puts the dashboard back in front of a screensaver; never within 2 minutes
+of its last launch, and never on a TV someone else uses. In the list each report also has
 `screen` (`cast` for the TV a cast keeper opened, `screen` for one paired
 with a code) and `receivedAt`.
 
@@ -599,13 +612,19 @@ while no slot applies; empty with `rotateSeconds` 0 means no rotation. Deleting 
 rotation. A rotating snapshot carries `pages` (the display's own dashboard first) and `pageSeconds`; the screen turns
 the page on its clock, so every screen of a display shows the same page.
 
-**cast:** `{"state": "showing", "since": "2026-10-09T08:31:00Z", "problem"?: "…", "reason"?: "not_found"}`, only for
+**cast:** `{"state": "showing", "since": "2026-10-09T08:31:00Z", "problem"?: "…", "reason"?: "not_found", "restartedAt"?: "…", "restartReason"?: "periodic", "hiddenAt"?: "…"}`, only for
 a display on a Cast device. `state` is `connecting`, `showing`, `standby` (the receiver runs but the TV sleeps),
 `other_app` (someone else is casting or the TV shows another input; GDash starts when it ends), `yielded` (someone took
 the TV from GDash, or used it when GDash started; GDash waits until the TV has been in standby, its idle screen has
 shown for 10 minutes, or a `cast-takeovers` request), `resting` (outside active hours) or `unreachable`, with `problem`
 saying why in the words of the error and `reason` sorting it: `not_found` (discovery did not find the device) or
-`no_answer` (anything else, such as a device that refused or dropped the connection).
+`no_answer` (anything else, such as a device that refused or dropped the connection). `restartedAt` and
+`restartReason` (`periodic` or `hidden`) say when the keeper last restarted the receiver against the screensaver, and
+`hiddenAt` when the page on the TV last reported that it was hidden; each is absent until it first happened.
+
+`screensaverMinutes` is how often the receiver on the display's Cast device is restarted to keep the dashboard in
+front of the TV's screensaver: 5, 10, 15 (default) or 30, or 0 for never. A Nest Hub is restarted at least every 9
+minutes, since it closes a receiver without media after about 10. A change applies within 30 seconds.
 
 `textScale` is the display's text size in percent: 100 (default), 125, 150 or 200. The snapshot carries it; the
 screen draws its stage narrower by that factor and in the screen's own shape (between 4:3 and 21:9), so a small

@@ -30,6 +30,8 @@ export interface Display {
   rotateSeconds: number;
   /** Text size in percent: 100, 125, 150 or 200. */
   textScale: number;
+  /** How often the receiver on a Cast device is restarted against the TV's screensaver, in minutes; 0 is never. */
+  screensaverMinutes: number;
   /** What GDash last found on the Cast device; only in the display list. */
   cast?: CastStatus;
   /** What the display's screens last reported about their browsers, newest first; only in the display list. */
@@ -50,6 +52,11 @@ export interface CastStatus {
   problem?: string;
   /** What kind of problem: not found on the network, or found but not answering. */
   reason?: 'not_found' | 'no_answer';
+  /** When GDash last restarted the receiver against the screensaver, and why. */
+  restartedAt?: string;
+  restartReason?: 'periodic' | 'hidden';
+  /** When the page on the TV last said it was hidden, such as by a screensaver. */
+  hiddenAt?: string;
 }
 
 /** A dashboard shown from one time of day until another, as HH:MM. */

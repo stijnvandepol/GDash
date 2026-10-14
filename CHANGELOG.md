@@ -61,10 +61,18 @@ the format follows [Keep a Changelog](https://keepachangelog.com).
 
 ### Added
 
+- The dashboard on a Google TV is restarted the moment its page says the
+  screensaver covered it, not only every 15 minutes, and only while the TV
+  shows GDash and nobody uses it. At each Cast display, **Keep in front of
+  the screensaver** chooses how often it is restarted: every 5, 10, 15 or 30
+  minutes, or off (`screensaverMinutes`). The display list says when GDash
+  last restarted the dashboard and when the screen was last hidden, and the
+  log has a line for every restart with its reason.
 - Every screen reports what its browser can do: under **Displays**, **What
   the screen reports** names the browser and version, the screen size and,
   in plain words, what the browser lacks and what GDash does about it, plus
-  script errors. `POST /api/displays/{id}/screen-reports` takes the report
+  script errors and when its page was last hidden or shown.
+  `POST /api/displays/{id}/screen-reports` takes the report
   from the screen itself; `GET /api/displays` lists them as `screenReports`.
   `?compat=1` on a display or preview page shows the fallback for older
   browsers in any browser.

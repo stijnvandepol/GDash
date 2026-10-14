@@ -243,6 +243,7 @@ func serve(ctx context.Context, logger *slog.Logger) error {
 		Announcements:        publisher.Announcements,
 		AnnouncementsChanged: announced(ctx, publisher),
 		ScreenReports:        screenreport.NewBoard(time.Now),
+		ScreenHidden:         castManager.ScreenHidden,
 		SettingsChanged: func() {
 			if err := sources.sync(ctx); err != nil {
 				logger.Error("could not apply the new settings; restart GDash", "error", err)

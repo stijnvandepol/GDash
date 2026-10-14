@@ -38,6 +38,13 @@ export function describeScreenSize(report: ScreenReport): string {
   return `${width} × ${height}${ratio} · the dashboard drawn at ${Math.round(report.stageScale * 100)}%`;
 }
 
+const CLOCK = new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+/** The page's last changes of visibility and focus: "hidden 11:50:03 · visible 11:50:40". */
+export function describeVisibility(report: ScreenReport): string {
+  return report.visibility.map((e) => `${e.state} ${CLOCK.format(new Date(e.at))}`).join(' · ');
+}
+
 const SLOW_RENDER_MS = 10_000;
 
 /** What an admin should know about a screen, in plain words; empty when all is well. */

@@ -1,3 +1,4 @@
+import type { Page } from '@playwright/test';
 import { expect, openTab, test } from './fixtures';
 
 // A screen tells the server about its own browser once it has drawn the
@@ -6,7 +7,12 @@ import { expect, openTab, test } from './fixtures';
 const DISPLAY = 'e2e-report';
 
 interface Listed {
-  displays: { id: string; screenReports?: unknown[] }[];
+  displays: { id: string; screenReports?: { reason: string; visibility: { state: string }[] }[] }[];
+}
+
+async function reportsOf(page: Page): Promise<{ reason: string; visibility: { state: string }[] }[]> {
+  const list = (await (await page.request.get('/api/displays')).json()) as Listed;
+  return list.displays.find((d) => d.id === DISPLAY)?.screenReports ?? [];
 }
 
 test('a paired TV reports its browser, and the Displays page shows it', async ({ adminPage: page, browser, baseURL }) => {
@@ -26,15 +32,15 @@ test('a paired TV reports its browser, and the Displays page shows it', async ({
     await screen.goto(`/d/${DISPLAY}?compat=1`);
     await expect(screen.locator('section.widget').first()).toBeVisible({ timeout: 15_000 });
 
-    await expect
-      .poll(
-        async () => {
-          const list = (await (await page.request.get('/api/displays')).json()) as Listed;
-          return list.displays.find((d) => d.id === DISPLAY)?.screenReports?.length ?? 0;
-        },
-        { timeout: 20_000 },
-      )
-      .toBe(1);
+    await expect.poll(async () => (await reportsOf(page)).map((r) => r.reason), { timeout: 20_000 }).toEqual(['connected']);
+
+    // A screensaver covers the page: it says so at once.
+    await screen.evaluate(() => {
+      Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => 'hidden' });
+      document.dispatchEvent(new Event('visibilitychange'));
+    });
+    await expect.poll(async () => (await reportsOf(page)).map((r) => r.reason)).toEqual(['hidden']);
+    expect((await reportsOf(page))[0]!.visibility.map((e) => e.state)).toContain('hidden');
   } finally {
     await tv.close();
   }
@@ -47,6 +53,7 @@ test('a paired TV reports its browser, and the Displays page shows it', async ({
   await expect(report).toContainText(/Chrome \d+/);
   await expect(report).toContainText('1280 × 720 at 1.5× · the dashboard drawn at 67%');
   await expect(report).toContainText('The fallback for older browsers is on (?compat=1 in the address)');
+  await expect(report).toContainText(/Visibility: .*hidden \d\d:\d\d:\d\d/);
 });
 
 test('the Displays page explains what an older TV browser lacks', async ({ adminPage: page }) => {
@@ -76,6 +83,8 @@ test('the Displays page explains what an older TV browser lacks', async ({ admin
     fontsLoaded: true,
     firstRenderMs: 3100,
     errors: [{ message: 'TypeError: e.replaceAll is not a function', source: '/assets/colors-abc.js:1:2048' }],
+    reason: 'connected',
+    visibility: [],
   };
   await page.route('**/api/cast-devices', (route) =>
     route.fulfill({ json: { devices: [{ id: 'e2e-device', name: 'Tv Keuken', model: 'Chromecast', addr: '192.0.2.1:8009', hasScreen: true }] } }),
@@ -96,11 +105,24 @@ test('the Displays page explains what an older TV browser lacks', async ({ admin
       rotation: [],
       rotateSeconds: 0,
       textScale: 100,
+      screensaverMinutes: 15,
       pairedScreens: 0,
-      cast: { state: 'showing', since: '2026-10-12T10:00:00Z' },
+      cast: {
+        state: 'showing',
+        since: '2026-10-12T10:00:00Z',
+        restartedAt: '2026-10-14T09:52:00Z',
+        restartReason: 'hidden',
+        hiddenAt: '2026-10-14T09:51:55Z',
+      },
       screenReports: [oldTv],
     };
     await route.fulfill({ response, json: { displays: [...body.displays, kitchen] } });
+  });
+  const changes: unknown[] = [];
+  await page.route('**/api/displays/e2e-old-tv', async (route) => {
+    if (route.request().method() !== 'PATCH') return route.fallback();
+    changes.push(route.request().postDataJSON());
+    await route.fulfill({ json: {} });
   });
   await page.reload();
   await openTab(page, 'Displays');
@@ -113,4 +135,12 @@ test('the Displays page explains what an older TV browser lacks', async ({ admin
   await expect(report).toContainText("does not support :where() (Chrome 88 and later)");
   await expect(report).toContainText('TypeError: e.replaceAll is not a function');
   await expect(report).toContainText('/assets/colors-abc.js:1:2048');
+
+  // Whether the restarts against the screensaver happen, and how often.
+  await expect(row).toContainText(/Restarted against the screensaver at \d\d:\d\d, because the screen was hidden/);
+  await expect(row).toContainText(/The screen was last hidden at \d\d:\d\d/);
+  const every = row.getByLabel('Keep E2E Old TV in front of the screensaver');
+  await expect(every).toHaveValue('15');
+  await every.selectOption({ label: 'Every 5 minutes' });
+  await expect.poll(() => changes).toEqual([{ screensaverMinutes: 5 }]);
 });
