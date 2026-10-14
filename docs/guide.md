@@ -12,7 +12,8 @@ disappears when the basics are done.
 1. **Integrations, Weather:** type your town or postcode and choose the
    right result, or enter the coordinates. The weather service only receives
    the location rounded to about 1 km.
-2. **Integrations, News feeds and Calendars:** add RSS or Atom feeds, and the secret
+2. **Integrations, News feeds and Calendars:** tick the news sources you want,
+   such as NOS, NU.nl or your regional broadcaster (see [News](#news)), and add the secret
    iCal address of each calendar you want on the screen. In Google Calendar
    it is under the calendar's settings, "Secret address in iCal format"; in
    Outlook under "Publish a calendar"; in iCloud under "Public calendar".
@@ -158,7 +159,7 @@ add calendars and feeds under Integrations, and the photos once you add photos.
 | Energy price | The electricity price now, whether it is low, average or high today, today's prices per hour and the cheapest three hours (Netherlands) |
 | Solar forecast | What your solar panels are expected to produce today, the best hour, the hours still to come and tomorrow's total; see [Solar forecast](#solar-forecast) |
 | Calendar | The coming week from your calendars |
-| News | Headlines from your feeds |
+| News | Headlines from your news sources, all of them or the ones you tick; see [News](#news) |
 | Note | A short text for the household |
 | Countdown | The days until a date, such as a holiday |
 | Holidays | The coming school holidays of your region and the public holidays in the Netherlands; see [Holidays](#holidays) |
@@ -241,6 +242,43 @@ GDash. The file holds the layout, the theme (with its night theme and
 typeface, if any) and the widget settings, such
 as the text of a note; it holds no data, no calendar addresses and no custom
 API or its key (see [Custom APIs](#custom-apis)).
+
+## News
+
+Under **Integrations, News feeds** you choose up to ten news sources:
+
+- **Add a news source** lists the sources GDash knows, the Netherlands first,
+  by country and by kind: general, international, regional, sport, economy,
+  tech, science, culture, offbeat and children's news. Tick one to add it,
+  untick it to remove it. **Search** finds a source by its name, country,
+  kind or language, such as "NOS", "sport" or "Belgium".
+- **Your own RSS or Atom address** adds any other feed, such as your local
+  paper, under a name you choose.
+
+The chosen sources are listed by name, with where a built-in one is from or
+the address of your own. The NOS news feed is there from the first start;
+remove it if you do not want it.
+
+A **News** widget shows **All chosen sources** by default: their newest
+headlines together, newest first, each with the name of its source in front.
+Under **Sources** in its settings, **Only these sources** shows only the
+ones you tick, so the kitchen can show the NOS and the study Tweakers. A
+widget with one source has that source's name as its title. Each screen is
+only sent the headlines its own widgets show. A widget whose sources were
+all removed says so on the screen.
+
+GDash asks every source for its headlines every 15 minutes, with a
+conditional request, so an unchanged feed costs the publisher next to
+nothing. When one source does not answer, the screens keep the last
+headlines of all sources and mark them as old, rather than quietly leaving
+one out.
+
+The built-in sources are feeds their publishers offer publicly; GDash shows
+the headlines with the name of the source, as a feed reader does. They are
+kept in `internal/news/catalogue.json`, and each was fetched once to check
+that it answers with recent headlines before it was added. A publisher can
+move or stop a feed; such a source then fails under Integrations, and you
+can remove it and add its new address as your own.
 
 ## Waste collection
 

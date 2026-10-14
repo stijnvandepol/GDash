@@ -5,6 +5,27 @@ the format follows [Keep a Changelog](https://keepachangelog.com).
 
 ## Unreleased
 
+### Added
+
+- News sources to choose from: about 50 feeds that their publishers offer,
+  such as the NOS, NU.nl, RTL Nieuws, the national papers, Tweakers,
+  Security.nl, twelve regional broadcasters, VRT NWS, the BBC, The Guardian,
+  tagesschau, Le Monde and France 24, each checked to answer with recent
+  headlines. Under Integrations, News feeds a searchable list by country and
+  kind lets you tick them; your own RSS or Atom address still works. GDash
+  keeps up to ten feeds (was five), and refuses the same address twice.
+  `GET /api/news-catalogue` lists them.
+- A News widget can show only the sources you tick in its settings, so each
+  screen shows its own news; without a choice it shows all of them, as
+  before. A widget with one source has that source's name as its title, and
+  with several each headline names its source. A screen only receives the
+  headlines of the sources its own widgets show.
+
+### Changed
+
+- The news feed of the first start is called NOS Nieuws instead of
+  feeds.nos.nl, also in existing installations that kept that name.
+
 ### Fixed
 
 - A long headline in the News widget wraps onto a second line instead of

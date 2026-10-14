@@ -62,7 +62,7 @@ survive the internet dropping out. GDash is made for exactly that.
 | Solar forecast | What your solar panels are expected to produce today and tomorrow | Open-Meteo, or [Forecast.Solar](https://forecast.solar), no key |
 | Home Assistant | Sensors and switches, such as the temperature or a door | Your Home Assistant, read only |
 | Homey | Sensors and switches, and who is home as badges with initials | Your Homey Pro, read only, with an API key |
-| News | Headlines from up to five RSS or Atom feeds | Any feed (default: NOS) |
+| News | Headlines from up to ten sources, a different choice per widget | About 50 built-in sources (NOS, NU.nl, Tweakers, regional broadcasters, BBC, tagesschau and more) or any RSS or Atom feed (default: NOS) |
 | Photos | A slideshow of photos you upload, or of an album of Immich or Synology Photos | Stored on your server, [Immich](https://immich.app) with an API key, or a Synology Photos share link |
 | Now playing | What plays on your Cast speakers, groups and Nest Hubs, with the cover and progress | The devices themselves, read only |
 | Note and countdown | A short text, or the days until a date | — |

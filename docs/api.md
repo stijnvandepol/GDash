@@ -70,7 +70,8 @@ come from another site (cross-site request forgery protection).
 | `PUT /api/settings/solar` `{location, arrays, performanceRatio, source}` | admin | `200` the panels, see **settings.solar** | `400`, `401`, `422` naming every invalid field, such as `arrays[0].tilt` |
 | `DELETE /api/settings/solar` | admin | `204`; solar forecast widgets say that no panels are set up | `401` |
 | `GET /api/places?name=Oss` | admin | `200 {"places": [place]}` | `401`, `422`, `502 upstream_unavailable` |
-| `POST /api/news-feeds` `{name, url}` | admin | `201` news feed | `401`, `409` at 5 feeds, `422` |
+| `GET /api/news-catalogue` | admin | `200 {"categories": [category], "sources": [catalogue entry]}`, see **news catalogue** | `401` |
+| `POST /api/news-feeds` `{name, url}` | admin | `201` news feed | `401`, `409` at 10 feeds, `422`, also for an address that is added already |
 | `DELETE /api/news-feeds/{id}` | admin | `204` | `401`, `404` |
 | `POST /api/calendars` `{name, url}` | admin | `201` calendar, without its address | `401`, `409` at 10 calendars, `422` |
 | `PATCH /api/calendars/{id}` `{color}` | admin | `204` | `401`, `404`, `422` for another colour |
@@ -235,7 +236,12 @@ The log records who posted and to how many displays, never the token or the mess
 The weather location, news feeds and calendars are managed here instead of
 in environment variables. On the very first start GDash copies
 `GDASH_LATITUDE`, `GDASH_LONGITUDE`, `GDASH_NEWS_FEED` (default: NOS)
-and `GDASH_CALENDAR_URLS` into the settings; later starts ignore them.
+and `GDASH_CALENDAR_URLS` into the settings; later starts ignore them. A feed from the news catalogue gets the
+catalogue's name, such as NOS Nieuws; another is named after its host.
+
+With `GDASH_TEST_UPSTREAM` (the end-to-end tests only, a loopback address) the feeds of the news catalogue are read
+from `<GDASH_TEST_UPSTREAM>/news/<catalogue id>` instead of their publishers; an address of one's own is fetched as
+it is.
 
 A calendar's iCal address gives read access to everyone who has it. It is
 stored encrypted with `secret.key` in the data directory and never returned
@@ -607,7 +613,7 @@ allows, overlaps another, lacks a required setting, or has a setting its type do
 | `waste` | 6x4 | `waste.default` | `calendar`: the `id` of one of the calendars in the settings (required) |
 | `energyprice` | 6x4 | `energyprice.nl` | |
 | `solar` | 6x4 | `solar.default` | |
-| `news` | 6x4 | `news.default` | `maxItems`: 1 to 20 |
+| `news` | 6x4 | `news.default` | `maxItems`: 1 to 20, `feeds`: up to 10 `id`s of news feeds in the settings, each once; absent or empty shows every feed, as dashboards from before the setting do |
 | `calendar` | 6x4 | `calendar.default` | `maxItems`: 1 to 20 |
 | `text` | 4x3 | none | `text`: 1 to 300 characters, line breaks allowed (required) |
 | `photos` | 4x3 | `photos.default`, or `photos.immich` or `photos.synology` with `source` `immich` or `synology` | `seconds`: 5 to 600 per photo, default 30, `source`: `uploaded` (default), `immich` or `synology` |
@@ -626,7 +632,7 @@ allows, overlaps another, lacks a required setting, or has a setting its type do
 | `custom` | 4x3 | `custom.default` | `source`: the `id` of a custom source (required), `mode`: `value`, `list`, `keyValues` or `badges` (required), `title`: up to 60 characters; value mode: `path` (required), `label` (up to 40), `unit` (up to 12), `decimals` 0 to 6; list mode: `path` of the list and `fields`, 1 to 3 paths read from each item (both required); key-values and badges mode: `pairs`, 1 to 8 `{label, path}` (required); a badge is on when its value is `true`, a number other than 0, or the text `on`, `home`, `yes`, `open` or `true` in any case, and a screen only receives the labels of the badges that are on, as `badges`; `rules`: up to 6, see [Custom APIs](#custom-apis) |
 
 A setting's `kind` is `integer`, `text`, `date`, `calendar`, `camera`, `entities`, `homeyCapabilities`, `homeyUsers`,
-`castDevices`, `stop`, `place`, `webPage`, `choice` or `boolean`, or for the Custom widget `customSource`, `path`, `paths`, `pairs` and `rules`;
+`castDevices`, `newsFeeds`, `stop`, `place`, `webPage`, `choice` or `boolean`, or for the Custom widget `customSource`, `path`, `paths`, `pairs` and `rules`;
 `min` and `max` bound an integer, a text's length in characters, or the number of entities or items. A `choice` is one
 of the strings in the setting's `options`; a `boolean` is `true` or `false`. A
 `place` is exactly `{"name": "Oss", "latitude": 51.765, "longitude": 5.518}`: a name of 1 to 100 characters, a latitude
@@ -636,7 +642,9 @@ as `widgets[2]` with `rules[0].when: … at character 7`. Its `source`, like a `
 sources when a dashboard is saved or imported: a widget whose source is deleted, or that came from another GDash, says
 on the screen that its API is not available. A `calendar` setting is a whole number from 1 up, the `id` of a
 calendar; the server does not check that the calendar exists when a dashboard is saved, so a widget whose calendar is
-deleted later says on the screen that it cannot find it. A `camera` setting is the same for a camera; IDs of removed
+deleted later says on the screen that it cannot find it. A `newsFeeds` setting is a list of such `id`s of news
+feeds, likewise not checked: a widget shows those of its feeds that still exist, and says on the screen when none
+does. A `camera` setting is the same for a camera; IDs of removed
 cameras are never given to a new one. A `stop` is one code of 1 to 16 letters and digits.
 Text settings are shown as plain text on the screen, never as HTML.
 
@@ -646,8 +654,19 @@ Text settings are shown as plain text on the screen, never as HTML.
 A calendar's `color` is one of `blue`, `green`, `orange`, `purple`, `red`, `teal`, `pink` and `yellow`; until one is
 chosen it follows the calendar's place in the list. Its events carry the colour to the TV.
 Names are 1 to 60 characters; addresses use http or https, and calendars also webcal.
-Several news feeds are merged into one list, newest first, each headline with `source` set to its feed's name and
-an empty `title`, which the screen fills in in its own language.
+The entry `news.default` holds the newest 10 headlines of every news feed by the feed's `id`:
+`{"3": {"name": "NOS Nieuws", "items": [{"title": "…", "link": "https://…", "published": "2026-10-14T09:00:00Z"}]}}`.
+A screen receives only the feeds its News widgets show (all of them when a widget has no `feeds`); the widget merges
+its feeds newest first, names each headline's feed when it shows more than one, and takes the feed's name as its
+title when it shows one. When one feed fails, the whole entry keeps its last value and is marked `failing`.
+
+**news catalogue:** the news feeds GDash offers to choose from, in `internal/news/catalogue.json`, Dutch ones first:
+`{"id": "nos-algemeen", "name": "NOS Nieuws", "language": "nl", "country": "NL", "category": "general",
+"url": "https://feeds.nos.nl/nosnieuwsalgemeen", "note": "Listed by the NOS at nos.nl/feeds."}`. `language` is an
+ISO 639-1 code, `country` an ISO 3166-1 alpha-2 code, `category` one of `general`, `international`, `regional`,
+`sport`, `economy`, `tech`, `science`, `culture`, `offbeat` and `kids`, and `note`, when present, what is known of
+the publisher's terms. Choosing one is `POST /api/news-feeds` with its `name` and `url`; the web interface knows a
+chosen catalogue source by its address.
 
 **place:** `{"name": "Oss", "region": "North Brabant, Netherlands", "latitude": 51.765, "longitude": 5.518}`
 
