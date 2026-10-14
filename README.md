@@ -76,23 +76,23 @@ screen marks data that has gone stale.
 
 ### Looks
 
-- **Thirty-three styles** in four groups: calm essentials (Minimal dark and
+- **Forty-five styles** in five groups: calm essentials (Minimal dark and
   light, Glass, Warm light, High contrast, Night), styles with a character of
   their own (Frost, Walnut, Swiss, Tonal, Candy, Gilded, Riviera), styles
   inspired by films and series (Galaxy, Terminal, Parchment, Neon, Upside
   down, Noir, Mars, Hyperspace, Dark side, Desert planet, Wizard school,
-  Middle realm, Rain city, Time machine, Agent 00) and styles inspired by
+  Middle realm, Rain city, Time machine, Agent 00), styles inspired by
   games (Shiny hunt, Pocket console, Block world, Quest menu), and styles
   after art movements and patterns (De Stijl, Delft blue, Tessellation,
   Bauhaus, Starry swirl, Golden mosaic, Great wave, Colour field, Memphis,
   Art deco, Risograph, Brutalist), all drawn in CSS with the art behind the data.
-- **Thirteen typefaces** that ship with GDash, chosen per dashboard.
+- **Fifteen typefaces** that ship with GDash, chosen per dashboard.
 - **A night style** that takes over after sunset at your location.
 - Texts on the TV in **English, Dutch, German or French**.
 - Text sizes from 100 to 200 % per display, and every text colour at 4.5:1
   contrast or more in every style.
 
-![Eight of the thirty-three styles on the same dashboard: Frost, Walnut, Swiss, Gilded, Galaxy, Terminal, Noir and Candy](docs/images/styles.jpg)
+![Eight of the forty-five styles on the same dashboard: Frost, Walnut, Swiss, Gilded, Galaxy, Terminal, Noir and Candy](docs/images/styles.jpg)
 
 ### In the web interface
 

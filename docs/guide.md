@@ -123,7 +123,7 @@ add calendars and feeds under Integrations, and the photos once you add photos.
   panel then shows them, and **← Add widgets** goes back. The editor is
   about how a dashboard looks: addresses, keys and the values an API gives
   are set up under Integrations.
-- **Style:** the Style button opens a gallery of thirty-three themes in four
+- **Style:** the Style button opens a gallery of forty-five themes in five
   groups, each shown as a small screen. Minimal dark (the default, best for OLED screens),
   Minimal light and Warm light for bright rooms, Glass, High contrast for
   reading from across the room or with poor eyesight, and Night, dim amber
@@ -146,9 +146,8 @@ add calendars and feeds under Integrations, and the photos once you add photos.
   barrel). Under Games: Shiny hunt (pastel, sparkles and a red band), Pocket
   console (the four greens of a 1989 handheld in a pixel face), Block world
   (grass and dirt in square blocks) and Quest menu (deep blue menu windows
-  over an old map). They borrow no names, logos or symbols. Each theme has
-  its own typeface; under **Typeface** you can pick another of the thirteen
-  for this dashboard. All of them ship with Under Art & abstract, twelve after art movements and patterns, with
+  over an old map). They borrow no names, logos or symbols. Under Art &
+  abstract, twelve after art movements and patterns, with
   the art in the backdrop and in the margins of the tiles, never under the
   text: De Stijl (white planes, black lines and a plane of red, blue or
   yellow), Delft blue (white glaze and cobalt, every tile with corner
@@ -160,9 +159,8 @@ add calendars and feeds under Integrations, and the photos once you add photos.
   (squiggles and confetti from the eighties), Art deco (black and gold
   fans), Risograph (pink and blue ink in halftone dots) and Brutalist (raw
   concrete). Some vary their motif from tile to tile. Each theme has its own
-  typeface; under **Typeface** you can pick another of the thirteen for this
-  dashboard. All of them ship with
-  GDash and work offline. Under **After sunset** the dashboard can switch to
+  typeface; under **Typeface** you can pick another of the fifteen for this
+  dashboard. All of them ship with GDash and work offline. Under **After sunset** the dashboard can switch to
   another theme between sunset and sunrise, for instance Frost to Frost
   night, Minimal light to Minimal dark or Warm light to Night; the typeface
   stays. The switch follows the sun at the weather location from Integrations
