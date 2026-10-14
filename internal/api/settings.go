@@ -189,14 +189,18 @@ func (s *Server) postNewsFeed(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusCreated, feed)
 }
 
-// postCalendar handles POST /api/calendars {name, url}: 201 with the
-// calendar, which never includes the secret address.
+// postCalendar handles POST /api/calendars {name, url, purpose}: 201 with
+// the calendar, which never includes the secret address. purpose "waste"
+// adds a waste collection calendar; without it, a calendar of appointments.
 func (s *Server) postCalendar(w http.ResponseWriter, r *http.Request) {
-	var body sourceBody
+	var body struct {
+		sourceBody
+		Purpose string `json:"purpose"`
+	}
 	if !decodeJSON(w, r, &body) {
 		return
 	}
-	cal, err := s.Settings.AddCalendar(r.Context(), body.Name, body.URL)
+	cal, err := s.Settings.AddCalendar(r.Context(), body.Name, body.URL, body.Purpose)
 	if err != nil {
 		s.writeSettingsError(w, "add calendar", err)
 		return

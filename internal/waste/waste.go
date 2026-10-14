@@ -25,7 +25,9 @@ const (
 	General Kind = "rest"
 	Glass   Kind = "glass"
 	Textile Kind = "textile"
-	Other   Kind = "other"
+	// Tree is the collection of Christmas trees in January.
+	Tree  Kind = "tree"
+	Other Kind = "other"
 )
 
 // maxPickups keeps the snapshot small: a household has a few kinds and a
@@ -58,9 +60,11 @@ type rule struct {
 }
 
 // rules are tried in order and the first match wins. Glass comes before
-// organic so that "Groen glas" (green glass) is not organic waste.
+// organic so that "Groen glas" (green glass) is not organic waste, and
+// trees so that "Kerstbomen (groen)" is not either.
 var rules = []rule{
 	{Glass, []string{"glas", "glass"}, nil},
+	{Tree, []string{"kerstbo", "christmas", "xmas", "weihnachtsb", "tannenb", "sapin"}, nil},
 	{Paper, []string{"papier", "paper", "karton", "cardboard"}, nil},
 	{Textile, []string{"textiel", "textile", "kleding", "clothes", "clothing"}, nil},
 	{Plastic, []string{"plastic", "packag", "verpakking", "drankkarton", "blik"}, []string{"pmd"}},
@@ -70,7 +74,8 @@ var rules = []rule{
 
 // Classify returns the kind of waste a calendar event title is for, or
 // Other. It knows the usual Dutch and English names, such as GFT, PMD,
-// papier, restafval, glas, textiel, green, plastic, paper and general.
+// papier, restafval, glas, textiel, kerstbomen, green, plastic, paper and
+// general.
 func Classify(title string) Kind {
 	words := strings.FieldsFunc(strings.ToLower(title), func(r rune) bool {
 		return !unicode.IsLetter(r) && !unicode.IsDigit(r)

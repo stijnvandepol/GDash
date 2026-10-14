@@ -3,6 +3,7 @@ package settings
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"log/slog"
 	"path/filepath"
@@ -68,7 +69,7 @@ func TestLocation(t *testing.T) {
 func TestCalendarAddressIsSecret(t *testing.T) {
 	ctx := context.Background()
 	s := newService(t)
-	cal, err := s.AddCalendar(ctx, "Family", "webcal://calendar.example.org/private-0123456789/basic.ics")
+	cal, err := s.AddCalendar(ctx, "Family", "webcal://calendar.example.org/private-0123456789/basic.ics", PurposeAppointments)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -282,7 +283,7 @@ func TestCalendarColors(t *testing.T) {
 	ctx := context.Background()
 	s := newService(t)
 	for _, name := range []string{"Family", "Work"} {
-		if _, err := s.AddCalendar(ctx, name, secretURL+"?"+name); err != nil {
+		if _, err := s.AddCalendar(ctx, name, secretURL+"?"+name, PurposeAppointments); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -299,5 +300,58 @@ func TestCalendarColors(t *testing.T) {
 	src, _ := s.Sources(ctx)
 	if src.Calendars[0].Color != "orange" || src.Calendars[1].Color != "green" {
 		t.Fatalf("source colours = %s, %s", src.Calendars[0].Color, src.Calendars[1].Color)
+	}
+}
+
+func TestWasteCalendarsAreListedApart(t *testing.T) {
+	ctx := context.Background()
+	s := newService(t)
+	if _, err := s.AddCalendar(ctx, "Family", secretURL, PurposeAppointments); err != nil {
+		t.Fatal(err)
+	}
+	home, err := s.AddCalendar(ctx, "Home", "webcal://afval.example.org/ical/1234AB-1", PurposeWaste)
+	if err != nil {
+		t.Fatal(err)
+	}
+	got, _ := s.Get(ctx)
+	if len(got.Calendars) != 1 || got.Calendars[0].Name != "Family" || len(got.WasteCalendars) != 1 || got.WasteCalendars[0].ID != home.ID {
+		t.Fatalf("Get = %+v and %+v; want Family among the calendars and Home among the waste calendars", got.Calendars, got.WasteCalendars)
+	}
+	// A waste calendar keeps the colour of its place in the whole list, so
+	// splitting the lists changes no calendar's colour.
+	if got.WasteCalendars[0].Color != "green" {
+		t.Fatalf("waste calendar colour = %q, want green, the second colour", got.WasteCalendars[0].Color)
+	}
+	src, _ := s.Sources(ctx)
+	if len(src.Calendars) != 1 || len(src.WasteCalendars) != 1 || src.WasteCalendars[0].URL != "https://afval.example.org/ical/1234AB-1" {
+		t.Fatalf("Sources = %+v and %+v; want the waste calendar apart, over https", src.Calendars, src.WasteCalendars)
+	}
+	if _, err := s.AddCalendar(ctx, "Bins", "ftp://x", "bins"); fieldNames(err) != "url,purpose" {
+		t.Fatalf("unknown purpose: fields = %q, want url,purpose", fieldNames(err))
+	}
+}
+
+func TestWasteCalendarsHaveTheirOwnLimit(t *testing.T) {
+	ctx := context.Background()
+	s := newService(t)
+	for i := range MaxWasteCalendars {
+		if _, err := s.AddCalendar(ctx, fmt.Sprintf("Address %d", i), secretURL, PurposeWaste); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if _, err := s.AddCalendar(ctx, "One more", secretURL, PurposeWaste); !errors.Is(err, store.ErrConflict) {
+		t.Fatalf("waste calendar past the limit: err = %v, want ErrConflict", err)
+	}
+	if _, err := s.AddCalendar(ctx, "Family", secretURL, PurposeAppointments); err != nil {
+		t.Fatalf("the waste calendars count towards the limit of calendars: %v", err)
+	}
+}
+
+func TestCalendarAddress(t *testing.T) {
+	if got, err := CalendarAddress("webcal://afval.example.org/a.ics"); err != nil || got != "https://afval.example.org/a.ics" {
+		t.Fatalf("CalendarAddress = %q, %v; want the https address", got, err)
+	}
+	if _, err := CalendarAddress("afval.example.org"); fieldNames(err) != "url" {
+		t.Fatalf("address without a scheme: fields = %q, want url", fieldNames(err))
 	}
 }

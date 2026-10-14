@@ -35,6 +35,9 @@ import (
 const (
 	MaxNewsFeeds = 10
 	MaxCalendars = 10
+	// MaxWasteCalendars is a few addresses, such as home and a holiday
+	// house.
+	MaxWasteCalendars = 5
 )
 
 const (
@@ -73,7 +76,11 @@ type Settings struct {
 	// Location is nil until one is chosen.
 	Location  *Location  `json:"location"`
 	NewsFeeds []NewsFeed `json:"newsFeeds"`
+	// Calendars are the calendars of appointments, for the Calendar widget.
 	Calendars []Calendar `json:"calendars"`
+	// WasteCalendars are the waste collection calendars, for the Waste
+	// collection widget.
+	WasteCalendars []Calendar `json:"wasteCalendars"`
 	// Language is what TVs show their texts and dates in.
 	Language string `json:"language"`
 	// HomeAssistant is nil until a connection is set up.
@@ -104,7 +111,10 @@ var Languages = []string{"en", "nl", "de", "fr"}
 type Sources struct {
 	Location  *weather.Location
 	NewsFeeds []news.Source
+	// Calendars are the calendars of appointments.
 	Calendars []calendar.Source
+	// WasteCalendars are the waste collection calendars.
+	WasteCalendars []calendar.Source
 	// HomeAssistant is nil when no readable connection is set up.
 	HomeAssistant *homeassistant.Connection
 	// Homey is nil when no readable local connection is set up.
@@ -150,7 +160,7 @@ func (s *Service) Get(ctx context.Context) (Settings, error) {
 	if err != nil {
 		return Settings{}, err
 	}
-	out := Settings{Location: loc, NewsFeeds: []NewsFeed{}, Calendars: []Calendar{}, Language: language, UpdateCheck: updateCheck}
+	out := Settings{Location: loc, NewsFeeds: []NewsFeed{}, Calendars: []Calendar{}, WasteCalendars: []Calendar{}, Language: language, UpdateCheck: updateCheck}
 	feeds, err := s.Store.Sources(ctx, store.SourceNews)
 	if err != nil {
 		return Settings{}, err
@@ -162,11 +172,16 @@ func (s *Service) Get(ctx context.Context) (Settings, error) {
 	if err != nil {
 		return Settings{}, err
 	}
+	// The colour follows the place among all calendars, as before waste
+	// calendars had their own list, so no calendar changes colour.
 	for i, c := range calendars {
 		_, openErr := s.Box.Open(c.Address)
-		out.Calendars = append(out.Calendars, Calendar{
-			ID: c.ID, Name: c.Name, Host: c.Host, Color: calendarColor(c.Color, i), Unreadable: openErr != nil,
-		})
+		view := Calendar{ID: c.ID, Name: c.Name, Host: c.Host, Color: calendarColor(c.Color, i), Unreadable: openErr != nil}
+		if c.Purpose == PurposeWaste {
+			out.WasteCalendars = append(out.WasteCalendars, view)
+		} else {
+			out.Calendars = append(out.Calendars, view)
+		}
 	}
 	if out.HomeAssistant, err = s.homeAssistantView(ctx); err != nil {
 		return Settings{}, err
@@ -224,7 +239,12 @@ func (s *Service) Sources(ctx context.Context) (Sources, error) {
 			s.Logger.Error("calendar address cannot be decrypted; remove the calendar and add it again", "calendar", c.Name, "error", err)
 			continue
 		}
-		out.Calendars = append(out.Calendars, calendar.Source{ID: c.ID, Name: c.Name, URL: address, Color: calendarColor(c.Color, i)})
+		source := calendar.Source{ID: c.ID, Name: c.Name, URL: address, Color: calendarColor(c.Color, i)}
+		if c.Purpose == PurposeWaste {
+			out.WasteCalendars = append(out.WasteCalendars, source)
+		} else {
+			out.Calendars = append(out.Calendars, source)
+		}
 	}
 	conn, ok, err := s.HomeAssistantConnection(ctx)
 	if err != nil {
@@ -393,23 +413,45 @@ func checkSource(name, address string, isCalendar bool) (*url.URL, error) {
 	if msg := nameProblem(name); msg != "" {
 		errs.Add("name", msg)
 	}
-	u, err := url.Parse(strings.TrimSpace(address))
-	switch {
-	case err != nil || u.Host == "" || len(address) > maxURLLength:
-		errs.Add("url", "paste the full address, starting with https://")
-	case isCalendar && u.Scheme == "webcal":
-		u.Scheme = "https"
-	case u.Scheme != "http" && u.Scheme != "https":
-		errs.Add("url", "use an http or https address")
-	case !isCalendar && u.User != nil:
-		// Feed addresses are stored and shown as they are; a password in
-		// one would be visible in the web interface and the logs.
-		errs.Add("url", "use the feed's address without a user name or password")
+	u, msg := checkAddress(address, isCalendar)
+	if msg != "" {
+		errs.Add("url", msg)
 	}
 	if err := errs.Err(); err != nil {
 		return nil, err
 	}
 	return u, nil
+}
+
+// CalendarAddress checks the address of a calendar as AddCalendar does and
+// returns it as GDash fetches it, webcal:// as https://. It returns a
+// *validation.Error for the field "url".
+func CalendarAddress(address string) (string, error) {
+	u, msg := checkAddress(address, true)
+	if msg != "" {
+		var errs validation.Collector
+		errs.Add("url", msg)
+		return "", errs.Err()
+	}
+	return u.String(), nil
+}
+
+// checkAddress returns the parsed address, or what is wrong with it.
+func checkAddress(address string, isCalendar bool) (*url.URL, string) {
+	u, err := url.Parse(strings.TrimSpace(address))
+	switch {
+	case err != nil || u.Host == "" || len(address) > maxURLLength:
+		return nil, "paste the full address, starting with https://"
+	case isCalendar && u.Scheme == "webcal":
+		u.Scheme = "https"
+	case u.Scheme != "http" && u.Scheme != "https":
+		return nil, "use an http or https address"
+	case !isCalendar && u.User != nil:
+		// Feed addresses are stored and shown as they are; a password in
+		// one would be visible in the web interface and the logs.
+		return nil, "use the feed's address without a user name or password"
+	}
+	return u, ""
 }
 
 func nameProblem(name string) string {

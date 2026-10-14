@@ -69,8 +69,8 @@ const (
 // Settings. A service is only asked for data that a screen shows.
 func (d *dataSources) dashboardSources(cfg settings.Sources, dashboards []display.Dashboard) []datahub.Source {
 	var sources []datahub.Source
-	if ids := display.WasteCalendarIDs(dashboards); len(ids) > 0 && len(cfg.Calendars) > 0 {
-		sources = append(sources, d.wasteSource(cfg.Calendars, ids))
+	if source, ok := d.wasteSource(cfg.WasteCalendars, dashboards); ok {
+		sources = append(sources, source)
 	}
 	if display.UsesWidget(dashboards, "energyprice") {
 		sources = append(sources, datahub.Source{
@@ -205,41 +205,57 @@ func (d *dataSources) fuelSource(location *weather.Location, queries []fuel.Quer
 	}, true
 }
 
-// wasteSource fetches the pickups of the calendars that waste widgets name.
-// A calendar that is gone (deleted, or unreadable) is left out of the
-// answer, which the widget shows as a calendar it cannot find.
-func (d *dataSources) wasteSource(all []calendar.Source, ids []int64) datahub.Source {
+// wasteSource fetches the pickups of the waste calendars that waste widgets
+// name, and of the only waste calendar when a widget names none. A calendar
+// that is gone (deleted, unreadable or not a waste calendar) is left out of
+// the answer, which the widget shows as a calendar it cannot find.
+func (d *dataSources) wasteSource(all []calendar.Source, dashboards []display.Dashboard) (datahub.Source, bool) {
+	ids, usesDefault := display.WasteCalendarIDs(dashboards)
+	var only int64
+	if usesDefault && len(all) == 1 {
+		only = all[0].ID
+	}
 	var chosen []calendar.Source
 	for _, c := range all {
-		if slices.Contains(ids, c.ID) {
+		if slices.Contains(ids, c.ID) || c.ID == only {
 			chosen = append(chosen, c)
 		}
+	}
+	// A widget without a calendar beside several still gets an answer, an
+	// empty one, so its screen asks for a choice instead of a calendar.
+	if len(chosen) == 0 && !(usesDefault && len(all) > 1) {
+		return datahub.Source{}, false
 	}
 	return datahub.Source{
 		Key:      display.WasteSource,
 		Interval: wasteInterval,
 		Timeout:  wasteTimeout,
-		Version:  d.fingerprint(chosen),
+		Version:  d.fingerprint(struct{ Calendars, Only any }{chosen, only}),
 		Fetch: func(ctx context.Context) (any, error) {
-			return d.wastePickups(ctx, chosen)
+			return d.wastePickups(ctx, chosen, only)
 		},
-	}
+	}, true
 }
 
 // wastePickups reads each calendar on its own, so the pickups can be told
-// apart by calendar. It fails when any calendar fails, so the widgets keep
-// the last complete answer instead of quietly showing half of it.
-func (d *dataSources) wastePickups(ctx context.Context, calendars []calendar.Source) (waste.Report, error) {
+// apart by calendar; those of only, when not 0, are also under
+// display.WasteDefaultKey. It fails when any calendar fails, so the widgets
+// keep the last complete answer instead of quietly showing half of it.
+func (d *dataSources) wastePickups(ctx context.Context, calendars []calendar.Source, only int64) (waste.Report, error) {
 	report := waste.Report{}
 	var errs []error
 	for _, c := range calendars {
-		events, err := d.calendar.Upcoming(ctx, []calendar.Source{c}, wasteDays)
+		events, err := d.calendar.Read(ctx, c, wasteDays)
 		if err != nil {
 			// The error never holds the address; see calendar.withoutURL.
 			errs = append(errs, fmt.Errorf("waste calendar %d: %w", c.ID, err))
 			continue
 		}
-		report[strconv.FormatInt(c.ID, 10)] = waste.Pickups(events)
+		pickups := waste.Pickups(events)
+		report[strconv.FormatInt(c.ID, 10)] = pickups
+		if c.ID == only {
+			report[display.WasteDefaultKey] = pickups
+		}
 	}
 	return report, errors.Join(errs...)
 }

@@ -17,6 +17,7 @@ import (
 	"github.com/stijnvandepol/gdash/internal/secret"
 	"github.com/stijnvandepol/gdash/internal/settings"
 	"github.com/stijnvandepol/gdash/internal/solar"
+	"github.com/stijnvandepol/gdash/internal/waste"
 	"github.com/stijnvandepol/gdash/internal/weather"
 )
 
@@ -38,20 +39,34 @@ func wasteOn(id float64) display.Widget {
 	return display.Widget{ID: "waste", Type: "waste", Settings: map[string]any{"calendar": id}}
 }
 
+// wasteOnly is a waste widget that names no calendar.
+var wasteOnly = display.Widget{ID: "waste", Type: "waste"}
+
 func TestWasteIsFetchedOnlyForCalendarsThatWidgetsShow(t *testing.T) {
-	cfg := settings.Sources{Calendars: []calendar.Source{{ID: 1, URL: "https://a.example/a.ics"}, {ID: 2, URL: "https://a.example/b.ics"}}}
+	cfg := settings.Sources{WasteCalendars: []calendar.Source{{ID: 1, URL: "https://a.example/a.ics"}, {ID: 2, URL: "https://a.example/b.ics"}}}
 	if got := widgetSources(t, cfg); len(got) != 0 {
 		t.Fatalf("sources without widgets = %v, want none", got)
 	}
 	if got := widgetSources(t, settings.Sources{}, wasteOn(1)); len(got) != 0 {
 		t.Fatalf("sources without calendars = %v, want none, so the widget says to add one", got)
 	}
+	appointments := settings.Sources{Calendars: cfg.WasteCalendars}
+	if got := widgetSources(t, appointments, wasteOn(1)); len(got) != 0 {
+		t.Fatalf("sources for a calendar of appointments = %v, want none: a waste widget shows waste calendars only", got)
+	}
+	choose, ok := widgetSources(t, cfg, wasteOnly)[display.WasteSource]
+	if !ok {
+		t.Fatal("no waste source for a widget without a calendar beside two waste calendars; its screen would say there is none")
+	}
+	if report, err := choose.Fetch(context.Background()); err != nil || len(report.(waste.Report)) != 0 {
+		t.Fatalf("report for a widget without a calendar beside two = %v, %v; want an empty one, so the screen asks which", report, err)
+	}
 	one := widgetSources(t, cfg, wasteOn(1))[display.WasteSource]
 	two := widgetSources(t, cfg, wasteOn(2))[display.WasteSource]
 	if one.Key == "" || one.Version == "" || one.Version == two.Version {
 		t.Fatalf("versions = %q and %q; want a source whose version follows the chosen calendar", one.Version, two.Version)
 	}
-	changed := settings.Sources{Calendars: []calendar.Source{{ID: 1, URL: "https://a.example/new.ics"}}}
+	changed := settings.Sources{WasteCalendars: []calendar.Source{{ID: 1, URL: "https://a.example/new.ics"}}}
 	if now := widgetSources(t, changed, wasteOn(1))[display.WasteSource]; now.Version == one.Version {
 		t.Fatal("the source did not restart when the calendar's address changed")
 	}
@@ -277,7 +292,7 @@ func wasteServer(t *testing.T, status int) (*dataSources, string) {
 
 func TestWastePickupsAreKeyedByCalendar(t *testing.T) {
 	d, address := wasteServer(t, http.StatusOK)
-	report, err := d.wastePickups(context.Background(), []calendar.Source{{ID: 7, Name: "Afval", URL: address}})
+	report, err := d.wastePickups(context.Background(), []calendar.Source{{ID: 7, Name: "Afval", URL: address}}, 0)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -297,7 +312,26 @@ func TestWastePickupsAreKeyedByCalendar(t *testing.T) {
 
 func TestWastePickupsFailWhenACalendarFails(t *testing.T) {
 	d, address := wasteServer(t, http.StatusInternalServerError)
-	if _, err := d.wastePickups(context.Background(), []calendar.Source{{ID: 7, URL: address}}); err == nil {
+	if _, err := d.wastePickups(context.Background(), []calendar.Source{{ID: 7, URL: address}}, 0); err == nil {
 		t.Fatal("wastePickups succeeded; the widget would show an empty list instead of its last good one")
+	}
+}
+
+func TestAWasteWidgetWithoutACalendarShowsTheOnlyWasteCalendar(t *testing.T) {
+	d, address := wasteServer(t, http.StatusOK)
+	only := settings.Sources{WasteCalendars: []calendar.Source{{ID: 7, Name: "Afval", URL: address}}}
+	source, ok := widgetSources(t, only, wasteOnly)[display.WasteSource]
+	if !ok {
+		t.Fatal("no waste source for a widget without a calendar beside the only waste calendar")
+	}
+	if named := widgetSources(t, only, wasteOn(7))[display.WasteSource]; named.Version == source.Version {
+		t.Fatal("the version does not change when a widget starts to show the only waste calendar by default")
+	}
+	report, err := d.wastePickups(context.Background(), only.WasteCalendars, 7)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(report[display.WasteDefaultKey]) != 5 || len(report["7"]) != 5 {
+		t.Fatalf("report = %v, want the five pickups under the calendar and under %q", report, display.WasteDefaultKey)
 	}
 }

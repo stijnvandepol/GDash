@@ -78,9 +78,7 @@ type Client struct {
 // fails, so the dashboard keeps the last complete list instead of quietly
 // showing half of it.
 func (c *Client) Upcoming(ctx context.Context, sources []Source, days int) ([]Event, error) {
-	now := c.Now().In(c.Location)
-	from := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, c.Location)
-	w := Window{From: from, To: from.AddDate(0, 0, days), Location: c.Location}
+	w := c.window(days)
 
 	// Calendars download in parallel, so a few slow ones do not add up to
 	// more than the refresh may take.
@@ -94,13 +92,8 @@ func (c *Client) Upcoming(ctx context.Context, sources []Source, days int) ([]Ev
 			defer wg.Done()
 			slots <- struct{}{}
 			defer func() { <-slots }()
-			body, err := c.fetch(ctx, src)
-			if err == nil {
-				found[i], err = Parse(bytes.NewReader(body), w, src.Name)
-			}
-			for j := range found[i] {
-				found[i][j].Color = src.Color
-			}
+			var err error
+			found[i], err = c.read(ctx, src, w)
 			if err != nil {
 				errs[i] = fmt.Errorf("calendar %d: %w", i+1, err)
 			}
@@ -114,11 +107,50 @@ func (c *Client) Upcoming(ctx context.Context, sources []Source, days int) ([]Ev
 	for _, f := range found {
 		events = append(events, f...)
 	}
+	return sortedFirst(events), nil
+}
+
+// Read returns the events of one calendar as Upcoming does, with an error
+// that does not say which calendar, for a test of an address before it is
+// stored.
+func (c *Client) Read(ctx context.Context, src Source, days int) ([]Event, error) {
+	events, err := c.read(ctx, src, c.window(days))
+	if err != nil {
+		return nil, err
+	}
+	return sortedFirst(events), nil
+}
+
+// window runs from the start of today for the given number of days.
+func (c *Client) window(days int) Window {
+	now := c.Now().In(c.Location)
+	from := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, c.Location)
+	return Window{From: from, To: from.AddDate(0, 0, days), Location: c.Location}
+}
+
+// read fetches and parses one calendar, with its colour on every event.
+func (c *Client) read(ctx context.Context, src Source, w Window) ([]Event, error) {
+	body, err := c.fetch(ctx, src)
+	if err != nil {
+		return nil, err
+	}
+	events, err := Parse(bytes.NewReader(body), w, src.Name)
+	if err != nil {
+		return nil, err
+	}
+	for i := range events {
+		events[i].Color = src.Color
+	}
+	return events, nil
+}
+
+// sortedFirst sorts events and keeps the first maxEvents.
+func sortedFirst(events []Event) []Event {
 	Sort(events)
 	if len(events) > maxEvents {
 		events = events[:maxEvents]
 	}
-	return events, nil
+	return events
 }
 
 func (c *Client) fetch(ctx context.Context, src Source) ([]byte, error) {

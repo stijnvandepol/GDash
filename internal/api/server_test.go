@@ -22,6 +22,7 @@ import (
 	"github.com/stijnvandepol/gdash/internal/announcement"
 	"github.com/stijnvandepol/gdash/internal/apitoken"
 	"github.com/stijnvandepol/gdash/internal/auth"
+	"github.com/stijnvandepol/gdash/internal/calendar"
 	"github.com/stijnvandepol/gdash/internal/camera"
 	"github.com/stijnvandepol/gdash/internal/cast"
 	"github.com/stijnvandepol/gdash/internal/casting"
@@ -234,6 +235,7 @@ func newTestEnv(t *testing.T, discover func(context.Context) ([]cast.Device, err
 		Stops:             stops,
 		Traffic:           trafficGuard,
 		KNMI:              fakeKNMI{},
+		Calendars:         &calendar.Client{HTTP: outbound.NewClient(5 * time.Second), Location: time.UTC, Now: now},
 		CustomFetcher:     &custom.Fetcher{HTTP: outbound.NewClient(5 * time.Second), Box: box, Now: now},
 		WebPageChecker:    &webpage.Checker{HTTP: outbound.NewClient(5 * time.Second)},
 		ReceiveCustom:     sources.receiveCustom,

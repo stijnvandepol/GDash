@@ -96,7 +96,7 @@ func narrowShared(used map[string]datahub.Entry, dashboards []Dashboard) {
 		used[HomeySource] = onlyKeys(entry, HomeyCapabilityKeys(dashboards))
 	}
 	if entry, ok := used[WasteSource]; ok {
-		used[WasteSource] = onlyIDs(entry, WasteCalendarIDs(dashboards))
+		used[WasteSource] = onlyKeys(entry, wasteKeys(dashboards))
 	}
 	if entry, ok := used[DeparturesSource]; ok {
 		used[DeparturesSource] = onlyKeys(entry, StopCodes(dashboards))

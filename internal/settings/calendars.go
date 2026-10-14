@@ -35,11 +35,31 @@ type Calendar struct {
 	Unreadable bool `json:"unreadable"`
 }
 
-// AddCalendar adds an ICS calendar; its address is stored encrypted. It
-// returns a *validation.Error for invalid input and store.ErrConflict when
-// MaxCalendars is reached.
-func (s *Service) AddCalendar(ctx context.Context, name, address string) (Calendar, error) {
+// What a calendar is for, as the web interface sends it: appointments for
+// the Calendar widget (empty), or the pickups of a waste collection, which
+// only the Waste collection widget shows.
+const (
+	PurposeAppointments = ""
+	PurposeWaste        = store.PurposeWaste
+)
+
+// calendarLimits is how many calendars of each purpose GDash keeps.
+var calendarLimits = map[string]int{PurposeAppointments: MaxCalendars, PurposeWaste: MaxWasteCalendars}
+
+// AddCalendar adds an ICS calendar for a purpose; its address is stored
+// encrypted. It returns a *validation.Error for invalid input and
+// store.ErrConflict when MaxCalendars, or MaxWasteCalendars, is reached.
+func (s *Service) AddCalendar(ctx context.Context, name, address, purpose string) (Calendar, error) {
+	limit, known := calendarLimits[purpose]
 	u, err := checkSource(name, address, true)
+	if !known {
+		errs := validation.Collector{}
+		for _, f := range validation.Fields(err) {
+			errs.Add(f.Field, f.Message)
+		}
+		errs.Add("purpose", `use "waste" for a waste collection calendar, or leave it out`)
+		return Calendar{}, errs.Err()
+	}
 	if err != nil {
 		return Calendar{}, err
 	}
@@ -48,8 +68,8 @@ func (s *Service) AddCalendar(ctx context.Context, name, address string) (Calend
 		return Calendar{}, err
 	}
 	id, err := s.Store.AddSource(ctx, store.Source{
-		Kind: store.SourceCalendar, Name: name, Address: sealed, Host: u.Hostname(), CreatedAt: s.Now().UTC(),
-	}, MaxCalendars)
+		Kind: store.SourceCalendar, Name: name, Address: sealed, Host: u.Hostname(), Purpose: purpose, CreatedAt: s.Now().UTC(),
+	}, limit)
 	if err != nil {
 		return Calendar{}, err
 	}

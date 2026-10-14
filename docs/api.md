@@ -73,9 +73,10 @@ come from another site (cross-site request forgery protection).
 | `GET /api/news-catalogue` | admin | `200 {"categories": [category], "sources": [catalogue entry]}`, see **news catalogue** | `401` |
 | `POST /api/news-feeds` `{name, url}` | admin | `201` news feed | `401`, `409` at 10 feeds, `422`, also for an address that is added already |
 | `DELETE /api/news-feeds/{id}` | admin | `204` | `401`, `404` |
-| `POST /api/calendars` `{name, url}` | admin | `201` calendar, without its address | `401`, `409` at 10 calendars, `422` |
+| `POST /api/calendars` `{name, url, purpose?}` | admin | `201` calendar, without its address; `purpose` `"waste"` adds a waste collection calendar, which `settings.wasteCalendars` lists, and without it a calendar of appointments | `401`, `409` at 10 calendars or 5 waste calendars, `422` naming `name`, `url` or `purpose` |
 | `PATCH /api/calendars/{id}` `{color}` | admin | `204` | `401`, `404`, `422` for another colour |
-| `DELETE /api/calendars/{id}` | admin | `204` | `401`, `404` |
+| `DELETE /api/calendars/{id}` | admin | `204`; for either kind of calendar | `401`, `404` |
+| `POST /api/waste-calendar-tests` `{url}` | admin | `200 {"pickups": [{kind, title, date}]}`: the pickups of the next 56 days, read now and not stored, as in the **waste data** | `401`, `422` naming `url`, `502 fetch_failed` with what went wrong, such as the status the calendar server answered, never the address |
 | `PUT /api/homeassistant` `{url, token}` | admin | `200 {"url": …}` after Home Assistant accepted the token | `401`, `422` naming `url` or `token` |
 | `DELETE /api/homeassistant` | admin | `204`; Home Assistant widgets show that it is not connected | `401` |
 | `GET /api/homeassistant/entities` | admin | `200 {"entities": [entity]}`, sorted by ID | `401`, `409 not_connected`, `502 upstream_unavailable` |
@@ -610,7 +611,7 @@ allows, overlaps another, lacks a required setting, or has a setting its type do
 | `sun` | 5x4 | `weather.current` | |
 | `moon` | 4x4 | none | |
 | `airquality` | 5x4 | `airquality.current` | |
-| `waste` | 6x4 | `waste.default` | `calendar`: the `id` of one of the calendars in the settings (required) |
+| `waste` | 6x4 | `waste.default` | `calendar`: the `id` of one of the waste calendars in the settings; without it the widget shows the only waste calendar, and asks for a choice when there are several |
 | `energyprice` | 6x4 | `energyprice.nl` | |
 | `solar` | 6x4 | `solar.default` | |
 | `news` | 6x4 | `news.default` | `maxItems`: 1 to 20, `feeds`: up to 10 `id`s of news feeds in the settings, each once; absent or empty shows every feed, as dashboards from before the setting do |
@@ -641,14 +642,16 @@ for a result, without `region`. A Custom widget's settings are checked together,
 as `widgets[2]` with `rules[0].when: … at character 7`. Its `source`, like a `calendar`, is not checked against the
 sources when a dashboard is saved or imported: a widget whose source is deleted, or that came from another GDash, says
 on the screen that its API is not available. A `calendar` setting is a whole number from 1 up, the `id` of a
-calendar; the server does not check that the calendar exists when a dashboard is saved, so a widget whose calendar is
-deleted later says on the screen that it cannot find it. A `newsFeeds` setting is a list of such `id`s of news
+waste calendar; the server does not check that the calendar exists when a dashboard is saved, so a widget whose
+calendar is deleted later, or that names a calendar of appointments, says on the screen that it cannot find it. A `newsFeeds` setting is a list of such `id`s of news
 feeds, likewise not checked: a widget shows those of its feeds that still exist, and says on the screen when none
 does. A `camera` setting is the same for a camera; IDs of removed
 cameras are never given to a new one. A `stop` is one code of 1 to 16 letters and digits.
 Text settings are shown as plain text on the screen, never as HTML.
 
-**settings:** `{"language": "nl", "location": {"name": "Oss", "latitude": 51.77, "longitude": 5.52} | null, "newsFeeds": [{"id": 1, "name": "NOS", "url": "https://…"}], "calendars": [{"id": 2, "name": "Family", "host": "calendar.google.com", "color": "blue", "unreadable": false}], "updateCheck": true}`.
+**settings:** `{"language": "nl", "location": {"name": "Oss", "latitude": 51.77, "longitude": 5.52} | null, "newsFeeds": [{"id": 1, "name": "NOS", "url": "https://…"}], "calendars": [{"id": 2, "name": "Family", "host": "calendar.google.com", "color": "blue", "unreadable": false}], "wasteCalendars": [{"id": 3, "name": "Home", "host": "www.mijnafvalwijzer.nl", "color": "green", "unreadable": false}], "updateCheck": true}`.
+`calendars` are the calendars of appointments, which the Calendar widget shows; `wasteCalendars` are the waste
+collection calendars, which only Waste collection widgets show. Both are calendars under `/api/calendars`.
 `updateCheck` is whether GDash asks `api.github.com` once a day for the latest release; it is on until turned off. See
 [SECURITY.md](../SECURITY.md).
 A calendar's `color` is one of `blue`, `green`, `orange`, `purple`, `red`, `teal`, `pink` and `yellow`; until one is
@@ -726,12 +729,14 @@ The index runs from 0 to 100 and above (good, fair, moderate, poor, very poor, e
 `pollen` only lists the kinds (alder, birch, grass, mugwort, olive, ragweed) that Open-Meteo has a value for; it is
 empty outside Europe and, depending on the model, outside the pollen season.
 
-**waste data (`waste.default`):** the pickups of the calendars that the waste widgets of the display show, by calendar
-`id` as text: `{"3": [{"kind": "gft", "title": "GFT", "date": "2026-10-13"}]}`. `kind` is `gft`, `pmd`, `paper`, `rest`,
-`glass`, `textile` or `other`, recognised from the event's title (Dutch and English names); `title` is the title as the
+**waste data (`waste.default`):** the pickups of the waste calendars that the waste widgets of the display show, by
+calendar `id` as text: `{"3": [{"kind": "gft", "title": "GFT", "date": "2026-10-13"}]}`, and under `"default"` those of
+the only waste calendar when a widget names none. `kind` is `gft`, `pmd`, `paper`, `rest`, `glass`, `textile`, `tree`
+(Christmas trees) or `other`, recognised from the event's title (Dutch and English names); `title` is the title as the
 calendar has it, which the screen shows for `other`; `date` is the local day the event starts. The server fetches the
 next 15 days of each calendar every 30 minutes, at most 60 pickups per calendar, and the screen shows the next pickup of
-each kind within 14 days. A calendar that is deleted or cannot be read is left out.
+each kind within 14 days. A calendar that is deleted, cannot be read or is not a waste calendar is left out, and so is
+`"default"` with no waste calendar or several.
 
 **holiday data (`holidays.nl`):** `{"public": [{"kind": "christmas", "date": "2026-12-25"}], "middle": [{"kind": "autumn", "name": "Herfstvakantie", "start": "2026-10-17", "end": "2026-10-25"}]}`.
 `public` holds the Dutch public holidays from today to the end of next year, computed by the server: `kind` is

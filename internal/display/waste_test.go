@@ -27,7 +27,7 @@ func TestValidateWasteAndEnergyPriceWidgets(t *testing.T) {
 	}{
 		{"waste", wasteWidget("waste", float64(3)), ""},
 		{"waste with an int from Go code", wasteWidget("waste", 3), ""},
-		{"waste without a calendar", wasteWidget("waste", nil), "widgets[2]: a waste widget needs a calendar"},
+		{"waste without a calendar shows the only waste calendar", wasteWidget("waste", nil), ""},
 		{"waste calendar zero", wasteWidget("waste", float64(0)), "widgets[2]: calendar must be the number of a calendar added under Integrations"},
 		{"waste calendar negative", wasteWidget("waste", float64(-1)), "widgets[2]: calendar must be the number of a calendar"},
 		{"waste calendar fraction", wasteWidget("waste", 1.5), "widgets[2]: calendar must be the number of a calendar"},
@@ -69,8 +69,12 @@ func TestWasteCalendarIDsAreCollectedOnce(t *testing.T) {
 		wasteWidget("e", nil),
 		{Type: "text", Settings: map[string]any{"calendar": float64(9)}},
 	}}
-	if got := WasteCalendarIDs([]Dashboard{a, b}); !slices.Equal(got, []int64{2, 7}) {
-		t.Fatalf("WasteCalendarIDs = %v, want the calendars of valid waste widgets, sorted once", got)
+	got, usesDefault := WasteCalendarIDs([]Dashboard{a, b})
+	if !slices.Equal(got, []int64{2, 7}) || !usesDefault {
+		t.Fatalf("WasteCalendarIDs = %v, %t; want the calendars of valid waste widgets, sorted once, and the default for the widget without one", got, usesDefault)
+	}
+	if _, usesDefault := WasteCalendarIDs([]Dashboard{a}); usesDefault {
+		t.Fatal("WasteCalendarIDs reports the default although every widget names a calendar")
 	}
 }
 
@@ -83,13 +87,14 @@ func TestUsesWidget(t *testing.T) {
 
 func TestEachDisplayGetsOnlyItsOwnWasteCalendars(t *testing.T) {
 	hall := Normalize(Dashboard{ID: "hall", Widgets: []Widget{wasteWidget("waste", float64(1))}})
+	kitchen := Normalize(Dashboard{ID: "kitchen", Widgets: []Widget{wasteWidget("waste", nil)}})
 	living := Normalize(Dashboard{ID: "living", Widgets: []Widget{wasteWidget("a", float64(1))}})
 	living.Widgets = append(living.Widgets, Normalize(Dashboard{Widgets: []Widget{wasteWidget("b", float64(2))}}).Widgets[0])
 	living.Widgets[1].Y = 9
 	data := map[string]datahub.Entry{WasteSource: {Value: []byte(
-		`{"1":[{"kind":"gft","title":"GFT","date":"2026-10-13"}],"2":[{"kind":"glass","title":"Glas","date":"2026-10-14"}]}`)}}
+		`{"1":[{"kind":"gft","title":"GFT","date":"2026-10-13"}],"2":[{"kind":"glass","title":"Glas","date":"2026-10-14"}],"default":[{"kind":"gft","title":"GFT","date":"2026-10-13"}]}`)}}
 	b := NewBroadcaster()
-	if err := b.Publish(now, map[string]View{"hall": {Dashboard: hall}, "living": {Dashboard: living}}, data, "en"); err != nil {
+	if err := b.Publish(now, map[string]View{"hall": {Dashboard: hall}, "living": {Dashboard: living}, "kitchen": {Dashboard: kitchen}}, data, "en"); err != nil {
 		t.Fatal(err)
 	}
 	ctx, cancel := context.WithCancel(context.Background())
@@ -112,5 +117,8 @@ func TestEachDisplayGetsOnlyItsOwnWasteCalendars(t *testing.T) {
 	}
 	if got := calendars("living"); !slices.Equal(got, []string{"1", "2"}) {
 		t.Fatalf("living room received calendars %v, want 1 and 2", got)
+	}
+	if got := calendars("kitchen"); !slices.Equal(got, []string{WasteDefaultKey}) {
+		t.Fatalf("kitchen received calendars %v, want only the default for its widget without a calendar", got)
 	}
 }

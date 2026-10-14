@@ -32,7 +32,7 @@ func (s *Service) SeedOnce(ctx context.Context, seed Seed) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	empty := current.Location == nil && len(current.NewsFeeds) == 0 && len(current.Calendars) == 0
+	empty := current.Location == nil && len(current.NewsFeeds) == 0 && len(current.Calendars) == 0 && len(current.WasteCalendars) == 0
 	if empty {
 		// Everything is checked before anything is written: a seed that
 		// fails halfway would leave settings that are no longer empty, and
@@ -94,7 +94,7 @@ func (s *Service) apply(ctx context.Context, seed Seed) error {
 	}
 	for i, c := range seed.Calendars {
 		// The error never includes the address: it is a secret.
-		if _, err := s.AddCalendar(ctx, c.Name, c.URL); err != nil {
+		if _, err := s.AddCalendar(ctx, c.Name, c.URL, PurposeAppointments); err != nil {
 			return fmt.Errorf("calendar %d from the environment could not be stored", i+1)
 		}
 	}

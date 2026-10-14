@@ -14,6 +14,11 @@ const (
 	SourceCalendar = "calendar"
 )
 
+// PurposeWaste marks a calendar of waste collection pickups, which only
+// the Waste collection widget shows. Appointments, and every news feed,
+// have an empty purpose.
+const PurposeWaste = "waste"
+
 // maxSourcesPerKind bounds the source lists, so every read is bounded.
 // internal/settings enforces its own, lower limits.
 const maxSourcesPerKind = 50
@@ -27,7 +32,9 @@ type Source struct {
 	Address string
 	Host    string
 	// Color is a palette name chosen in the web interface, or empty.
-	Color     string
+	Color string
+	// Purpose is PurposeWaste or empty.
+	Purpose   string
 	CreatedAt time.Time
 }
 
@@ -64,7 +71,7 @@ func (s *Store) DeleteSetting(ctx context.Context, key string) error {
 // Sources returns the sources of one kind in the order they were added.
 func (s *Store) Sources(ctx context.Context, kind string) ([]Source, error) {
 	rows, err := s.db.QueryContext(ctx,
-		"SELECT id, kind, name, address, host, color, created_at FROM sources WHERE kind = ? ORDER BY id LIMIT ?", kind, maxSourcesPerKind)
+		"SELECT id, kind, name, address, host, color, purpose, created_at FROM sources WHERE kind = ? ORDER BY id LIMIT ?", kind, maxSourcesPerKind)
 	if err != nil {
 		return nil, fmt.Errorf("list sources: %w", err)
 	}
@@ -73,7 +80,7 @@ func (s *Store) Sources(ctx context.Context, kind string) ([]Source, error) {
 	for rows.Next() {
 		var src Source
 		var created string
-		if err := rows.Scan(&src.ID, &src.Kind, &src.Name, &src.Address, &src.Host, &src.Color, &created); err != nil {
+		if err := rows.Scan(&src.ID, &src.Kind, &src.Name, &src.Address, &src.Host, &src.Color, &src.Purpose, &created); err != nil {
 			return nil, err
 		}
 		if src.CreatedAt, err = parseTime(created); err != nil {
@@ -85,23 +92,23 @@ func (s *Store) Sources(ctx context.Context, kind string) ([]Source, error) {
 }
 
 // AddSource stores a source and returns its ID. It returns ErrConflict when
-// limit sources of that kind exist already.
+// limit sources of that kind and purpose exist already.
 func (s *Store) AddSource(ctx context.Context, src Source, limit int) (int64, error) {
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
 		return 0, err
 	}
 	defer tx.Rollback()
-	var count int
-	if err := tx.QueryRowContext(ctx, "SELECT count(*) FROM sources WHERE kind = ?", src.Kind).Scan(&count); err != nil {
+	var all, alike int
+	if err := tx.QueryRowContext(ctx, "SELECT count(*), coalesce(sum(purpose = ?), 0) FROM sources WHERE kind = ?", src.Purpose, src.Kind).Scan(&all, &alike); err != nil {
 		return 0, fmt.Errorf("count sources: %w", err)
 	}
-	if count >= min(limit, maxSourcesPerKind) {
+	if alike >= limit || all >= maxSourcesPerKind {
 		return 0, fmt.Errorf("%w: limit of %d %s sources reached", ErrConflict, limit, src.Kind)
 	}
 	res, err := tx.ExecContext(ctx,
-		"INSERT INTO sources (kind, name, address, host, color, created_at) VALUES (?, ?, ?, ?, ?, ?)",
-		src.Kind, src.Name, src.Address, src.Host, src.Color, formatTime(src.CreatedAt))
+		"INSERT INTO sources (kind, name, address, host, color, purpose, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+		src.Kind, src.Name, src.Address, src.Host, src.Color, src.Purpose, formatTime(src.CreatedAt))
 	if err != nil {
 		return 0, fmt.Errorf("add source: %w", err)
 	}
