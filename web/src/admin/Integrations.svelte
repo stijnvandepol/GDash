@@ -137,6 +137,22 @@
     if (id) document.getElementById(`action-${id}`)?.focus();
   }
 
+  // A setup closes when you click outside its card and panel, or press
+  // Escape, as a menu would. A click in a dialog or a toast over the page
+  // (a confirmation, a saved message) leaves it open.
+  function closeOutside(event: PointerEvent) {
+    if (!open || !(event.target instanceof Element)) return;
+    if (event.target.closest(`#card-${CSS.escape(open)}, #setup-${CSS.escape(open)}, dialog, [role="dialog"], [role="alertdialog"], .toast, [role="status"]`)) return;
+    void close();
+  }
+
+  function closeOnEscape(event: KeyboardEvent) {
+    if (event.key !== 'Escape' || !open || event.defaultPrevented) return;
+    if (document.querySelector('dialog[open]')) return;
+    event.preventDefault();
+    void close();
+  }
+
   function useCustomApi() {
     void openSetup('custom');
   }
@@ -147,6 +163,8 @@
     return 'Set up';
   }
 </script>
+
+<svelte:document onpointerdown={closeOutside} onkeydown={closeOnEscape} />
 
 <header class="page-head">
   <div>
@@ -216,7 +234,7 @@
         {#each group.items as item (item.id)}
           {@const state = states.get(item.id)!}
           {@const uses = context.settings && item.weatherLocation?.(context.settings)}
-          <li class="item {item.kind}" class:on={state.kind !== 'idle'} class:open={open === item.id}>
+          <li class="item {item.kind}" id="card-{item.id}" class:on={state.kind !== 'idle'} class:open={open === item.id}>
             <div class="top">
               <span class="glyph"><Icon name={item.icon} size={20} /></span>
               <div class="text">

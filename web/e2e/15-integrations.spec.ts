@@ -176,3 +176,26 @@ test('the P1 meter is a widget of its own in the editor, with its values by name
   await page.getByRole('button', { name: 'Preview', exact: true }).click();
   await expect(page.frameLocator('iframe').locator('main.screen .big')).toHaveText(/^1[,.]?234\s*W$/, { timeout: 20_000 });
 });
+
+test('an open setup closes on a click outside it, on Escape and with its own button', async ({ adminPage: page }) => {
+  const setup = await openIntegration(page, 'Weather');
+  const action = page.locator('#action-weather');
+  await expect(action).toHaveAttribute('aria-expanded', 'true');
+
+  // A click inside the setup keeps it open.
+  await setup.click({ position: { x: 10, y: 10 } });
+  await expect(setup).toBeVisible();
+
+  // A click on the page outside it closes it.
+  await page.getByRole('heading', { name: 'Integrations', exact: true }).click();
+  await expect(setup).toBeHidden();
+
+  await openIntegration(page, 'Weather');
+  await page.keyboard.press('Escape');
+  await expect(setup).toBeHidden();
+
+  // Its own button closes it again.
+  await openIntegration(page, 'Weather');
+  await action.click();
+  await expect(setup).toBeHidden();
+});

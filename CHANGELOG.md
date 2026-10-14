@@ -5,6 +5,11 @@ the format follows [Keep a Changelog](https://keepachangelog.com).
 
 ## Unreleased
 
+### Fixed
+
+- An integration's setup closes when you click outside it or press Escape,
+  instead of staying open until its own Close.
+
 ## 0.9.2 – 2026-10-14
 
 ### Added
