@@ -1,0 +1,191 @@
+/*
+ * OLED and night presets: a pure black backdrop, tiles without a fill
+ * (an outline, a rule or nothing), dim colours and thin strokes. On an OLED
+ * screen black pixels are off, use no power and cannot burn in, so these
+ * light only the text. Each one also suits "After sunset". Same rules as
+ * presets.css: only custom properties, textures drawn with gradients (no
+ * images), text at 4.5:1 or more. build/oledRating.ts rates every theme.
+ */
+
+/* Void: nothing but soft grey type on black. */
+.screen[data-theme='void'] {
+  --surface-0: #000000;
+  --surface-1: #000000;
+  --widget-border: transparent;
+  --text-primary: #b4b4b4;
+  --text-muted: #7c7c7c;
+  --accent: #d2d2d2;
+  --warning: #c9a24a;
+  --dot-tint: var(--text-muted);
+  --backdrop: none;
+  --font-ui: var(--face-geist);
+  --weight-figure: 200;
+  --weight-text: 300;
+}
+
+/* Ember: amber that glows like the last of a fire, in soft round outlines. */
+.screen[data-theme='ember'] {
+  --surface-0: #000000;
+  --surface-1: rgba(0, 0, 0, 0);
+  --widget-border: rgba(255, 128, 52, 0.22);
+  --text-primary: #f0a45c;
+  --text-muted: #b5774a;
+  --accent: #ff7a36;
+  --warning: #ffd36e;
+  --dot-tint: var(--accent);
+  --backdrop: none;
+  --text-glow: 0 0 0.5em rgba(255, 106, 32, 0.32);
+  --font-ui: var(--face-outfit);
+  --radius-scale: 1.3;
+  --weight-figure: 250;
+  --weight-text: 300;
+}
+
+/* Moonlight: cool silver-blue in a light serif, as the night outside. */
+.screen[data-theme='moonlight'] {
+  --surface-0: #000000;
+  --surface-1: rgba(0, 0, 0, 0);
+  --widget-border: rgba(168, 196, 238, 0.16);
+  --text-primary: #c6d3e6;
+  --text-muted: #8394ad;
+  --accent: #a8c7ff;
+  --warning: #e6c27a;
+  --backdrop: none;
+  --font-ui: var(--face-cormorant);
+  --radius-scale: 0.45;
+  --weight-figure: 300;
+  /* The face has hairlines; text reads better a step heavier. */
+  --weight-text: 500;
+}
+
+/* Aurora: a faint ribbon of green into violet over each tile, mint for
+   what stands out. */
+.screen[data-theme='aurora'] {
+  --surface-0: #000000;
+  --surface-1: rgba(0, 0, 0, 0);
+  --widget-border: transparent;
+  --text-primary: #d2e3da;
+  --text-muted: #8da699;
+  --accent: #5eeead;
+  --warning: #ffc46b;
+  --dot-tint: var(--text-muted);
+  --backdrop: none;
+  --tile-image: linear-gradient(90deg, rgba(94, 238, 173, 0.9), rgba(150, 110, 255, 0.85) 60%, rgba(150, 110, 255, 0)) 0 0 / 100% 3px no-repeat;
+  --font-ui: var(--face-space-grotesk);
+  --radius-scale: 0.25;
+  --weight-figure: 300;
+  --weight-text: 300;
+}
+
+/* Deep sea: bioluminescent cyan in the dark, round as bubbles. */
+.screen[data-theme='deep-sea'] {
+  --surface-0: #000000;
+  --surface-1: rgba(0, 0, 0, 0);
+  --widget-border: rgba(40, 210, 255, 0.17);
+  --text-primary: #a9ecfb;
+  --text-muted: #4ea8bc;
+  --accent: #2fdfff;
+  --warning: #ffd166;
+  --backdrop: none;
+  --text-glow: 0 0 0.45em rgba(40, 210, 255, 0.38);
+  --font-ui: var(--face-inter);
+  --radius-scale: 1.6;
+  --weight-figure: 200;
+  --weight-text: 300;
+}
+
+/* Firefly: warm grey on black, with tiny yellow lights for the dots and
+   what stands out. */
+.screen[data-theme='firefly'] {
+  --surface-0: #000000;
+  --surface-1: #000000;
+  --widget-border: transparent;
+  --text-primary: #c6c1b2;
+  --text-muted: #8b867a;
+  --accent: #ffe066;
+  --warning: #ff9f43;
+  --dot-tint: var(--accent);
+  --backdrop: none;
+  --font-ui: var(--face-news-cycle);
+  --weight-figure: 400;
+  --weight-text: 400;
+}
+
+/* Graphite OLED: mid-grey lines on black, square, drawn in a mono face. */
+.screen[data-theme='graphite-oled'] {
+  --surface-0: #000000;
+  --surface-1: rgba(0, 0, 0, 0);
+  --widget-border: #454545;
+  --widget-border-width: 2px;
+  --text-primary: #bcbcbc;
+  --text-muted: #838383;
+  --accent: #e2e2e2;
+  --warning: #d9b24c;
+  --dot-tint: var(--text-muted);
+  --backdrop: none;
+  --font-ui: var(--face-jetbrains-mono);
+  /* A mono face is wide; a little tighter keeps words in their tiles. */
+  --tracking: -0.04em;
+  --radius-scale: 0;
+  --weight-figure: 200;
+  --weight-text: 300;
+}
+
+/* Red night: only dim red, which keeps eyes used to the dark, as on a
+   ship's bridge at night. */
+.screen[data-theme='red-night'] {
+  --surface-0: #000000;
+  --surface-1: #000000;
+  --widget-border: rgba(255, 36, 20, 0.16);
+  --text-primary: #ff3b2b;
+  --text-muted: #e92b1c;
+  --accent: #ff5a44;
+  --warning: #ff7a52;
+  --dot-tint: var(--text-muted);
+  --backdrop: none;
+  --font-ui: var(--face-geist);
+  --radius-scale: 0.7;
+  /* Red is only readable near full strength; thin strokes light less of it. */
+  --weight-figure: 200;
+  --weight-text: 300;
+}
+
+/* Starlight: a few faint stars in a black sky, the tiles dark windows in
+   it, set in Bodoni. The stars repeat at odd sizes, so no pattern shows. */
+.screen[data-theme='starlight'] {
+  --surface-0: #000000;
+  --surface-1: rgba(0, 0, 0, 0.86);
+  --widget-border: transparent;
+  --text-primary: #e2ded2;
+  --text-muted: #9f9b90;
+  --accent: #e8d38f;
+  --warning: #ffb36b;
+  --backdrop: radial-gradient(1.4px 1.4px at 37px 53px, rgba(255, 255, 255, 0.7) 50%, transparent 100%) 0 0 / 263px 241px,
+    radial-gradient(1px 1px at 151px 19px, rgba(205, 218, 255, 0.45) 50%, transparent 100%) 0 0 / 317px 293px,
+    radial-gradient(1.7px 1.7px at 89px 171px, rgba(255, 240, 214, 0.65) 50%, transparent 100%) 0 0 / 409px 383px,
+    radial-gradient(0.9px 0.9px at 211px 97px, rgba(255, 255, 255, 0.35) 50%, transparent 100%) 0 0 / 191px 223px;
+  /* The brightest star, under a tile. */
+  --measure-backdrop: #b3b3b3;
+  --font-ui: var(--face-bodoni);
+  --radius-scale: 0.3;
+  --weight-figure: 400;
+  --weight-text: 500;
+}
+
+/* Ink: off-white serif on black like a printed page turned over, a hair
+   rule under each tile and a red pen for what stands out. */
+.screen[data-theme='ink'] {
+  --surface-0: #000000;
+  --surface-1: rgba(0, 0, 0, 0);
+  --widget-border: transparent;
+  --text-primary: #e8e2d2;
+  --text-muted: #9d968a;
+  --accent: #f0806e;
+  --warning: #e7b85a;
+  --backdrop: none;
+  --tile-image: linear-gradient(rgba(232, 226, 210, 0.26), rgba(232, 226, 210, 0.26)) 0 100% / 100% 1px no-repeat;
+  --font-ui: var(--face-lora);
+  --radius-scale: 0;
+  --weight-figure: 400;
+  --weight-text: 400;
+}

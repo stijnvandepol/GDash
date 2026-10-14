@@ -2,9 +2,10 @@
 import { defineConfig } from 'vite';
 import { svelte } from '@sveltejs/vite-plugin-svelte';
 import { legacyCss } from './build/legacyCss.ts';
+import { oledRatings } from './build/oledRating.ts';
 
 export default defineConfig({
-  plugins: [svelte(), legacyCss()],
+  plugins: [svelte(), legacyCss(), oledRatings()],
   build: {
     outDir: 'dist',
     emptyOutDir: true,

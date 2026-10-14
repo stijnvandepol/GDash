@@ -1,6 +1,8 @@
 // What the editor says about each theme and typeface. The themes themselves
 // are in ../themes.css and the presets files; internal/display lists the same
 // names, and themes.test.ts keeps the three in step.
+import { OLED_RATINGS } from 'virtual:oled-ratings';
+import type { OledRating } from '../../build/oledRating.ts';
 
 /** The sections of the style picker. */
 export const GROUPS = [
@@ -9,6 +11,7 @@ export const GROUPS = [
   { id: 'screen', name: 'Film and series', note: 'Inspired by a film or a series, without its names or logos.' },
   { id: 'games', name: 'Games', note: 'Inspired by video games, without their names, characters or logos.' },
   { id: 'art', name: 'Art & abstract', note: 'After art movements and patterns; the art stays behind the data.' },
+  { id: 'oled', name: 'OLED and night', note: 'Pure black with dim, thin type: OLED pixels stay off, so they save power and cannot burn in.' },
 ] as const;
 
 export type GroupId = (typeof GROUPS)[number]['id'];
@@ -87,6 +90,18 @@ export const THEMES: Record<string, ThemeInfo> = {
   'art-deco': { name: 'Art deco', group: 'art', note: 'Black and gold, fans and a sunburst, gold frames.', font: 'bodoni' },
   risograph: { name: 'Risograph', group: 'art', note: 'Pink and blue ink in halftone dots, a little off register.', font: 'jost' },
   brutalist: { name: 'Brutalist', group: 'art', note: 'Raw concrete with board joints and heavy type.', font: 'space-grotesk' },
+
+  // OLED and night.
+  void: { name: 'Void', group: 'oled', note: 'Soft grey type on black, nothing else.', font: 'geist' },
+  ember: { name: 'Ember', group: 'oled', note: 'Glowing amber in soft outlines, for a warm night.', font: 'outfit' },
+  moonlight: { name: 'Moonlight', group: 'oled', note: 'Cool silver-blue in a light serif.', font: 'cormorant' },
+  aurora: { name: 'Aurora', group: 'oled', note: 'A faint ribbon of green into violet over each tile.', font: 'space-grotesk' },
+  'deep-sea': { name: 'Deep sea', group: 'oled', note: 'Bioluminescent cyan, round as bubbles.', font: 'inter' },
+  firefly: { name: 'Firefly', group: 'oled', note: 'Warm grey with tiny yellow lights.', font: 'news-cycle' },
+  'graphite-oled': { name: 'Graphite OLED', group: 'oled', note: 'Mid-grey lines on black in a mono face.', font: 'jetbrains-mono' },
+  'red-night': { name: 'Red night', group: 'oled', note: 'Only dim red, which keeps eyes used to the dark.', font: 'geist' },
+  starlight: { name: 'Starlight', group: 'oled', note: 'A few faint stars in a black sky.', font: 'bodoni' },
+  ink: { name: 'Ink', group: 'oled', note: 'Off-white serif with a hair rule under each tile.', font: 'lora' },
 };
 
 export const FONTS: Record<FontId, string> = {
@@ -122,6 +137,21 @@ export function nightChoices(theme: string, themes: string[], chosen: string): s
   const first = NIGHT_PAIRS[theme];
   const rest = themes.filter((id) => id !== first && (id !== theme || id === chosen));
   return first && themes.includes(first) ? [first, ...rest] : rest;
+}
+
+/** What the style picker calls each OLED rating. */
+const OLED_LABELS: Record<OledRating, string> = { 'oled-friendly': 'OLED-friendly', ok: 'OLED OK', bright: 'Bright' };
+
+/** A theme's OLED rating with its label and a line about it; undefined for a theme the build did not rate. */
+export function oledBadge(id: string): { rating: OledRating; label: string; title: string } | undefined {
+  const rated = OLED_RATINGS[id];
+  if (!rated) return undefined;
+  const percent = Math.round(rated.level * 100);
+  const title =
+    rated.rating === 'oled-friendly'
+      ? `Pure black backdrop, about ${percent} % lit on average: OLED pixels stay off.`
+      : `About ${percent} % lit on average.`;
+  return { rating: rated.rating, label: OLED_LABELS[rated.rating], title };
 }
 
 export function themeName(id: string): string {

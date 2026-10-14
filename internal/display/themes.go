@@ -13,6 +13,8 @@ var Themes = []string{
 	// Art & abstract presets (web/src/presets-art.css).
 	"de-stijl", "delft", "tessellation", "bauhaus", "starry-swirl", "golden-mosaic", "great-wave", "colour-field",
 	"memphis", "art-deco", "risograph", "brutalist",
+	// OLED and night: pure black, tiles without a fill.
+	"void", "ember", "moonlight", "aurora", "deep-sea", "firefly", "graphite-oled", "red-night", "starlight", "ink",
 }
 
 // Fonts are the typefaces a dashboard can choose instead of its theme's own;

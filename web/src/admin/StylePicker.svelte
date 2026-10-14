@@ -1,6 +1,6 @@
 <script lang="ts">
   import StyleSample from './StyleSample.svelte';
-  import { FONTS, GROUPS, THEMES, nightChoices, themeName, type FontId } from './styles';
+  import { FONTS, GROUPS, THEMES, nightChoices, oledBadge, themeName, type FontId } from './styles';
 
   // The dashboard's style: a theme from a gallery of samples, and a typeface
   // that is the theme's own or one of the others, and the theme to switch to
@@ -49,10 +49,18 @@
     onchange();
   }
 
+  // Only the themes that leave an OLED screen dark, from every section.
+  let oledOnly = $state(false);
+
   // The server's themes in its order, sorted into the picker's sections; a
   // theme this editor has no notes for goes with the essentials.
   const sections = $derived(
-    GROUPS.map((g) => ({ ...g, themes: themes.filter((id) => (THEMES[id]?.group ?? 'essentials') === g.id) })),
+    GROUPS.map((g) => ({
+      ...g,
+      themes: themes.filter(
+        (id) => (THEMES[id]?.group ?? 'essentials') === g.id && (!oledOnly || oledBadge(id)?.rating === 'oled-friendly'),
+      ),
+    })).filter((g) => g.themes.length > 0),
   );
 
   const nightOptions = $derived(nightChoices(theme, themes, nightTheme));
@@ -68,6 +76,13 @@
 
   <fieldset>
     <legend>Theme</legend>
+    <label class="filter">
+      <input type="checkbox" bind:checked={oledOnly} aria-describedby="oled-hint" />
+      Only OLED-friendly
+    </label>
+    <p id="oled-hint" class="muted small filter-hint">
+      A pure black backdrop and unlit tiles: on an OLED TV black pixels are off, use no power and cannot burn in.
+    </p>
     {#each sections as section (section.id)}
     <div class="section-head">
       <h3>{section.name}</h3>
@@ -75,10 +90,14 @@
     </div>
     <div class="themes">
       {#each section.themes as id (id)}
+        {@const badge = oledBadge(id)}
         <label class="choice" class:chosen={theme === id}>
           <input class="sr-only" type="radio" name="theme" value={id} checked={theme === id} onchange={() => pickTheme(id)} />
           <StyleSample theme={id} {font} />
-          <span class="name">{THEMES[id]?.name ?? id}</span>
+          <span class="name">
+            <span>{THEMES[id]?.name ?? id}</span>
+            {#if badge}<span class="oled {badge.rating}" title={badge.title}>{badge.label}</span>{/if}
+          </span>
           <span class="note muted small">{THEMES[id]?.note ?? ''}</span>
         </label>
       {/each}
@@ -176,8 +195,8 @@
     padding-top: var(--s-3);
     border-top: 1px solid var(--border);
   }
-  legend + .section-head {
-    margin-top: 0;
+  .filter-hint + .section-head {
+    margin-top: var(--s-4);
   }
   .section-head h3 {
     font-size: var(--fs-md);
@@ -220,8 +239,38 @@
     outline: none;
   }
   .name {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 2px var(--s-2);
     font-weight: 600;
     color: var(--text);
+  }
+  /* The OLED rating: a quiet tag, only the friendly one in the signal colour. */
+  .oled {
+    padding: 0 6px;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--r-sm);
+    font-size: var(--fs-xs);
+    font-weight: 550;
+    line-height: 1.5;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+  .oled.oled-friendly {
+    border-color: var(--focus);
+    color: var(--text);
+  }
+  .filter {
+    clear: both;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--s-2);
+    font-weight: 450;
+    cursor: pointer;
+  }
+  .filter-hint {
+    margin: var(--s-1) 0 0;
   }
   .note {
     line-height: 1.35;

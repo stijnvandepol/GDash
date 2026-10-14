@@ -19,6 +19,7 @@
 @import './presets-screen.css';
 @import './presets-film.css';
 @import './presets-art.css';
+@import './presets-oled.css';
 
 /* What every theme starts from. */
 .screen {
@@ -72,8 +73,7 @@
   font-synthesis: var(--synthesis);
 }
 
-/* Minimal Dark: the default, and the safest choice for OLED screens.
-   Graphite, like the web interface in the evening, with the signal orange
+/* Minimal Dark: the default. Graphite, like the web interface in the evening, with the signal orange
    for what needs to stand out. */
 .screen,
 .screen[data-theme='minimal-dark'] {
