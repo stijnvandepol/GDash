@@ -1,11 +1,9 @@
 <script lang="ts">
   import type { Entry } from '../protocol';
   import { fitItems } from './fit';
-  import { clock } from '../state.svelte';
   import { t } from '../i18n.svelte';
   import {
     DEFAULT_ITEMS,
-    FUEL_TEXT,
     distanceText,
     fuelKey,
     fuelOf,
@@ -13,7 +11,6 @@
     fuelWaitingText,
     priceText,
     radiusOf,
-    readPlace,
     savingText,
     stationList,
   } from './fuel';
@@ -21,9 +18,7 @@
   let { entry, settings }: { entry: Entry | undefined; settings: Record<string, unknown> | undefined } = $props();
 
   const fuel = $derived(fuelOf(settings));
-  const place = $derived(readPlace(settings?.place));
   const maxItems = $derived(typeof settings?.maxItems === 'number' ? settings.maxItems : DEFAULT_ITEMS);
-  const stale = $derived(entry !== undefined && clock.now.getTime() > Date.parse(entry.staleAfter));
   const list = $derived(stationList(entry?.value, fuelKey(settings)));
   const rows = $derived(list ? fuelRows(list, maxItems) : undefined);
   const saving = $derived(rows ? savingText(rows, fuel) : undefined);
@@ -31,11 +26,6 @@
 
 <div class="fuel" use:fitItems>
   {#if rows}
-    <h2 class="title" class:stale>
-      <span class="kind">{t('fuelTitle')}</span>
-      {#if place}<span class="place">{place.name}</span>{/if}
-      <span class="type">{t(FUEL_TEXT[fuel]!)}</span>
-    </h2>
     {#if rows.length > 0}
       <ol class="stations">
         {#each rows as row, i (i)}
@@ -62,36 +52,6 @@
     flex-direction: column;
     width: 100%;
     min-width: 0;
-  }
-  .title {
-    display: flex;
-    gap: 0.4em;
-    margin: 0 0 clamp(8px, 4cqh, 20px);
-    font-family: var(--font-display);
-    font-size: clamp(24px, 6.5cqw, 36px);
-    font-weight: 500;
-    color: var(--text-muted);
-    white-space: nowrap;
-  }
-  .title.stale {
-    color: var(--warning);
-  }
-  .kind,
-  .type {
-    flex: none;
-  }
-  .place {
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    color: var(--text-primary);
-  }
-  .title.stale .place {
-    color: inherit;
-  }
-  .place::before,
-  .type::before {
-    content: '· ';
   }
   .stations {
     list-style: none;

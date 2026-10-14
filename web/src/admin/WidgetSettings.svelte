@@ -16,6 +16,7 @@
   import NewsFeedPicker from './NewsFeedPicker.svelte';
   import CustomWidgetSettings from './CustomWidgetSettings.svelte';
   import TrafficWidgetSettings from './TrafficWidgetSettings.svelte';
+  import TitleSetting from './TitleSetting.svelte';
 
   // Texts up to this length get a single-line field, longer ones a text area.
   const SINGLE_LINE_MAX = 60;
@@ -41,9 +42,11 @@
   // Where comes first: the radius and the fuel are about the place, and
   // announcing is about the province.
   const isWhere = (key: string) => key === 'place' || key === 'region';
+  // The title has a field of its own, above the rest (TitleSetting).
+  const isTitle = (key: string) => key === 'title' || key === 'hideTitle';
   const keys = $derived(
     Object.keys(type.settings)
-      .filter((key) => !(key === 'stopName' && 'stop' in type.settings))
+      .filter((key) => !isTitle(key) && !(key === 'stopName' && 'stop' in type.settings))
       .sort()
       .sort((a, b) => Number(isWhere(b)) - Number(isWhere(a))),
   );
@@ -93,6 +96,9 @@
   }
 </script>
 
+{#if type.settings.title}
+  <TitleSetting {widgetType} {settings} max={type.settings.title.max ?? 40} {onchange} />
+{/if}
 {#if isCustom && sources === null}
   <p class="small muted" role="status">Loading…</p>
 {:else if preset}

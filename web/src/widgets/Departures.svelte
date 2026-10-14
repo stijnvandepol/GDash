@@ -11,9 +11,7 @@
   let { entry, settings }: { entry: Entry | undefined; settings: Record<string, unknown> | undefined } = $props();
 
   const stop = $derived(typeof settings?.stop === 'string' ? settings.stop : '');
-  const title = $derived(typeof settings?.stopName === 'string' && settings.stopName !== '' ? settings.stopName : stop);
   const maxItems = $derived(typeof settings?.maxItems === 'number' ? settings.maxItems : DEFAULT_ITEMS);
-  const stale = $derived(entry !== undefined && clock.now.getTime() > Date.parse(entry.staleAfter));
   // The screen's clock, corrected when it is far off: a TV that runs five
   // minutes fast would show every bus five minutes too soon.
   const now = $derived(new Date(clock.now.getTime() + display.serverOffsetMs));
@@ -23,7 +21,6 @@
 
 <div class="board" use:fitItems>
   {#if rows}
-    <h2 class="stop" class:stale>{title}</h2>
     {#if rows.length > 0}
       <ol class="departures">
         {#each rows as row, i (i)}
@@ -51,19 +48,6 @@
     flex-direction: column;
     width: 100%;
     min-width: 0;
-  }
-  .stop {
-    margin: 0 0 clamp(8px, 4cqh, 20px);
-    font-family: var(--font-display);
-    font-size: clamp(24px, 6.5cqw, 36px);
-    font-weight: 500;
-    color: var(--text-muted);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .stop.stale {
-    color: var(--warning);
   }
   .departures {
     list-style: none;

@@ -73,6 +73,10 @@
     margin: calc(-1 * var(--space-widget));
     overflow: hidden;
   }
+  /* Under a title the page starts below it, and fills the rest. */
+  :global(.titled) .webpage {
+    margin-top: 0;
+  }
   iframe {
     position: absolute;
     top: 0;

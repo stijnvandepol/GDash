@@ -13,7 +13,6 @@
 
 <div class="price">
   {#if view}
-    <span class="title">{t('energyPriceTitle')}</span>
     <div class="now">
       <span class="figure">{formatPrice(view.price, locale())}</span>
       <span class="unit" class:stale>{t('energyPriceUnit')}</span>
@@ -47,13 +46,6 @@
     gap: 8px;
     width: 100%;
     min-width: 0;
-  }
-  .title {
-    display: none;
-    font-family: var(--font-display);
-    font-size: 34px;
-    font-weight: 500;
-    color: var(--text-muted);
   }
   .now {
     display: flex;
@@ -155,11 +147,8 @@
     color: var(--text-muted);
     font-size: 38px;
   }
-  /* A tall tile has room for a heading and the hours under the bars. */
+  /* A tall tile has room for the hours under the bars. */
   @container (min-height: 300px) {
-    .title {
-      display: block;
-    }
     .hours {
       display: grid;
     }

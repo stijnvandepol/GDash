@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { Entry } from '../protocol';
   import { fitItems } from './fit';
+  import { t } from '../i18n.svelte';
   import { formatCell, shownFor, waitingFor, type Tone } from './custom';
   import Badges from './Badges.svelte';
 
@@ -21,7 +22,6 @@
 </script>
 
 <div class="custom" class:stale={shown?.stale || shown?.failing}>
-  {#if shown?.title}<h2 class="title">{shown.title}</h2>{/if}
   {#if shown && shown.state === 'ok'}
     {#if shown.message}
       <p class="message {toneClass(shown.tone)}">
@@ -50,7 +50,8 @@
           {/each}
         </ul>
       {:else if shown.mode === 'badges'}
-        <Badges labels={shown.badges ?? []} tone={shown.tone} empty="–" />
+        <!-- Without a title of its own the tile is called Who's home (titles.ts), so it says nobody is. -->
+        <Badges labels={shown.badges ?? []} tone={shown.tone} empty={shown.title ? '–' : t('homeyNobodyHome')} />
       {:else}
         <ul class="rows" use:fitItems>
           {#each shown.pairs ?? [] as pair, i (i)}
@@ -76,20 +77,6 @@
     height: 100%;
     min-width: 0;
     min-height: 0;
-  }
-  .title {
-    margin: 0 0 clamp(6px, 3cqh, 16px);
-    font-family: var(--font-display);
-    font-size: clamp(22px, 6cqw, 34px);
-    font-weight: 500;
-    color: var(--text-muted);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    flex: none;
-  }
-  .stale .title {
-    color: var(--warning);
   }
   .message {
     margin: 0 0 clamp(6px, 3cqh, 16px);

@@ -7,8 +7,6 @@
     DEFAULT_ITEMS,
     camerasText,
     emptyText,
-    radiusOf,
-    roadsOf,
     showOf,
     showsIncidents,
     totalsText,
@@ -21,9 +19,7 @@
   let { entry, settings }: { entry: Entry | undefined; settings: Record<string, unknown> | undefined } = $props();
 
   const show = $derived(showOf(settings));
-  const roads = $derived(roadsOf(settings));
   const maxItems = $derived(typeof settings?.maxItems === 'number' ? settings.maxItems : DEFAULT_ITEMS);
-  const stale = $derived(entry !== undefined && clock.now.getTime() > Date.parse(entry.staleAfter));
   const result = $derived(trafficResult(entry?.value, trafficKey(settings)));
   const rows = $derived(result ? trafficRows(result, show, maxItems, clock.now) : []);
   // ANWB data is wanted but traffic info is turned off: say so instead of
@@ -39,10 +35,6 @@
 
 <div class="traffic">
   {#if result}
-    <h2 class="title" class:stale>
-      <span class="kind">{t('trafficTitle')}</span>
-      <span class="what">{roads.length > 0 ? roads.join(', ') : t('trafficWithin', { km: radiusOf(settings) })}</span>
-    </h2>
     {#if show.includes('totals') && result.totals}
       <p class="totals">{totalsText(result.totals)}</p>
     {/if}
@@ -85,34 +77,6 @@
     width: 100%;
     height: 100%;
     min-width: 0;
-  }
-  .title {
-    display: flex;
-    gap: 0.4em;
-    margin: 0 0 clamp(6px, 3cqh, 16px);
-    font-family: var(--font-display);
-    font-size: clamp(24px, 6.5cqw, 36px);
-    font-weight: 500;
-    color: var(--text-muted);
-    white-space: nowrap;
-  }
-  .title.stale {
-    color: var(--warning);
-  }
-  .kind {
-    flex: none;
-  }
-  .what {
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    color: var(--text-primary);
-  }
-  .title.stale .what {
-    color: inherit;
-  }
-  .what::before {
-    content: '· ';
   }
   .totals,
   .cameras,

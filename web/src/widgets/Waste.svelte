@@ -20,7 +20,6 @@
 
 <div class="waste" use:fitItems>
   {#if Array.isArray(pickups)}
-    <span class="title">{t('wasteTitle')}</span>
     {#if next.length === 0}
       <p class="empty" class:stale>{t('wasteNone')}</p>
     {:else}
@@ -51,24 +50,16 @@
     min-width: 0;
     overflow: hidden;
   }
-  .title {
-    display: none;
-    margin-bottom: 12px;
-    font-family: var(--font-display);
-    font-size: 34px;
-    font-weight: 500;
-    color: var(--text-muted);
-  }
   ul {
     list-style: none;
     margin: 0;
     padding: 0;
     display: grid;
     gap: 0.3em;
-    /* As large as three lines allow in the tile's height (22% each, with
+    /* As large as three lines allow in the tile's height (23.5% each, with
        the gaps) and as the width allows for a kind and its day. */
     font-size: 34px;
-    font-size: min(52px, 11cqw, 22cqh);
+    font-size: min(52px, 11cqw, 23.5cqh);
   }
   li {
     display: flex;
@@ -111,11 +102,5 @@
     margin: 0;
     font-size: 38px;
     color: var(--text-muted);
-  }
-  /* A tall tile has room for a heading. */
-  @container (min-height: 300px) {
-    .title {
-      display: block;
-    }
   }
 </style>

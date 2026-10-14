@@ -2,7 +2,6 @@
   import type { Entry } from '../protocol';
   import { waitingText } from './waiting';
   import { fitItems } from './fit';
-  import { clock } from '../state.svelte';
   import { locale, t } from '../i18n.svelte';
   import { SOURCES_REMOVED, newsView, type Headline } from './news';
 
@@ -10,7 +9,6 @@
 
   const view = $derived(newsView(entry?.value, settings));
   const feed = $derived(view === SOURCES_REMOVED ? null : view);
-  const stale = $derived(entry !== undefined && clock.now.getTime() > Date.parse(entry.staleAfter));
   const time = $derived(new Intl.DateTimeFormat(locale(), { hour: '2-digit', minute: '2-digit' }));
 
   function publishedAt(item: Headline): string {
@@ -22,7 +20,6 @@
 
 <div class="news" use:fitItems>
   {#if feed && entry}
-    <h2 class="source" class:stale>{feed.title || t('news')}</h2>
     <ol class="headlines">
       {#each feed.items as item, i (i)}
         <li>
@@ -46,16 +43,6 @@
     flex-direction: column;
     width: 100%;
     min-width: 0;
-  }
-  .source {
-    margin: 0 0 20px;
-    font-family: var(--font-display);
-    font-size: 36px;
-    font-weight: 500;
-    color: var(--text-muted);
-  }
-  .source.stale {
-    color: var(--warning);
   }
   .headlines {
     list-style: none;

@@ -49,7 +49,9 @@
 
   function pickView(id: string) {
     const picked = preset.views.find((v) => v.id === id);
-    if (picked) onchange(viewSettings(preset, picked, Number(settings.source)));
+    // Another view brings its own title; No title stays as chosen.
+    const hidden = settings.hideTitle === true ? { hideTitle: true } : {};
+    if (picked) onchange({ ...viewSettings(preset, picked, Number(settings.source)), ...hidden });
   }
 
   function pickValue(path: string) {
@@ -83,9 +85,6 @@
     </select>
   </label>
 {/if}
-<label>
-  Title <input value={text('title')} maxlength="60" oninput={(e) => update({ title: (e.target as HTMLInputElement).value })} />
-</label>
 
 {#if mode === 'value'}
   <label>

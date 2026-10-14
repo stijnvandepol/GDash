@@ -693,7 +693,7 @@ allows, overlaps another, lacks a required setting, or has a setting its type do
 | `holidays` | 6x4 | `holidays.nl` | `region`: `north`, `middle` (default) or `south`, `show`: `both` (default), `school` or `public`, `maxItems`: 1 to 20, default 5 |
 | `homeassistant` | 4x3 | `homeassistant.default` | `entities`: 1 to 8 entity IDs such as `sensor.living_room_temperature` (required) |
 | `homey` | 4x3 | `homey.default` | `capabilities`: 1 to 8 keys `<device id>/<capability id>` such as `5f2c…/measure_temperature`, from the search (required) |
-| `homeypresence` | 4x3 | `homey.presence` | `users`: 1 to 8 `{id, label}`, a Homey user's `id` and a label of 1 to 12 characters on one line, such as initials (required); screens receive this widget without its settings |
+| `homeypresence` | 4x3 | `homey.presence` | `users`: 1 to 8 `{id, label}`, a Homey user's `id` and a label of 1 to 12 characters on one line, such as initials (required); screens receive this widget without its users, only with `title` and `hideTitle` |
 | `departures` | 6x4 | `departures.default` | `stop`: a stop area code such as `utrcsw`, from the stop search (required), `stopName`: 1 to 100 characters, shown as the title, `maxItems`: 1 to 20 |
 | `rain` | 5x3 | `rain.default` | `place`: a place with `name`, `latitude` and `longitude`, default the weather location |
 | `warnings` | 6x3 | `warnings.default` | `region`: `Groningen`, `Friesland`, `Drenthe`, `Overijssel`, `Flevoland`, `Gelderland`, `Utrecht`, `Noord-Holland`, `Zuid-Holland`, `Zeeland`, `Noord-Brabant`, `Limburg` or `Waddeneilanden`, default the province of the weather location, `announce`: `true` to put a code orange or red warning over every display when it starts, default `false` |
@@ -709,7 +709,13 @@ A setting's `kind` is `integer`, `text`, `date`, `calendar`, `camera`, `entities
 of the strings in the setting's `options`; a `boolean` is `true` or `false`. A
 `place` is exactly `{"name": "Oss", "latitude": 51.765, "longitude": 5.518}`: a name of 1 to 100 characters, a latitude
 from -90 to 90 and a longitude from -180 to 180 as numbers, and no other field; it is what `GET /api/places` returns
-for a result, without `region`. A Custom widget's settings are checked together, and an error names the setting, such
+for a result, without `region`.
+
+Every type also takes `title`, a text of 1 to 40 characters on one line that the screen shows over the tile instead of
+the widget's own title, and `hideTitle`, `true` to show no title at all. Without them a screen shows the widget's own
+title in its language, such as "Who's home" or "Waste collection", and none over widgets that explain themselves, such
+as the clock and the weather; a tile too small for a title leaves it out. The Custom widget keeps its own `title` of up
+to 60 characters. A Custom widget's settings are checked together, and an error names the setting, such
 as `widgets[2]` with `rules[0].when: … at character 7`. Its `source`, like a `calendar`, is not checked against the
 sources when a dashboard is saved or imported: a widget whose source is deleted, or that came from another GDash, says
 on the screen that its API is not available. A `calendar` setting is a whole number from 1 up, the `id` of a

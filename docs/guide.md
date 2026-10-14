@@ -216,6 +216,18 @@ add calendars and feeds under Integrations, and the photos once you add photos.
 | Camera | A still image of a camera at home, refreshed every few seconds; see [Cameras](#cameras) |
 | Web page | A page you add under Integrations, such as a Grafana panel or a Home Assistant dashboard, filling the tile; see [Web page](#web-page) |
 
+**Titles.** A tile that does not explain itself has a short title in the
+language of the TVs, such as **Who's home** over the badges of who is home,
+**Waste collection** over the pickups, the name of the stop over departures
+or the name of the page over a web page. The clock, the weather, the
+calendar and a few others have none. In a widget's settings, **Title** shows
+the default as a grey example: type another, such as Keuken or Bins, or tick
+**No title**. Every title has the same size and style; on a tile too low
+for one, such as three rows at 150 % text, it is left out so the data keeps
+its room. With nobody home the
+Who's home tile says **Nobody is home**, and a waste calendar without pickups
+in the coming 14 days says **No pickups planned**.
+
 **Photos** are added under Integrations, Photos: JPEG, PNG or WebP, up to 8 MB
 each and 50 in total. They stay on your server and only go to paired
 screens and to you; the rest of the network gets nothing. GDash removes

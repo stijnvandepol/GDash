@@ -18,15 +18,10 @@
 
   const area = $derived(readArea(entry?.value, warningsKey(settings)));
   const list = $derived(area ? activeWarnings(area, clock.now.getTime()) : []);
-  const stale = $derived(entry !== undefined && clock.now.getTime() > Date.parse(entry.staleAfter));
 </script>
 
 <div class="warnings" use:fitItems>
   {#if area}
-    <h2 class="title" class:stale>
-      <span class="kind">{t('warningsTitle')}</span>
-      <span class="region">{area.region}</span>
-    </h2>
     {#if list.length > 0}
       <ol class="list">
         {#each list as w (w.id)}
@@ -63,35 +58,6 @@
     gap: clamp(6px, 3cqh, 14px);
     width: 100%;
     min-width: 0;
-  }
-  .title {
-    display: flex;
-    gap: 0.4em;
-    flex: none;
-    margin: 0;
-    font-family: var(--font-display);
-    font-size: clamp(20px, min(5.5cqw, 16cqh), 34px);
-    font-weight: 500;
-    color: var(--text-muted);
-    white-space: nowrap;
-  }
-  .title.stale {
-    color: var(--warning);
-  }
-  .kind {
-    flex: none;
-  }
-  .region {
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    color: var(--text-primary);
-  }
-  .title.stale .region {
-    color: inherit;
-  }
-  .region::before {
-    content: '· ';
   }
   .list {
     list-style: none;

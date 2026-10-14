@@ -17,7 +17,6 @@
 
 <div class="air" use:fitItems>
   {#if air && level}
-    <span class="title">{t('airQuality')}</span>
     <div class="index">
       <span class="number">{air.index}</span>
       <span class="level" class:warning={levelNumber >= FIRST_WARNING_LEVEL}>{t(AQI_TEXT[level])}</span>
@@ -51,14 +50,6 @@
     justify-content: center;
     width: 100%;
     min-width: 0;
-  }
-  .title {
-    display: none;
-    margin-bottom: 12px;
-    font-family: var(--font-display);
-    font-size: 34px;
-    font-weight: 500;
-    color: var(--text-muted);
   }
   .index {
     display: flex;
@@ -120,11 +111,5 @@
   .muted {
     color: var(--text-muted);
     font-size: 38px;
-  }
-  /* A tall tile has room for a heading. */
-  @container (min-height: 300px) {
-    .title {
-      display: block;
-    }
   }
 </style>

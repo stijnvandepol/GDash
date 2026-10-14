@@ -42,7 +42,7 @@ function snapshot() {
       { id: 'home', type: 'homeypresence', x: 16, y: 0, w: 8, h: 4, source: 'homey.presence' },
       { id: 'weather', type: 'weather', x: 0, y: 4, w: 10, h: 6, source: 'weather', settings: { current: 'knmi' } },
       { id: 'news', type: 'news', x: 10, y: 4, w: 14, h: 10, source: 'news' },
-      { id: 'power', type: 'custom', x: 0, y: 10, w: 10, h: 4, source: 'custom.default' },
+      { id: 'power', type: 'custom', x: 0, y: 10, w: 10, h: 4, source: 'custom.default', settings: { source: 1, mode: 'value', path: 'power', title: 'Stroom' } },
     ],
   };
   const headlines = [
@@ -90,9 +90,9 @@ async function openTv(browser: Browser, baseURL: string | undefined, screen: typ
     // The legacy stylesheet has loaded and the tiles carry their queries.
     await expect(page.locator('link[href$=".legacy.css"]').first()).toBeAttached();
     await expect.poll(() => page.evaluate(() => [...document.styleSheets].some((s) => s.href?.endsWith('.legacy.css') && s.cssRules.length > 0))).toBe(true);
-    await expect(page.locator('section.widget[data-cq]')).toHaveCount(6);
+    await expect(page.locator('section.widget .tile-body[data-cq]')).toHaveCount(6);
     // This Chromium's own container queries are off, as on an older TV.
-    expect(await page.locator('section.widget').first().evaluate((el) => getComputedStyle(el).containerType)).toBe('normal');
+    expect(await page.locator('section.widget .tile-body').first().evaluate((el) => getComputedStyle(el).containerType)).toBe('normal');
   }
   // Two frames, so the fallback's last measurements are drawn.
   await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
@@ -111,9 +111,8 @@ const MEASURED = [
   '.weather .description',
   '.weather .range',
   '.weather .measured',
-  '.news .source',
+  '.tile-title',
   '.news li .title',
-  '.custom .title',
   '.custom .big',
   '.custom .label',
 ];
@@ -175,7 +174,7 @@ function overflowingText(page: Page): Promise<string[]> {
         for (const r of node.parentElement.getClientRects()) {
           if (r.width === 0) continue;
           if (r.left < inner.left || r.right > inner.right || r.top < inner.top || r.bottom > inner.bottom) {
-            problems.push(`${tile.firstElementChild?.className.split(' ')[0]}: "${node.textContent.trim().slice(0, 40)}"`);
+            problems.push(`${tile.querySelector('.tile-body')?.firstElementChild?.className.split(' ')[0]}: "${node.textContent.trim().slice(0, 40)}"`);
             break;
           }
         }
@@ -196,7 +195,7 @@ test('the fallback for older TVs draws the owner\'s layout as the browser\'s own
   try {
     // The native page loads no legacy stylesheet and leaves the tiles alone.
     await expect(native.locator('link[href$=".legacy.css"]')).toHaveCount(0);
-    await expect(native.locator('section.widget[data-cq]')).toHaveCount(0);
+    await expect(native.locator('section.widget [data-cq]')).toHaveCount(0);
 
     const expected = await measure(native);
     const actual = await measure(compat);
@@ -227,6 +226,8 @@ for (const [name, screen, compat] of [
     const page = await openTv(browser, baseURL, screen, compat);
     try {
       expect(await overflowingText(page)).toEqual([]);
+      // The tiles that do not explain themselves say what they show, in the TV's language.
+      await expect(page.locator('.tile-title')).toHaveText(['Afval', 'Wie is thuis', 'NOS Nieuws', 'Stroom']);
       const size = async (selector: string) => parseFloat(await page.locator(selector).first().evaluate((el) => getComputedStyle(el).fontSize));
       // Sizes on the 1920-pixel stage; a 1280 TV draws them at two thirds.
       expect(await size('.waste li .kind')).toBeGreaterThanOrEqual(34);

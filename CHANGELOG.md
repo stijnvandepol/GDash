@@ -16,6 +16,12 @@ the format follows [Keep a Changelog](https://keepachangelog.com).
 - Two typefaces to choose per dashboard: Oswald, a condensed sans, and
   Jersey 10, a pixel face (both SIL Open Font License).
 
+### Changed
+
+- With nobody home, a Custom widget's badges without a title of their own say
+  "Nobody is home" instead of a dash, and a waste calendar without pickups
+  says "No pickups planned". The Dutch title of the waste tile is "Afval".
+
 ### Fixed
 
 - An integration's setup closes when you click outside it or press Escape,
@@ -56,6 +62,15 @@ the format follows [Keep a Changelog](https://keepachangelog.com).
   as you paste them, with what to copy instead, and a failed test explains
   the usual cause, such as Google's 404 for the public address of a private
   calendar. `POST /api/calendar-tests`.
+- Every tile that does not explain itself has a title in the language of the
+  TVs: Who's home, Waste collection, Electricity price, Rain, Weather
+  warnings, Holidays, Moon, Solar forecast, Now playing, Traffic, Fuel, the
+  stop of Departures, the page of a Web page, Home Assistant and Homey, and
+  Who's home over a Custom widget's badges. All titles share one size and
+  style, and are left out on a tile too low for one. In the editor,
+  **Title** takes a title of your own or **No title**; every widget type takes
+  the settings `title` (up to 40 characters) and `hideTitle`. Existing
+  dashboards get the titles without a change.
 - A Google calendar with years of history no longer fails as "larger than
   the limit": GDash reads a calendar while it downloads, keeps only the
   recurring events and those around the coming days, and reads up to 64 MB

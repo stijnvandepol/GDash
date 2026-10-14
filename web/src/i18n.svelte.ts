@@ -76,7 +76,7 @@ const en = {
   wasteMissing: 'Calendar not found. Pick another one.',
   wasteChoose: 'Choose which waste calendar this widget shows.',
   wasteNotSetUp: 'No waste calendar. Add one under Integrations, Waste collection.',
-  wasteNone: 'No pickups in the next 14 days.',
+  wasteNone: 'No pickups planned',
   wasteOrganic: 'Organic waste',
   wastePlastic: 'Plastic & packaging',
   wastePaper: 'Paper',
@@ -268,6 +268,12 @@ const en = {
   trafficSourceOsm: '© OpenStreetMap contributors',
   measuredAt: 'Measured at {station} {time}',
   humidity: 'Humidity {percent}%',
+  whoIsHome: 'Who’s home',
+  moonTitle: 'Moon',
+  departuresTitle: 'Departures',
+  nowPlayingTitle: 'Now playing',
+  cameraTitle: 'Camera',
+  webPageTitle: 'Web page',
 };
 
 export type TextKey = keyof typeof en;
@@ -333,13 +339,13 @@ export const TEXTS: Record<Language, Record<TextKey, string>> = {
     pollenModerate: 'Matig',
     pollenHigh: 'Hoog',
     pollenVeryHigh: 'Zeer hoog',
-    wasteTitle: 'Afvalkalender',
+    wasteTitle: 'Afval',
     wasteLoading: 'Afvalkalender laden…',
     wasteFailed: 'De afvalkalender kon niet worden geladen',
     wasteMissing: 'Agenda niet gevonden. Kies een andere.',
     wasteChoose: 'Kies welke afvalkalender deze widget toont.',
     wasteNotSetUp: 'Geen afvalkalender. Voeg er een toe onder Integrations, Waste collection.',
-    wasteNone: 'Geen ophaaldagen de komende 14 dagen.',
+    wasteNone: 'Geen ophaaldagen gepland',
     wasteOrganic: 'GFT',
     wastePlastic: 'PMD',
     wastePaper: 'Papier',
@@ -531,6 +537,12 @@ export const TEXTS: Record<Language, Record<TextKey, string>> = {
     trafficSourceOsm: '© OpenStreetMap-bijdragers',
     measuredAt: 'Gemeten in {station} {time}',
     humidity: 'Luchtvochtigheid {percent}%',
+    whoIsHome: 'Wie is thuis',
+    moonTitle: 'Maan',
+    departuresTitle: 'Vertrektijden',
+    nowPlayingTitle: 'Nu speelt',
+    cameraTitle: 'Camera',
+    webPageTitle: 'Webpagina',
   },
   de,
   fr,
@@ -553,7 +565,12 @@ export function currentLanguage(): Language {
 
 /** The text for key in the current language, with {name} placeholders filled in. */
 export function t(key: TextKey, values: Record<string, string | number> = {}): string {
-  let text = TEXTS[currentLanguage()][key];
+  return translate(currentLanguage(), key, values);
+}
+
+/** The text for key in a given language, such as English for the editor. */
+export function translate(language: Language, key: TextKey, values: Record<string, string | number> = {}): string {
+  let text = TEXTS[language][key];
   // A function as replacement: a value such as "$&" is inserted as it is.
   for (const [name, value] of Object.entries(values)) text = text.replace(`{${name}}`, () => String(value));
   return text;

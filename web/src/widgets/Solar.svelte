@@ -14,7 +14,6 @@
 
 <div class="solar">
   {#if view}
-    <span class="title">{t('solarTitle')}</span>
     <div class="today">
       <span class="figure">~{formatKWh(view.todayKWh, locale())}</span>
       <span class="unit" class:stale>kWh</span>
@@ -51,13 +50,6 @@
     gap: 8px;
     width: 100%;
     min-width: 0;
-  }
-  .title {
-    display: none;
-    font-family: var(--font-display);
-    font-size: 34px;
-    font-weight: 500;
-    color: var(--text-muted);
   }
   .today {
     display: flex;
@@ -165,11 +157,6 @@
   @container (max-height: 200px) {
     .hours {
       display: none;
-    }
-  }
-  @container (min-height: 300px) {
-    .title {
-      display: block;
     }
   }
 </style>

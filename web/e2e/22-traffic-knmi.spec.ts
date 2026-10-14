@@ -67,8 +67,10 @@ test('a screen shows traffic on the roads, fixed cameras and measured weather', 
   // The ANWB's own Dutch description stays as sent.
   await expect(roads).toContainText('Stilstaand verkeer. Kapotte auto.');
 
-  const near = screen.locator('.traffic').nth(1);
-  await expect(near).toContainText('within 10 km');
+  // The tile's title names what it watches.
+  const nearTile = screen.locator('section.widget').filter({ has: page.locator('.traffic') }).nth(1);
+  await expect(nearTile.locator('.tile-title')).toHaveText('Traffic · within 10 km');
+  const near = nearTile.locator('.traffic');
   await expect(near).toContainText('Born → Urmond');
   await expect(near).not.toContainText('Batadorp');
 

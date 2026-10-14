@@ -9,6 +9,7 @@
   import AnnouncementBanner from './AnnouncementBanner.svelte';
   import { containerFallback } from './compat';
   import { REFRESH_MS, driftAt, msToNextRefresh } from './screenCare';
+  import { tileContent, tileTitle, titleFits, titleIsStale } from './widgets/titles';
 
   // Spacing of theme.css in design pixels. A larger text size draws the
   // stage smaller and these with it, so only the text grows.
@@ -123,6 +124,8 @@
     };
   });
 
+  const space = $derived({ gap: SPACE_GAP / stage.textScale, padding: SPACE_WIDGET / stage.textScale });
+
   /** The display this page shows, from its address /d/<id>. */
   function pairingDisplayId(): string {
     return location.pathname.split('/').filter(Boolean).pop() ?? '';
@@ -166,73 +169,85 @@
       style:grid-template-rows="repeat({dashboard.rows}, 1fr)"
     >
       {#each dashboard.widgets as widget (widget.id)}
+        {@const title = tileTitle(widget, widget.source ? display.snapshot?.data[widget.source] : undefined, t)}
+        {@const titled = title !== null && titleFits(tileContent(stage, dashboard, widget, space))}
         <section
           class="widget"
-          use:containerFallback
+          class:titled
           style:grid-column="{widget.x + 1} / span {widget.w}"
           style:grid-row="{widget.y + 1} / span {widget.h}"
         >
-          {#if widget.type === 'clock'}
-            <Clock />
-          {:else if widget.type === 'weather'}
-            <Weather
-              entry={widget.source ? display.snapshot?.data[widget.source] : undefined}
-              settings={widget.settings}
-              measured={display.snapshot?.data['knmi.observation']}
-            />
-          {:else if widget.type === 'calendar'}
-            <Calendar entry={widget.source ? display.snapshot?.data[widget.source] : undefined} settings={widget.settings} />
-          {:else if widget.type === 'news'}
-            <News entry={widget.source ? display.snapshot?.data[widget.source] : undefined} settings={widget.settings} />
-          {:else if widget.type === 'forecast'}
-            <Forecast entry={widget.source ? display.snapshot?.data[widget.source] : undefined} settings={widget.settings} />
-          {:else if widget.type === 'sun'}
-            <Sun entry={widget.source ? display.snapshot?.data[widget.source] : undefined} />
-          {:else if widget.type === 'moon'}
-            <Moon />
-          {:else if widget.type === 'airquality'}
-            <AirQuality entry={widget.source ? display.snapshot?.data[widget.source] : undefined} />
-          {:else if widget.type === 'waste'}
-            <Waste entry={widget.source ? display.snapshot?.data[widget.source] : undefined} settings={widget.settings} />
-          {:else if widget.type === 'energyprice'}
-            <EnergyPrice entry={widget.source ? display.snapshot?.data[widget.source] : undefined} />
-          {:else if widget.type === 'solar'}
-            <Solar entry={widget.source ? display.snapshot?.data[widget.source] : undefined} />
-          {:else if widget.type === 'text'}
-            <Note settings={widget.settings} />
-          {:else if widget.type === 'countdown'}
-            <Countdown settings={widget.settings} />
-          {:else if widget.type === 'holidays'}
-            <Holidays entry={widget.source ? display.snapshot?.data[widget.source] : undefined} settings={widget.settings} />
-          {:else if widget.type === 'photos'}
-            <Photos entry={widget.source ? display.snapshot?.data[widget.source] : undefined} settings={widget.settings} />
-          {:else if widget.type === 'homeassistant'}
-            <HomeAssistant entry={widget.source ? display.snapshot?.data[widget.source] : undefined} settings={widget.settings} />
-          {:else if widget.type === 'homey'}
-            <Homey entry={widget.source ? display.snapshot?.data[widget.source] : undefined} settings={widget.settings} />
-          {:else if widget.type === 'homeypresence'}
-            <HomeyPresence entry={widget.source ? display.snapshot?.data[widget.source] : undefined} key="{dashboard.id}/{widget.id}" />
-          {:else if widget.type === 'departures'}
-            <Departures entry={widget.source ? display.snapshot?.data[widget.source] : undefined} settings={widget.settings} />
-          {:else if widget.type === 'fuel'}
-            <Fuel entry={widget.source ? display.snapshot?.data[widget.source] : undefined} settings={widget.settings} />
-          {:else if widget.type === 'rain'}
-            <Rain entry={widget.source ? display.snapshot?.data[widget.source] : undefined} settings={widget.settings} />
-          {:else if widget.type === 'warnings'}
-            <Warnings entry={widget.source ? display.snapshot?.data[widget.source] : undefined} settings={widget.settings} />
-          {:else if widget.type === 'camera'}
-            <Camera settings={widget.settings} />
-          {:else if widget.type === 'traffic'}
-            <Traffic entry={widget.source ? display.snapshot?.data[widget.source] : undefined} settings={widget.settings} />
-          {:else if widget.type === 'custom'}
-            <Custom entry={widget.source ? display.snapshot?.data[widget.source] : undefined} key="{dashboard.id}/{widget.id}" />
-          {:else if widget.type === 'nowplaying'}
-            <NowPlaying entry={widget.source ? display.snapshot?.data[widget.source] : undefined} settings={widget.settings} />
-          {:else if widget.type === 'webpage'}
-            <WebPage entry={widget.source ? display.snapshot?.data[widget.source] : undefined} settings={widget.settings} />
-          {:else}
-            <p class="muted">{t('unknownWidget', { type: widget.type })}</p>
+          {#if titled}
+            <h2
+              class="tile-title"
+              class:stale={titleIsStale(widget, widget.source ? display.snapshot?.data[widget.source] : undefined, `${dashboard.id}/${widget.id}`, clock.now.getTime())}
+            >
+              {title}
+            </h2>
           {/if}
+          <div class="tile-body" use:containerFallback>
+            {#if widget.type === 'clock'}
+              <Clock />
+            {:else if widget.type === 'weather'}
+              <Weather
+                entry={widget.source ? display.snapshot?.data[widget.source] : undefined}
+                settings={widget.settings}
+                measured={display.snapshot?.data['knmi.observation']}
+              />
+            {:else if widget.type === 'calendar'}
+              <Calendar entry={widget.source ? display.snapshot?.data[widget.source] : undefined} settings={widget.settings} />
+            {:else if widget.type === 'news'}
+              <News entry={widget.source ? display.snapshot?.data[widget.source] : undefined} settings={widget.settings} />
+            {:else if widget.type === 'forecast'}
+              <Forecast entry={widget.source ? display.snapshot?.data[widget.source] : undefined} settings={widget.settings} />
+            {:else if widget.type === 'sun'}
+              <Sun entry={widget.source ? display.snapshot?.data[widget.source] : undefined} />
+            {:else if widget.type === 'moon'}
+              <Moon />
+            {:else if widget.type === 'airquality'}
+              <AirQuality entry={widget.source ? display.snapshot?.data[widget.source] : undefined} />
+            {:else if widget.type === 'waste'}
+              <Waste entry={widget.source ? display.snapshot?.data[widget.source] : undefined} settings={widget.settings} />
+            {:else if widget.type === 'energyprice'}
+              <EnergyPrice entry={widget.source ? display.snapshot?.data[widget.source] : undefined} />
+            {:else if widget.type === 'solar'}
+              <Solar entry={widget.source ? display.snapshot?.data[widget.source] : undefined} />
+            {:else if widget.type === 'text'}
+              <Note settings={widget.settings} />
+            {:else if widget.type === 'countdown'}
+              <Countdown settings={widget.settings} />
+            {:else if widget.type === 'holidays'}
+              <Holidays entry={widget.source ? display.snapshot?.data[widget.source] : undefined} settings={widget.settings} />
+            {:else if widget.type === 'photos'}
+              <Photos entry={widget.source ? display.snapshot?.data[widget.source] : undefined} settings={widget.settings} />
+            {:else if widget.type === 'homeassistant'}
+              <HomeAssistant entry={widget.source ? display.snapshot?.data[widget.source] : undefined} settings={widget.settings} />
+            {:else if widget.type === 'homey'}
+              <Homey entry={widget.source ? display.snapshot?.data[widget.source] : undefined} settings={widget.settings} />
+            {:else if widget.type === 'homeypresence'}
+              <HomeyPresence entry={widget.source ? display.snapshot?.data[widget.source] : undefined} key="{dashboard.id}/{widget.id}" />
+            {:else if widget.type === 'departures'}
+              <Departures entry={widget.source ? display.snapshot?.data[widget.source] : undefined} settings={widget.settings} />
+            {:else if widget.type === 'fuel'}
+              <Fuel entry={widget.source ? display.snapshot?.data[widget.source] : undefined} settings={widget.settings} />
+            {:else if widget.type === 'rain'}
+              <Rain entry={widget.source ? display.snapshot?.data[widget.source] : undefined} settings={widget.settings} />
+            {:else if widget.type === 'warnings'}
+              <Warnings entry={widget.source ? display.snapshot?.data[widget.source] : undefined} settings={widget.settings} />
+            {:else if widget.type === 'camera'}
+              <Camera settings={widget.settings} />
+            {:else if widget.type === 'traffic'}
+              <Traffic entry={widget.source ? display.snapshot?.data[widget.source] : undefined} settings={widget.settings} />
+            {:else if widget.type === 'custom'}
+              <Custom entry={widget.source ? display.snapshot?.data[widget.source] : undefined} key="{dashboard.id}/{widget.id}" />
+            {:else if widget.type === 'nowplaying'}
+              <NowPlaying entry={widget.source ? display.snapshot?.data[widget.source] : undefined} settings={widget.settings} />
+            {:else if widget.type === 'webpage'}
+              <WebPage entry={widget.source ? display.snapshot?.data[widget.source] : undefined} settings={widget.settings} />
+            {:else}
+              <p class="muted">{t('unknownWidget', { type: widget.type })}</p>
+            {/if}
+          </div>
         </section>
       {/each}
       {#if announcement}
@@ -284,9 +299,36 @@
     padding: var(--space-widget);
     overflow: hidden;
     display: flex;
-    /* Widgets size their type to the tile with cqw and cqh units. A
-       browser without container queries still keeps the tile's size from
-       following its content; compat.ts stands in for the units. */
+    flex-direction: column;
+    /* The tile's size never follows its content. */
+    contain: size;
+  }
+  /* The same title on every tile, so the screen reads as one: a muted
+     label on one line, left out where the data needs the room (titles.ts). */
+  .tile-title {
+    flex: none;
+    margin: 0 0 4px;
+    font-family: var(--font-display);
+    font-size: 25px;
+    font-weight: 500;
+    line-height: 1.2;
+    color: var(--text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .tile-title.stale {
+    color: var(--warning);
+  }
+  /* The widget's own box under the title. Widgets size their type to it
+     with cqw and cqh units; a browser without container queries still
+     keeps its size from following its content, and compat.ts stands in
+     for the units. */
+  .tile-body {
+    flex: 1 1 0;
+    min-width: 0;
+    min-height: 0;
+    display: flex;
     contain: size;
     container-type: size;
   }

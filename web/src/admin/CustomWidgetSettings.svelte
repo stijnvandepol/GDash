@@ -105,9 +105,6 @@
     {#each MODES as m (m.mode)}<option value={m.mode}>{m.label}</option>{/each}
   </select>
 </label>
-<label>
-  Title <input value={text('title')} maxlength="60" oninput={(e) => update({ title: (e.target as HTMLInputElement).value })} />
-</label>
 
 {#if mode === 'value'}
   <label>
