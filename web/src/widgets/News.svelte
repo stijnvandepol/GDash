@@ -97,13 +97,18 @@
     color: var(--text-muted);
     font-variant-numeric: tabular-nums;
   }
+  /* A headline gets two lines before it is cut short, so most read whole;
+     fitItems hides the ones that no longer fit the tile at all. */
   .title {
     font-size: 38px;
     line-height: 1.25;
     color: var(--text-primary);
-    white-space: nowrap;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
     overflow: hidden;
-    text-overflow: ellipsis;
+    overflow-wrap: break-word;
     min-width: 0;
   }
   .feed {

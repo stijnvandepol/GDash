@@ -5,6 +5,11 @@ the format follows [Keep a Changelog](https://keepachangelog.com).
 
 ## Unreleased
 
+### Fixed
+
+- A long headline in the News widget wraps onto a second line instead of
+  being cut off halfway; headlines that do not fit the tile are left out whole.
+
 ## 0.9.1 – 2026-10-14
 
 ### Changed
