@@ -1,5 +1,8 @@
 // Shapes of the data the GDash API sends and receives. api.ts re-exports
 // them, so components import everything from './api'.
+import type { ScreenReport } from '../screenReport';
+
+export type { ScreenReport };
 export interface User {
   id: number;
   username: string;
@@ -29,6 +32,15 @@ export interface Display {
   textScale: number;
   /** What GDash last found on the Cast device; only in the display list. */
   cast?: CastStatus;
+  /** What the display's screens last reported about their browsers, newest first; only in the display list. */
+  screenReports?: ReceivedScreenReport[];
+}
+
+/** A screen's report about its browser as the display list carries it. */
+export interface ReceivedScreenReport extends ScreenReport {
+  /** "cast" for the TV GDash casts to, "screen" for one paired with a code. */
+  screen: 'cast' | 'screen';
+  receivedAt: string;
 }
 
 export interface CastStatus {

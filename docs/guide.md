@@ -1384,6 +1384,26 @@ Choose **Schedule** at a display:
   display's own, for example the overview, then the calendar, then the news,
   each for 30 seconds. During a time slot only the slot's dashboard shows.
 
+## When the TV looks different from the preview
+
+A TV draws the dashboard with its own built-in browser, and the one in a
+Chromecast or another Cast device is often years older than the browser on
+your computer. Every screen therefore reports what its browser can do. Under
+**Displays**, open **What the screen reports** at the display. Per screen it
+names the browser, such as *Chrome 87 (Cast)*, the screen size, how large
+the dashboard is drawn, and in plain words what that browser lacks and what
+GDash does about it, plus any script errors the page ran into. The report
+arrives a few seconds after the dashboard is on screen and again after the
+screen reconnects; after a restart of GDash it is back within a minute or
+so.
+
+A browser older than Chrome 105 has no container queries, which the widgets
+use to size their text to their tile. GDash then loads a fallback that sizes
+the text in the same way; the report says so. Chrome 80 is the oldest
+browser GDash supports. To see the fallback in your own browser, add
+`?compat=1` to the address of a display or preview page, such as
+`/preview/default?compat=1`; nothing else changes.
+
 ## Keeping an eye on things
 
 - The display list says per TV whether the dashboard is on screen and since
@@ -1392,6 +1412,9 @@ Choose **Schedule** at a display:
   GDash cannot reach it.
 - **Integrations** shows on every card whether it is connected and when it
   last updated, or why it fails.
+- **What the screen reports**, at each display, shows what the browser of
+  each screen can do; see
+  [When the TV looks different from the preview](#when-the-tv-looks-different-from-the-preview).
 - **Settings, Account, Recent activity** lists logins, failed logins, pairings and
   changes of the last 90 days.
 

@@ -32,7 +32,9 @@ type NewDisplayToken struct {
 
 // DisplayToken is a paired screen's token, by hash.
 type DisplayToken struct {
-	DisplayID  string
+	DisplayID string
+	// Kind is TokenScreen or TokenCast.
+	Kind       string
 	LastSeenAt time.Time
 }
 
@@ -78,8 +80,8 @@ func (s *Store) CreateDisplayToken(ctx context.Context, t NewDisplayToken) error
 func (s *Store) DisplayToken(ctx context.Context, tokenHash string) (DisplayToken, error) {
 	var t DisplayToken
 	var lastSeen string
-	err := s.db.QueryRowContext(ctx, "SELECT display_id, last_seen_at FROM display_tokens WHERE token_hash = ?", tokenHash).
-		Scan(&t.DisplayID, &lastSeen)
+	err := s.db.QueryRowContext(ctx, "SELECT display_id, kind, last_seen_at FROM display_tokens WHERE token_hash = ?", tokenHash).
+		Scan(&t.DisplayID, &t.Kind, &lastSeen)
 	if errors.Is(err, sql.ErrNoRows) {
 		return DisplayToken{}, ErrNotFound
 	}

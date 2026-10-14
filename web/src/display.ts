@@ -7,12 +7,25 @@ import { t } from './i18n.svelte';
 import { isSnapshot } from './protocol';
 import { applySnapshot, display, forgetSnapshot, restoreSnapshot } from './state.svelte';
 import { shouldReloadForFrames } from './widgets/webpage';
-import { startCompat } from './compat';
+import { compat, detectFeatures, startCompat } from './compat';
+import { buildReport, createErrorLog, rejectionMessage, scriptSource, sendReport } from './screenReport';
+import { stageFor } from './stage';
 
 const OFFLINE_RETRY_MS = 15000;
 const FRAME_RELOAD_KEY = 'gdash.frameReloadAt';
+// The screen reports when it has drawn the dashboard and after every
+// reconnect, at most once per REPORT_GAP_MS; the server limits it too.
+const REPORT_GAP_MS = 60_000;
+const RENDER_WAIT_MS = 30_000;
+const FONT_WAIT_MS = 10_000;
+const POLL_MS = 500;
 
 const displayId = location.pathname.split('/').filter(Boolean).pop() ?? 'default';
+
+const errors = createErrorLog();
+window.addEventListener('error', (event) => errors.add(event.message, scriptSource(event.filename, event.lineno, event.colno)));
+window.addEventListener('unhandledrejection', (event) => errors.add(rejectionMessage(event.reason), ''));
+let lastReportAt = -Infinity;
 
 startCompat();
 restoreSnapshot(displayId, isSnapshot);
@@ -67,6 +80,7 @@ function connect(): void {
   const events = new EventSource(`/api/displays/${encodeURIComponent(displayId)}/events`);
   events.addEventListener('open', () => {
     display.connection = 'live';
+    void reportScreen();
   });
   events.addEventListener('error', () => {
     display.connection = 'offline';
@@ -89,4 +103,32 @@ function connect(): void {
       console.warn('gdash: ignored a snapshot with an unexpected shape');
     }
   });
+}
+
+const delay = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+
+/** Waits until the dashboard is on screen, or RENDER_WAIT_MS; a sleeping display draws none. */
+async function rendered(): Promise<void> {
+  for (let waited = 0; display.firstRenderMs === null && waited < RENDER_WAIT_MS; waited += POLL_MS) await delay(POLL_MS);
+}
+
+/** Tells the server what this screen's browser can do; see screenReport.ts. */
+async function reportScreen(): Promise<void> {
+  if (Date.now() - lastReportAt < REPORT_GAP_MS) return;
+  lastReportAt = Date.now();
+  await rendered();
+  await Promise.race([document.fonts.ready, delay(FONT_WAIT_MS)]);
+  const report = buildReport({
+    userAgent: navigator.userAgent,
+    width: innerWidth,
+    height: innerHeight,
+    devicePixelRatio,
+    stageScale: stageFor(innerWidth, innerHeight, display.snapshot?.textScale).scale,
+    features: detectFeatures(),
+    compat: compat.active,
+    fontsLoaded: document.fonts.status === 'loaded',
+    firstRenderMs: display.firstRenderMs,
+    errors: errors.list(),
+  });
+  await sendReport(displayId, report);
 }

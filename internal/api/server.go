@@ -26,6 +26,7 @@ import (
 	"github.com/stijnvandepol/gdash/internal/pairing"
 	"github.com/stijnvandepol/gdash/internal/photos"
 	"github.com/stijnvandepol/gdash/internal/ratelimit"
+	"github.com/stijnvandepol/gdash/internal/screenreport"
 	"github.com/stijnvandepol/gdash/internal/settings"
 	"github.com/stijnvandepol/gdash/internal/store"
 	"github.com/stijnvandepol/gdash/internal/update"
@@ -136,6 +137,8 @@ type Server struct {
 	TrustedProxies []netip.Prefix
 	Now            func() time.Time
 	Logger         *slog.Logger
+	// ScreenReports keeps what each screen last reported about its browser.
+	ScreenReports *screenreport.Board
 }
 
 // Handler returns the routes of the server.
@@ -232,6 +235,7 @@ func (s *Server) Handler() http.Handler {
 	mux.Handle("PATCH /api/displays/{display}", s.requireUser(s.updateDisplay))
 	mux.Handle("DELETE /api/displays/{display}", s.requireUser(s.deleteDisplay))
 	mux.Handle("POST /api/displays/{display}/cast-takeovers", s.requireUser(s.postCastTakeover))
+	mux.HandleFunc("POST /api/displays/{display}/screen-reports", s.postScreenReport)
 
 	// Rejects state-changing requests that a browser sends from another
 	// site (CSRF), based on Sec-Fetch-Site and Origin.

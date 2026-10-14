@@ -59,6 +59,16 @@ the format follows [Keep a Changelog](https://keepachangelog.com).
   the measured temperature's line of the KNMI fits and reads at 26 pixels
   instead of 22.
 
+### Added
+
+- Every screen reports what its browser can do: under **Displays**, **What
+  the screen reports** names the browser and version, the screen size and,
+  in plain words, what the browser lacks and what GDash does about it, plus
+  script errors. `POST /api/displays/{id}/screen-reports` takes the report
+  from the screen itself; `GET /api/displays` lists them as `screenReports`.
+  `?compat=1` on a display or preview page shows the fallback for older
+  browsers in any browser.
+
 ## 0.9.1 – 2026-10-14
 
 ### Changed

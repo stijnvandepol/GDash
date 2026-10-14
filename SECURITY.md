@@ -54,6 +54,17 @@ fully trust, such as a guest's phone.
   that expires after two minutes. Unpairing takes effect within 20 seconds,
   and a screen that has not shown its display for 90 days is unpaired.
   Each display only receives the data its own widgets show.
+- **Screen reports:** a paired screen tells the server about its own
+  browser, so an admin can see why a TV draws a dashboard differently: the
+  user agent, the screen size and pixel ratio, which CSS features it has,
+  whether the fonts loaded, how long the first dashboard took, and up to 5
+  script errors as a one-line message with the script's path, line and
+  column. Nothing about the household and no page address, so no launch
+  token. Only a screen paired with that display can report, with its own
+  display cookie, at most 10 times in 10 minutes and 8 KB at a time; every
+  field is checked for type, length and range. The server keeps only each
+  screen's last report, in memory, for at most 5 screens per display, and
+  only admins see them.
 - **Secrets:** calendar addresses give read access to a calendar, and a
   Home Assistant token to everything its user can see, so they are
   encrypted (AES-256-GCM) with a key file next to the database, never

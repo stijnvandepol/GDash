@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { Dashboard, Display } from './api';
-  import { castTone, describeCast } from './status';
+  import { castTone, describeAge, describeCast } from './status';
+  import { describeBrowser, describeScreenSize, screenWarnings } from './screenReports';
   import { DEFAULT_DASHBOARD_ID, describeHours, describeScreens } from './displays';
   import Icon from './Icon.svelte';
   import DashboardThumb from './DashboardThumb.svelte';
@@ -55,6 +56,11 @@
   // straight away; otherwise connecting another screen is a step away.
   const needsScreen = $derived(!isCast && screens === 0);
   let connecting = $state(false);
+  const reports = $derived(d.screenReports ?? []);
+
+  function reportedAgo(receivedAt: string): string {
+    return describeAge(Math.max(0, Math.round((Date.now() - Date.parse(receivedAt)) / 60_000)));
+  }
 
   async function pair(code: string) {
     await onpair(code);
@@ -152,6 +158,37 @@
       <button class="link" onclick={onrename}>Rename</button>
       <button class="link danger remove" onclick={onremove}>Remove</button>
     </div>
+
+    <!-- What the screens found out about their own browsers: how to tell
+         why the TV looks different from the preview. -->
+    {#if reports.length > 0}
+      <details class="reports">
+        <summary>What the screen reports</summary>
+        {#each reports as report, i (i)}
+          {@const warnings = screenWarnings(report)}
+          <section class="report" aria-label="Report of {report.screen === 'cast' ? tv : 'a paired screen'}">
+            <p class="report-head">
+              <strong>{describeBrowser(report.userAgent)}</strong>
+              <span class="muted">on {report.screen === 'cast' ? tv : 'a paired screen'}, {reportedAgo(report.receivedAt)}</span>
+            </p>
+            <p class="small">{describeScreenSize(report)}</p>
+            {#if warnings.length > 0}
+              <ul class="small warnings">
+                {#each warnings as warning (warning)}<li>{warning}</li>{/each}
+              </ul>
+            {:else}
+              <p class="small">Everything the dashboard uses works on this screen.</p>
+            {/if}
+            {#if report.errors.length > 0}
+              <ul class="small errors">
+                {#each report.errors as error, j (j)}<li><code>{error.message}</code>{#if error.source}{' '}<span class="muted">{error.source}</span>{/if}</li>{/each}
+              </ul>
+            {/if}
+            <p class="small muted agent">{report.userAgent}</p>
+          </section>
+        {/each}
+      </details>
+    {/if}
   </div>
 </article>
 
@@ -280,6 +317,60 @@
     flex-wrap: wrap;
     align-items: center;
     gap: var(--s-2) var(--s-4);
+  }
+  .reports summary {
+    cursor: pointer;
+    color: var(--muted);
+    font-size: var(--fs-sm);
+    min-height: 32px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  /* A flex summary loses the browser's triangle, so it draws its own. */
+  .reports summary::before {
+    content: '▸';
+  }
+  .reports[open] > summary::before {
+    content: '▾';
+  }
+  .report {
+    display: grid;
+    gap: var(--s-1);
+    padding: var(--s-2) 0;
+  }
+  .report + .report {
+    border-top: 1px solid var(--border);
+  }
+  .report p {
+    margin: 0;
+  }
+  .report-head {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 var(--s-2);
+    align-items: baseline;
+  }
+  .warnings,
+  .errors {
+    margin: 0;
+    padding-left: 1.2em;
+    display: grid;
+    gap: var(--s-1);
+  }
+  /* Plain bullets, not the rows of the display list around them. */
+  .warnings li,
+  .errors li {
+    display: list-item;
+    padding: 0;
+    border-top: 0;
+  }
+  .errors code {
+    overflow-wrap: anywhere;
+  }
+  .agent {
+    font-family: var(--mono);
+    overflow-wrap: anywhere;
   }
   /* Removing is rare and cannot be undone: apart from the rest. */
   .remove {

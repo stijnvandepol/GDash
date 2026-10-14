@@ -229,7 +229,8 @@ Architecture:     One Go binary (cmd/gdash). internal/datahub fetches external d
                   internal/auth (accounts, sessions) and internal/pairing (which screens may show a display)
                   share internal/token and internal/ratelimit; internal/apitoken holds the tokens that
                   automations use and internal/announcement the messages they put over the displays (in
-                  memory, never in SQLite); internal/api serves pages, SSE and the JSON
+                  memory, never in SQLite), internal/screenreport what each screen says about its browser
+                  (also in memory); internal/api serves pages, SSE and the JSON
                   API (docs/api.md); internal/cast talks CASTV2 and mDNS and keeps a receiver on screen;
                   internal/casting runs one keeper per display. web/ holds the web interface (/), the display
                   runtime (/d/<id>) and the receiver; web/build/legacyCss.ts writes the fallback stylesheets

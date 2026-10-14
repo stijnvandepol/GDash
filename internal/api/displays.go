@@ -7,6 +7,7 @@ import (
 	"github.com/stijnvandepol/gdash/internal/casting"
 	"github.com/stijnvandepol/gdash/internal/displays"
 	"github.com/stijnvandepol/gdash/internal/schedule"
+	"github.com/stijnvandepol/gdash/internal/screenreport"
 	"github.com/stijnvandepol/gdash/internal/store"
 	"github.com/stijnvandepol/gdash/internal/validation"
 )
@@ -16,7 +17,8 @@ const defaultTextScale = 100
 
 // listDisplays handles GET /api/displays: {"displays": [...]}, at most
 // displays.MaxDisplays, each with the number of screens paired by code and,
-// for a display on a Cast device, what its keeper last found there. The TV
+// for a display on a Cast device, what its keeper last found there, and what
+// its screens last reported about their browsers (screenReports). The TV
 // a cast keeper opened is not among the paired screens: for a Cast display
 // they are the screens it is open on besides its TV.
 func (s *Server) listDisplays(w http.ResponseWriter, r *http.Request) {
@@ -34,11 +36,14 @@ func (s *Server) listDisplays(w http.ResponseWriter, r *http.Request) {
 		displays.Display
 		PairedScreens int             `json:"pairedScreens"`
 		Cast          *casting.Status `json:"cast,omitempty"`
+		// ScreenReports is what the display's screens last said about
+		// their browsers, newest first.
+		ScreenReports []screenreport.Received `json:"screenReports"`
 	}
 	statuses := s.CastStatus()
 	out := make([]listed, len(list))
 	for i, d := range list {
-		out[i] = listed{Display: d, PairedScreens: counts[d.ID]}
+		out[i] = listed{Display: d, PairedScreens: counts[d.ID], ScreenReports: s.ScreenReports.For(d.ID)}
 		if st, ok := statuses[d.ID]; ok {
 			out[i].Cast = &st
 		}
@@ -162,6 +167,7 @@ func (s *Server) deleteDisplay(w http.ResponseWriter, r *http.Request) {
 		s.writeStoreError(w, "delete display", err)
 		return
 	}
+	s.ScreenReports.Forget(r.PathValue("display"))
 	s.auditUser(r, auditDisplayDeleted, r.PathValue("display"))
 	s.DisplaysChanged()
 	w.WriteHeader(http.StatusNoContent)

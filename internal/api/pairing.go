@@ -7,6 +7,7 @@ import (
 
 	"github.com/stijnvandepol/gdash/internal/auth"
 	"github.com/stijnvandepol/gdash/internal/pairing"
+	"github.com/stijnvandepol/gdash/internal/store"
 )
 
 const displayCookie = "gdash_display"
@@ -112,6 +113,7 @@ func (s *Server) deletePairings(w http.ResponseWriter, r *http.Request) {
 		s.internalError(w, "unpair screens", err)
 		return
 	}
+	s.ScreenReports.ForgetScreens(r.PathValue("display"), store.TokenScreen)
 	s.auditUser(r, auditScreensUnpaired, fmt.Sprintf("%s: %d screens", r.PathValue("display"), n))
 	writeJSON(w, http.StatusOK, map[string]int64{"removed": n})
 }
@@ -143,11 +145,18 @@ func (s *Server) isAdmin(r *http.Request) (bool, error) {
 }
 
 func (s *Server) displayFromCookie(r *http.Request) (string, error) {
+	screen, err := s.screenFromCookie(r)
+	return screen.DisplayID, err
+}
+
+// screenFromCookie returns the paired screen that sent r, or
+// pairing.ErrInvalidToken.
+func (s *Server) screenFromCookie(r *http.Request) (pairing.Screen, error) {
 	cookie, err := r.Cookie(displayCookie)
 	if err != nil {
-		return "", pairing.ErrInvalidToken
+		return pairing.Screen{}, pairing.ErrInvalidToken
 	}
-	return s.Pairing.Authenticate(r.Context(), cookie.Value)
+	return s.Pairing.Screen(r.Context(), cookie.Value)
 }
 
 // writePairingError translates pairing errors. It returns true when err is

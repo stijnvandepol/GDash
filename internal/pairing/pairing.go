@@ -220,31 +220,55 @@ func (s *Service) Exchange(ctx context.Context, launchToken, clientIP string) (d
 	return displayToken, l.displayID, nil
 }
 
+// Screen is a paired screen as its display token identifies it.
+type Screen struct {
+	DisplayID string
+	// Key tells the screens of one display apart without revealing their
+	// tokens: "cast" for the TV a cast keeper opened, which gets a new token
+	// at every launch but stays one screen, else the hash of the token.
+	Key string
+	// Kind is store.TokenScreen or store.TokenCast.
+	Kind string
+}
+
+// castScreenKey is the key of the one TV a cast keeper keeps a display on.
+const castScreenKey = "cast"
+
 // Authenticate returns the display a display token may show.
 func (s *Service) Authenticate(ctx context.Context, displayToken string) (string, error) {
+	screen, err := s.Screen(ctx, displayToken)
+	return screen.DisplayID, err
+}
+
+// Screen returns the screen a display token belongs to, or ErrInvalidToken.
+func (s *Service) Screen(ctx context.Context, displayToken string) (Screen, error) {
 	if displayToken == "" {
-		return "", ErrInvalidToken
+		return Screen{}, ErrInvalidToken
 	}
 	hash := token.Hash(displayToken)
 	t, err := s.store.DisplayToken(ctx, hash)
 	if errors.Is(err, store.ErrNotFound) {
-		return "", ErrInvalidToken
+		return Screen{}, ErrInvalidToken
 	}
 	if err != nil {
-		return "", err
+		return Screen{}, err
 	}
 	if s.now().Sub(t.LastSeenAt) > screenIdleTimeout {
 		if err := s.store.DeleteDisplayToken(ctx, hash); err != nil {
-			return "", err
+			return Screen{}, err
 		}
-		return "", ErrInvalidToken
+		return Screen{}, ErrInvalidToken
 	}
 	if s.now().Sub(t.LastSeenAt) > touchInterval {
 		if err := s.store.TouchDisplayToken(ctx, hash, s.now()); err != nil {
-			return "", err
+			return Screen{}, err
 		}
 	}
-	return t.DisplayID, nil
+	key := hash
+	if t.Kind == store.TokenCast {
+		key = castScreenKey
+	}
+	return Screen{DisplayID: t.DisplayID, Key: key, Kind: t.Kind}, nil
 }
 
 // Unpair removes the screens paired with a code and returns how many there

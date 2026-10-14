@@ -64,6 +64,13 @@
     return () => clearTimeout(timer);
   });
   const dashboard = $derived(pageAt(display.snapshot, now));
+
+  // When the first dashboard was on screen, for the report a TV sends
+  // about itself: the frame after it was put in the page.
+  $effect(() => {
+    if (!dashboard || display.firstRenderMs !== null) return;
+    requestAnimationFrame(() => (display.firstRenderMs ??= Math.round(performance.now())));
+  });
   const asleep = $derived(display.snapshot?.active === false);
 
   // An announcement leaves the screen at its expiry on the server's clock,

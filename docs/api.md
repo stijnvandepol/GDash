@@ -48,7 +48,7 @@ come from another site (cross-site request forgery protection).
 | `POST /api/api-tokens` `{name}` | admin | `201` token with its secret in `token`, shown this once | `401`, `409` at 10 tokens, `422` |
 | `DELETE /api/api-tokens/{id}` | admin | `204`; automations that use it get `401` from then on | `401`, `404` |
 | `POST /api/announcements` `{message, title?, seconds?, displays?}` | API token or admin | `201 {title?, message, expiresAt, displays}` | `400`, `401 invalid_token` or `not_logged_in`, `422`, `429 rate_limited` |
-| `GET /api/displays` | admin | `200 {"displays": [display + pairedScreens + cast?]}`; `pairedScreens` counts the screens paired with a code, never the TV a cast keeper opened | `401` |
+| `GET /api/displays` | admin | `200 {"displays": [display + pairedScreens + cast? + screenReports]}`; `pairedScreens` counts the screens paired with a code, never the TV a cast keeper opened; `screenReports` is what the display's screens last said about their browsers, newest first, see [Screen reports](#screen-reports) | `401` |
 | `POST /api/displays` `{id, name, castDeviceId, dashboardId?, activeFrom?, activeUntil?, schedule?}` | admin | `201` display | `401`, `409 conflict`, `422` (also for an unknown dashboard) |
 | `PATCH /api/displays/{id}` `{name?, castDeviceId?, dashboardId?, activeFrom?, activeUntil?, schedule?, rotation?, rotateSeconds?, textScale?}` | admin | `200` display | `401`, `404 not_found`, `422` (also for an unknown dashboard) |
 | `DELETE /api/displays/{id}` | admin | `204` | `401`, `404 not_found` |
@@ -114,6 +114,7 @@ come from another site (cross-site request forgery protection).
 | `GET /api/now-playing/artwork/{id}` | admin, or a paired screen whose display was sent this cover in its `nowplaying.default` data | `200` the cover (JPEG, PNG, WebP or GIF, at most 2 MB), `Cache-Control: private, max-age=600` | `404`, also for anyone else, a cover of something that no longer plays and one that could not be fetched |
 | `GET /api/cast-devices` | admin | `200 {"devices": [device]}` | `401`, `500 discovery_failed` |
 | `GET /api/displays/{id}/events` | paired screen or admin | `text/event-stream`, `snapshot` events | `401 not_paired`, `404` for an invalid id |
+| `POST /api/displays/{id}/screen-reports` with a [screen report](#screen-reports) | a screen paired with that display; not an admin | `204`; kept in memory as the screen's last report | `400`, `401 not_paired`, `403 other_display`, `404` for an invalid id, `413 too_large` above 8 KB, `422` naming every invalid field, `429 rate_limited` above 10 reports per screen in 10 minutes (with `Retry-After`) |
 | `POST /api/pairing-requests` `{displayId}` | no | `201 {code, pollToken, expiresAt}` | `404`, `429 rate_limited` |
 | `POST /api/display-sessions` `{pollToken}` or `{launchToken}` | no | `201 {displayId}`, sets `gdash_display`; `202` while pending | `400`, `401 invalid_token` |
 | `GET /api/display-sessions/current` | paired screen | `200 {displayId}` | `401 not_paired` |
@@ -174,6 +175,41 @@ replaced on every launch.
 the TV a cast keeper opened stays paired, and `removed` does not count it. Open
 streams re-check their access every 20 seconds, so unpairing stops a screen
 within that time. Deleting a display unpairs all its screens, the TV as well.
+
+## Screen reports
+
+A TV's built-in browser is hard to inspect, so every display page tells the
+server about its own browser: once it has drawn the dashboard, and again
+after it reconnects, at most once a minute. The server keeps the last report
+of each screen in memory, never in the database, for at most 5 screens per
+display; a restart, unpairing the screens or deleting the display forgets
+them. `GET /api/displays` lists them per display as `screenReports`, and the
+Displays page shows them under **What the screen reports**.
+
+```json
+{"userAgent": "Mozilla/5.0 (Linux; Android 12.0; …) Chrome/87.0.4280.141 Safari/537.36 CrKey/1.56.500000 DeviceType/AndroidTV",
+ "viewport": {"width": 1280, "height": 720}, "devicePixelRatio": 1.5, "stageScale": 0.6667,
+ "features": {"containerUnits": false, "containerQueries": false, "where": true, "has": false, "colorMix": false,
+              "aspectRatio": true, "flexGap": true, "inset": true, "lineClamp": true, "textWrap": false,
+              "nesting": false, "cascadeLayers": false},
+ "compat": true, "fontsLoaded": true, "firstRenderMs": 2400,
+ "errors": [{"message": "TypeError: x is not a function", "source": "/assets/App-abc.js:1:200"}]}
+```
+
+`userAgent` is 1 to 512 characters; `viewport` is the page's size in CSS
+pixels (1 to 16384); `devicePixelRatio` is above 0 and at most 16;
+`stageScale` (above 0, at most 32) is how far the 1920-pixel stage is scaled
+to fit the screen. `features` says which CSS features the browser has, all
+twelve as booleans; `compat` is true when the page uses its fallback for
+browsers without container queries. `fontsLoaded` is whether the typefaces
+had loaded, `firstRenderMs` the milliseconds from loading the page until the
+dashboard was first on screen (0 to 3600000, or `null` when nothing was
+drawn, for example outside active hours). `errors` holds at most 5 uncaught
+script errors: a `message` of 1 to 300 characters and a `source` of up to 200,
+the script's path with line and column, never the page's address. Texts are
+one line without control characters. In the list each report also has
+`screen` (`cast` for the TV a cast keeper opened, `screen` for one paired
+with a code) and `receivedAt`.
 
 ## Announcements
 

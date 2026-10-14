@@ -35,6 +35,7 @@ import (
 	"github.com/stijnvandepol/gdash/internal/outbound"
 	"github.com/stijnvandepol/gdash/internal/pairing"
 	"github.com/stijnvandepol/gdash/internal/photos"
+	"github.com/stijnvandepol/gdash/internal/screenreport"
 	"github.com/stijnvandepol/gdash/internal/secret"
 	"github.com/stijnvandepol/gdash/internal/settings"
 	"github.com/stijnvandepol/gdash/internal/store"
@@ -241,6 +242,7 @@ func serve(ctx context.Context, logger *slog.Logger) error {
 		},
 		Announcements:        publisher.Announcements,
 		AnnouncementsChanged: announced(ctx, publisher),
+		ScreenReports:        screenreport.NewBoard(time.Now),
 		SettingsChanged: func() {
 			if err := sources.sync(ctx); err != nil {
 				logger.Error("could not apply the new settings; restart GDash", "error", err)

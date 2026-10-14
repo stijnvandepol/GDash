@@ -205,6 +205,61 @@ func TestEveryLaunchReplacesTheCastToken(t *testing.T) {
 	}
 }
 
+// A TV that a cast keeper relaunches gets a new token each time but stays
+// one screen; screens paired by code each have a key of their own.
+func TestScreenKeys(t *testing.T) {
+	ctx := context.Background()
+	s, _ := newTestService(t)
+	var castKeys []string
+	for range 2 {
+		launchToken, err := s.NewLaunchToken("kitchen", tvAddr)
+		if err != nil {
+			t.Fatal(err)
+		}
+		displayToken, _, err := s.Exchange(ctx, launchToken, tvAddr.String())
+		if err != nil {
+			t.Fatal(err)
+		}
+		screen, err := s.Screen(ctx, displayToken)
+		if err != nil || screen.DisplayID != "kitchen" || screen.Kind != store.TokenCast {
+			t.Fatalf("Screen of the cast token = %+v, %v", screen, err)
+		}
+		castKeys = append(castKeys, screen.Key)
+	}
+	if castKeys[0] != castKeys[1] {
+		t.Fatalf("cast keys %q, want one key for every launch", castKeys)
+	}
+
+	var screenKeys []string
+	for range 2 {
+		req, err := s.Begin(ctx, "kitchen", "192.168.1.160")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := s.Approve(ctx, "kitchen", req.Code); err != nil {
+			t.Fatal(err)
+		}
+		displayToken, _, err := s.Claim(req.PollToken)
+		if err != nil {
+			t.Fatal(err)
+		}
+		screen, err := s.Screen(ctx, displayToken)
+		if err != nil || screen.Kind != store.TokenScreen {
+			t.Fatalf("Screen of a paired screen = %+v, %v", screen, err)
+		}
+		if strings.Contains(screen.Key, displayToken) {
+			t.Fatal("a screen key contains its token")
+		}
+		screenKeys = append(screenKeys, screen.Key)
+	}
+	if screenKeys[0] == screenKeys[1] || screenKeys[0] == castKeys[0] {
+		t.Fatalf("screen keys %q and cast key %q, want three different keys", screenKeys, castKeys[0])
+	}
+	if _, err := s.Screen(ctx, "unknown"); !errors.Is(err, ErrInvalidToken) {
+		t.Fatalf("Screen of an unknown token: err = %v, want ErrInvalidToken", err)
+	}
+}
+
 func TestUnpairRevokesScreens(t *testing.T) {
 	ctx := context.Background()
 	s, _ := newTestService(t)

@@ -26,6 +26,8 @@ export const display = $state<{
    * address from one.
    */
   framesAllowed: boolean;
+  /** Milliseconds from loading the page until a dashboard was first on screen. */
+  firstRenderMs: number | null;
 }>({
   snapshot: null,
   connection: 'connecting',
@@ -33,6 +35,7 @@ export const display = $state<{
   problem: null,
   serverOffsetMs: 0,
   framesAllowed: true,
+  firstRenderMs: null,
 });
 
 /** Minute-resolution clock shared by widgets. One timer for the whole page. */

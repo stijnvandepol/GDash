@@ -35,6 +35,7 @@ import (
 	"github.com/stijnvandepol/gdash/internal/outbound"
 	"github.com/stijnvandepol/gdash/internal/pairing"
 	"github.com/stijnvandepol/gdash/internal/photos"
+	"github.com/stijnvandepol/gdash/internal/screenreport"
 	"github.com/stijnvandepol/gdash/internal/secret"
 	"github.com/stijnvandepol/gdash/internal/settings"
 	"github.com/stijnvandepol/gdash/internal/store"
@@ -250,6 +251,7 @@ func newTestEnv(t *testing.T, discover func(context.Context) ([]cast.Device, err
 		SettingsChanged:      func() { settingsChanges.Add(1) },
 		Announcements:        board,
 		AnnouncementsChanged: func(time.Time) { announced.Add(1) },
+		ScreenReports:        screenreport.NewBoard(now),
 		SourceStatus:         sources.Entries,
 		Data:                 sources.Entries,
 		Version:              "v1.2.3",

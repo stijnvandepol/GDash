@@ -18,7 +18,7 @@ func TestDisplayTokenLifecycle(t *testing.T) {
 		t.Fatalf("CreateDisplayToken: %v", err)
 	}
 	tok, err := s.DisplayToken(ctx, "hash-1")
-	if err != nil || tok.DisplayID != "keuken" || !tok.LastSeenAt.Equal(created) {
+	if err != nil || tok.DisplayID != "keuken" || tok.Kind != TokenScreen || !tok.LastSeenAt.Equal(created) {
 		t.Fatalf("DisplayToken = %+v, %v", tok, err)
 	}
 
@@ -40,8 +40,8 @@ func TestDisplayTokenLifecycle(t *testing.T) {
 	if _, err := s.DisplayToken(ctx, "hash-1"); !errors.Is(err, ErrNotFound) {
 		t.Fatalf("token after unpairing: err = %v, want ErrNotFound", err)
 	}
-	if _, err := s.DisplayToken(ctx, "cast-1"); err != nil {
-		t.Fatalf("the cast token was removed with the screens: %v", err)
+	if tok, err := s.DisplayToken(ctx, "cast-1"); err != nil || tok.Kind != TokenCast {
+		t.Fatalf("the cast token after unpairing the screens = %+v, %v; want it kept, as a cast token", tok, err)
 	}
 }
 
