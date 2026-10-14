@@ -5,6 +5,8 @@ the format follows [Keep a Changelog](https://keepachangelog.com).
 
 ## Unreleased
 
+## 0.9.1 – 2026-10-14
+
 ### Changed
 
 - The devices and services that used to be presets of a custom API, such as
