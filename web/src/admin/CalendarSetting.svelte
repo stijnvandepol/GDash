@@ -49,7 +49,8 @@
     } catch (err) {
       if (err instanceof ApiError) {
         testError = err.fieldMessage('url') ?? err.message;
-        testAdvice = explainCalendarFailure(url, err.code);
+        // What is wrong with the address itself already shows under the field.
+        testAdvice = checkCalendarAddress(url).problem ? '' : explainCalendarFailure(url, err.code);
       } else {
         testError = onerror(err);
       }
