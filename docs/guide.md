@@ -19,7 +19,9 @@ disappears when the basics are done.
    Outlook under "Publish a calendar"; in iCloud under "Public calendar".
    GDash stores the address encrypted and never shows it again. Each
    calendar gets its own colour on the TV, so you can see whose appointment
-   it is; choose another one next to the calendar.
+   it is; choose another one next to the calendar. The pickup dates of your
+   waste collection go under **Waste collection** instead, see
+   [Waste collection](#waste-collection).
 3. **Settings, Screens, Language on the TVs:** English, Nederlands, Deutsch or Français.
 4. **Displays, Add a display:** pick your TV from the list of Cast devices
    GDash found and give the display a name, such as Kitchen; without one it
@@ -34,10 +36,11 @@ Keuken on the network". Change what it shows at any time under **Shows**.
 ## Integrations
 
 Everything GDash shows data from is under **Integrations**, apart from the
-other settings: the weather location, solar panels, news feeds, calendars, Home
-Assistant, Homey, photos, custom APIs and the API tokens that automations
-use. Settings keeps the language on the TVs, the test announcement and your
-account.
+other settings: the weather location, solar panels, news feeds, calendars,
+waste collection, Home Assistant, Homey, photos, custom APIs and the API
+tokens that automations use. Settings keeps the language on the TVs, the
+test announcement and your account.
+
 
 - **Search** finds a service by its name, what it shows, its category or a
   label, such as "solar", "train" or "no key". The search stays in the
@@ -155,7 +158,7 @@ add calendars and feeds under Integrations, and the photos once you add photos.
 | Air quality | The European air quality index in words, and the pollen in the air (Europe only) |
 | Rain | The rain in the next two hours as bars, and one sentence such as "Rain from 14:20 (light)"; see [Rain](#rain) |
 | Weather warnings | The KNMI's code yellow, orange and red warnings for a province (Netherlands); see [Weather warnings](#weather-warnings) |
-| Waste collection | The next pickup of each kind of household waste in the coming 14 days, from one of your calendars |
+| Waste collection | The next pickup of each kind of household waste in the coming 14 days, from your waste calendar; see [Waste collection](#waste-collection) |
 | Energy price | The electricity price now, whether it is low, average or high today, today's prices per hour and the cheapest three hours (Netherlands) |
 | Solar forecast | What your solar panels are expected to produce today, the best hour, the hours still to come and tomorrow's total; see [Solar forecast](#solar-forecast) |
 | Calendar | The coming week from your calendars |
@@ -282,33 +285,49 @@ can remove it and add its new address as your own.
 
 ## Waste collection
 
-Many municipalities, and the sites mijnafvalwijzer and afvalkalender, offer
-the pickup dates as an **iCal link**. GDash can show the next pickups from it.
+Many municipalities, and mijnafvalwijzer.nl, offer the pickup dates of your
+address as a **calendar link** (iCal or webcal). GDash shows the next
+pickups from it.
 
-1. Find the iCal (or "ICS" or "agenda") link of your address on the site of
-   your waste collector. It is an address that ends in `.ics` or is called
-   "subscribe to calendar".
-2. In GDash, under Integrations, Calendars, add that link as a
-   calendar and give it a name such as "Waste". It is stored encrypted, like
-   any calendar.
-3. Add a **Waste collection** widget to a dashboard. It asks which calendar to
-   use: choose the one you just added. A choice is required; GDash does not
-   guess, as your other calendars hold appointments and not pickups.
+1. Find the link of your address:
+   - on [mijnafvalwijzer.nl](https://www.mijnafvalwijzer.nl), look up your
+     postcode and house number and copy the **Kalender URL** under
+     Notificaties;
+   - on the afvalkalender of your municipality or its waste company, on its
+     site or in its app, look for a button such as "Zet in je agenda",
+     "Agenda koppelen", iCal, ics or webcal by your address. Copy the link
+     (right-click, Copy link address) rather than downloading the file: a
+     downloaded file does not change when a pickup moves.
+
+   A PDF or a list on a web page does not work; without a calendar link
+   GDash cannot read your pickups.
+2. In GDash, under **Integrations, Waste collection**, give it a name such
+   as "Home" and paste the link. **Test** reads it now, without storing it,
+   and lists the pickups of the next 8 weeks and the kinds of waste it
+   recognised; **Add** stores it, encrypted like every calendar link. Add one
+   per address, such as home and a holiday house, up to 5.
+3. Add a **Waste collection** widget to a dashboard. With one waste calendar
+   it shows that one, without asking. With more than one it asks which
+   address to show.
 
 The widget lists the next pickup of each kind in the coming 14 days, the
 soonest first, with the day as Today, Tomorrow or the weekday, in the
 language of the screens. GDash recognises the usual names in the titles of
 the events, Dutch and English: GFT, groente, green or organic as organic
 waste; PMD, plastic or packaging; papier or paper; restafval, rest or
-general waste; glas or glass; textiel or textile. Any other title is shown
-as it is, with a yellow dot. The colours are green for organic waste, orange
-for plastic, blue for paper, grey for general waste, teal for glass and purple
-for textile.
+general waste; glas or glass; textiel or textile; kerstbomen or Christmas
+trees. Any other title is shown as it is, with a yellow dot. The colours are
+green for organic waste, orange for plastic, blue for paper, grey for
+general waste, teal for glass, purple for textile and red for Christmas
+trees.
 
-A waste calendar can also be shown in the Calendar widget; that is a
-different widget and lists every event of the week. If the calendar is
-removed later, the widget says that it cannot find it, until you choose
-another. The pickups follow the calendar's own refresh, every 30 minutes.
+Waste calendars are kept apart from your other calendars: the Calendars card
+and the Calendar widget leave them out, and the Waste collection widget only
+offers waste calendars. A calendar that a Waste collection widget showed
+before GDash kept them apart moved to the Waste collection card by itself.
+If a waste calendar is removed later, a widget that named it says that it
+cannot find it, until you choose another. The pickups are read again every
+30 minutes.
 
 ## Holidays
 

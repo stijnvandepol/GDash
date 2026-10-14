@@ -25,6 +25,17 @@ the format follows [Keep a Changelog](https://keepachangelog.com).
 
 - The news feed of the first start is called NOS Nieuws instead of
   feeds.nos.nl, also in existing installations that kept that name.
+- Waste collection has a setup of its own under Integrations: paste the
+  calendar link of your address from your municipality or mijnafvalwijzer.nl,
+  with a short guide to where to find it, and **Test** shows the pickups of
+  the next 8 weeks and the kinds of waste it recognises before you add it.
+  Add one per address, such as home and a holiday house. Waste calendars no
+  longer appear under Calendars or in the Calendar widget, and a Waste
+  collection widget only offers waste calendars; with one, it shows that one
+  without asking. A calendar that a Waste collection widget already showed
+  moves to the Waste collection card by itself when you upgrade.
+- The Waste collection widget recognises the collection of Christmas trees
+  (kerstbomen), with a red dot.
 
 ### Fixed
 

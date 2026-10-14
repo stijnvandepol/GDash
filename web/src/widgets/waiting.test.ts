@@ -27,7 +27,7 @@ describe('waitingText', () => {
     expect(waitingText(undefined, 'calendar')).toBe('No calendar. Add one under Integrations.');
     expect(waitingText(undefined, 'sun')).toBe('No location set. Choose one under Integrations.');
     expect(waitingText(undefined, 'airquality')).toBe('No location set. Choose one under Integrations.');
-    expect(waitingText(undefined, 'waste')).toBe('No calendar. Add one under Integrations.');
+    expect(waitingText(undefined, 'waste')).toBe('No waste calendar. Add one under Integrations, Waste collection.');
     expect(waitingText(undefined, 'energyprice')).toBe('Loading the electricity price…');
     expect(waitingText(undefined, 'solar')).toBe('No solar panels set up. Add them under Integrations.');
     expect(waitingText(undefined, 'holidays')).toBe('Loading holidays…');

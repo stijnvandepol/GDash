@@ -28,6 +28,7 @@ import SourceList from './SourceList.svelte';
 import SynologySetting from './SynologySetting.svelte';
 import WebPageSetting from './WebPageSetting.svelte';
 import TrafficSetting from './TrafficSetting.svelte';
+import WasteSetting from './WasteSetting.svelte';
 
 // Every card on the Integrations page. Adding an integration is adding an
 // entry here: what it is, how its state reads, and the setup it opens.
@@ -61,7 +62,6 @@ export interface Integration extends CatalogueEntry {
 const MAX_CALENDARS = 10;
 
 const NEEDS_LOCATION: IntegrationState = { kind: 'idle', detail: 'Built in · needs the weather location' };
-const NEEDS_CALENDAR: IntegrationState = { kind: 'idle', detail: 'Built in · needs a calendar' };
 const NOT_FETCHED = 'Fetched once a dashboard shows it.';
 
 const SERVICES: Integration[] = [
@@ -147,7 +147,7 @@ const SERVICES: Integration[] = [
       view(SourceList, {
         title: 'Calendars',
         intro:
-          'Paste the secret iCal address of a Google, Outlook or iCloud calendar. Anyone with it can read the calendar, so GDash stores it encrypted and never shows it again.',
+          'For the Calendar widget: paste the secret iCal address of a Google, Outlook or iCloud calendar. Anyone with it can read the calendar, so GDash stores it encrypted and never shows it again. A waste collection calendar goes under Waste collection.',
         items: ctx.settings.calendars.map((c) => ({
           id: c.id,
           name: c.name,
@@ -172,6 +172,31 @@ const SERVICES: Integration[] = [
           await api.setCalendarColor(id, color);
           await ctx.onchanged();
         },
+        onerror: ctx.onerror,
+      }),
+  },
+  {
+    id: 'waste',
+    name: 'Waste collection',
+    description: 'The next pickups, from the waste calendar link of your municipality or mijnafvalwijzer',
+    keywords: 'afval afvalkalender afvalwijzer gft pmd bin ical webcal pickup kliko container',
+    category: 'lists',
+    icon: 'bin',
+    tags: ['no-key', 'nl'],
+    kind: 'service',
+    requires: { widget: 'waste' },
+    state: ({ settings, status }) => {
+      const calendars = settings.wasteCalendars;
+      if (calendars.length === 0) return NOT_SET_UP;
+      if (calendars.some((c) => c.unreadable)) return { kind: 'problem', detail: 'A waste calendar cannot be read on this server. Add it again.' };
+      const st = sourceState(status['waste.default'], NOT_FETCHED);
+      return { ...st, detail: `${calendars.length === 1 ? calendars[0]!.name : count(calendars.length, 'address', 'addresses')}. ${st.detail}` };
+    },
+    panel: (ctx) =>
+      view(WasteSetting, {
+        calendars: ctx.settings.wasteCalendars,
+        status: ctx.status['waste.default'],
+        onchanged: ctx.onchanged,
         onerror: ctx.onerror,
       }),
   },
@@ -494,18 +519,6 @@ const BUILT_IN: Integration[] = [
     kind: 'builtin',
     requires: { widget: 'energyprice' },
     state: ({ status }) => builtinState(status['energyprice.nl']),
-  },
-  {
-    id: 'waste',
-    name: 'Waste collection',
-    description: 'The next pickups, from your municipality’s waste calendar',
-    keywords: 'afval gft bin ical pickup',
-    category: 'lists',
-    icon: 'bin',
-    tags: ['no-key'],
-    kind: 'builtin',
-    requires: { widget: 'waste' },
-    state: ({ settings, status }) => (settings.calendars.length > 0 ? builtinState(status['waste.default']) : NEEDS_CALENDAR),
   },
   {
     id: 'holidays',

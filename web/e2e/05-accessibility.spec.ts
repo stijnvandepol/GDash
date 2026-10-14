@@ -67,7 +67,7 @@ for (const colorScheme of ['light', 'dark'] as const) {
       await page.emulateMedia({ colorScheme });
       await openTab(page, 'Integrations');
       await expectNoBlockingViolations(page);
-      const setups = ['Weather', 'News feeds', 'Calendars', 'Home Assistant', 'Homey', 'Photos', 'Custom APIs', 'API tokens', 'HomeWizard P1 meter', 'Tibber', 'AdGuard Home'];
+      const setups = ['Weather', 'News feeds', 'Calendars', 'Waste collection', 'Home Assistant', 'Homey', 'Photos', 'Custom APIs', 'API tokens', 'HomeWizard P1 meter', 'Tibber', 'AdGuard Home'];
       for (const name of setups) {
         await openIntegration(page, name);
         await expectNoBlockingViolations(page);

@@ -15,10 +15,15 @@ describe('readWaste', () => {
     expect(readWaste(value, 4)).toEqual([]);
   });
 
-  it('says missing for a calendar the data does not hold, or none chosen', () => {
+  it('says missing for a calendar the data does not hold', () => {
     expect(readWaste(value, 9)).toBe('missing');
-    expect(readWaste(value, undefined)).toBe('missing');
     expect(readWaste(value, '3')).toBe('missing');
+  });
+
+  it('reads the only waste calendar for a widget without one, and asks for a choice when there is none', () => {
+    expect(readWaste({ ...value, default: [pickup('pmd', '2026-10-16')] }, undefined)).toEqual([pickup('pmd', '2026-10-16')]);
+    expect(readWaste(value, undefined)).toBe('choose');
+    expect(readWaste({}, undefined)).toBe('choose');
   });
 
   it('is undefined while there is no usable data', () => {

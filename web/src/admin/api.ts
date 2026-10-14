@@ -1,6 +1,7 @@
 // Small client for the GDash API. Every error response has the shape
 // {"error": {"code", "message", "fields"?}}, see internal/api/server.go.
 import type { AuditEvent } from './audit';
+import type { Pickup } from '../widgets/waste';
 
 export interface FieldError {
   field: string;
@@ -177,6 +178,10 @@ export const api = {
   addNewsFeed: (name: string, url: string) => request<NewsFeed>('POST', '/api/news-feeds', { name, url }),
   deleteNewsFeed: (id: number) => request<void>('DELETE', `/api/news-feeds/${id}`),
   addCalendar: (name: string, url: string) => request<Calendar>('POST', '/api/calendars', { name, url }),
+  addWasteCalendar: (name: string, url: string) => request<Calendar>('POST', '/api/calendars', { name, url, purpose: 'waste' }),
+  /** Reads a waste calendar now, without storing it: the pickups of the next 8 weeks. */
+  testWasteCalendar: (url: string) =>
+    request<{ pickups: Pickup[] }>('POST', '/api/waste-calendar-tests', { url }).then((r) => r.pickups),
   deleteCalendar: (id: number) => request<void>('DELETE', `/api/calendars/${id}`),
   setCalendarColor: (id: number, color: string) => request<void>('PATCH', `/api/calendars/${id}`, { color }),
   connectHomeAssistant: (url: string, token: string) =>

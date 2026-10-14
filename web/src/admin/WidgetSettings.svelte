@@ -7,7 +7,7 @@
   import HomeyCapabilityPicker from './HomeyCapabilityPicker.svelte';
   import HomeyUserPicker from './HomeyUserPicker.svelte';
   import { presenceUsers } from './homey';
-  import CalendarPicker from './CalendarPicker.svelte';
+  import WasteCalendarPicker from './WasteCalendarPicker.svelte';
   import CameraPicker from './CameraPicker.svelte';
   import WebPagePicker from './WebPagePicker.svelte';
   import StopPicker from './StopPicker.svelte';
@@ -111,7 +111,7 @@
   {:else if rule.kind === 'homeyUsers'}
     <HomeyUserPicker selected={presenceUsers(settings[key])} max={rule.max ?? 1} onchange={(users) => set(key, users)} />
   {:else if rule.kind === 'calendar'}
-    <CalendarPicker selected={typeof settings[key] === 'number' ? settings[key] : undefined} onchange={(id) => set(key, id)} />
+    <WasteCalendarPicker selected={typeof settings[key] === 'number' ? settings[key] : undefined} onchange={(id) => set(key, id)} />
   {:else if rule.kind === 'camera'}
     <CameraPicker selected={typeof settings[key] === 'number' ? settings[key] : undefined} onchange={(id) => set(key, id)} />
   {:else if rule.kind === 'webPage'}

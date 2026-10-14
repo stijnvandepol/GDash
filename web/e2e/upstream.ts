@@ -8,8 +8,10 @@ import { solarAnswer } from './solar-stand-in';
 
 // A stand-in for Buienradar, MeteoAlarm and Open-Meteo's solar forecast,
 // so the Rain, Weather warnings and Solar forecast widgets show data
-// without the internet, and for the ANWB's traffic list, the Overpass API
-// and the KNMI, which answer with the Go tests' recorded answers. The
+// without the internet, for a municipality's waste calendar, which a test
+// pastes into the Waste collection setup, and for the ANWB's traffic list,
+// the Overpass API and the KNMI, which answer with the Go tests' recorded
+// answers. The
 // server is pointed here with GDASH_TEST_UPSTREAM (cmd/gdash/config.go);
 // the paths are the ones cmd/gdash/warnings.go, cmd/gdash/traffic.go and
 // cmd/gdash/news.go name; the news path stands in for the feeds of the
@@ -88,12 +90,40 @@ function newsFeed(id: string, now: number): string | undefined {
   return `<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"><channel><title>${escapeXml(id)}</title>${items}</channel></rss>`;
 }
 
+/** A day from now as an iCal date, YYYYMMDD, in the time zone of the machine, which the server shares. */
+function icalDay(now: number, days: number): string {
+  const d = new Date(now);
+  d.setDate(d.getDate() + days);
+  return `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`;
+}
+
+/** A municipality's waste calendar: GFT tomorrow, PMD in three days, paper in nine, Christmas trees in twenty and bulky waste in a month. */
+function wasteCalendar(now: number): string {
+  const pickups: [number, string][] = [
+    [1, 'GFT'],
+    [3, 'Plastic\\, blik en drinkpakken (PMD)'],
+    [9, 'Papier en karton'],
+    [20, 'Kerstbomen'],
+    [30, 'Grofvuil op afspraak'],
+  ];
+  const events = pickups.flatMap(([days, title]) => [
+    'BEGIN:VEVENT',
+    `UID:e2e-waste-${days}@afval.example`,
+    `DTSTART;VALUE=DATE:${icalDay(now, days)}`,
+    `DTEND;VALUE=DATE:${icalDay(now, days + 1)}`,
+    `SUMMARY:${title}`,
+    'END:VEVENT',
+  ]);
+  return ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//E2E Afvalkalender//NL', ...events, 'END:VCALENDAR', ''].join('\r\n');
+}
+
 function answer(path: string, now: number): { type: string; body: string } | undefined {
   if (path.startsWith('/news/')) {
     const body = newsFeed(path.slice('/news/'.length), now);
     return body === undefined ? undefined : { type: 'application/rss+xml', body };
   }
   if (path === '/buienradar/data/raintext') return { type: 'text/plain', body: raintext(now) };
+  if (path === '/waste/afvalkalender.ics') return { type: 'text/calendar', body: wasteCalendar(now) };
   if (path === '/meteoalarm/api/v1/warnings/feeds-netherlands') return { type: 'application/json', body: JSON.stringify(feed(now)) };
   if (path === '/open-meteo-solar/v1/forecast') return { type: 'application/json', body: JSON.stringify(solarAnswer(now)) };
   return undefined;

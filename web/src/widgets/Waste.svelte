@@ -36,6 +36,8 @@
     {/if}
   {:else if pickups === 'missing'}
     <span class="empty">{t('wasteMissing')}</span>
+  {:else if pickups === 'choose'}
+    <span class="empty">{t('wasteChoose')}</span>
   {:else}
     <span class="empty">{waitingText(entry, 'waste')}</span>
   {/if}

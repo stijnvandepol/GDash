@@ -2,7 +2,7 @@ import type { TextKey } from '../i18n.svelte';
 import { daysUntil, parseLocalDate } from './dates';
 
 /** The kinds of waste the server recognises in event titles (internal/waste), in the order of a day's list. */
-export const WASTE_KINDS = ['gft', 'pmd', 'paper', 'rest', 'glass', 'textile', 'other'] as const;
+export const WASTE_KINDS = ['gft', 'pmd', 'paper', 'rest', 'glass', 'textile', 'tree', 'other'] as const;
 export type WasteKind = (typeof WASTE_KINDS)[number];
 
 /** How many days ahead the widget looks. */
@@ -16,6 +16,7 @@ export const WASTE_TEXT: Record<Exclude<WasteKind, 'other'>, TextKey> = {
   rest: 'wasteGeneral',
   glass: 'wasteGlass',
   textile: 'wasteTextile',
+  tree: 'wasteTree',
 };
 
 /**
@@ -30,8 +31,15 @@ export const WASTE_COLOR: Record<WasteKind, string | undefined> = {
   rest: undefined,
   glass: 'teal',
   textile: 'purple',
+  tree: 'red',
   other: 'yellow',
 };
+
+/**
+ * The key of the waste data that holds the only waste calendar, for a
+ * widget that names none (internal/display WasteDefaultKey).
+ */
+const DEFAULT_KEY = 'default';
 
 /** One pickup as the server sends it. */
 export interface Pickup {
@@ -54,15 +62,17 @@ function isPickup(v: unknown): v is Pickup {
 
 /**
  * The pickups of one calendar out of the waste data, which holds the
- * calendars of the widgets by their number. Undefined means the data is not
- * there yet or unreadable; 'missing' means the data is there but this
- * calendar is not in it, because it was deleted or cannot be read.
+ * calendars of the widgets by their number, and the only waste calendar for
+ * a widget that names none. Undefined means the data is not there yet or
+ * unreadable; 'missing' means the data is there but this calendar is not
+ * in it, because it was deleted or cannot be read; 'choose' means the
+ * widget names no calendar and there is not exactly one to show.
  */
-export function readWaste(value: unknown, calendar: unknown): Pickup[] | 'missing' | undefined {
+export function readWaste(value: unknown, calendar: unknown): Pickup[] | 'missing' | 'choose' | undefined {
   if (typeof value !== 'object' || value === null || Array.isArray(value)) return undefined;
-  if (typeof calendar !== 'number') return 'missing';
-  const list = (value as Record<string, unknown>)[String(calendar)];
-  if (list === undefined) return 'missing';
+  if (calendar !== undefined && typeof calendar !== 'number') return 'missing';
+  const list = (value as Record<string, unknown>)[calendar === undefined ? DEFAULT_KEY : String(calendar)];
+  if (list === undefined) return calendar === undefined ? 'choose' : 'missing';
   return Array.isArray(list) ? list.filter(isPickup) : undefined;
 }
 

@@ -30,6 +30,9 @@
     onremove,
     oncolor,
     onerror,
+    help,
+    test,
+    results,
     children,
     formTitle,
   }: {
@@ -52,6 +55,12 @@
     /** Changes an item's colour; without it no colour is shown. */
     oncolor?: (id: number, color: string) => Promise<void>;
     onerror: (err: unknown) => string;
+    /** Where to find the address, under the intro. */
+    help?: Snippet;
+    /** A Test button before Add, given the address as typed. */
+    test?: Snippet<[string]>;
+    /** Shown under the form, such as what a test found. */
+    results?: Snippet;
   } = $props();
 
   async function recolor(item: Item, color: string) {
@@ -106,6 +115,7 @@
 <section class="card">
   <h2>{title}</h2>
   <p class="muted">{intro}</p>
+  {@render help?.()}
   {#if items.length > 0}
     <p class="small" class:error={status?.failing}>{describeStatus(status)}</p>
     <ul class="list">
@@ -157,11 +167,19 @@
         />
         {#if fieldErrors.url}<span class="field-error">{fieldErrors.url}</span>{/if}
       </label>
-      <button type="submit" disabled={busy}>Add</button>
+      {#if test}
+        <div class="inline">
+          {@render test(url.trim())}
+          <button type="submit" disabled={busy}>Add</button>
+        </div>
+      {:else}
+        <button type="submit" disabled={busy}>Add</button>
+      {/if}
     </form>
   {:else}
     <p class="muted">You reached the limit of {max}. Remove one to add another.</p>
   {/if}
+  {@render results?.()}
   {#if error}<p class="error">{error}</p>{/if}
 </section>
 

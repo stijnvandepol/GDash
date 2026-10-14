@@ -173,7 +173,10 @@ export interface Calendar {
 export interface Settings {
   location: Location | null;
   newsFeeds: NewsFeed[];
+  /** The calendars of appointments, for the Calendar widget. */
   calendars: Calendar[];
+  /** The waste collection calendars, for the Waste collection widget. */
+  wasteCalendars: Calendar[];
   /** What the TVs show their texts and dates in. */
   language: 'en' | 'nl' | 'de' | 'fr';
   /** Null until Home Assistant is connected; the token never leaves the server. */
