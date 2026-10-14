@@ -1,9 +1,12 @@
+import { CONTAINER_SIZE_EVENT } from '../compat';
+
 /**
  * Hides the list items of a widget that do not fit entirely, so a list never
  * ends in a half-cut line on the TV. A group marked data-fit-group, such as a
  * calendar day, is hidden when none of its items is visible. It measures
  * again when the widget's size or content changes, and when a font has
- * loaded, which changes the size of the text without touching the widget.
+ * loaded or the TV fallback of compat.ts resized a tile's units, which
+ * change the size of the text without touching the widget.
  */
 export function fitItems(node: HTMLElement) {
   const fit = () => {
@@ -28,6 +31,7 @@ export function fitItems(node: HTMLElement) {
   const content = new MutationObserver(fit);
   content.observe(node, { childList: true, subtree: true, characterData: true });
   document.fonts.addEventListener('loadingdone', fit);
+  window.addEventListener(CONTAINER_SIZE_EVENT, fit);
   fit();
 
   return {
@@ -35,6 +39,7 @@ export function fitItems(node: HTMLElement) {
       resize.disconnect();
       content.disconnect();
       document.fonts.removeEventListener('loadingdone', fit);
+      window.removeEventListener(CONTAINER_SIZE_EVENT, fit);
     },
   };
 }
@@ -61,12 +66,14 @@ export function shrinkToWidth(node: HTMLElement, minPx: number) {
   const content = new MutationObserver(fit);
   content.observe(node, { childList: true, subtree: true, characterData: true });
   document.fonts.addEventListener('loadingdone', fit);
+  window.addEventListener(CONTAINER_SIZE_EVENT, fit);
   fit();
   return {
     destroy() {
       resize.disconnect();
       content.disconnect();
       document.fonts.removeEventListener('loadingdone', fit);
+      window.removeEventListener(CONTAINER_SIZE_EVENT, fit);
     },
   };
 }
@@ -111,12 +118,14 @@ export function shrinkToFit(node: HTMLElement, minPx: number) {
   const content = new MutationObserver(fit);
   content.observe(node, { childList: true, subtree: true, characterData: true });
   document.fonts.addEventListener('loadingdone', fit);
+  window.addEventListener(CONTAINER_SIZE_EVENT, fit);
   fit();
   return {
     destroy() {
       resize.disconnect();
       content.disconnect();
       document.fonts.removeEventListener('loadingdone', fit);
+      window.removeEventListener(CONTAINER_SIZE_EVENT, fit);
     },
   };
 }

@@ -4,6 +4,7 @@
 import '@fontsource-variable/geist';
 import { mount } from 'svelte';
 import App from './App.svelte';
+import { startCompat } from './compat';
 import { t } from './i18n.svelte';
 import { isPreviewMessage, previewOutcome, previewRequest, type PreviewDraft, type PreviewOutcome } from './previewApi';
 import { display, showSnapshot } from './state.svelte';
@@ -21,6 +22,7 @@ let timer: ReturnType<typeof setTimeout> | undefined;
 // Only the newest request may change the screen, however the answers arrive.
 let latest = 0;
 
+startCompat();
 mount(App, { target: document.getElementById('app')! });
 window.addEventListener('message', onMessage);
 // In the editor's frame the first message says what to show, so the stored

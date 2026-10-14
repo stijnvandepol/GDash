@@ -141,6 +141,16 @@
     overflow: hidden;
     color: var(--text-muted);
   }
+  /* Without aspect-ratio the cover gets its width from the same units: the
+     card is the tile's height when alone, else about 62% of it. */
+  @supports not (aspect-ratio: 1) {
+    .art {
+      width: min(38cqw, 100cqh);
+    }
+    .card:not(.alone) .art {
+      width: min(38cqw, 62cqh);
+    }
+  }
   /* A faint tile behind the cover, in the theme's own text colour; layers
      with opacity instead of color-mix, which older receivers lack. */
   .art::before,

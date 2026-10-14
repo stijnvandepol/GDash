@@ -50,9 +50,12 @@
  * Tracking, glow and faked bold on every element rather than once on the
  * screen: letter-spacing and text-shadow inherit as absolute lengths, so an
  * em set on the screen would be the same few pixels on a headline and on a
- * clock. No specificity, so a widget's own letter-spacing still wins.
+ * clock. No specificity, so a widget's own letter-spacing still wins. The
+ * universal selector rather than :where(.screen, .screen *), which Chrome
+ * only has since version 88: outside a screen the properties are not set,
+ * so the rule leaves the web interface alone.
  */
-:where(.screen, .screen *) {
+* {
   letter-spacing: var(--tracking);
   text-shadow: var(--text-glow);
   font-synthesis: var(--synthesis);

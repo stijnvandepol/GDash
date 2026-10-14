@@ -7,6 +7,7 @@
   import { stageFor } from './stage';
   import { msUntilExpiry, visibleAnnouncement } from './announcement';
   import AnnouncementBanner from './AnnouncementBanner.svelte';
+  import { containerFallback } from './compat';
 
   // Spacing of theme.css in design pixels. A larger text size draws the
   // stage smaller and these with it, so only the text grows.
@@ -137,6 +138,7 @@
       {#each dashboard.widgets as widget (widget.id)}
         <section
           class="widget"
+          use:containerFallback
           style:grid-column="{widget.x + 1} / span {widget.w}"
           style:grid-row="{widget.y + 1} / span {widget.h}"
         >
@@ -244,7 +246,10 @@
     padding: var(--space-widget);
     overflow: hidden;
     display: flex;
-    /* Widgets size their type to the tile with cqw and cqh units. */
+    /* Widgets size their type to the tile with cqw and cqh units. A
+       browser without container queries still keeps the tile's size from
+       following its content; compat.ts stands in for the units. */
+    contain: size;
     container-type: size;
   }
   .message {

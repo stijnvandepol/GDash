@@ -84,12 +84,25 @@
   /* One bar per step; dry steps are a thin line on the ground, so the
      graph shows where the rain is without counting on its colour. */
   .chart {
+    position: relative;
     display: flex;
     align-items: stretch;
     gap: 2px;
     flex: 1 1 0;
     min-height: 16px;
-    border-bottom: 2px solid color-mix(in srgb, var(--text-muted) 45%, transparent);
+    border-bottom: 2px solid transparent;
+  }
+  /* The base line in muted text at 45%: with opacity, since color-mix
+     only exists from Chrome 111 and older TVs would draw no line at all. */
+  .chart::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -2px;
+    height: 2px;
+    background: var(--text-muted);
+    opacity: 0.45;
   }
   .slot {
     display: flex;

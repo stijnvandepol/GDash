@@ -1,14 +1,18 @@
 /// <reference types="vitest/config" />
 import { defineConfig } from 'vite';
 import { svelte } from '@sveltejs/vite-plugin-svelte';
+import { legacyCss } from './build/legacyCss.ts';
 
 export default defineConfig({
-  plugins: [svelte()],
+  plugins: [svelte(), legacyCss()],
   build: {
     outDir: 'dist',
     emptyOutDir: true,
     // Cast receivers run an older Chromium than desktop browsers. ES2020 is
-    // a conservative target until real devices have been measured.
+    // Chrome 80, the oldest Cast runtime still in use; the CSS minifier
+    // takes the same browsers (it writes inset as top, right, bottom and
+    // left). What a target cannot lower, container queries above all, the
+    // legacy stylesheets of build/legacyCss.ts cover.
     target: 'es2020',
     rollupOptions: {
       input: {
@@ -25,7 +29,7 @@ export default defineConfig({
     },
   },
   test: {
-    include: ['src/**/*.test.ts'],
+    include: ['src/**/*.test.ts', 'build/**/*.test.ts'],
     // Fixed, so date tests cross a real daylight saving change.
     env: { TZ: 'Europe/Amsterdam' },
   },

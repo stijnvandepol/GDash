@@ -7,7 +7,11 @@
     "strict": true,
     "noUncheckedIndexedAccess": true,
     "types": ["vite/client"],
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    // The Vite config is loaded by Node, which needs the extension of the
+    // build scripts it imports; nothing here is emitted by tsc.
+    "allowImportingTsExtensions": true,
+    "noEmit": true
   },
-  "include": ["src/**/*.ts", "src/**/*.svelte", "vite.config.ts"]
+  "include": ["src/**/*.ts", "src/**/*.svelte", "build/**/*.ts", "vite.config.ts"]
 }

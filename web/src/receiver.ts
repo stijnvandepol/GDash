@@ -5,10 +5,13 @@
 import '@fontsource-variable/geist';
 import { mount } from 'svelte';
 import App from './App.svelte';
+import { startCompat } from './compat';
 import { CAST_NAMESPACE, isSnapshot } from './protocol';
 import { applySnapshot, display, restoreSnapshot } from './state.svelte';
 
 const STORAGE_ID = 'cast';
+
+startCompat();
 
 // Snapshots arrive from any sender on the network (see below), so a Web
 // page widget here never opens the address one names.

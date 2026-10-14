@@ -102,8 +102,7 @@
      centred, measured in the tile's container units. */
   .frame.whole {
     width: min(100cqw, 100cqh * var(--ratio));
-    height: auto;
-    aspect-ratio: var(--ratio);
+    height: min(100cqh, 100cqw / var(--ratio));
     margin: auto;
   }
   img {

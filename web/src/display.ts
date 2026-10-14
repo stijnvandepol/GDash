@@ -7,12 +7,14 @@ import { t } from './i18n.svelte';
 import { isSnapshot } from './protocol';
 import { applySnapshot, display, forgetSnapshot, restoreSnapshot } from './state.svelte';
 import { shouldReloadForFrames } from './widgets/webpage';
+import { startCompat } from './compat';
 
 const OFFLINE_RETRY_MS = 15000;
 const FRAME_RELOAD_KEY = 'gdash.frameReloadAt';
 
 const displayId = location.pathname.split('/').filter(Boolean).pop() ?? 'default';
 
+startCompat();
 restoreSnapshot(displayId, isSnapshot);
 mount(App, { target: document.getElementById('app')! });
 document.addEventListener('securitypolicyviolation', reloadForBlockedFrame);

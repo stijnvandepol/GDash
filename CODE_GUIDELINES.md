@@ -232,7 +232,9 @@ Architecture:     One Go binary (cmd/gdash). internal/datahub fetches external d
                   memory, never in SQLite); internal/api serves pages, SSE and the JSON
                   API (docs/api.md); internal/cast talks CASTV2 and mDNS and keeps a receiver on screen;
                   internal/casting runs one keeper per display. web/ holds the web interface (/), the display
-                  runtime (/d/<id>) and the receiver. Research (Dutch): GoogleHome-Dashboard/docs/onderzoek.
+                  runtime (/d/<id>) and the receiver; web/build/legacyCss.ts writes the fallback stylesheets
+                  that web/src/compat.ts loads on TV browsers older than Chrome 105 (the target is Chrome 80).
+                  Research (Dutch): GoogleHome-Dashboard/docs/onderzoek.
 Known oddities:   - Plain HTTP on the LAN, against "All transport is TLS". A TV that opens /d/<id> through
                     DashCast cannot be given a certificate it trusts for a LAN address, and Chromecasts reject
                     self-signed ones. TLS is expected from a reverse proxy for the web interface. Open decision.

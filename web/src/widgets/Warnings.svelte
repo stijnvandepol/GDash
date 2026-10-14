@@ -104,6 +104,10 @@
   /* A banner per warning, set apart by a bar in the theme's warning colour
      that grows with the level, and by the level's name. */
   .banner {
+    /* A stacking context of its own, so the tint (::before) sits between
+       the banner's background and its text. */
+    position: relative;
+    z-index: 0;
     display: grid;
     gap: 2px;
     padding: 0.3em 0.5em 0.3em 0.6em;
@@ -113,13 +117,27 @@
     line-height: 1.2;
     color: var(--text-primary);
   }
-  .banner.orange {
-    border-left-width: 0.45em;
-    background: color-mix(in srgb, var(--warning) 10%, transparent);
-  }
+  .banner.orange,
   .banner.red {
     border-left-width: 0.45em;
-    background: color-mix(in srgb, var(--warning) 22%, transparent);
+  }
+  /* The warning colour as a faint tint: with opacity, since color-mix only
+     exists from Chrome 111. */
+  .banner.orange::before,
+  .banner.red::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: -1;
+    border-radius: inherit;
+    background: var(--warning);
+    opacity: 0.1;
+  }
+  .banner.red::before {
+    opacity: 0.22;
   }
   .head {
     display: flex;

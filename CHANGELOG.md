@@ -46,6 +46,14 @@ the format follows [Keep a Changelog](https://keepachangelog.com).
 
 - A long headline in the News widget wraps onto a second line instead of
   being cut off halfway; headlines that do not fit the tile are left out whole.
+- On a TV whose built-in browser is older than Chrome 105, such as the Cast
+  runtime of many Chromecasts, widgets size their text to their tile again:
+  the Weather widget fits, the Waste widget's text is no longer tiny and the
+  badges of Who's home keep their ring. GDash loads a fallback for
+  container queries there, and on Chrome 85 to 87 also for the scoped
+  styles that relied on `:where()`. Chrome 80 to 84 can run the page again
+  too, and the Weather warnings banners and the Rain chart's base line no
+  longer depend on `color-mix()`.
 - The Waste widget's text grows with its tile; at 6x4 it was 25 pixels on a
   720p TV. A Weather widget in a short tile sizes its lines to the tile, so
   the measured temperature's line of the KNMI fits and reads at 26 pixels
