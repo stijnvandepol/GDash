@@ -49,8 +49,8 @@ come from another site (cross-site request forgery protection).
 | `DELETE /api/api-tokens/{id}` | admin | `204`; automations that use it get `401` from then on | `401`, `404` |
 | `POST /api/announcements` `{message, title?, seconds?, displays?}` | API token or admin | `201 {title?, message, expiresAt, displays}` | `400`, `401 invalid_token` or `not_logged_in`, `422`, `429 rate_limited` |
 | `GET /api/displays` | admin | `200 {"displays": [display + pairedScreens + cast? + screenReports]}`; `pairedScreens` counts the screens paired with a code, never the TV a cast keeper opened; `screenReports` is what the display's screens last said about their browsers, newest first, see [Screen reports](#screen-reports) | `401` |
-| `POST /api/displays` `{id, name, castDeviceId, dashboardId?, activeFrom?, activeUntil?, schedule?, screensaverMinutes?}` | admin | `201` display | `401`, `409 conflict`, `422` (also for an unknown dashboard) |
-| `PATCH /api/displays/{id}` `{name?, castDeviceId?, dashboardId?, activeFrom?, activeUntil?, schedule?, rotation?, rotateSeconds?, textScale?, screensaverMinutes?}` | admin | `200` display | `401`, `404 not_found`, `422` (also for an unknown dashboard) |
+| `POST /api/displays` `{id, name, castDeviceId, dashboardId?, activeFrom?, activeUntil?, schedule?, screensaverMinutes?, screenCare?, dimAtNight?, dimFrom?, dimUntil?}` | admin | `201` display | `401`, `409 conflict`, `422` (also for an unknown dashboard) |
+| `PATCH /api/displays/{id}` `{name?, castDeviceId?, dashboardId?, activeFrom?, activeUntil?, schedule?, rotation?, rotateSeconds?, textScale?, screensaverMinutes?, screenCare?, dimAtNight?, dimFrom?, dimUntil?}` | admin | `200` display | `401`, `404 not_found`, `422` (also for an unknown dashboard) |
 | `DELETE /api/displays/{id}` | admin | `204` | `401`, `404 not_found` |
 | `POST /api/displays/{id}/cast-takeovers` | admin | `204`: the display's cast keeper shows the dashboard on the TV within seconds, also over what someone is watching, and stops waiting (`yielded`); recorded in the audit log as `cast_taken_over`. Not while the TV is in standby or outside active hours | `401`, `404 not_found`, `409 not_cast` (no Cast device) or `not_connected` (GDash is still connecting to the TV) |
 | `GET /api/widget-types` | admin | `200 {columns, rows, themes, fonts, types: {name: {minW, minH, settings: {key: {kind, min?, max?, required}}}}}` | `401` |
@@ -630,6 +630,17 @@ minutes, since it closes a receiver without media after about 10. A change appli
 screen draws its stage narrower by that factor and in the screen's own shape (between 4:3 and 21:9), so a small
 screen shows the same layout larger and without bars. Widgets then show fewer list items.
 
+`screenCare` is `off` (default) or `oled`. With `oled` every screen of the display looks after an OLED panel, whatever
+the theme: the dashboard drifts slowly up to 8 pixels either way instead of jumping, tile borders, titles and labels
+are drawn at 70 %, the brightness breathes 10 % over six minutes, the clock's colon is never lit fully for long, and
+half a minute past every hour the screen is black for one second (not while an announcement shows).
+
+`dimAtNight` is `off` (default), `sunset` or `hours`; while it applies the screen draws the dashboard at 60 %
+brightness. `sunset` dims between sunset and sunrise at the weather location, at the same moments as a dashboard's
+`nightTheme`, and never without a location. `hours` dims from `dimFrom` to `dimUntil`, HH:MM in the server's time
+zone, which may wrap past midnight and must differ (else `422` on `dimFrom`). The hours are kept when another mode is
+chosen. Outside active hours the screen is dark, not dimmed. The snapshot carries `screenCare` and `dimmed`.
+
 **slot:** `{"from": "06:30", "until": "09:00", "days": ["mon", "tue"], "dashboardId": "morning"}`. During the slot the
 display shows that dashboard instead of its own; the first slot that contains the current time wins. `days` holds
 `mon` to `sun`; empty means every day. A slot past midnight belongs to the day it starts, so Friday 22:00 to 01:00
@@ -892,6 +903,8 @@ object means that nothing plays.
 Each display gets the dashboard for the current time (its schedule or its own), and `data` only holds the sources its widgets use. `active` is false outside the
 display's active hours; `data` is then empty. `announcement` is only present while a message is shown, see
 [Announcements](#announcements).
+`screenCare` and `dimmed` (true while the display is dimmed at night) come from the display, see
+[display](#objects).
 A preview snapshot has the same shape: `active` is true, the household's `language` and the chosen `textScale`
 (default 100) are set, there are no `pages`, and `data` holds the sources of that one dashboard. Its `version` is a
 hash of the content, so a poller sees whether anything changed. Data a draft needs that no saved dashboard uses yet

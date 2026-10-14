@@ -123,7 +123,7 @@ add calendars and feeds under Integrations, and the photos once you add photos.
   panel then shows them, and **← Add widgets** goes back. The editor is
   about how a dashboard looks: addresses, keys and the values an API gives
   are set up under Integrations.
-- **Style:** the Style button opens a gallery of forty-five themes in five
+- **Style:** the Style button opens a gallery of fifty-five themes in six
   groups, each shown as a small screen. Minimal dark (the default, best for OLED screens),
   Minimal light and Warm light for bright rooms, Glass, High contrast for
   reading from across the room or with poor eyesight, and Night, dim amber
@@ -158,7 +158,17 @@ add calendars and feeds under Integrations, and the photos once you add photos.
   Colour field (soft fields of red and plum, very calm), Memphis
   (squiggles and confetti from the eighties), Art deco (black and gold
   fans), Risograph (pink and blue ink in halftone dots) and Brutalist (raw
-  concrete). Some vary their motif from tile to tile. Each theme has its own
+  concrete). Some vary their motif from tile to tile. Under OLED and night ten themes are pure black with tiles that are
+  only outlined, ruled or not drawn at all, in dim colours and thin type:
+  Void (soft grey), Ember (glowing amber), Moonlight (silver-blue serif),
+  Aurora (a green-to-violet ribbon over each tile), Deep sea (bioluminescent
+  cyan), Firefly (warm grey with yellow lights), Graphite OLED (grey lines in
+  a mono face), Red night (only red, which keeps your eyes used to the dark),
+  Starlight (a few faint stars) and Ink (off-white serif). Every card has a
+  badge for OLED screens: **OLED-friendly** (a pure black backdrop and unlit
+  tiles), **OLED OK** (dark, but the backdrop or tiles are lit) or
+  **Bright**; GDash works it out from the theme's colours, assuming tiles
+  cover about 60 % of the screen. **Only OLED-friendly** shows just those. Each theme has its own
   typeface; under **Typeface** you can pick another of the fifteen for this
   dashboard. All of them ship with GDash and work offline. Under **After sunset** the dashboard can switch to
   another theme between sunset and sunrise, for instance Frost to Frost
@@ -1383,6 +1393,32 @@ and port. In Home Assistant, Developer tools, Actions, run the command with a
 `message` and read its answer: `401` means the token is wrong or revoked, `422`
 names the field to correct, and `429` means more than 30 announcements in a
 minute.
+
+## OLED screens and energy
+
+An OLED TV makes the light of every pixel itself: a black pixel is off,
+uses no power and cannot burn in, while a pixel that shows the same bright
+thing for months can keep a faint ghost of it. An LCD TV lights its whole
+panel from behind, black or not, so black themes save it little to nothing;
+only its own backlight or brightness setting does. For an OLED TV, choose a
+theme marked OLED-friendly (see Style under Dashboards), and at the display:
+
+- **Screen care: OLED care** works with any theme. The dashboard drifts
+  slowly, up to 8 pixels either way, instead of a small jump every few
+  minutes; tile borders, titles and labels are drawn at 70 %; the brightness
+  breathes 10 % over six minutes, too slowly to notice; the clock's colon is
+  never lit fully for long; and half a minute past every hour the screen is
+  black for one second, unless an announcement is showing.
+- **Dim at night** draws the dashboard at 60 % brightness **from sunset to
+  sunrise** at the weather location, or **between set hours** that you
+  choose. After sunset it switches at the same moment as a dashboard's
+  style after sunset, so a dashboard that changes to a dark style at night
+  is dimmed too. On an OLED TV that saves power; on an LCD TV it only makes
+  the picture darker.
+
+What saves the most on any TV is not showing anything: **active hours**
+(under Schedule) leave the screen dark outside them, so the TV can go to
+standby.
 
 ## Small screens
 

@@ -31,6 +31,22 @@ the format follows [Keep a Changelog](https://keepachangelog.com).
 - Two typefaces to choose per dashboard, Jost (geometric) and Fraunces (an
   expressive serif), both under the SIL Open Font License and shipped with
   GDash.
+- Ten OLED and night styles, in a group of their own: Void, Ember,
+  Moonlight, Aurora, Deep sea, Firefly, Graphite OLED, Red night, Starlight
+  and Ink. Each has a pure black backdrop, tiles without a fill and dim,
+  thin type, and each can be the style after sunset.
+- Every style is rated for OLED screens in the style picker: OLED-friendly,
+  OLED OK or Bright, worked out from its colours when GDash is built. **Only
+  OLED-friendly** shows just the first.
+- Screen care per display (`screenCare`, migration 0028): OLED care, with
+  any style, drifts the dashboard slowly instead of in jumps, draws tile
+  borders, titles and labels at 70 %, lets the brightness breathe 10 % over
+  minutes, keeps the clock's colon from being lit fully for long, and makes
+  the screen black for a second every hour.
+- Dim at night per display (`dimAtNight`, `dimFrom`, `dimUntil`): 60 %
+  brightness from sunset to sunrise, at the same moment as the style after
+  sunset, or between set hours. The guide says honestly what saves energy:
+  a lot on an OLED TV, little on an LCD TV.
 
 ## 0.9.2 – 2026-10-14
 
