@@ -65,8 +65,10 @@
     padding: 0;
     display: grid;
     gap: 0.3em;
+    /* As large as three lines allow in the tile's height (22% each, with
+       the gaps) and as the width allows for a kind and its day. */
     font-size: 34px;
-    font-size: min(34px, 7cqw);
+    font-size: min(52px, 11cqw, 22cqh);
   }
   li {
     display: flex;

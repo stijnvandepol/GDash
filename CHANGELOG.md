@@ -46,6 +46,10 @@ the format follows [Keep a Changelog](https://keepachangelog.com).
 
 - A long headline in the News widget wraps onto a second line instead of
   being cut off halfway; headlines that do not fit the tile are left out whole.
+- The Waste widget's text grows with its tile; at 6x4 it was 25 pixels on a
+  720p TV. A Weather widget in a short tile sizes its lines to the tile, so
+  the measured temperature's line of the KNMI fits and reads at 26 pixels
+  instead of 22.
 
 ## 0.9.1 – 2026-10-14
 

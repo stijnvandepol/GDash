@@ -129,9 +129,23 @@
     .updated:not(.measured) {
       display: none;
     }
+    .temperature {
+      font-size: min(220px, 50cqw, 44cqh);
+    }
+    .icon {
+      font-size: min(140px, 32cqw, 30cqh);
+    }
+    .description {
+      margin-top: min(16px, 3cqh);
+      font-size: min(56px, 12cqw, 13cqh);
+    }
+    .range {
+      margin-top: min(12px, 3cqh);
+      font-size: min(40px, 11cqh);
+    }
     .measured {
-      margin-top: 12px;
-      font-size: 22px;
+      margin-top: min(12px, 3cqh);
+      font-size: max(22px, min(28px, 8cqh));
     }
   }
   @container (max-height: 260px) {
