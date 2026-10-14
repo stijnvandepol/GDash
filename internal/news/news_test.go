@@ -148,7 +148,7 @@ func TestFetchRejectsErrorsAndHugeFeeds(t *testing.T) {
 	}
 }
 
-func TestHeadlinesMergesFeedsNewestFirst(t *testing.T) {
+func TestHeadlinesKeepsEachFeedApart(t *testing.T) {
 	feeds := map[string]string{
 		"/a": `<rss><channel><title>A</title>
 			<item><title>A old</title><pubDate>Thu, 08 Oct 2026 08:00:00 +0000</pubDate></item>
@@ -168,23 +168,23 @@ func TestHeadlinesMergesFeedsNewestFirst(t *testing.T) {
 	c := &Client{HTTP: &http.Client{Timeout: 5 * time.Second}}
 	ctx := context.Background()
 
-	single, err := c.Headlines(ctx, []Source{{Name: "Mine", URL: srv.URL + "/a"}}, 5)
-	if err != nil || single.Title != "A" || single.Items[0].Source != "" {
-		t.Fatalf("one feed = %+v, %v; want its own title and no source labels", single, err)
-	}
-
-	merged, err := c.Headlines(ctx, []Source{{Name: "Feed A", URL: srv.URL + "/a"}, {Name: "Feed B", URL: srv.URL + "/b"}}, 2)
+	got, err := c.Headlines(ctx, []Source{{ID: 3, Name: "Feed A", URL: srv.URL + "/a"}, {ID: 7, Name: "Feed B", URL: srv.URL + "/b"}}, 1)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if merged.Title != "" || len(merged.Items) != 2 {
-		t.Fatalf("merged = %+v", merged)
+	if len(got) != 2 {
+		t.Fatalf("feeds = %+v; want one per source", got)
 	}
-	if merged.Items[0].Title != "B new" || merged.Items[0].Source != "Feed B" || merged.Items[1].Title != "A old" {
-		t.Fatalf("order = %q (%s), %q; want newest first with its feed name", merged.Items[0].Title, merged.Items[0].Source, merged.Items[1].Title)
+	a, b := got["3"], got["7"]
+	// The admin's name, not the feed's own title; each feed cut on its own.
+	if a.Name != "Feed A" || len(a.Items) != 1 || a.Items[0].Title != "A old" {
+		t.Fatalf("feed 3 = %+v; want Feed A with its first headline", a)
+	}
+	if b.Name != "Feed B" || len(b.Items) != 1 || b.Items[0].Title != "B new" {
+		t.Fatalf("feed 7 = %+v; want Feed B with its headline", b)
 	}
 
-	if _, err := c.Headlines(ctx, []Source{{Name: "A", URL: srv.URL + "/a"}, {Name: "Gone", URL: srv.URL + "/gone"}}, 5); err == nil {
+	if _, err := c.Headlines(ctx, []Source{{ID: 1, Name: "A", URL: srv.URL + "/a"}, {ID: 2, Name: "Gone", URL: srv.URL + "/gone"}}, 5); err == nil {
 		t.Fatal("Headlines succeeded with a failing feed")
 	}
 	if _, cached := c.cached(srv.URL + "/b"); cached {
@@ -200,10 +200,10 @@ func TestHeadlinesFetchesFeedsInParallel(t *testing.T) {
 	}))
 	defer srv.Close()
 	c := &Client{HTTP: &http.Client{Timeout: 5 * time.Second}}
-	sources := []Source{{Name: "a", URL: srv.URL + "/a"}, {Name: "b", URL: srv.URL + "/b"}, {Name: "c", URL: srv.URL + "/c"}}
+	sources := []Source{{ID: 1, Name: "a", URL: srv.URL + "/a"}, {ID: 2, Name: "b", URL: srv.URL + "/b"}, {ID: 3, Name: "c", URL: srv.URL + "/c"}}
 	ctx, cancel := context.WithTimeout(context.Background(), 2*delay)
 	defer cancel()
-	if feed, err := c.Headlines(ctx, sources, 5); err != nil || len(feed.Items) != 3 {
-		t.Fatalf("Headlines of three slow feeds within twice the delay of one = %+v, %v", feed, err)
+	if feeds, err := c.Headlines(ctx, sources, 5); err != nil || len(feeds) != 3 {
+		t.Fatalf("Headlines of three slow feeds within twice the delay of one = %+v, %v", feeds, err)
 	}
 }

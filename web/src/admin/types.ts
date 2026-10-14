@@ -107,6 +107,7 @@ export interface SettingRule {
     | 'homeyCapabilities'
     | 'homeyUsers'
     | 'castDevices'
+    | 'newsFeeds'
     | 'stop'
     | 'place'
     | 'customSource'
@@ -137,6 +138,25 @@ export interface NewsFeed {
   id: number;
   name: string;
   url: string;
+}
+
+/** A news feed GDash offers to choose from; internal/news/catalogue.json holds them. */
+export interface NewsCatalogueEntry {
+  id: string;
+  name: string;
+  /** ISO 639-1, such as nl. */
+  language: string;
+  /** ISO 3166-1 alpha-2, such as NL. */
+  country: string;
+  category: string;
+  url: string;
+  /** What is known of the publisher's terms, if anything. */
+  note?: string;
+}
+
+export interface NewsCatalogue {
+  categories: string[];
+  sources: NewsCatalogueEntry[];
 }
 
 /** A calendar; its secret address never leaves the server. */

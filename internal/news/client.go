@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"slices"
+	"strconv"
 	"sync"
 )
 
@@ -39,20 +40,24 @@ type cachedFeed struct {
 
 // Source is a feed as the admin added it.
 type Source struct {
+	ID   int64
 	Name string
 	URL  string
 }
 
-// Headlines returns the newest maxItems headlines of all sources. One
-// source keeps its own title; several are merged newest first, each item
-// naming its feed, under an empty title that the screen fills in in its own
-// language. Any failing feed fails the whole list, so the dashboard
-// keeps the last complete one instead of quietly dropping a feed.
-func (c *Client) Headlines(ctx context.Context, sources []Source, maxItems int) (Feed, error) {
+// SourceFeed is the newest headlines of one source, under the name the
+// admin gave it.
+type SourceFeed struct {
+	Name  string `json:"name"`
+	Items []Item `json:"items"`
+}
+
+// Headlines returns the newest maxItems headlines of every source, by the
+// source's ID, so a screen can be given only the feeds its widgets show and
+// each widget merges its own. Any failing feed fails the whole set, so the
+// dashboard keeps the last complete one instead of quietly dropping a feed.
+func (c *Client) Headlines(ctx context.Context, sources []Source, maxItems int) (map[string]SourceFeed, error) {
 	c.forgetExcept(sources)
-	if len(sources) == 1 {
-		return c.Fetch(ctx, sources[0].URL, maxItems)
-	}
 	// Feeds download in parallel, so a slow one does not hold up the rest
 	// past the refresh's time limit. There are at most a handful.
 	feeds := make([]Feed, len(sources))
@@ -64,28 +69,20 @@ func (c *Client) Headlines(ctx context.Context, sources []Source, maxItems int) 
 			defer wg.Done()
 			feed, err := c.Fetch(ctx, src.URL, maxItems)
 			if err != nil {
-				errs[i] = fmt.Errorf("feed %d: %w", i+1, err)
+				errs[i] = fmt.Errorf("feed %d: %w", src.ID, err)
 			}
 			feeds[i] = feed
 		}()
 	}
 	wg.Wait()
 	if err := errors.Join(errs...); err != nil {
-		return Feed{}, err
+		return nil, err
 	}
-	merged := Feed{Items: []Item{}}
-	for i, feed := range feeds {
-		for _, item := range feed.Items {
-			item.Source = sources[i].Name
-			merged.Items = append(merged.Items, item)
-		}
+	out := make(map[string]SourceFeed, len(sources))
+	for i, src := range sources {
+		out[strconv.FormatInt(src.ID, 10)] = SourceFeed{Name: src.Name, Items: feeds[i].Items}
 	}
-	// Stable, so items without a date keep their feed's order at the end.
-	slices.SortStableFunc(merged.Items, func(a, b Item) int { return b.Published.Compare(a.Published) })
-	if len(merged.Items) > maxItems {
-		merged.Items = merged.Items[:maxItems]
-	}
-	return merged, nil
+	return out, nil
 }
 
 // forgetExcept drops the conditional-request state of removed feeds.

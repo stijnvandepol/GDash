@@ -110,6 +110,23 @@ func TestFeedAddressMayNotHoldAPassword(t *testing.T) {
 	}
 }
 
+func TestFeedCannotBeAddedTwice(t *testing.T) {
+	ctx := context.Background()
+	s := newService(t)
+	first, err := s.AddNewsFeed(ctx, "NOS", "https://feeds.nos.nl/nosnieuwsalgemeen")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := s.AddNewsFeed(ctx, "NOS again", "https://feeds.nos.nl/nosnieuwsalgemeen"); fieldNames(err) != "url" {
+		t.Fatalf("the same address twice: fields = %q, want url", fieldNames(err))
+	}
+	// The data hub keys each feed's headlines by its ID.
+	src, err := s.Sources(ctx)
+	if err != nil || len(src.NewsFeeds) != 1 || src.NewsFeeds[0].ID != first.ID || src.NewsFeeds[0].Name != "NOS" {
+		t.Fatalf("Sources().NewsFeeds = %+v, %v; want the one feed with its ID", src.NewsFeeds, err)
+	}
+}
+
 func TestSourcesValidationAndLimits(t *testing.T) {
 	ctx := context.Background()
 	s := newService(t)

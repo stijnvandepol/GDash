@@ -48,18 +48,21 @@ type dataSources struct {
 	weather    weather.Client
 	airQuality airquality.Client
 	news       *news.Client
-	calendar   *calendar.Client
-	home       *homeassistant.Client
-	homey      *homey.Client
-	immich     *immich.Client
-	synology   *synology.Client
-	energy     energyprice.Client
-	solar      solar.Client
-	departures *departures.Client
-	fuel       *fuel.Client
-	holidays   holidays.Client
-	rain       *rain.Client
-	warnings   *warnings.Client
+	// newsStandIn is GDASH_TEST_UPSTREAM's address for the feeds of the
+	// news catalogue, or empty outside the end-to-end tests.
+	newsStandIn string
+	calendar    *calendar.Client
+	home        *homeassistant.Client
+	homey       *homey.Client
+	immich      *immich.Client
+	synology    *synology.Client
+	energy      energyprice.Client
+	solar       solar.Client
+	departures  *departures.Client
+	fuel        *fuel.Client
+	holidays    holidays.Client
+	rain        *rain.Client
+	warnings    *warnings.Client
 	// traffic guards the requests to the ANWB; cameras keeps the fixed
 	// camera list; knmi reads measured weather.
 	traffic *traffic.Guard
@@ -201,11 +204,12 @@ func startData(ctx context.Context, cfg config, db *store.Store, svc *settings.S
 		},
 	}
 	if cfg.testUpstream != "" {
-		logger.Warn("GDASH_TEST_UPSTREAM is set: rain, weather warnings, the solar forecast, traffic, fixed cameras and KNMI measurements come from a stand-in, not from Buienradar, Open-Meteo, MeteoAlarm, the ANWB, Overpass or the KNMI", "address", cfg.testUpstream)
+		logger.Warn("GDASH_TEST_UPSTREAM is set: rain, weather warnings, the solar forecast, traffic, fixed cameras, KNMI measurements and the feeds of the news catalogue come from a stand-in, not from Buienradar, Open-Meteo, MeteoAlarm, the ANWB, Overpass, the KNMI or the publishers", "address", cfg.testUpstream)
 		sources.rain.BuienradarURL = cfg.testUpstream + testBuienradarPath
 		sources.rain.OpenMeteoURL = cfg.testUpstream + testOpenMeteoPath
 		sources.warnings.BaseURL = cfg.testUpstream + testMeteoAlarmPath
 		sources.solar.OpenMeteo.BaseURL = cfg.testUpstream + testSolarPath
+		sources.newsStandIn = cfg.testUpstream + testNewsPath
 	}
 	sources.nowPlaying = newNowPlaying(hub, sources)
 	if err := sources.sync(ctx); err != nil {
@@ -323,9 +327,9 @@ func (d *dataSources) build(cfg settings.Sources, entities, stops []string) []da
 			Fetch:    func(ctx context.Context) (any, error) { return d.airQuality.Current(ctx, *loc) },
 		})
 	}
-	if feeds := cfg.NewsFeeds; len(feeds) > 0 {
+	if feeds := d.newsFeeds(cfg.NewsFeeds); len(feeds) > 0 {
 		sources = append(sources, datahub.Source{
-			Key:      "news.default",
+			Key:      display.NewsSource,
 			Interval: newsInterval,
 			Timeout:  newsTimeout,
 			Version:  d.fingerprint(feeds),

@@ -22,8 +22,6 @@ type Item struct {
 	Title     string    `json:"title"`
 	Link      string    `json:"link,omitempty"`
 	Published time.Time `json:"published,omitzero"`
-	// Source names the feed when headlines from several feeds are merged.
-	Source string `json:"source,omitempty"`
 }
 
 // Feed is the name of a feed and its newest headlines.

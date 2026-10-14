@@ -61,7 +61,7 @@ func DefaultDashboard(withCalendar bool) Dashboard {
 		Widgets: []Widget{
 			{ID: "clock", Type: "clock", X: 0, Y: 0, W: 14, H: 6},
 			{ID: "weather", Type: "weather", X: 14, Y: 0, W: 10, H: 14, Source: WeatherSource},
-			{ID: "news", Type: "news", X: 0, Y: 6, W: 14, H: 8, Source: "news.default", Settings: map[string]any{"maxItems": 5}},
+			{ID: "news", Type: "news", X: 0, Y: 6, W: 14, H: 8, Source: NewsSource, Settings: map[string]any{"maxItems": 5}},
 		},
 	}
 	if withCalendar {
@@ -69,7 +69,7 @@ func DefaultDashboard(withCalendar bool) Dashboard {
 			{ID: "clock", Type: "clock", X: 0, Y: 0, W: 10, H: 5},
 			{ID: "weather", Type: "weather", X: 0, Y: 5, W: 10, H: 9, Source: WeatherSource},
 			{ID: "calendar", Type: "calendar", X: 10, Y: 0, W: 14, H: 9, Source: "calendar.default", Settings: map[string]any{"maxItems": 5}},
-			{ID: "news", Type: "news", X: 10, Y: 9, W: 14, H: 5, Source: "news.default", Settings: map[string]any{"maxItems": 3}},
+			{ID: "news", Type: "news", X: 10, Y: 9, W: 14, H: 5, Source: NewsSource, Settings: map[string]any{"maxItems": 3}},
 		}
 	}
 	return d

@@ -64,6 +64,7 @@ export const fr: Record<TextKey, string> = {
   newsLoading: 'Chargement des actualités…',
   newsFailed: 'Impossible de charger les actualités',
   newsNotSetUp: 'Aucun flux d’actualités. Ajoutez-en un sous Integrations.',
+  newsSourcesRemoved: 'Les sources d’actualités choisies ont été supprimées. Choisissez-en d’autres dans le tableau de bord.',
   calendarLoading: 'Chargement de l’agenda…',
   calendarFailed: 'Impossible de charger l’agenda',
   calendarNotSetUp: 'Aucun agenda. Ajoutez-en un sous Integrations.',

@@ -4,36 +4,14 @@
   import { fitItems } from './fit';
   import { clock } from '../state.svelte';
   import { locale, t } from '../i18n.svelte';
-
-  interface Headline {
-    title: string;
-    published?: string;
-    /** The feed's name, when headlines of several feeds are merged. */
-    source?: string;
-  }
-  interface Feed {
-    title: string;
-    items: Headline[];
-  }
-
-  const DEFAULT_ITEMS = 5;
+  import { SOURCES_REMOVED, newsView, type Headline } from './news';
 
   let { entry, settings }: { entry: Entry | undefined; settings: Record<string, unknown> | undefined } = $props();
 
-  const feed = $derived(isFeed(entry?.value) ? entry.value : undefined);
-  const maxItems = $derived(typeof settings?.maxItems === 'number' ? settings.maxItems : DEFAULT_ITEMS);
+  const view = $derived(newsView(entry?.value, settings));
+  const feed = $derived(view === SOURCES_REMOVED ? null : view);
   const stale = $derived(entry !== undefined && clock.now.getTime() > Date.parse(entry.staleAfter));
   const time = $derived(new Intl.DateTimeFormat(locale(), { hour: '2-digit', minute: '2-digit' }));
-
-  function isFeed(v: unknown): v is Feed {
-    if (typeof v !== 'object' || v === null) return false;
-    const f = v as Record<string, unknown>;
-    return (
-      typeof f.title === 'string' &&
-      Array.isArray(f.items) &&
-      f.items.every((i) => typeof i === 'object' && i !== null && typeof (i as Headline).title === 'string')
-    );
-  }
 
   function publishedAt(item: Headline): string {
     if (!item.published) return '';
@@ -46,15 +24,17 @@
   {#if feed && entry}
     <h2 class="source" class:stale>{feed.title || t('news')}</h2>
     <ol class="headlines">
-      {#each feed.items.slice(0, maxItems) as item, i (i)}
+      {#each feed.items as item, i (i)}
         <li>
           <span class="when">{publishedAt(item)}</span>
           <span class="title">
-            {#if item.source}<span class="feed">{item.source}</span>{/if}{item.title}
+            {#if item.source}<span class="feed">{item.source}</span>{/if}<span class="text">{item.title}</span>
           </span>
         </li>
       {/each}
     </ol>
+  {:else if view === SOURCES_REMOVED}
+    <span class="muted">{t('newsSourcesRemoved')}</span>
   {:else}
     <span class="muted">{waitingText(entry, 'news')}</span>
   {/if}
@@ -97,32 +77,61 @@
     color: var(--text-muted);
     font-variant-numeric: tabular-nums;
   }
-  /* A headline gets two lines before it is cut short, so most read whole;
-     fitItems hides the ones that no longer fit the tile at all. */
   .title {
+    display: flex;
+    gap: 0.5em;
+    align-items: baseline;
     font-size: 38px;
     line-height: 1.25;
     color: var(--text-primary);
+    min-width: 0;
+  }
+  /* The source's name stays on one line, beside or above the headline. */
+  .feed {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  /* A headline gets two lines before it is cut short, so most read whole;
+     fitItems hides the ones that no longer fit the tile at all. */
+  .text {
     display: -webkit-box;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 2;
     line-clamp: 2;
     overflow: hidden;
     overflow-wrap: break-word;
-    min-width: 0;
   }
+  /* A long source name never takes the headline's place. */
   .feed {
-    margin-right: 0.5em;
+    flex: none;
+    max-width: 40%;
     color: var(--text-muted);
+  }
+  .text {
+    flex: 1;
+    min-width: 0;
   }
   .muted {
     color: var(--text-muted);
     font-size: 38px;
   }
-  /* A narrow tile keeps the headline and drops the time. */
+  /* A narrow tile keeps the headline and drops the time; the source goes
+     above the headline, smaller, so both stay readable. */
   @container (max-width: 440px) {
     .when {
       display: none;
+    }
+    .title {
+      flex-direction: column;
+      gap: 0;
+    }
+    .feed {
+      max-width: 100%;
+      font-size: 28px;
+    }
+    .text {
+      align-self: stretch;
     }
   }
 </style>

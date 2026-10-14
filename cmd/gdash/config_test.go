@@ -26,11 +26,19 @@ func TestLoadConfigDefaults(t *testing.T) {
 	if len(cfg.seed.Calendars) != 0 {
 		t.Fatalf("calendars = %+v, want none by default", cfg.seed.Calendars)
 	}
-	if len(cfg.seed.NewsFeeds) != 1 || cfg.seed.NewsFeeds[0].URL != defaultNewsFeed || cfg.seed.NewsFeeds[0].Name != "feeds.nos.nl" {
+	// The name the news catalogue gives it, which a News widget shows.
+	if len(cfg.seed.NewsFeeds) != 1 || cfg.seed.NewsFeeds[0].URL != defaultNewsFeed || cfg.seed.NewsFeeds[0].Name != "NOS Nieuws" {
 		t.Fatalf("news feeds = %+v, want the default", cfg.seed.NewsFeeds)
 	}
 	if loc := cfg.seed.Location; loc == nil || loc.Latitude != 51.65 || loc.Longitude != 5.94 {
 		t.Fatalf("location = %+v, want rounded to 2 decimals", loc)
+	}
+}
+
+func TestLoadConfigNamesAFeedOfOnesOwnAfterItsHost(t *testing.T) {
+	cfg, err := loadConfig(env(map[string]string{"GDASH_NEWS_FEED": "https://news.example.org/rss.xml"}))
+	if err != nil || len(cfg.seed.NewsFeeds) != 1 || cfg.seed.NewsFeeds[0].Name != "news.example.org" {
+		t.Fatalf("news feeds = %+v, %v; want the feed named after its host", cfg.seed.NewsFeeds, err)
 	}
 }
 

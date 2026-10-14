@@ -1,4 +1,5 @@
 <script lang="ts">
+  import type { Snippet } from 'svelte';
   import { toast } from './toast.svelte';
   import { ask } from './confirm.svelte';
   import { ApiError, type SourceStatus } from './api';
@@ -29,10 +30,16 @@
     onremove,
     oncolor,
     onerror,
+    children,
+    formTitle,
   }: {
     title: string;
     intro: string;
     items: Item[];
+    /** Another way to add, such as the news catalogue, between the list and the form. */
+    children?: Snippet;
+    /** A heading over the form, when there is another way to add. */
+    formTitle?: string;
     /** The status of the data source these items feed, if configured. */
     status: SourceStatus | undefined;
     max: number;
@@ -126,6 +133,8 @@
       {/each}
     </ul>
   {/if}
+  {@render children?.()}
+  {#if formTitle}<h3>{formTitle}</h3>{/if}
   {#if items.length < max}
     <form onsubmit={add}>
       <label>

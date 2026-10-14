@@ -63,6 +63,7 @@ export const de: Record<TextKey, string> = {
   newsLoading: 'Nachrichten werden geladen…',
   newsFailed: 'Die Nachrichten konnten nicht geladen werden',
   newsNotSetUp: 'Kein News-Feed. Füge unter Integrations einen hinzu.',
+  newsSourcesRemoved: 'Die gewählten Nachrichtenquellen wurden entfernt. Wähle im Dashboard andere.',
   calendarLoading: 'Kalender wird geladen…',
   calendarFailed: 'Der Kalender konnte nicht geladen werden',
   calendarNotSetUp: 'Kein Kalender. Füge unter Integrations einen hinzu.',

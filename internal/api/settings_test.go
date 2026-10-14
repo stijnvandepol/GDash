@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/stijnvandepol/gdash/internal/datahub"
+	"github.com/stijnvandepol/gdash/internal/settings"
 	"github.com/stijnvandepol/gdash/internal/weather"
 )
 
@@ -112,17 +113,33 @@ func TestNewsFeeds(t *testing.T) {
 	if status != http.StatusUnprocessableEntity || !strings.Contains(body, `"field":"url"`) {
 		t.Fatalf("file URL = %d %s", status, body)
 	}
-	for i := range 5 {
+	for i := range settings.MaxNewsFeeds {
 		feed := fmt.Sprintf(`{"name":"Feed","url":"https://example.org/%d"}`, i)
 		if status, body = env.do(t, "POST", "/api/news-feeds", feed); status != http.StatusCreated {
 			t.Fatalf("add feed %d = %d %s", i, status, body)
 		}
 	}
-	if status, _ = env.do(t, "POST", "/api/news-feeds", `{"name":"Sixth","url":"https://example.org/z"}`); status != http.StatusConflict {
-		t.Fatalf("sixth feed = %d, want 409", status)
+	if status, body = env.do(t, "POST", "/api/news-feeds", `{"name":"Again","url":"https://example.org/0"}`); status != http.StatusUnprocessableEntity || !strings.Contains(body, `"field":"url"`) {
+		t.Fatalf("a feed added twice = %d %s, want 422 on url", status, body)
+	}
+	if status, _ = env.do(t, "POST", "/api/news-feeds", `{"name":"One more","url":"https://example.org/z"}`); status != http.StatusConflict {
+		t.Fatalf("feed over the limit = %d, want 409", status)
 	}
 	if _, body = env.do(t, "GET", "/api/settings", ""); !strings.Contains(body, `"url":"https://example.org/0"`) {
 		t.Fatalf("settings = %s", body)
+	}
+}
+
+func TestNewsCatalogue(t *testing.T) {
+	env := newTestEnv(t, nil)
+	if status, _ := env.do(t, "GET", "/api/news-catalogue", ""); status != http.StatusUnauthorized {
+		t.Fatalf("catalogue without login = %d, want 401", status)
+	}
+	env.setUp(t)
+	status, body := env.do(t, "GET", "/api/news-catalogue", "")
+	if status != http.StatusOK || !strings.Contains(body, `"id":"nos-algemeen"`) || !strings.Contains(body, `"url":"https://feeds.nos.nl/nosnieuwsalgemeen"`) ||
+		!strings.Contains(body, `"categories":["general"`) {
+		t.Fatalf("catalogue = %d %.300s", status, body)
 	}
 }
 

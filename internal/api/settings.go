@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/stijnvandepol/gdash/internal/datahub"
+	"github.com/stijnvandepol/gdash/internal/news"
 	"github.com/stijnvandepol/gdash/internal/settings"
 	"github.com/stijnvandepol/gdash/internal/store"
 	"github.com/stijnvandepol/gdash/internal/validation"
@@ -227,6 +228,12 @@ func (s *Server) patchCalendar(w http.ResponseWriter, r *http.Request) {
 	s.auditUser(r, auditCalendarChanged, "id "+strconv.FormatInt(id, 10)+": "+body.Color)
 	s.SettingsChanged()
 	w.WriteHeader(http.StatusNoContent)
+}
+
+// getNewsCatalogue handles GET /api/news-catalogue: the news feeds GDash
+// offers to choose from, Dutch ones first, and their categories.
+func (s *Server) getNewsCatalogue(w http.ResponseWriter, _ *http.Request) {
+	writeJSON(w, http.StatusOK, map[string]any{"categories": news.Categories, "sources": news.Catalogue()})
 }
 
 // deleteNewsFeed handles DELETE /api/news-feeds/{id}: 204, or 404.

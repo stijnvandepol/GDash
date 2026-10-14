@@ -23,6 +23,18 @@ describe('defaultSettings', () => {
     expect(defaultSettings(waste, today)).toEqual({});
   });
 
+  it('starts a News widget on all chosen sources, which is no feeds setting', () => {
+    const news: WidgetType = {
+      minW: 6,
+      minH: 4,
+      settings: {
+        feeds: { kind: 'newsFeeds', max: 10, required: false },
+        maxItems: { kind: 'integer', min: 1, max: 20, required: false },
+      },
+    };
+    expect(defaultSettings(news, today)).toEqual({ maxItems: 5 });
+  });
+
   it('leaves the stop of a departures widget to be chosen', () => {
     const departures: WidgetType = {
       minW: 6,

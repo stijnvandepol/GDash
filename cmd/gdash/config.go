@@ -14,6 +14,7 @@ import (
 
 	"github.com/stijnvandepol/gdash/internal/calendar"
 	"github.com/stijnvandepol/gdash/internal/holidays"
+	"github.com/stijnvandepol/gdash/internal/news"
 	"github.com/stijnvandepol/gdash/internal/settings"
 	"github.com/stijnvandepol/gdash/internal/weather"
 )
@@ -208,8 +209,7 @@ func loadSeed(getenv func(string) string) (settings.Seed, error) {
 	if !isHTTPURL(feed) {
 		return settings.Seed{}, fmt.Errorf("GDASH_NEWS_FEED %q is not an http(s) URL", feed)
 	}
-	u, _ := url.Parse(feed)
-	seed.NewsFeeds = []settings.NewsFeed{{Name: feedName(u.Hostname()), URL: feed}}
+	seed.NewsFeeds = []settings.NewsFeed{{Name: feedName(feed), URL: feed}}
 
 	calendars, err := calendar.ParseSources(getenv("GDASH_CALENDAR_URLS"))
 	if err != nil {
@@ -221,9 +221,14 @@ func loadSeed(getenv func(string) string) (settings.Seed, error) {
 	return seed, nil
 }
 
-// feedName names a feed from the environment after its host, cut to the
-// longest name settings accept.
-func feedName(host string) string {
+// feedName names a feed from the environment as the news catalogue does,
+// or else after its host, cut to the longest name settings accept.
+func feedName(address string) string {
+	if entry, ok := news.CatalogueEntryByURL(address); ok {
+		return entry.Name
+	}
+	u, _ := url.Parse(address)
+	host := u.Hostname()
 	const maxRunes = 60
 	if r := []rune(host); len(r) > maxRunes {
 		return string(r[:maxRunes])

@@ -20,6 +20,7 @@ import HomeySetting from './HomeySetting.svelte';
 import ImmichSetting from './ImmichSetting.svelte';
 import KnmiSetting from './KnmiSetting.svelte';
 import LocationSetting from './LocationSetting.svelte';
+import NewsSetting from './NewsSetting.svelte';
 import PhotoSetting from './PhotoSetting.svelte';
 import PresetSetup from './PresetSetup.svelte';
 import SolarSetting from './SolarSetting.svelte';
@@ -56,8 +57,7 @@ export interface Integration extends CatalogueEntry {
   panel?: (ctx: PanelContext) => PanelView;
 }
 
-// The server allows these numbers; internal/settings holds the same.
-const MAX_NEWS_FEEDS = 5;
+// The server allows this number; internal/settings holds the same.
 const MAX_CALENDARS = 10;
 
 const NEEDS_LOCATION: IntegrationState = { kind: 'idle', detail: 'Built in · needs the weather location' };
@@ -112,8 +112,8 @@ const SERVICES: Integration[] = [
   {
     id: 'news',
     name: 'News feeds',
-    description: 'Headlines from RSS or Atom feeds, such as NOS',
-    keywords: 'rss atom nos headlines',
+    description: 'Headlines from NOS, NU.nl, Tweakers, BBC and more, or any RSS or Atom feed',
+    keywords: 'rss atom nos nu.nl tweakers bbc regional omroep headlines nieuws',
     category: 'news',
     icon: 'news',
     tags: ['no-key'],
@@ -125,24 +125,7 @@ const SERVICES: Integration[] = [
       return { ...st, detail: `${count(feeds, 'feed', 'feeds')}. ${st.detail}` };
     },
     panel: (ctx) =>
-      view(SourceList, {
-        title: 'News',
-        intro: 'RSS or Atom feeds. With more than one, the newest headlines of all feeds are shown together.',
-        items: ctx.settings.newsFeeds.map((f) => ({ id: f.id, name: f.name, detail: f.url })),
-        status: ctx.status['news.default'],
-        max: MAX_NEWS_FEEDS,
-        namePlaceholder: 'NOS',
-        urlPlaceholder: 'https://feeds.nos.nl/nosnieuwsalgemeen',
-        onadd: async (name, url) => {
-          await api.addNewsFeed(name, url);
-          await ctx.onchanged();
-        },
-        onremove: async (id) => {
-          await api.deleteNewsFeed(id);
-          await ctx.onchanged();
-        },
-        onerror: ctx.onerror,
-      }),
+      view(NewsSetting, { feeds: ctx.settings.newsFeeds, status: ctx.status['news.default'], onchanged: ctx.onchanged, onerror: ctx.onerror }),
   },
   {
     id: 'calendars',

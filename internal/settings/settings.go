@@ -30,9 +30,10 @@ import (
 )
 
 // Limits per kind. Every feed costs a request per refresh, and every
-// calendar is downloaded whole, so a household needs a handful.
+// calendar is downloaded whole, so a household needs a handful. Ten feeds
+// leave room for a different set per screen; they download in parallel.
 const (
-	MaxNewsFeeds = 5
+	MaxNewsFeeds = 10
 	MaxCalendars = 10
 )
 
@@ -211,7 +212,7 @@ func (s *Service) Sources(ctx context.Context) (Sources, error) {
 		return Sources{}, err
 	}
 	for _, f := range feeds {
-		out.NewsFeeds = append(out.NewsFeeds, news.Source{Name: f.Name, URL: f.Address})
+		out.NewsFeeds = append(out.NewsFeeds, news.Source{ID: f.ID, Name: f.Name, URL: f.Address})
 	}
 	calendars, err := s.Store.Sources(ctx, store.SourceCalendar)
 	if err != nil {
@@ -328,11 +329,22 @@ func (s *Service) ClearLocation(ctx context.Context) error {
 }
 
 // AddNewsFeed adds an RSS or Atom feed. It returns a *validation.Error for
-// invalid input and store.ErrConflict when MaxNewsFeeds is reached.
+// invalid input or a feed that is added already, and store.ErrConflict when
+// MaxNewsFeeds is reached.
 func (s *Service) AddNewsFeed(ctx context.Context, name, address string) (NewsFeed, error) {
 	u, err := checkSource(name, address, false)
 	if err != nil {
 		return NewsFeed{}, err
+	}
+	feeds, err := s.Store.Sources(ctx, store.SourceNews)
+	if err != nil {
+		return NewsFeed{}, err
+	}
+	// The same feed twice would only show its headlines twice.
+	if slices.ContainsFunc(feeds, func(f store.Source) bool { return f.Address == u.String() }) {
+		var errs validation.Collector
+		errs.Add("url", "this feed is added already")
+		return NewsFeed{}, errs.Err()
 	}
 	id, err := s.Store.AddSource(ctx, store.Source{
 		Kind: store.SourceNews, Name: name, Address: u.String(), Host: u.Hostname(), CreatedAt: s.Now().UTC(),

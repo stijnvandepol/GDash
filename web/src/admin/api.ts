@@ -50,6 +50,7 @@ import type {
   KnmiInfo,
   Location,
   NewApiToken,
+  NewsCatalogue,
   NewsFeed,
   PendingLogin,
   Photo,
@@ -172,6 +173,7 @@ export const api = {
   setUpdateCheck: (enabled: boolean) => request<{ enabled: boolean }>('PUT', '/api/settings/update-check', { enabled }),
   places: (name: string) =>
     request<{ places: Place[] }>('GET', `/api/places?name=${encodeURIComponent(name)}`).then((r) => r.places),
+  newsCatalogue: () => request<NewsCatalogue>('GET', '/api/news-catalogue'),
   addNewsFeed: (name: string, url: string) => request<NewsFeed>('POST', '/api/news-feeds', { name, url }),
   deleteNewsFeed: (id: number) => request<void>('DELETE', `/api/news-feeds/${id}`),
   addCalendar: (name: string, url: string) => request<Calendar>('POST', '/api/calendars', { name, url }),

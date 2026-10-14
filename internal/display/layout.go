@@ -85,7 +85,7 @@ var WidgetTypes = map[string]WidgetType{
 	"waste":       {Source: WasteSource, MinW: 6, MinH: 4, Settings: wasteSettings},
 	"energyprice": {Source: EnergyPriceSource, MinW: 6, MinH: 4},
 	"solar":       {Source: SolarSource, MinW: 6, MinH: 4},
-	"news":        {Source: "news.default", MinW: 6, MinH: 4, Settings: maxItems},
+	"news":        newsWidget,
 	"calendar":    {Source: "calendar.default", MinW: 6, MinH: 4, Settings: maxItems},
 	"text":        {MinW: 4, MinH: 3, Settings: map[string]Setting{"text": {Kind: SettingText, Min: 1, Max: 300, Required: true}}},
 	"photos": {Source: PhotosSource, MinW: 4, MinH: 3, Settings: map[string]Setting{
@@ -338,6 +338,8 @@ func valueProblem(key string, value any, rule Setting) string {
 		}
 	case SettingCastDevices:
 		return castDevicesProblem(key, value)
+	case SettingNewsFeeds:
+		return newsFeedsProblem(key, value)
 	case SettingChoices:
 		return choicesProblem(key, value, rule)
 	case SettingRoads:

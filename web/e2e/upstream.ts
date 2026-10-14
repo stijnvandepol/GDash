@@ -11,8 +11,10 @@ import { solarAnswer } from './solar-stand-in';
 // without the internet, and for the ANWB's traffic list, the Overpass API
 // and the KNMI, which answer with the Go tests' recorded answers. The
 // server is pointed here with GDASH_TEST_UPSTREAM (cmd/gdash/config.go);
-// the paths are the ones cmd/gdash/warnings.go and cmd/gdash/traffic.go
-// name. Open-Meteo's path answers 404: the
+// the paths are the ones cmd/gdash/warnings.go, cmd/gdash/traffic.go and
+// cmd/gdash/news.go name; the news path stands in for the feeds of the
+// news catalogue, so the tests choose real catalogue sources without the
+// internet. Open-Meteo's path answers 404: the
 // tests use a place in the Netherlands, which Buienradar covers. Every
 // answer is built around the current time, so there is always something
 // ahead. /open-meteo-solar/requests lists the queries the solar forecast
@@ -68,7 +70,29 @@ function feed(now: number): unknown {
   };
 }
 
+/** Stand-in headlines for two sources of the news catalogue, by catalogue id (internal/news/catalogue.json). */
+export const NEWS_STAND_INS: Record<string, string[]> = {
+  'nos-algemeen': ['Kitchen headline from the NOS stand-in', 'Second NOS stand-in headline'],
+  tweakers: ['Study headline from the Tweakers stand-in', 'Second Tweakers stand-in headline'],
+};
+
+const escapeXml = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+
+/** The RSS of a catalogue source, its headlines a few minutes old; GDash asks for it at /news/<id> (cmd/gdash/news.go). */
+function newsFeed(id: string, now: number): string | undefined {
+  const titles = NEWS_STAND_INS[id];
+  if (!titles) return undefined;
+  const items = titles
+    .map((title, i) => `<item><title>${escapeXml(title)}</title><pubDate>${new Date(now - (i + 1) * STEP_MS).toUTCString()}</pubDate></item>`)
+    .join('');
+  return `<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"><channel><title>${escapeXml(id)}</title>${items}</channel></rss>`;
+}
+
 function answer(path: string, now: number): { type: string; body: string } | undefined {
+  if (path.startsWith('/news/')) {
+    const body = newsFeed(path.slice('/news/'.length), now);
+    return body === undefined ? undefined : { type: 'application/rss+xml', body };
+  }
   if (path === '/buienradar/data/raintext') return { type: 'text/plain', body: raintext(now) };
   if (path === '/meteoalarm/api/v1/warnings/feeds-netherlands') return { type: 'application/json', body: JSON.stringify(feed(now)) };
   if (path === '/open-meteo-solar/v1/forecast') return { type: 'application/json', body: JSON.stringify(solarAnswer(now)) };

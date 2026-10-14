@@ -13,6 +13,7 @@
   import StopPicker from './StopPicker.svelte';
   import PlacePicker from './PlacePicker.svelte';
   import CastDevicePicker from './CastDevicePicker.svelte';
+  import NewsFeedPicker from './NewsFeedPicker.svelte';
   import CustomWidgetSettings from './CustomWidgetSettings.svelte';
   import TrafficWidgetSettings from './TrafficWidgetSettings.svelte';
 
@@ -81,6 +82,11 @@
     return Array.isArray(v) ? v.filter((s): s is string => typeof s === 'string') : [];
   }
 
+  function ids(key: string): number[] {
+    const v = settings[key];
+    return Array.isArray(v) ? v.filter((n): n is number => typeof n === 'number') : [];
+  }
+
   function text(key: string): string {
     const v = settings[key];
     return typeof v === 'string' ? v : '';
@@ -119,6 +125,9 @@
       <input type="checkbox" checked={settings[key] === true} onchange={(e) => set(key, (e.target as HTMLInputElement).checked)} />
       {settingLabel(widgetType, key)}
     </label>
+  {:else if rule.kind === 'newsFeeds'}
+    <!-- No feeds means every feed, which the server stores as no setting. -->
+    <NewsFeedPicker selected={ids(key)} max={rule.max ?? 1} onchange={(chosen) => set(key, chosen.length > 0 ? chosen : undefined)} />
   {:else if rule.kind === 'castDevices'}
     <!-- No devices means any device, which the server stores as no setting. -->
     <CastDevicePicker selected={list(key)} max={rule.max ?? 1} onchange={(ids) => set(key, ids.length > 0 ? ids : undefined)} />
