@@ -71,9 +71,10 @@ func TestParseFillsEventFields(t *testing.T) {
 }
 
 func TestParseReturnsAnErrorForLinesThatPanicTheDecoder(t *testing.T) {
-	for _, line := range []string{"X;A=", "X;A=1,", `X;A="1"2:3`} {
-		ics := "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:x\r\n" + line + "\r\nEND:VCALENDAR\r\n"
-		if _, err := Parse(strings.NewReader(ics), window(t), "Work"); err == nil {
+	// On a property that Parse reads: trim drops the others before the
+	// decoder sees them.
+	for _, line := range []string{"SUMMARY;A=", "SUMMARY;A=1,", `SUMMARY;A="1"2:3`} {
+		if _, err := Parse(strings.NewReader(vevent("DTSTART:20261009T080000Z", line)), window(t), "Work"); err == nil {
 			t.Errorf("Parse accepted the line %q", line)
 		}
 	}

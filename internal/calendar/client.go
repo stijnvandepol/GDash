@@ -1,7 +1,6 @@
 package calendar
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -14,13 +13,10 @@ import (
 )
 
 const (
-	// maxCalendarBytes is far above a family calendar with years of history
-	// and stops a broken server from making GDash read without end.
-	maxCalendarBytes = 10 << 20
 	// maxEvents keeps a snapshot well below the 64 KB Cast message limit.
 	maxEvents = 50
 	// parallelFetches bounds how many calendars download at once: each may
-	// be up to maxCalendarBytes, and a home server has little memory.
+	// keep up to maxKeptBytes, and a home server has little memory.
 	parallelFetches = 4
 	userAgent       = "GDash (self-hosted TV dashboard; +https://github.com/stijnvandepol/gdash)"
 )
@@ -129,14 +125,16 @@ func (c *Client) window(days int) Window {
 }
 
 // read fetches and parses one calendar, with its colour on every event.
+// The feed is parsed while it downloads; see trim.
 func (c *Client) read(ctx context.Context, src Source, w Window) ([]Event, error) {
-	body, err := c.fetch(ctx, src)
+	body, err := c.open(ctx, src)
 	if err != nil {
 		return nil, err
 	}
-	events, err := Parse(bytes.NewReader(body), w, src.Name)
+	defer body.Close()
+	events, err := Parse(body, w, src.Name)
 	if err != nil {
-		return nil, err
+		return nil, withoutURL(err)
 	}
 	for i := range events {
 		events[i].Color = src.Color
@@ -153,29 +151,34 @@ func sortedFirst(events []Event) []Event {
 	return events
 }
 
-func (c *Client) fetch(ctx context.Context, src Source) ([]byte, error) {
+// StatusError is an answer other than 200 OK from a calendar server, such
+// as 404 for the public address of a calendar that is not public.
+type StatusError struct {
+	Code   int
+	Status string
+}
+
+func (e *StatusError) Error() string { return "calendar server answered " + e.Status }
+
+// open requests a calendar and returns its body. The content type is not
+// checked: servers send ICS as text/calendar, text/plain or a download, so
+// Parse tells a calendar from a web page by its first line.
+func (c *Client) open(ctx context.Context, src Source) (io.ReadCloser, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, src.URL, nil)
 	if err != nil {
 		return nil, errors.New("invalid calendar URL")
 	}
 	req.Header.Set("User-Agent", userAgent)
-	req.Header.Set("Accept", "text/calendar")
+	req.Header.Set("Accept", "text/calendar, */*;q=0.5")
 	resp, err := c.HTTP.Do(req)
 	if err != nil {
 		return nil, withoutURL(err)
 	}
-	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("calendar server answered %s", resp.Status)
+		resp.Body.Close()
+		return nil, &StatusError{Code: resp.StatusCode, Status: resp.Status}
 	}
-	body, err := io.ReadAll(io.LimitReader(resp.Body, maxCalendarBytes+1))
-	if err != nil {
-		return nil, withoutURL(err)
-	}
-	if len(body) > maxCalendarBytes {
-		return nil, errors.New("calendar is larger than the limit")
-	}
-	return body, nil
+	return resp.Body, nil
 }
 
 // withoutURL drops the request URL that net/http puts in its errors: for a

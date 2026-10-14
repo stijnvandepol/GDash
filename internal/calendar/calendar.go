@@ -4,6 +4,7 @@
 package calendar
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"io"
@@ -55,9 +56,15 @@ type occurrence struct {
 }
 
 // Parse lists the events of one ICS document in the window, sorted by start.
-// fallbackName names the calendar when the feed does not.
+// fallbackName names the calendar when the feed does not. It returns an
+// error that wraps ErrNotCalendar for a document that is no calendar, and
+// ErrTooLarge for one above the limits.
 func Parse(r io.Reader, w Window, fallbackName string) ([]Event, error) {
-	cal, err := decode(r)
+	kept, err := trim(r, w)
+	if err != nil {
+		return nil, fmt.Errorf("parse calendar: %w", err)
+	}
+	cal, err := decode(bytes.NewReader(kept))
 	if err != nil {
 		return nil, fmt.Errorf("parse calendar: %w", err)
 	}

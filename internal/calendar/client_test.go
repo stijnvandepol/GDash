@@ -1,13 +1,18 @@
 package calendar
 
 import (
+	"compress/gzip"
 	"context"
+	"errors"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/stijnvandepol/gdash/internal/outbound"
 )
 
 func TestParseSources(t *testing.T) {
@@ -111,5 +116,67 @@ func TestUpcomingFetchesCalendarsInParallel(t *testing.T) {
 	defer cancel()
 	if _, err := c.Upcoming(ctx, sources, 7); err != nil {
 		t.Fatalf("Upcoming of %d slow calendars within twice the delay of one: %v", len(sources), err)
+	}
+}
+
+// TestReadFollowsGoogle reads a calendar the way Google serves one: behind
+// a redirect to another host, compressed, at an address with %40 and %23
+// in its path, and with years of history.
+func TestReadFollowsGoogle(t *testing.T) {
+	const path = "/calendar/ical/nl.dutch%23holiday%40group.v.calendar.google.com/private-0123/basic.ics"
+	served := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.EscapedPath() != path {
+			t.Errorf("path = %q, want %q", r.URL.EscapedPath(), path)
+		}
+		if !strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
+			t.Errorf("Accept-Encoding = %q; Google's feeds are far smaller compressed", r.Header.Get("Accept-Encoding"))
+		}
+		w.Header().Set("Content-Type", "text/calendar; charset=UTF-8")
+		w.Header().Set("Content-Encoding", "gzip")
+		zw := gzip.NewWriter(w)
+		if _, err := io.Copy(zw, newHistory(time.Date(2010, 1, 1, 0, 0, 0, 0, time.UTC))); err != nil {
+			t.Error(err)
+		}
+		zw.Close()
+	}))
+	defer served.Close()
+	front := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, served.URL+r.URL.EscapedPath(), http.StatusFound)
+	}))
+	defer front.Close()
+
+	loc := amsterdam(t)
+	c := &Client{HTTP: outbound.NewClient(20 * time.Second), Location: loc, Now: func() time.Time { return time.Date(2026, 10, 14, 9, 0, 0, 0, loc) }}
+	events, err := c.Read(context.Background(), Source{Name: "Werk", URL: front.URL + path}, 7)
+	if err != nil {
+		t.Fatalf("Read: %v", err)
+	}
+	if len(events) != 2 || events[0].Title != "Vandaag" {
+		t.Fatalf("events = %+v", events)
+	}
+}
+
+func TestReadTellsWhatWentWrong(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		if r.URL.Path == "/public/basic.ics" {
+			// Google's answer for the public address of a private calendar.
+			w.WriteHeader(http.StatusNotFound)
+			w.Write([]byte("<html><title>Error 404 (Not Found)!!1</title>"))
+			return
+		}
+		// An embed or web address: a page, with 200.
+		w.Write([]byte("<!doctype html><html><head><title>Google Calendar</title>"))
+	}))
+	defer srv.Close()
+	c := &Client{HTTP: &http.Client{Timeout: 5 * time.Second}, Location: time.UTC, Now: time.Now}
+
+	_, err := c.Read(context.Background(), Source{URL: srv.URL + "/public/basic.ics"}, 7)
+	var status *StatusError
+	if !errors.As(err, &status) || status.Code != http.StatusNotFound {
+		t.Errorf("Read of a missing calendar = %v, want a StatusError 404", err)
+	}
+	if _, err := c.Read(context.Background(), Source{URL: srv.URL + "/calendar/embed"}, 7); !errors.Is(err, ErrNotCalendar) {
+		t.Errorf("Read of a web page = %v, want ErrNotCalendar", err)
 	}
 }
