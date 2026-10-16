@@ -91,10 +91,15 @@
   .mark.trauma {
     background: #fb8c00;
   }
+  /* An alert gets two lines before it is cut short, as a headline does,
+     so most read whole; fitItems hides the ones that no longer fit. */
   .text {
-    white-space: nowrap;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
     overflow: hidden;
-    text-overflow: ellipsis;
+    overflow-wrap: break-word;
   }
   .ago {
     color: var(--text-muted);
@@ -114,6 +119,18 @@
     font-size: clamp(13px, 2.8cqw, 18px);
     line-height: 1;
     color: var(--text-muted);
+  }
+  /* A strip two rows high: the credit sits in the tile's lower edge rather
+     than on a line of its own, so the alerts have the whole tile. */
+  @container (max-height: 160px) {
+    .p2000 {
+      position: relative;
+    }
+    .source {
+      position: absolute;
+      right: 0;
+      bottom: calc(var(--space-widget) / -2 + 4px);
+    }
   }
   .visually-hidden {
     position: absolute;

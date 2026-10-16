@@ -183,8 +183,9 @@ function googleCalendar(now: number): string {
 }
 
 /**
- * alarmeringen.nl's feeds for P2000: two fire alerts in Brabant-Zuidoost
- * (Nuenen 10 minutes ago, Eindhoven 2 hours ago) and one police alert in
+ * alarmeringen.nl's feeds for P2000: three fire alerts in Brabant-Zuidoost
+ * (Nuenen 10 minutes ago, a long one in Eindhoven an hour ago, Eindhoven 2
+ * hours ago) and one police alert in
  * Nuenen; Nuenen's own feed names its region. Other feeds are empty.
  */
 function alarmeringen(path: string, now: number): string | undefined {
@@ -193,7 +194,11 @@ function alarmeringen(path: string, now: number): string | undefined {
     `<description>${text}</description><pubDate>${new Date(now - minutesAgo * 60_000).toUTCString().replace('GMT', '+0000')}</pubDate><guid>${id}</guid></item>`;
   const feed = (items: string[]) => `<?xml version="1.0" encoding="utf-8"?><rss version="2.0"><channel><title>Alarmeringen.nl feed</title>${items.join('')}</channel></rss>`;
   if (path === '/feeds/region/brabant-zuidoost/brandweer.rss') {
-    return feed([item('1001', 10, 'nuenen', 'Woningbrand op Dorpsstraat in Nuenen'), item('1002', 120, 'eindhoven', 'Gaslucht op Kerkstraat in Eindhoven')]);
+    return feed([
+      item('1001', 10, 'nuenen', 'Woningbrand op Dorpsstraat in Nuenen'),
+      item('1004', 60, 'eindhoven', 'Brand in een bedrijfspand met uitslaande vlammen op de Vestdijk ter hoogte van het station in Eindhoven'),
+      item('1002', 120, 'eindhoven', 'Gaslucht op Kerkstraat in Eindhoven'),
+    ]);
   }
   if (path === '/feeds/region/brabant-zuidoost/politie.rss') return feed([item('1003', 30, 'nuenen', 'Politie naar Berg in Nuenen')]);
   if (path === '/feeds/city/nuenen.rss') return feed([item('1001', 10, 'nuenen', 'Woningbrand op Dorpsstraat in Nuenen')]);

@@ -28,8 +28,9 @@ const (
 )
 
 // p2000Widget is a P2000 widget: the alerts of one safety region, or of one
-// to five places, for the chosen disciplines.
-var p2000Widget = WidgetType{Source: P2000Source, MinW: 6, MinH: 4, Settings: map[string]Setting{
+// to five places, for the chosen disciplines. Two rows high it is a strip
+// with the latest alert or two.
+var p2000Widget = WidgetType{Source: P2000Source, MinW: 6, MinH: 2, Settings: map[string]Setting{
 	"region":      {Kind: SettingChoice, Options: p2000.RegionSlugs},
 	"places":      {Kind: SettingP2000Places, Min: 1, Max: maxP2000Places},
 	"disciplines": {Kind: SettingChoices, Min: 1, Options: p2000.Disciplines},

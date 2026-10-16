@@ -16,6 +16,8 @@
   const SPACE_GAP = 24;
   const SPACE_WIDGET = 48;
   const RADIUS_WIDGET = 28;
+  // A tile this many rows high or lower keeps half its padding above and below.
+  const LOW_ROWS = 2;
   import Clock from './widgets/Clock.svelte';
   import Weather from './widgets/Weather.svelte';
   import News from './widgets/News.svelte';
@@ -175,6 +177,7 @@
         <section
           class="widget"
           class:titled
+          class:low={widget.h <= LOW_ROWS}
           style:grid-column="{widget.x + 1} / span {widget.w}"
           style:grid-row="{widget.y + 1} / span {widget.h}"
         >
@@ -327,6 +330,12 @@
      with cqw and cqh units; a browser without container queries still
      keeps its size from following its content, and compat.ts stands in
      for the units. */
+  /* A strip two rows high, which only the P2000 widget can be, keeps half
+     the padding above and below: the full padding leaves room for no line. */
+  .widget.low {
+    padding-top: calc(var(--space-widget) / 2);
+    padding-bottom: calc(var(--space-widget) / 2);
+  }
   .tile-body {
     flex: 1 1 0;
     min-width: 0;
