@@ -78,7 +78,16 @@
     display: grid;
     min-width: 0;
   }
-  .name,
+  /* A station's name gets two lines before it is cut short; the address
+     line under it stays one. */
+  .name {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    overflow: hidden;
+    overflow-wrap: break-word;
+  }
   .meta {
     white-space: nowrap;
     overflow: hidden;

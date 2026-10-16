@@ -132,11 +132,16 @@
     display: grid;
     min-width: 0;
   }
+  /* Where, such as a junction to a town, and what happens there each get
+     two lines before they are cut short. */
   .where,
   .note {
-    white-space: nowrap;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
     overflow: hidden;
-    text-overflow: ellipsis;
+    overflow-wrap: break-word;
   }
   .note {
     font-size: 0.56em;

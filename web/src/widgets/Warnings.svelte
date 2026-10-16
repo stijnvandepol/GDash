@@ -148,9 +148,11 @@
     display: none;
     font-size: 0.7em;
     color: var(--text-muted);
-    white-space: nowrap;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
     overflow: hidden;
-    text-overflow: ellipsis;
+    overflow-wrap: break-word;
   }
   .red .headline,
   .orange .headline {
@@ -176,7 +178,7 @@
   /* A taller tile has room for the KNMI's own headline. */
   @container (min-height: 260px) {
     .headline {
-      display: block;
+      display: -webkit-box;
     }
   }
 </style>
