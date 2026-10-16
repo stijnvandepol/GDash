@@ -76,6 +76,8 @@ for setup on an empty data directory and served the web interface.
 
 **0.10.0** was tagged on 16 October 2026: a P2000 widget with the call-outs of fire brigade, police, ambulance, KNRM and trauma helicopter in a safety region or up to five places, from Alarmeringen.nl, and a Google TV that no longer switches back to the dashboard while an app such as Netflix covers it (the page now reports when it is hidden and shown, and the keeper yields meanwhile; still to watch on the real TV). 89 Playwright tests passed.
 
+**0.10.1** was tagged on 16 October 2026: long texts (P2000 alerts, appointments, traffic places and notes, fuel stations, KNMI headlines) get two lines before they are cut short, and a P2000 widget can be a strip two rows high. 89 Playwright tests passed.
+
 ## Checked by CI on every push
 
 gofmt, go vet, staticcheck, the Go tests with the race detector (fuzz seeds included), govulncheck, svelte-check with zero warnings, the web unit tests (Vitest), npm audit, an up-to-date THIRD_PARTY_LICENSES, a gitleaks scan of the whole history, 24 Playwright browser tests (setup, settings, backup, dashboards, styles, pairing, schedule) with axe accessibility checks in light and dark mode and a check that every button keeps 4.5:1 while hovered, and a Docker build for amd64 and arm64. The first run passed on 8 October 2026; all of it passed on 9 October 2026 after the security and design rounds.

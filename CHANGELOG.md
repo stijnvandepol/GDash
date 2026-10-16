@@ -5,6 +5,8 @@ the format follows [Keep a Changelog](https://keepachangelog.com).
 
 ## Unreleased
 
+## 0.10.1 – 2026-10-16
+
 ### Changed
 
 - Long texts get two lines before they are cut short: P2000 alerts,
