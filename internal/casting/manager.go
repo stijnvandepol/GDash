@@ -36,6 +36,7 @@ type Manager struct {
 	statuses  map[string]Status
 	takeOvers map[string]chan struct{}
 	hiddens   map[string]chan struct{}
+	showns    map[string]chan struct{}
 }
 
 // Keep connects one display's keeper to the manager.
@@ -43,13 +44,15 @@ type Keep struct {
 	// Report receives every state the keeper finds.
 	Report func(cast.State, error)
 	// Restarted is called after every restart of a running receiver, with
-	// cast.RestartPeriodic or cast.RestartHidden.
+	// cast.RestartPeriodic.
 	Restarted func(reason string)
 	// TakeOver delivers an admin's request to show the dashboard on the TV
 	// now.
 	TakeOver <-chan struct{}
-	// Hidden delivers a report of the page on the TV that it is hidden.
+	// Hidden delivers a report of the page on the TV that it is hidden, and
+	// Shown one that it is on screen again.
 	Hidden <-chan struct{}
+	Shown  <-chan struct{}
 }
 
 // Status is what the keeper of a display last reported.
@@ -63,8 +66,8 @@ type Status struct {
 	// ReasonNotFound or ReasonNoAnswer. Empty in the other states.
 	Reason string `json:"reason,omitempty"`
 	// RestartedAt is when the keeper last restarted the receiver to keep it
-	// in front of the screensaver, and RestartReason why: cast.RestartPeriodic
-	// or cast.RestartHidden. Absent until it first did.
+	// in front of the screensaver, and RestartReason why: cast.RestartPeriodic.
+	// Absent until it first did.
 	RestartedAt   *time.Time `json:"restartedAt,omitempty"`
 	RestartReason string     `json:"restartReason,omitempty"`
 	// HiddenAt is when the page on the TV last reported that it is hidden,
@@ -149,9 +152,9 @@ func (m *Manager) restarted(displayID string) func(reason string) {
 }
 
 // ScreenHidden passes a report of the page on a display's TV that it is
-// hidden to the display's keeper, which restarts the receiver when the TV
-// is free (see cast.Keeper.Hidden). It reports false when the display has
-// no running keeper. It never blocks.
+// hidden to the display's keeper, which then leaves the TV to whoever
+// covered the dashboard (see cast.Keeper.Hidden). It reports false when the
+// display has no running keeper. It never blocks.
 func (m *Manager) ScreenHidden(displayID string) bool {
 	m.mu.Lock()
 	hidden, ok := m.hiddens[displayID]
@@ -161,11 +164,24 @@ func (m *Manager) ScreenHidden(displayID string) bool {
 		m.statuses[displayID] = status
 	}
 	m.mu.Unlock()
-	if !ok {
-		return false
-	}
+	return ok && signal(hidden)
+}
+
+// ScreenShown passes a report of the page on a display's TV that it is on
+// screen again to the display's keeper (see cast.Keeper.Shown). It reports
+// false when the display has no running keeper. It never blocks.
+func (m *Manager) ScreenShown(displayID string) bool {
+	m.mu.Lock()
+	shown, ok := m.showns[displayID]
+	m.mu.Unlock()
+	return ok && signal(shown)
+}
+
+// signal sends on a channel with room for one, without blocking: a signal
+// that is still waiting covers a second one. It always reports true.
+func signal(ch chan struct{}) bool {
 	select {
-	case hidden <- struct{}{}:
+	case ch <- struct{}{}:
 	default:
 	}
 	return true
@@ -189,16 +205,17 @@ func (m *Manager) TakeOver(displayID string) bool {
 	return true
 }
 
-// track makes a display's keeper reachable for TakeOver and ScreenHidden.
+// track makes a display's keeper reachable for TakeOver, ScreenHidden and
+// ScreenShown.
 func (m *Manager) track(displayID string) Keep {
-	takeOver, hidden := make(chan struct{}, 1), make(chan struct{}, 1)
+	takeOver, hidden, shown := make(chan struct{}, 1), make(chan struct{}, 1), make(chan struct{}, 1)
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	if m.takeOvers == nil {
-		m.takeOvers, m.hiddens = map[string]chan struct{}{}, map[string]chan struct{}{}
+		m.takeOvers, m.hiddens, m.showns = map[string]chan struct{}{}, map[string]chan struct{}{}, map[string]chan struct{}{}
 	}
-	m.takeOvers[displayID], m.hiddens[displayID] = takeOver, hidden
-	return Keep{Report: m.reporter(displayID), Restarted: m.restarted(displayID), TakeOver: takeOver, Hidden: hidden}
+	m.takeOvers[displayID], m.hiddens[displayID], m.showns[displayID] = takeOver, hidden, shown
+	return Keep{Report: m.reporter(displayID), Restarted: m.restarted(displayID), TakeOver: takeOver, Hidden: hidden, Shown: shown}
 }
 
 func (m *Manager) forget(displayID string) {
@@ -207,6 +224,7 @@ func (m *Manager) forget(displayID string) {
 	delete(m.statuses, displayID)
 	delete(m.takeOvers, displayID)
 	delete(m.hiddens, displayID)
+	delete(m.showns, displayID)
 }
 
 type running struct {

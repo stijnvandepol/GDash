@@ -27,8 +27,8 @@ export interface VisibilityEvent {
   at: string;
 }
 
-/** Why a screen reports: it connected, or its page was just hidden. */
-export type ReportReason = 'connected' | 'hidden';
+/** Why a screen reports: it connected, or its page was just hidden or shown again. */
+export type ReportReason = 'connected' | 'hidden' | 'visible';
 
 export interface ScreenReport {
   reason: ReportReason;

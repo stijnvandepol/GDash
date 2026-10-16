@@ -28,6 +28,9 @@ const screenReport = `{
 // hiddenReport is the report a page sends the moment it is hidden.
 var hiddenReport = strings.Replace(screenReport, `"reason": "connected"`, `"reason": "hidden"`, 1)
 
+// visibleReport is the report a page sends when it is on screen again.
+var visibleReport = strings.Replace(screenReport, `"reason": "connected"`, `"reason": "visible"`, 1)
+
 type listedReports struct {
 	Displays []struct {
 		ID            string `json:"id"`
@@ -163,7 +166,7 @@ func TestScreenReportsAreRateLimited(t *testing.T) {
 	env.createKitchen(t)
 	screen := pairedScreen(t, env)
 	url := env.srv.URL + "/api/displays/keuken/screen-reports"
-	for i := range 10 {
+	for i := range 30 {
 		if status, body := post(t, screen, url, screenReport); status != http.StatusNoContent {
 			t.Fatalf("report %d = %d %s, want 204", i+1, status, body)
 		}
@@ -194,7 +197,7 @@ func TestDeletingADisplayForgetsItsReports(t *testing.T) {
 	}
 }
 
-func TestHiddenReportOfTheCastTVReachesItsKeeper(t *testing.T) {
+func TestVisibilityReportsOfTheCastTVReachItsKeeper(t *testing.T) {
 	env := newTestEnv(t, nil)
 	env.setUp(t)
 	env.createKitchen(t)
@@ -220,14 +223,27 @@ func TestHiddenReportOfTheCastTVReachesItsKeeper(t *testing.T) {
 	if got := env.sources.hiddenDisplays(); !slices.Equal(got, []string{"keuken"}) {
 		t.Fatalf("hidden = %v, want the kitchen's keeper told", got)
 	}
+	if status, body := post(t, castTV, url, visibleReport); status != http.StatusNoContent {
+		t.Fatalf("visible report = %d %s", status, body)
+	}
+	if got := env.sources.shownDisplays(); !slices.Equal(got, []string{"keuken"}) {
+		t.Fatalf("shown = %v, want the kitchen's keeper told", got)
+	}
+	if got := env.sources.hiddenDisplays(); len(got) != 1 {
+		t.Fatalf("hidden after a visible report = %v, want only the first", got)
+	}
 
 	// A tablet paired with a code is hidden when someone puts it away:
 	// nothing for the keeper.
-	if status, body := post(t, pairedScreen(t, env), url, hiddenReport); status != http.StatusNoContent {
+	tablet := pairedScreen(t, env)
+	if status, body := post(t, tablet, url, hiddenReport); status != http.StatusNoContent {
 		t.Fatalf("hidden report of a tablet = %d %s", status, body)
 	}
-	if got := env.sources.hiddenDisplays(); len(got) != 1 {
-		t.Fatalf("hidden = %v, want only the TV's report passed on", got)
+	if status, body := post(t, tablet, url, visibleReport); status != http.StatusNoContent {
+		t.Fatalf("visible report of a tablet = %d %s", status, body)
+	}
+	if got, shown := env.sources.hiddenDisplays(), env.sources.shownDisplays(); len(got) != 1 || len(shown) != 1 {
+		t.Fatalf("hidden = %v, shown = %v, want only the TV's reports passed on", got, shown)
 	}
 
 	reports := reportsOf(t, env, "keuken").Displays[0].ScreenReports

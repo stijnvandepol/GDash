@@ -20,8 +20,9 @@ const reportRetrySeconds = 600
 // its display cookie; an admin previewing the display may not. 401 for an
 // unpaired screen, 403 for a screen of another display, 413 above 8 KB, 422
 // naming every invalid field and 429 when the screen reports too often. A
-// report with reason "hidden" from the TV a cast keeper opened is passed to
-// that keeper, which restarts the receiver when the TV is free.
+// report with reason "hidden" or "visible" from the TV a cast keeper opened
+// is passed to that keeper: it leaves a dashboard that something covers,
+// such as Netflix, alone until the page is visible again.
 func (s *Server) postScreenReport(w http.ResponseWriter, r *http.Request) {
 	displayID := r.PathValue("display")
 	if !validDisplayID.MatchString(displayID) {
@@ -62,10 +63,15 @@ func (s *Server) postScreenReport(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	s.ScreenReports.Put(displayID, screen.Key, screen.Kind, report)
-	// Only the TV GDash casts to can be brought back by restarting the
-	// receiver; a tablet that someone puts away is not a screensaver.
-	if report.Reason == screenreport.ReasonHidden && screen.Kind == store.TokenCast && s.ScreenHidden != nil {
-		s.ScreenHidden(displayID)
+	// Only the TV GDash casts to has a keeper that needs to know; a tablet
+	// that someone puts away is nobody else's screen.
+	if screen.Kind == store.TokenCast {
+		switch {
+		case report.Reason == screenreport.ReasonHidden && s.ScreenHidden != nil:
+			s.ScreenHidden(displayID)
+		case report.Reason == screenreport.ReasonVisible && s.ScreenShown != nil:
+			s.ScreenShown(displayID)
+		}
 	}
 	w.WriteHeader(http.StatusNoContent)
 }

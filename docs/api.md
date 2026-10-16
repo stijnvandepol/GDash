@@ -115,7 +115,7 @@ come from another site (cross-site request forgery protection).
 | `GET /api/now-playing/artwork/{id}` | admin, or a paired screen whose display was sent this cover in its `nowplaying.default` data | `200` the cover (JPEG, PNG, WebP or GIF, at most 2 MB), `Cache-Control: private, max-age=600` | `404`, also for anyone else, a cover of something that no longer plays and one that could not be fetched |
 | `GET /api/cast-devices` | admin | `200 {"devices": [device]}` | `401`, `500 discovery_failed` |
 | `GET /api/displays/{id}/events` | paired screen or admin | `text/event-stream`, `snapshot` events | `401 not_paired`, `404` for an invalid id |
-| `POST /api/displays/{id}/screen-reports` with a [screen report](#screen-reports) | a screen paired with that display; not an admin | `204`; kept in memory as the screen's last report; a `hidden` report of the TV a cast keeper opened makes the keeper restart the receiver when the TV is free | `400`, `401 not_paired`, `403 other_display`, `404` for an invalid id, `413 too_large` above 8 KB, `422` naming every invalid field, `429 rate_limited` above 10 reports per screen in 10 minutes (with `Retry-After`) |
+| `POST /api/displays/{id}/screen-reports` with a [screen report](#screen-reports) | a screen paired with that display; not an admin | `204`; kept in memory as the screen's last report; a `hidden` report of the TV a cast keeper opened makes the keeper leave the TV alone (`yielded`) until a `visible` report, standby or a takeover | `400`, `401 not_paired`, `403 other_display`, `404` for an invalid id, `413 too_large` above 8 KB, `422` naming every invalid field, `429 rate_limited` above 30 reports per screen in 10 minutes (with `Retry-After`) |
 | `POST /api/pairing-requests` `{displayId}` | no | `201 {code, pollToken, expiresAt}` | `404`, `429 rate_limited` |
 | `POST /api/display-sessions` `{pollToken}` or `{launchToken}` | no | `201 {displayId}`, sets `gdash_display`; `202` while pending | `400`, `401 invalid_token` |
 | `GET /api/display-sessions/current` | paired screen | `200 {displayId}` | `401 not_paired` |
@@ -182,8 +182,10 @@ within that time. Deleting a display unpairs all its screens, the TV as well.
 A TV's built-in browser is hard to inspect, so every display page tells the
 server about its own browser: once it has drawn the dashboard, and again
 after it reconnects, at most once a minute (`reason` `connected`), and at
-once when the page becomes hidden, such as by the TV's screensaver, at most
-once per 30 seconds (`reason` `hidden`). The server keeps the last report
+once when the page becomes hidden, such as by an app opened on the TV or
+its screensaver, or visible again (`reason` `hidden` or `visible`); a change
+within 30 seconds of the last such report is sent when the 30 seconds have
+passed, with the state of that moment. The server keeps the last report
 of each screen in memory, never in the database, for at most 5 screens per
 display; a restart, unpairing the screens or deleting the display forgets
 them. `GET /api/displays` lists them per display as `screenReports`, and the
@@ -616,11 +618,11 @@ the page on its clock, so every screen of a display shows the same page.
 **cast:** `{"state": "showing", "since": "2026-10-09T08:31:00Z", "problem"?: "…", "reason"?: "not_found", "restartedAt"?: "…", "restartReason"?: "periodic", "hiddenAt"?: "…"}`, only for
 a display on a Cast device. `state` is `connecting`, `showing`, `standby` (the receiver runs but the TV sleeps),
 `other_app` (someone else is casting or the TV shows another input; GDash starts when it ends), `yielded` (someone took
-the TV from GDash, or used it when GDash started; GDash waits until the TV has been in standby, its idle screen has
-shown for 10 minutes, or a `cast-takeovers` request), `resting` (outside active hours) or `unreachable`, with `problem`
+the TV from GDash, covered its page, or used it when GDash started; GDash waits until the TV has been in standby, its
+idle screen has shown for 10 minutes, its page is visible again, or a `cast-takeovers` request), `resting` (outside active hours) or `unreachable`, with `problem`
 saying why in the words of the error and `reason` sorting it: `not_found` (discovery did not find the device) or
 `no_answer` (anything else, such as a device that refused or dropped the connection). `restartedAt` and
-`restartReason` (`periodic` or `hidden`) say when the keeper last restarted the receiver against the screensaver, and
+`restartReason` (`periodic`) say when the keeper last restarted the receiver against the screensaver, and
 `hiddenAt` when the page on the TV last reported that it was hidden; each is absent until it first happened.
 
 `screensaverMinutes` is how often the receiver on the display's Cast device is restarted to keep the dashboard in

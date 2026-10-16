@@ -111,8 +111,8 @@ test('the Displays page explains what an older TV browser lacks', async ({ admin
         state: 'showing',
         since: '2026-10-12T10:00:00Z',
         restartedAt: '2026-10-14T09:52:00Z',
-        restartReason: 'hidden',
-        hiddenAt: '2026-10-14T09:51:55Z',
+        restartReason: 'periodic',
+        hiddenAt: '2026-10-14T09:58:55Z',
       },
       screenReports: [oldTv],
     };
@@ -137,7 +137,7 @@ test('the Displays page explains what an older TV browser lacks', async ({ admin
   await expect(report).toContainText('/assets/colors-abc.js:1:2048');
 
   // Whether the restarts against the screensaver happen, and how often.
-  await expect(row).toContainText(/Restarted against the screensaver at \d\d:\d\d, because the screen was hidden/);
+  await expect(row).toContainText(/Restarted against the screensaver at \d\d:\d\d/);
   await expect(row).toContainText(/The screen was last hidden at \d\d:\d\d/);
   const every = row.getByLabel('Keep E2E Old TV in front of the screensaver');
   await expect(every).toHaveValue('15');

@@ -41,11 +41,18 @@ func (s *keeperSession) step(ctx context.Context, poll <-chan time.Time) error {
 		// Whether or not the receiver may be restarted now, the next try
 		// is a whole interval away.
 		s.keeper.refreshFrom = s.keeper.now()
-		err := s.restart(ctx, RestartPeriodic)
+		err := s.restart(ctx)
 		s.armRefresh()
 		return err
 	case <-s.keeper.Hidden:
-		return s.restartHidden(ctx)
+		s.pageHidden()
+		return nil
+	case <-s.keeper.Shown:
+		if s.keeper.claim.show() {
+			s.keeper.Logger.Info("the dashboard is on screen again")
+			return s.syncStatus(ctx)
+		}
+		return nil
 	case <-s.keeper.TakeOver:
 		s.keeper.claim.force = true
 		return s.syncStatus(ctx)
@@ -78,16 +85,21 @@ func (s *keeperSession) armRefresh() {
 	s.refresh.Reset(max(0, s.keeper.refreshFrom.Add(s.refreshEvery).Sub(s.keeper.now())))
 }
 
-// restartHidden follows a report from the page on the TV that it is
-// hidden. Right after a launch it is the receiver's own page going away,
-// or a TV that covers it again; neither is restarted.
-func (s *keeperSession) restartHidden(ctx context.Context) error {
+// pageHidden follows a report from the page on the TV that it is hidden.
+// Right after a launch it is the previous page, which the launch replaced.
+// Otherwise something covers the dashboard, such as Netflix on a Google
+// TV, which reports the receiver as running all the same: GDash yields, so
+// that neither a status nor the periodic restart puts it back over the app.
+func (s *keeperSession) pageHidden() {
 	k := s.keeper
-	if since := k.now().Sub(k.launchedAt); !k.launchedAt.IsZero() && since < minHiddenRestartGap {
-		k.Logger.Info("the screen reported it is hidden; not restarting so soon after the last launch", "since_launch", since.Round(time.Second))
-		return nil
+	if since := k.now().Sub(k.launchedAt); !k.launchedAt.IsZero() && since < ownPageGoneGap {
+		k.Logger.Info("the screen reported it is hidden right after a launch; taken for the previous page", "since_launch", since.Round(time.Second))
+		return
 	}
-	return s.restart(ctx, RestartHidden)
+	if k.claim.hide() {
+		k.Logger.Info("the dashboard is hidden on the TV, such as by an app; waiting until it is shown again or the TV is switched off")
+		k.report(StateYielded, nil)
+	}
 }
 
 // syncStatus asks the device for its current state and reconciles.
@@ -246,15 +258,15 @@ func (s *keeperSession) rest(ctx context.Context, app Application, running bool)
 }
 
 // restart stops the receiver and launches it again, against the Google TV
-// screensaver; reason is RestartPeriodic or RestartHidden. It asks the
-// device first, because the last status poll can be 30 seconds old, and
-// restarts only GDash's own session while nothing else is on the TV (see
-// claim.mayRestart): launching while the TV sleeps would switch it on
-// through HDMI-CEC, and a TV someone took over is theirs.
-func (s *keeperSession) restart(ctx context.Context, reason string) error {
+// screensaver. It asks the device first, because the last status poll can
+// be 30 seconds old, and restarts only GDash's own session while nothing
+// else is on the TV (see claim.mayRestart): launching while the TV sleeps
+// would switch it on through HDMI-CEC, and a TV someone took over is
+// theirs.
+func (s *keeperSession) restart(ctx context.Context) error {
 	k := s.keeper
 	if s.transport == "" {
-		k.Logger.Info("not restarting the receiver: GDash is not connected to its own receiver", "reason", reason)
+		k.Logger.Info("not restarting the receiver: GDash is not connected to its own receiver")
 		return nil
 	}
 	status, err := s.client.Status(ctx)
@@ -265,10 +277,10 @@ func (s *keeperSession) restart(ctx context.Context, reason string) error {
 		return err
 	}
 	if s.transport == "" || !k.claim.mayRestart(status, k.AppID) {
-		k.Logger.Info("not restarting the receiver: the TV is asleep, on another input or in use", "reason", reason)
+		k.Logger.Info("not restarting the receiver: the TV is asleep, on another input or in use")
 		return nil
 	}
-	k.Logger.Info("restarting receiver to keep it in front of the screensaver", "reason", reason)
+	k.Logger.Info("restarting receiver to keep it in front of the screensaver")
 	if err := s.stop(ctx, k.claim.session); err != nil {
 		return err
 	}
@@ -276,7 +288,7 @@ func (s *keeperSession) restart(ctx context.Context, reason string) error {
 		return err
 	}
 	if k.Restarted != nil {
-		k.Restarted(reason)
+		k.Restarted(RestartPeriodic)
 	}
 	return nil
 }

@@ -40,6 +40,11 @@ type claim struct {
 	// force: an admin asked to show the dashboard now, over whatever is on
 	// the screen.
 	force bool
+	// hidden: the page on the TV reported that it is hidden and has not
+	// reported that it is shown again. Google TV keeps reporting the
+	// receiver as running while Netflix or its screensaver covers it, so
+	// only the page can tell that it is not on screen.
+	hidden bool
 	// idleSince is when a yielded keeper first saw the device's idle
 	// screen in an unbroken run of such statuses; zero when not counting.
 	idleSince time.Time
@@ -66,7 +71,7 @@ func (c *claim) observe(status ReceiverStatus, appID string) string {
 	app, running := status.App(appID)
 	if !c.holds(app, running) {
 		expected := c.stopping == c.session
-		c.session, c.stopping = "", ""
+		c.session, c.stopping, c.hidden = "", "", false
 		switch {
 		case expected:
 			return ""
@@ -116,21 +121,47 @@ func (c *claim) endYield() {
 	c.yielded = false
 	c.replace = true
 	c.force = false
+	c.hidden = false
+}
+
+// hide is called when the page on the TV reports that it is hidden while
+// GDash holds the screen: someone opened an app over it, such as Netflix
+// on a Google TV, which still reports the receiver as running. It reports
+// whether GDash yields now.
+func (c *claim) hide() bool {
+	if c.session == "" || c.yielded {
+		return false
+	}
+	c.yielded, c.hidden = true, true
+	return true
+}
+
+// show is called when the page on the TV reports that it is on screen
+// again: whoever covered it gave the TV back. It reports whether that ended
+// a yield.
+func (c *claim) show() bool {
+	wasYielded := c.hidden && c.yielded
+	c.hidden = false
+	if wasYielded {
+		c.yielded, c.idleSince = false, time.Time{}
+	}
+	return wasYielded
 }
 
 // mayResume reports whether a yielded keeper whose own session still runs
-// is back on screen: the TV switched back to the Cast device's input and
-// nothing else runs.
+// is back on screen: the TV switched back to the Cast device's input,
+// nothing else runs, and the page did not report that it is hidden.
 func (c *claim) mayResume(status ReceiverStatus, appID string) bool {
-	return status.OnThisInput() && !status.hasOtherApp(appID)
+	return !c.hidden && status.OnThisInput() && !status.hasOtherApp(appID)
 }
 
 // mayRestart reports whether the periodic restart may stop and launch the
 // receiver: a fresh status shows GDash's own session and nothing else, on
-// an awake TV that shows the Cast device's input.
+// an awake TV that shows the Cast device's input, and the page did not
+// report that something covers it.
 func (c *claim) mayRestart(status ReceiverStatus, appID string) bool {
 	app, running := status.App(appID)
-	return !c.yielded && c.holds(app, running) && !status.hasOtherApp(appID) &&
+	return !c.yielded && !c.hidden && c.holds(app, running) && !status.hasOtherApp(appID) &&
 		!status.InStandby() && !status.OnOtherInput()
 }
 
@@ -139,6 +170,6 @@ func (c *claim) mayRestart(status ReceiverStatus, appID string) bool {
 func (c *claim) launched(sessionID string, otherInput bool) {
 	c.session, c.stopping = sessionID, ""
 	c.sawInput, c.pageSent = !otherInput, false
-	c.yielded, c.replace, c.force = false, false, false
+	c.yielded, c.replace, c.force, c.hidden = false, false, false, false
 	c.idleSince = time.Time{}
 }

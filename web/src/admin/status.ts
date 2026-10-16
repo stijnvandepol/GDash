@@ -53,16 +53,13 @@ export function describeCast(status: CastStatus | undefined, tv = 'the TV', back
 
 /**
  * Whether GDash keeps the dashboard in front of the TV's screensaver, in
- * plain words: when it last restarted the receiver and why, and when the
- * page on the TV last said it was hidden. Empty without a status.
+ * plain words: when it last restarted the receiver, and when the page on
+ * the TV last said it was hidden. Empty without a status.
  */
 export function describeScreensaver(status: CastStatus | undefined): string[] {
   if (!status) return [];
   const lines: string[] = [];
-  if (status.restartedAt) {
-    const why = status.restartReason === 'hidden' ? ', because the screen was hidden' : '';
-    lines.push(`Restarted against the screensaver at ${TIME.format(new Date(status.restartedAt))}${why}`);
-  }
+  if (status.restartedAt) lines.push(`Restarted against the screensaver at ${TIME.format(new Date(status.restartedAt))}`);
   if (status.hiddenAt) lines.push(`The screen was last hidden at ${TIME.format(new Date(status.hiddenAt))}`);
   return lines;
 }

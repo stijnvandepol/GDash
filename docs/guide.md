@@ -1528,13 +1528,17 @@ screensaver starts earlier, choose a shorter interval at the display under
 off. Choose one below the time after which the TV starts its screensaver,
 which Google TV sets under Settings, System, Ambient mode.
 
-The dashboard page also tells GDash the moment it is covered, and GDash then
-restarts it at once, within a few seconds. It does so only while the
-dashboard is what the TV shows: not while the TV sleeps, shows another
-input, or someone casts or watches something else, and not more than once
-every 2 minutes. The display list says when GDash last restarted the
-dashboard and when the screen was last hidden, so you can see whether it
-works.
+It restarts the dashboard only while the dashboard is what the TV shows:
+not while the TV sleeps, shows another input, or someone casts or watches
+something else. A Google TV still reports the dashboard as running while
+Netflix or another app is open over it, so the dashboard page tells GDash
+the moment it is covered and again when it is back on screen. While it is
+covered, GDash leaves the TV alone (see
+[When GDash is not on the TV](#when-gdash-is-not-on-the-tv)); when the
+TV's own screensaver covered it, a press on the remote brings the dashboard
+back and the restarts go on. The display list says when GDash last
+restarted the dashboard and when the screen was last hidden, so you can see
+whether it works.
 
 ## When the TV looks different from the preview
 
@@ -1609,7 +1613,8 @@ GDash does not fight for the TV. Once it has put the dashboard on screen,
 it notices when someone takes the TV away from it:
 
 - the dashboard is closed with Back or Home on the remote, or an app such
-  as Netflix or YouTube is opened on a Google TV;
+  as Netflix or YouTube is opened on a Google TV; the dashboard page itself
+  says when something covers it;
 - someone casts to the TV, such as YouTube from a phone, or another GDash
   server or DashCast user opens its own page;
 - the TV switches to another input, such as a game console (only TVs with
@@ -1622,8 +1627,8 @@ on again, the dashboard appears within about 30 seconds. The same happens
 when the device shows its own idle screen, such as the photo frame of a
 Nest Hub or the ambient screen of a Chromecast, for 10 minutes without a
 break (on an awake TV, not on another input): whatever played has ended.
-Switching back to the TV's Cast input while the dashboard still runs there
-also counts as giving it back. To have it back at once, choose **Show
+Switching back to the TV's Cast input while the dashboard still runs there,
+or the dashboard page coming back on screen, also counts as giving it back. To have it back at once, choose **Show
 dashboard now** at
 the display: it stops whatever is on the TV and switches the TV to the
 dashboard.

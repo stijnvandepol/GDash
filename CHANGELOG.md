@@ -5,6 +5,15 @@ the format follows [Keep a Changelog](https://keepachangelog.com).
 
 ## Unreleased
 
+### Fixed
+
+- A Google TV no longer switches back to the dashboard while you watch
+  Netflix or another app. The TV keeps reporting the dashboard as running
+  under the app, so the restart against the screensaver put it back on
+  screen. The dashboard page now tells GDash when it is covered and when it
+  is back; while it is covered, GDash waits as when someone takes the TV,
+  until the page is on screen again or the TV has been switched off.
+
 ## 0.9.3 – 2026-10-14
 
 ### Added

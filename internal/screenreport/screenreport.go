@@ -35,10 +35,11 @@ const (
 	maxStageScale      = 32
 	// A dashboard that takes longer than an hour to draw is not drawing.
 	maxFirstRenderMs = 3_600_000
-	// A screen reports when it loads and when it reconnects; a TV that a
-	// cast keeper restarts every 15 minutes reports four times an hour.
-	// This leaves room for a flaky network and stops a loop.
-	maxReports   = 10
+	// A screen reports when it loads and when it reconnects, and when it is
+	// hidden or shown at most twice a minute; someone zapping between an
+	// app and the dashboard sends a few. This leaves room for a flaky
+	// network and stops a loop.
+	maxReports   = 30
 	reportWindow = 10 * time.Minute
 	// maxScreensPerDisplay keeps the newest screens of a display; an older
 	// one is usually a token a screen no longer uses.
@@ -80,9 +81,11 @@ const (
 	// ReasonConnected: the page connected to the server, at load or after
 	// a reconnect.
 	ReasonConnected = "connected"
-	// ReasonHidden: the page just became hidden, such as by the TV's
-	// screensaver.
+	// ReasonHidden: the page just became hidden, such as by an app opened
+	// on the TV or by its screensaver.
 	ReasonHidden = "hidden"
+	// ReasonVisible: the page is on screen again after it was hidden.
+	ReasonVisible = "visible"
 )
 
 // visibilityStates are the changes a page records: its visibility and
@@ -97,7 +100,7 @@ type VisibilityEvent struct {
 
 // Report is what a screen sends about itself.
 type Report struct {
-	// Reason is ReasonConnected or ReasonHidden.
+	// Reason is ReasonConnected, ReasonHidden or ReasonVisible.
 	Reason           string   `json:"reason"`
 	UserAgent        string   `json:"userAgent"`
 	Viewport         Viewport `json:"viewport"`
@@ -130,8 +133,8 @@ type Received struct {
 // listing every invalid field.
 func Validate(r Report) error {
 	var errs validation.Collector
-	if r.Reason != ReasonConnected && r.Reason != ReasonHidden {
-		errs.Add("reason", "use connected or hidden")
+	if r.Reason != ReasonConnected && r.Reason != ReasonHidden && r.Reason != ReasonVisible {
+		errs.Add("reason", "use connected, hidden or visible")
 	}
 	checkText(&errs, "userAgent", r.UserAgent, 1, maxUserAgentLength)
 	if r.Viewport.Width < 1 || r.Viewport.Width > maxViewportPixels || r.Viewport.Height < 1 || r.Viewport.Height > maxViewportPixels {

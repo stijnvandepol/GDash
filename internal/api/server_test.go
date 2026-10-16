@@ -67,8 +67,10 @@ type fakeSources struct {
 	cast    map[string]casting.Status
 	// takeOvers are the displays whose TV an admin took back.
 	takeOvers []string
-	// hidden are the displays whose TV reported its page hidden.
+	// hidden and shown are the displays whose TV reported its page hidden
+	// or on screen again.
 	hidden []string
+	shown  []string
 	now    func() time.Time
 }
 
@@ -84,6 +86,20 @@ func (f *fakeSources) hiddenDisplays() []string {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	return slices.Clone(f.hidden)
+}
+
+// ScreenShown plays the cast manager taking a visible report.
+func (f *fakeSources) ScreenShown(displayID string) bool {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.shown = append(f.shown, displayID)
+	return true
+}
+
+func (f *fakeSources) shownDisplays() []string {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return slices.Clone(f.shown)
 }
 
 // receiveCustom plays the data hub taking a pushed answer: two intervals
@@ -270,6 +286,7 @@ func newTestEnv(t *testing.T, discover func(context.Context) ([]cast.Device, err
 		AnnouncementsChanged: func(time.Time) { announced.Add(1) },
 		ScreenReports:        screenreport.NewBoard(now),
 		ScreenHidden:         sources.ScreenHidden,
+		ScreenShown:          sources.ScreenShown,
 		SourceStatus:         sources.Entries,
 		Data:                 sources.Entries,
 		Version:              "v1.2.3",

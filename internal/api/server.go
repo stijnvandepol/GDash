@@ -139,9 +139,11 @@ type Server struct {
 	Logger         *slog.Logger
 	// ScreenReports keeps what each screen last reported about its browser.
 	ScreenReports *screenreport.Board
-	// ScreenHidden passes a report of the page on a Cast display's TV that
-	// it is hidden to the display's cast keeper; false when it has none.
+	// ScreenHidden and ScreenShown pass a report of the page on a Cast
+	// display's TV that it is hidden or on screen again to the display's
+	// cast keeper; false when it has none.
 	ScreenHidden func(displayID string) bool
+	ScreenShown  func(displayID string) bool
 }
 
 // Handler returns the routes of the server.

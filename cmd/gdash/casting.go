@@ -45,6 +45,7 @@ func newCastManager(cfg config, deps castDeps) (*casting.Manager, error) {
 			Restarted: keep.Restarted,
 			TakeOver:  keep.TakeOver,
 			Hidden:    keep.Hidden,
+			Shown:     keep.Shown,
 			Recall:    func() string { return sessions.recall(d.ID) },
 			Remember:  func(id string) { sessions.remember(d.ID, id) },
 			Logger:    logger.With("display", d.ID),

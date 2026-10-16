@@ -17,22 +17,15 @@ const (
 	// A session that lasted this long was healthy, so the next failure
 	// starts again at the minimum retry delay.
 	healthySessionLength = time.Minute
-	// minHiddenRestartGap is how long after a launch a report that the
-	// page is hidden does not restart the receiver: stopping the receiver
-	// hides its own page, and a TV that keeps covering it is not restarted
-	// more often than this.
-	minHiddenRestartGap = 2 * time.Minute
+	// ownPageGoneGap is how long after a launch a report that the page is
+	// hidden is taken for the previous page, which a restart stopped, and
+	// not for someone opening an app over the new one.
+	ownPageGoneGap = 30 * time.Second
 )
 
-// Why the keeper restarts a receiver that runs, for the log and the web
-// interface.
-const (
-	// RestartPeriodic: the Refresh interval passed.
-	RestartPeriodic = "periodic"
-	// RestartHidden: the page on the TV reported that it is hidden, such as
-	// by a screensaver.
-	RestartHidden = "hidden"
-)
+// RestartPeriodic is why the keeper restarts a receiver that runs, for the
+// log and the web interface: the Refresh interval passed.
+const RestartPeriodic = "periodic"
 
 // Keeper keeps a receiver app on screen on one Cast device and sends it
 // messages. It reconnects with backoff and launches the app on a free
@@ -68,12 +61,18 @@ type Keeper struct {
 	// with every status, so a changed setting applies within 30 seconds.
 	Refresh func(Device) time.Duration
 	// Hidden delivers a report of the page on the TV that it is hidden,
-	// such as by the TV's screensaver. The keeper then restarts its own
-	// receiver at once, under the same rules as the periodic restart, but
-	// not within minHiddenRestartGap of its last launch.
+	// such as by Netflix opened on a Google TV, which still reports the
+	// receiver as running. The keeper then yields as when someone takes the
+	// TV, and stops the periodic restart that would put the dashboard back
+	// over the app, until Shown, standby or TakeOver. A report within
+	// ownPageGoneGap of a launch is the previous page going away.
 	Hidden <-chan struct{}
+	// Shown delivers a report of the page on the TV that it is on screen
+	// again, such as when the TV's screensaver ends; it ends a yield that
+	// Hidden started.
+	Shown <-chan struct{}
 	// Restarted, if set, is called after every restart of a receiver that
-	// ran, with RestartPeriodic or RestartHidden. It must not block.
+	// ran, with RestartPeriodic. It must not block.
 	Restarted func(reason string)
 	// Status, if set, receives every state the keeper finds, for the web
 	// interface. It must not block.

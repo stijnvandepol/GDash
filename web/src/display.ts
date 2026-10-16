@@ -16,9 +16,11 @@ const FRAME_RELOAD_KEY = 'gdash.frameReloadAt';
 // The screen reports when it has drawn the dashboard and after every
 // reconnect, at most once per REPORT_GAP_MS; the server limits it too.
 const REPORT_GAP_MS = 60_000;
-// A page that is hidden says so at once, so the server can put the
-// dashboard back in front of a screensaver; at most once per HIDDEN_GAP_MS.
-const HIDDEN_GAP_MS = 30_000;
+// A page that is hidden or shown again says so at once, so the cast keeper
+// leaves an app opened over the dashboard, such as Netflix, alone. A change
+// within VISIBILITY_GAP_MS of the last such report waits for the gap, and
+// then the state of that moment is sent.
+const VISIBILITY_GAP_MS = 30_000;
 const RENDER_WAIT_MS = 30_000;
 const FONT_WAIT_MS = 10_000;
 const POLL_MS = 500;
@@ -32,18 +34,23 @@ const visibility = createVisibilityLog();
 document.addEventListener('visibilitychange', () => {
   const hidden = document.visibilityState === 'hidden';
   visibility.add(hidden ? 'hidden' : 'visible', new Date());
-  if (hidden) void reportHidden();
+  reportVisibility();
 });
 window.addEventListener('blur', () => visibility.add('blur', new Date()));
 window.addEventListener('focus', () => visibility.add('focus', new Date()));
 let lastReportAt = -Infinity;
-let lastHiddenAt = -Infinity;
+// The page loads on screen; the keeper assumes so after every launch.
+let reportedVisibility: 'hidden' | 'visible' = 'visible';
+let lastVisibilityAt = -Infinity;
+let visibilityTimer: ReturnType<typeof setTimeout> | undefined;
 
 startCompat();
 restoreSnapshot(displayId, isSnapshot);
 mount(App, { target: document.getElementById('app')! });
 document.addEventListener('securitypolicyviolation', reloadForBlockedFrame);
 void start();
+// A page that loads behind an app says so at once.
+reportVisibility();
 
 /**
  * The server lists the origins of this display's web pages in the page's
@@ -133,11 +140,21 @@ async function reportScreen(): Promise<void> {
   await sendReport(displayId, measure('connected'));
 }
 
-/** Tells the server at once that the page was hidden, such as by a screensaver. */
-async function reportHidden(): Promise<void> {
-  if (Date.now() - lastHiddenAt < HIDDEN_GAP_MS) return;
-  lastHiddenAt = Date.now();
-  await sendReport(displayId, measure('hidden'));
+/** Tells the server that the page was hidden, such as by an app, or is on screen again. */
+function reportVisibility(): void {
+  const state = document.visibilityState === 'hidden' ? 'hidden' : 'visible';
+  if (visibilityTimer !== undefined || state === reportedVisibility) return;
+  const wait = lastVisibilityAt + VISIBILITY_GAP_MS - Date.now();
+  if (wait > 0) {
+    visibilityTimer = setTimeout(() => {
+      visibilityTimer = undefined;
+      reportVisibility();
+    }, wait);
+    return;
+  }
+  reportedVisibility = state;
+  lastVisibilityAt = Date.now();
+  void sendReport(displayId, measure(state));
 }
 
 function measure(reason: ReportReason) {

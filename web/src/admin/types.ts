@@ -65,8 +65,8 @@ export interface CastStatus {
   reason?: 'not_found' | 'no_answer';
   /** When GDash last restarted the receiver against the screensaver, and why. */
   restartedAt?: string;
-  restartReason?: 'periodic' | 'hidden';
-  /** When the page on the TV last said it was hidden, such as by a screensaver. */
+  restartReason?: 'periodic';
+  /** When the page on the TV last said it was hidden, such as by an app or a screensaver. */
   hiddenAt?: string;
 }
 
