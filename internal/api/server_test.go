@@ -34,6 +34,7 @@ import (
 	"github.com/stijnvandepol/gdash/internal/homey"
 	"github.com/stijnvandepol/gdash/internal/immich"
 	"github.com/stijnvandepol/gdash/internal/outbound"
+	"github.com/stijnvandepol/gdash/internal/p2000"
 	"github.com/stijnvandepol/gdash/internal/pairing"
 	"github.com/stijnvandepol/gdash/internal/photos"
 	"github.com/stijnvandepol/gdash/internal/screenreport"
@@ -86,6 +87,20 @@ func (f *fakeSources) hiddenDisplays() []string {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	return slices.Clone(f.hidden)
+}
+
+// FindPlace plays alarmeringen.nl for the P2000 place test: it knows
+// Nuenen, a quiet Stilledorp, and fails for Storing.
+func (f *fakeSources) FindPlace(_ context.Context, name string) (p2000.Place, error) {
+	switch name {
+	case "Nuenen":
+		return p2000.Place{Name: "Nuenen", Slug: "nuenen", Region: "brabant-zuidoost"}, nil
+	case "Stilledorp":
+		return p2000.Place{}, p2000.ErrPlaceWithoutAlerts
+	case "Storing":
+		return p2000.Place{}, errors.New("connection refused")
+	}
+	return p2000.Place{}, p2000.ErrUnknownPlace
 }
 
 // ScreenShown plays the cast manager taking a visible report.
@@ -267,6 +282,7 @@ func newTestEnv(t *testing.T, discover func(context.Context) ([]cast.Device, err
 		Settings:          settingsService,
 		Places:            sources,
 		Stops:             stops,
+		P2000Places:       sources,
 		Traffic:           trafficGuard,
 		KNMI:              fakeKNMI{},
 		Calendars:         &calendar.Client{HTTP: outbound.NewClient(5 * time.Second), Location: time.UTC, Now: now},

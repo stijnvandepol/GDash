@@ -28,6 +28,7 @@ import (
 	"github.com/stijnvandepol/gdash/internal/news"
 	"github.com/stijnvandepol/gdash/internal/nowplaying"
 	"github.com/stijnvandepol/gdash/internal/outbound"
+	"github.com/stijnvandepol/gdash/internal/p2000"
 	"github.com/stijnvandepol/gdash/internal/photos"
 	"github.com/stijnvandepol/gdash/internal/rain"
 	"github.com/stijnvandepol/gdash/internal/settings"
@@ -63,6 +64,7 @@ type dataSources struct {
 	holidays    holidays.Client
 	rain        *rain.Client
 	warnings    *warnings.Client
+	p2000       *p2000.Client
 	// traffic guards the requests to the ANWB; cameras keeps the fixed
 	// camera list; knmi reads measured weather.
 	traffic *traffic.Guard
@@ -198,16 +200,18 @@ func startData(ctx context.Context, cfg config, db *store.Store, svc *settings.S
 			HTTP: outbound.NewClient(upstreamTimeout), UserAgent: userAgent, Location: dutch, Now: time.Now,
 		},
 		warnings: &warnings.Client{BaseURL: warnings.DefaultBaseURL, HTTP: outbound.NewClient(upstreamTimeout), UserAgent: userAgent, Now: time.Now},
+		p2000:    &p2000.Client{BaseURL: p2000.DefaultBaseURL, HTTP: outbound.NewClient(upstreamTimeout), UserAgent: userAgent},
 		solar: solar.Client{
 			OpenMeteo:     solar.OpenMeteo{BaseURL: solar.DefaultOpenMeteoURL, HTTP: &http.Client{Timeout: upstreamTimeout}},
 			ForecastSolar: solar.ForecastSolar{BaseURL: solar.DefaultForecastSolarURL, HTTP: &http.Client{Timeout: upstreamTimeout}},
 		},
 	}
 	if cfg.testUpstream != "" {
-		logger.Warn("GDASH_TEST_UPSTREAM is set: rain, weather warnings, the solar forecast, traffic, fixed cameras, KNMI measurements and the feeds of the news catalogue come from a stand-in, not from Buienradar, Open-Meteo, MeteoAlarm, the ANWB, Overpass, the KNMI or the publishers", "address", cfg.testUpstream)
+		logger.Warn("GDASH_TEST_UPSTREAM is set: rain, weather warnings, the solar forecast, traffic, fixed cameras, KNMI measurements, P2000 alerts and the feeds of the news catalogue come from a stand-in, not from Buienradar, Open-Meteo, MeteoAlarm, the ANWB, Overpass, the KNMI, alarmeringen.nl or the publishers", "address", cfg.testUpstream)
 		sources.rain.BuienradarURL = cfg.testUpstream + testBuienradarPath
 		sources.rain.OpenMeteoURL = cfg.testUpstream + testOpenMeteoPath
 		sources.warnings.BaseURL = cfg.testUpstream + testMeteoAlarmPath
+		sources.p2000.BaseURL = cfg.testUpstream + testP2000Path
 		sources.solar.OpenMeteo.BaseURL = cfg.testUpstream + testSolarPath
 		sources.newsStandIn = cfg.testUpstream + testNewsPath
 	}

@@ -215,6 +215,7 @@ func serve(ctx context.Context, logger *slog.Logger) error {
 			Now:     time.Now, Logger: logger,
 		},
 		Stops:          sources.stops,
+		P2000Places:    sources.p2000,
 		Traffic:        sources.traffic,
 		KNMI:           sources.knmi,
 		Calendars:      sources.calendar,

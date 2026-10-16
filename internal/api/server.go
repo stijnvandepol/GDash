@@ -80,6 +80,8 @@ type Server struct {
 	Immich               ImmichReader
 	Synology             SynologyReader
 	Stops                StopSearcher
+	// P2000Places finds a place for the P2000 widget's Test button.
+	P2000Places P2000PlaceFinder
 	// Traffic guards the requests to the ANWB's traffic info.
 	Traffic TrafficGuard
 	// KNMI tries a KNMI key before it is stored.
@@ -218,6 +220,7 @@ func (s *Server) Handler() http.Handler {
 	mux.Handle("GET /api/homey/users", s.requireUser(s.getHomeyUsers))
 	mux.Handle("PUT /api/homey/snapshot", s.requireUserOrToken(s.putHomeySnapshot))
 	mux.Handle("GET /api/departures/stops", s.requireUser(s.getDepartureStops))
+	mux.Handle("POST /api/p2000-place-tests", s.requireUser(s.postP2000PlaceTest))
 	mux.Handle("GET /api/traffic", s.requireUser(s.getTraffic))
 	mux.Handle("PUT /api/traffic", s.requireUser(s.putTraffic))
 	mux.Handle("GET /api/knmi", s.requireUser(s.getKNMI))
