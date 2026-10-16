@@ -132,6 +132,7 @@ var WidgetTypes = withTitles(map[string]WidgetType{
 	"fuel":              fuelWidget,
 	"rain":              rainWidget,
 	"warnings":          warningsWidget,
+	"p2000":             p2000Widget,
 	"traffic":           trafficWidget,
 	"homey":             homeyWidget,
 	HomeyPresenceWidget: homeyPresenceWidget,
@@ -285,8 +286,11 @@ func widgetProblem(w Widget, seen map[string]bool) string {
 	if msg := settingsProblem(w, kind); msg != "" {
 		return msg
 	}
-	if w.Type == "traffic" {
+	switch w.Type {
+	case "traffic":
 		return trafficProblem(w.Settings)
+	case "p2000":
+		return p2000Problem(w.Settings)
 	}
 	return ""
 }
@@ -310,7 +314,7 @@ func settingsProblem(w Widget, kind WidgetType) string {
 		}
 		// These kinds have a message that says how to choose one.
 		if rule.Kind == SettingEntities || rule.Kind == SettingStop || rule.Kind == SettingHomeyCapabilities || rule.Kind == SettingHomeyUsers ||
-			rule.Kind == SettingWebPage {
+			rule.Kind == SettingWebPage || rule.Kind == SettingP2000Places {
 			return valueProblem(key, nil, rule)
 		}
 		return fmt.Sprintf("a %s widget needs a %s", w.Type, key)
@@ -372,6 +376,8 @@ func valueProblem(key string, value any, rule Setting) string {
 		return choicesProblem(key, value, rule)
 	case SettingRoads:
 		return roadsProblem(key, value)
+	case SettingP2000Places:
+		return p2000PlacesProblem(key, value)
 	}
 	return ""
 }
