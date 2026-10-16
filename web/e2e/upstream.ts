@@ -182,7 +182,30 @@ function googleCalendar(now: number): string {
   ].join('\r\n');
 }
 
+/**
+ * alarmeringen.nl's feeds for P2000: two fire alerts in Brabant-Zuidoost
+ * (Nuenen 10 minutes ago, Eindhoven 2 hours ago) and one police alert in
+ * Nuenen; Nuenen's own feed names its region. Other feeds are empty.
+ */
+function alarmeringen(path: string, now: number): string | undefined {
+  const item = (id: string, minutesAgo: number, place: string, text: string) =>
+    `<item><title>pager ${id}</title><link>https://alarmeringen.nl/noord-brabant/brabant-zuidoost/${place}/${id}/p2000-x.html</link>` +
+    `<description>${text}</description><pubDate>${new Date(now - minutesAgo * 60_000).toUTCString().replace('GMT', '+0000')}</pubDate><guid>${id}</guid></item>`;
+  const feed = (items: string[]) => `<?xml version="1.0" encoding="utf-8"?><rss version="2.0"><channel><title>Alarmeringen.nl feed</title>${items.join('')}</channel></rss>`;
+  if (path === '/feeds/region/brabant-zuidoost/brandweer.rss') {
+    return feed([item('1001', 10, 'nuenen', 'Woningbrand op Dorpsstraat in Nuenen'), item('1002', 120, 'eindhoven', 'Gaslucht op Kerkstraat in Eindhoven')]);
+  }
+  if (path === '/feeds/region/brabant-zuidoost/politie.rss') return feed([item('1003', 30, 'nuenen', 'Politie naar Berg in Nuenen')]);
+  if (path === '/feeds/city/nuenen.rss') return feed([item('1001', 10, 'nuenen', 'Woningbrand op Dorpsstraat in Nuenen')]);
+  if (/^\/feeds\/region\/[a-z-]+\/[a-z]+\.rss$/.test(path)) return feed([]);
+  return undefined;
+}
+
 function answer(path: string, now: number): { type: string; body: string } | undefined {
+  if (path.startsWith('/alarmeringen/')) {
+    const body = alarmeringen(path.slice('/alarmeringen'.length), now);
+    return body === undefined ? undefined : { type: 'application/rss+xml', body };
+  }
   if (path === GOOGLE_CALENDAR_PATH) return { type: 'text/calendar; charset=UTF-8', body: googleCalendar(now) };
   // What Google answers for its embed and browser addresses: a web page.
   if (path === '/calendar/embed') return { type: 'text/html; charset=utf-8', body: '<!doctype html><html><head><title>Google Calendar</title></head></html>' };
