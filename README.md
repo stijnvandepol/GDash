@@ -56,6 +56,7 @@ survive the internet dropping out. GDash is made for exactly that.
 | Calendar | The coming week from Google, Outlook, iCloud or Nextcloud | Secret iCal address, no OAuth |
 | Waste collection | The next pickup per kind (GFT, PMD, paper, ...) | Your municipality's iCal link |
 | Departures | Next buses, trams, metros and ferries at a stop, with delays | [OVapi](https://v0.ovapi.nl) (Netherlands), no key |
+| P2000 | Call-outs of fire brigade, police, ambulance, KNRM and trauma helicopter in a safety region or your places | [Alarmeringen.nl](https://www.alarmeringen.nl) (Netherlands), no key |
 | Fuel prices | The cheapest petrol stations near a place | ANWB price data (Netherlands), no key |
 | Traffic | Jams, roadworks, mobile speed checks and fixed cameras on your roads | ANWB traffic info (unofficial, off until you turn it on) and [OpenStreetMap](https://www.openstreetmap.org) cameras |
 | Energy price | Today's dynamic electricity price per hour, cheapest window | [EnergyZero](https://www.energyzero.nl) (Netherlands), no key |
@@ -312,7 +313,8 @@ data of the [Dutch government](https://opendata.rijksoverheid.nl) (CC0), electri
 the [ANWB](https://www.anwb.nl), rain forecasts by
 [Buienradar.nl](https://www.buienradar.nl) (free for non-commercial use with
 this credit, which the Rain widget also shows), weather warnings by the
-[KNMI](https://www.knmi.nl) through [MeteoAlarm](https://meteoalarm.org), traffic from the ANWB's traffic list,
+[KNMI](https://www.knmi.nl) through [MeteoAlarm](https://meteoalarm.org), P2000 alerts by
+[Alarmeringen.nl](https://www.alarmeringen.nl) (CC BY-NC-ND 3.0, credited on the tile), traffic from the ANWB's traffic list,
 used unofficially and only when you turn it on (the data belongs to the ANWB; for your own household only),
 fixed speed cameras © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors under the ODbL, and
 station measurements by the [KNMI](https://dataplatform.knmi.nl) under CC BY 4.0. Photo albums from

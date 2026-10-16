@@ -211,6 +211,7 @@ add calendars and feeds under Integrations, and the photos once you add photos.
 | Homey | Up to eight sensors or switches from a Homey Pro; see [Homey](#homey) |
 | Who's home (Homey) | A round badge with initials for each chosen person who is home |
 | Departures | The next buses, trams, metros and ferries at one stop in the Netherlands |
+| P2000 | What the fire brigade, police and other services are called out for in a safety region or in your places (Netherlands); see [P2000](#p2000) |
 | Fuel prices | The cheapest petrol stations near a place, for one kind of fuel (Netherlands) |
 | Custom API | A value, a list or labelled values from any JSON API you add, with rules; see [Custom APIs](#custom-apis) |
 | Camera | A still image of a camera at home, refreshed every few seconds; see [Cameras](#cameras) |
@@ -846,6 +847,52 @@ Good to know:
   feed address and regions.
 - Warnings for the sea, the IJsselmeer and the harbours are left out: they are
   for shipping.
+## P2000
+
+The P2000 widget shows what the fire brigade, police, ambulance, lifeboats
+(KNRM) and trauma helicopter are called out for near you: the latest alerts
+of the Dutch emergency services' pager network, P2000, as a calm list of
+what is happening around here. Each line has a dot in the colour of the
+service (red fire brigade, blue police, green ambulance, orange lifeboat and
+trauma helicopter), the alert as a sentence, such as "Woningbrand op
+Dorpsstraat in Nuenen", and how long ago it went out.
+
+1. Add a **P2000** widget to a dashboard and select it.
+2. **Area**: choose **A safety region** (one of the 25 *veiligheidsregio's*)
+   or **Places**. For places, type a place and choose **Test and add**; GDash
+   looks it up on alarmeringen.nl and adds it with its safety region. The
+   field starts with the name of your weather location. Up to five places.
+   A name that more places share may need its province or municipality, as
+   alarmeringen.nl writes it, such as `Hengelo (Ov)`. A very quiet village
+   may have had no alerts lately; choose its safety region instead.
+3. **Show**: which services. Ambulance is off at first: ambulance rides are
+   most of the alerts and say little about what happens in the street.
+4. **Hours back** (1 to 48, default 12) and **Alerts at most** (1 to 20).
+
+Without alerts in that time the tile says "Nothing in the last 12 hours".
+
+Good to know:
+
+- The alerts come from [Alarmeringen.nl](https://www.alarmeringen.nl),
+  which receives the pager messages and publishes them as feeds per safety
+  region and service under the licence CC BY-NC-ND 3.0: GDash shows them
+  unchanged with the credit "Alarmeringen.nl" on the tile, and they are for
+  your own household, not for commercial use.
+- GDash asks once every 2 minutes, only for the regions and services your
+  dashboards show, at most 20 feeds (a feed is one region and one service).
+  An alert is on screen a few minutes after it went out. If alarmeringen.nl
+  cannot be reached, the last alerts stay and the title turns to the warning
+  colour once they are more than 3 minutes old. If the dashboards together
+  ask for more than 20 feeds, the widgets left out say "Too many P2000 areas
+  on the dashboards".
+- Each feed holds the last 100 alerts. For fire and police that is days to
+  weeks, but ambulance in a busy region fills it in less than a day; the
+  tile then says "Nothing in the last 16 hours" rather than claiming more
+  than it knows, and a quiet place in such a region may miss older alerts.
+- The texts are what the services' pagers receive, made readable by
+  alarmeringen.nl, and they often name a street. They are public, but think
+  about where the screen hangs.
+
 ## Traffic
 
 The Traffic widget shows jams, roadworks and closures, mobile speed checks

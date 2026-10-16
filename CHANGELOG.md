@@ -5,6 +5,16 @@ the format follows [Keep a Changelog](https://keepachangelog.com).
 
 ## Unreleased
 
+### Added
+
+- A P2000 widget: what the fire brigade, police, ambulance, lifeboats and
+  trauma helicopter are called out for, in one safety region or in up to
+  five places, as a sentence with a coloured dot per service and how long
+  ago. Places are checked with a Test button. Ambulance is off at first, as
+  its rides are most of the alerts. The alerts come from Alarmeringen.nl
+  (CC BY-NC-ND 3.0, credited on the tile), every 2 minutes, at most 20 feeds
+  for all dashboards. See [P2000](docs/guide.md#p2000).
+
 ### Fixed
 
 - A Google TV no longer switches back to the dashboard while you watch

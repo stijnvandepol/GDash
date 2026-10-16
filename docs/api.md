@@ -76,6 +76,7 @@ come from another site (cross-site request forgery protection).
 | `POST /api/calendars` `{name, url, purpose?}` | admin | `201` calendar, without its address; `purpose` `"waste"` adds a waste collection calendar, which `settings.wasteCalendars` lists, and without it a calendar of appointments | `401`, `409` at 10 calendars or 5 waste calendars, `422` naming `name`, `url` or `purpose` |
 | `PATCH /api/calendars/{id}` `{color}` | admin | `204` | `401`, `404`, `422` for another colour |
 | `DELETE /api/calendars/{id}` | admin | `204`; for either kind of calendar | `401`, `404` |
+| `POST /api/p2000-place-tests` `{name}` | admin | `200 {"name", "slug", "region", "regionName"}`: the name as typed, the place's slug as alarmeringen.nl's alerts name it (`'s-Gravenhage` is `den-haag`) and its safety region, read now and not stored, for a P2000 widget's places | `401`, `422` naming `name` (2 to 100 characters); `502` with `place_unknown`, `place_without_alerts` (no recent alerts to read the region from) or `fetch_failed` |
 | `POST /api/calendar-tests` `{url}` | admin | `200 {"name", "count", "events": [{title, start, end, allDay, calendar}]}`: the calendar's own name (or empty), the number of events in the next 30 days (at most 50) and the first 5, read now and not stored, as the Calendar widget receives them | `401`, `422` naming `url`; `502` with `calendar_not_found` (404 or 410, such as Google's public address of a private calendar), `calendar_refused` (401 or 403), `not_a_calendar` (a web page or other file), `calendar_too_large` (above 64 MB) or `fetch_failed`, and a message that never holds the address |
 | `POST /api/waste-calendar-tests` `{url}` | admin | `200 {"pickups": [{kind, title, date}]}`: the pickups of the next 56 days, read now and not stored, as in the **waste data** | `401`, `422` naming `url`, `502 fetch_failed` with what went wrong, such as the status the calendar server answered, never the address |
 | `PUT /api/homeassistant` `{url, token}` | admin | `200 {"url": …}` after Home Assistant accepted the token | `401`, `422` naming `url` or `token` |
@@ -426,7 +427,7 @@ data key (`weather.current`, `airquality.current`, `news.default`,
 widget for them:
 
 - waste `waste.default`, energy price `energyprice.nl`, solar `solar.default`, fuel `fuel.default`
-- holidays `holidays.nl`, rain `rain.default`, weather warnings `warnings.default`
+- holidays `holidays.nl`, rain `rain.default`, weather warnings `warnings.default`, P2000 `p2000.default`
 - Homey `homey.default` (values) and `homey.users` (who is home)
 - the albums `photos.immich` and `photos.synology`
 - Now playing `nowplaying.default`, which GDash pushes itself from the Cast devices
@@ -699,6 +700,7 @@ allows, overlaps another, lacks a required setting, or has a setting its type do
 | `departures` | 6x4 | `departures.default` | `stop`: a stop area code such as `utrcsw`, from the stop search (required), `stopName`: 1 to 100 characters, shown as the title, `maxItems`: 1 to 20 |
 | `rain` | 5x3 | `rain.default` | `place`: a place with `name`, `latitude` and `longitude`, default the weather location |
 | `warnings` | 6x3 | `warnings.default` | `region`: `Groningen`, `Friesland`, `Drenthe`, `Overijssel`, `Flevoland`, `Gelderland`, `Utrecht`, `Noord-Holland`, `Zuid-Holland`, `Zeeland`, `Noord-Brabant`, `Limburg` or `Waddeneilanden`, default the province of the weather location, `announce`: `true` to put a code orange or red warning over every display when it starts, default `false` |
+| `p2000` | 6x4 | `p2000.default` | `region`: one of the 25 safety region slugs, such as `brabant-zuidoost` or `limburg-zuid`, or `places`: 1 to 5 places `{"name", "slug", "region"}` from the place test, one of the two; `disciplines`: at least one of `brandweer`, `politie`, `ambulance`, `knrm`, `trauma`, default all but `ambulance`; `hours`: 1 to 48, default 12; `maxItems`: 1 to 20, default 8 |
 | `fuel` | 6x4 | `fuel.default` | `place`: a place with `name`, `latitude` and `longitude`, default the weather location, `radius`: 1 to 25 km, default 5, `fuel`: `EURO95` (default), `EURO98`, `DIESEL`, `AUTOGAS` or `CNG`, `maxItems`: 1 to 10, default 5 |
 | `camera` | 4x3 | none: the screen loads `GET /api/cameras/{id}/image` | `camera`: the `id` of a camera (required), `seconds`: 5 to 300 between images, default 10, `fit`: `contain` (default, the whole image) or `cover` (fills the tile) |
 | `nowplaying` | 6x4 | `nowplaying.default` | `devices`: up to 8 Cast device IDs (the 32 hex characters of `GET /api/cast-devices`); absent or empty follows any device. A TV that a display is linked to is never followed. Screens receive only the devices their widgets follow |
@@ -886,6 +888,14 @@ key `here`, under which `region` names the province of the weather location. `le
 `kind` is MeteoAlarm's awareness type (`wind`, `snow-ice`, `thunderstorm`, `fog`, `high-temperature`,
 `low-temperature`, `coastal-event`, `forest-fire`, `avalanches`, `rain`, `flooding`, `rain-flood`) or empty; `event` and
 `headline` are the KNMI's texts by language. A region without warnings has an empty list.
+
+**p2000 data (`p2000.default`):** the alerts of the feeds that a screen's own widgets show, by feed key
+`region/discipline`, newest first and at most 100 per feed, and the feed keys GDash does not fetch because the
+dashboards ask for more than 20: `{"feeds": {"brabant-zuidoost/brandweer": [{"id": "f63426eb…", "at":
+"2026-10-16T10:14:04Z", "discipline": "brandweer", "place": "nuenen", "text": "Woningbrand op Dorpsstraat in
+Nuenen"}]}, "skipped": []}`. `discipline` is `brandweer`, `politie`, `ambulance`, `knrm` or `trauma`; `place` is the
+place's slug on alarmeringen.nl and `text` its readable sentence. The screen keeps the alerts of its places and of the
+widget's hours, each `id` once.
 
 **departures data (`departures.default`):** maps the stop codes that a screen's own widgets show to their next
 departures, soonest first and at most 20:
