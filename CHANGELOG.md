@@ -5,6 +5,8 @@ the format follows [Keep a Changelog](https://keepachangelog.com).
 
 ## Unreleased
 
+## 0.10.0 – 2026-10-16
+
 ### Added
 
 - A P2000 widget: what the fire brigade, police, ambulance, lifeboats and
