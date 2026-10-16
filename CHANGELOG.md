@@ -5,6 +5,15 @@ the format follows [Keep a Changelog](https://keepachangelog.com).
 
 ## Unreleased
 
+### Changed
+
+- Long texts get two lines before they are cut short: P2000 alerts,
+  appointments, the place and the note of a traffic report, fuel station
+  names and the KNMI's headline of a weather warning, as headlines already
+  did.
+- A P2000 widget can be two rows high: a strip with the newest alerts. Such
+  a low tile keeps half its padding above and below.
+
 ## 0.10.0 – 2026-10-16
 
 ### Added
