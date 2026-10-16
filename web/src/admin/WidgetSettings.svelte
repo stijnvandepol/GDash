@@ -16,6 +16,7 @@
   import NewsFeedPicker from './NewsFeedPicker.svelte';
   import CustomWidgetSettings from './CustomWidgetSettings.svelte';
   import TrafficWidgetSettings from './TrafficWidgetSettings.svelte';
+  import P2000WidgetSettings from './P2000WidgetSettings.svelte';
   import TitleSetting from './TitleSetting.svelte';
 
   // Texts up to this length get a single-line field, longer ones a text area.
@@ -107,6 +108,8 @@
   <CustomWidgetSettings {settings} {onchange} />
 {:else if type.settings.roads?.kind === 'roads'}
   <TrafficWidgetSettings {settings} {onchange} />
+{:else if type.settings.places?.kind === 'p2000Places'}
+  <P2000WidgetSettings {settings} {onchange} />
 {:else}
 {#each keys as key (key)}
   {@const rule = type.settings[key]!}

@@ -9,6 +9,7 @@ import { SOURCES_REMOVED, newsView } from './news';
 import { FUEL_TEXT, fuelOf, readPlace } from './fuel';
 import { radiusOf, roadsOf } from './traffic';
 import { readArea, warningsKey } from './warnings';
+import { areaName } from './p2000';
 import { shownFor } from './custom';
 
 /** A text in the screen's language, as t of i18n.svelte.ts gives it. */
@@ -73,6 +74,8 @@ export function defaultTitle(widget: TitledWidget, entry: Entry | undefined, tex
       return joined(text('rainTitle'), readPlace(settings?.place)?.name);
     case 'warnings':
       return joined(text('warningsTitle'), readArea(entry?.value, warningsKey(settings))?.region);
+    case 'p2000':
+      return joined(text('p2000Title'), areaName(settings));
     case 'traffic': {
       const roads = roadsOf(settings);
       return joined(text('trafficTitle'), roads.length > 0 ? roads.join(', ') : text('trafficWithin', { km: radiusOf(settings) }));

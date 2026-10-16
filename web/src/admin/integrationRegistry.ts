@@ -481,6 +481,18 @@ const BUILT_IN: Integration[] = [
     state: () => builtinState(undefined),
   },
   {
+    id: 'p2000',
+    name: 'P2000',
+    description: 'Call-outs of fire brigade, police and ambulance in your region or places, from Alarmeringen.nl',
+    keywords: 'p2000 112 brandweer politie ambulance alarmeringen meldingen emergency',
+    category: 'news',
+    icon: 'alert',
+    tags: ['no-key', 'nl'],
+    kind: 'builtin',
+    requires: { widget: 'p2000' },
+    state: ({ status }) => builtinState(status['p2000.default']),
+  },
+  {
     id: 'departures',
     name: 'Departures',
     description: 'The next buses, trams and trains from a stop, from OVapi',

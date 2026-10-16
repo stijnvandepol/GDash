@@ -1,6 +1,7 @@
 import { roundCoordinate } from '../coordinates';
 import type { Place, WidgetType } from './api';
 import type { IconName } from './Icon.svelte';
+import { DEFAULT_DISCIPLINES } from '../widgets/p2000';
 
 /** The groups of the editor's widget palette, in the order they are shown. */
 export const WIDGET_CATEGORIES = [
@@ -52,6 +53,7 @@ export const WIDGETS: Record<string, WidgetInfo> = {
   fuel: { label: 'Fuel prices', category: 'travel', description: 'The cheapest fuel nearby', icon: 'fuel' },
   traffic: { label: 'Traffic', category: 'travel', description: 'Jams, roadworks and speed cameras on your roads', icon: 'road' },
   news: { label: 'News', category: 'media', description: 'Headlines from your feeds', icon: 'news' },
+  p2000: { label: 'P2000', category: 'media', description: 'Call-outs of fire brigade and police nearby (NL)', icon: 'alert' },
   photos: { label: 'Photos', category: 'media', description: 'A slideshow of your photos', icon: 'photo' },
   nowplaying: { label: 'Now playing', category: 'media', description: 'What plays on your Cast speakers', icon: 'music' },
   webpage: { label: 'Web page', category: 'media', description: 'A page from Integrations, such as Grafana', icon: 'browser' },
@@ -212,6 +214,9 @@ export function defaultSettings(type: WidgetType, today = new Date()): Record<st
   // A Traffic widget starts around the weather location (internal/traffic defaults);
   // roads replace the radius once they are typed.
   if (type.settings.roads?.kind === 'roads') return { radius: 25, show: ['jams', 'roadworks', 'speedchecks'], maxItems: 5 };
+  // A P2000 widget starts with a region, so it is valid at once; places are
+  // added with the Test button (internal/p2000 defaults).
+  if (type.settings.places?.kind === 'p2000Places') return { region: 'utrecht', disciplines: [...DEFAULT_DISCIPLINES], hours: 12, maxItems: 8 };
   // A fuel widget without a place follows the weather location.
   const settings: Record<string, unknown> = {};
   for (const [key, rule] of Object.entries(type.settings)) {

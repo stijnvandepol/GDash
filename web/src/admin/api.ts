@@ -30,6 +30,7 @@ import type {
   ApiToken,
   Calendar,
   CalendarTest,
+  P2000Place,
   Camera,
   CameraInput,
   CameraTest,
@@ -184,6 +185,8 @@ export const api = {
   addWasteCalendar: (name: string, url: string) => request<Calendar>('POST', '/api/calendars', { name, url, purpose: 'waste' }),
   /** Reads a calendar now, without storing it: the first events of the next 30 days. */
   testCalendar: (url: string) => request<CalendarTest>('POST', '/api/calendar-tests', { url }),
+  /** Looks a place up on alarmeringen.nl for the P2000 widget: its slug and safety region. */
+  testP2000Place: (name: string) => request<P2000Place>('POST', '/api/p2000-place-tests', { name }),
   /** Reads a waste calendar now, without storing it: the pickups of the next 8 weeks. */
   testWasteCalendar: (url: string) =>
     request<{ pickups: Pickup[] }>('POST', '/api/waste-calendar-tests', { url }).then((r) => r.pickups),

@@ -145,6 +145,7 @@ export interface SettingRule {
     | 'choice'
     | 'boolean'
     | 'choices'
+    | 'p2000Places'
     | 'roads'
     | 'path'
     | 'paths'
@@ -216,6 +217,15 @@ export interface CalendarTest {
   count: number;
   /** The first few events. */
   events: CalendarEvent[];
+}
+
+/** A place alarmeringen.nl knows, as the P2000 place test found it. */
+export interface P2000Place {
+  name: string;
+  slug: string;
+  /** The slug of its safety region, and that region's name. */
+  region: string;
+  regionName: string;
 }
 
 export interface Settings {

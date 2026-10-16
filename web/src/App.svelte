@@ -35,6 +35,7 @@
   import HomeyPresence from './widgets/HomeyPresence.svelte';
   import Traffic from './widgets/Traffic.svelte';
   import Departures from './widgets/Departures.svelte';
+  import P2000 from './widgets/P2000.svelte';
   import Fuel from './widgets/Fuel.svelte';
   import Rain from './widgets/Rain.svelte';
   import Warnings from './widgets/Warnings.svelte';
@@ -234,6 +235,8 @@
               <Rain entry={widget.source ? display.snapshot?.data[widget.source] : undefined} settings={widget.settings} />
             {:else if widget.type === 'warnings'}
               <Warnings entry={widget.source ? display.snapshot?.data[widget.source] : undefined} settings={widget.settings} />
+            {:else if widget.type === 'p2000'}
+              <P2000 entry={widget.source ? display.snapshot?.data[widget.source] : undefined} settings={widget.settings} />
             {:else if widget.type === 'camera'}
               <Camera settings={widget.settings} />
             {:else if widget.type === 'traffic'}
