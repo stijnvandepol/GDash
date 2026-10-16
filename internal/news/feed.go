@@ -93,12 +93,12 @@ func parseRSS(data []byte, maxItems int) (Feed, error) {
 	if err := xml.Unmarshal(data, &doc); err != nil {
 		return Feed{}, fmt.Errorf("parse RSS: %w", err)
 	}
-	feed := Feed{Title: plainText(doc.Channel.Title), Items: []Item{}}
+	feed := Feed{Title: PlainText(doc.Channel.Title), Items: []Item{}}
 	for _, it := range doc.Channel.Items {
 		if len(feed.Items) == maxItems {
 			break
 		}
-		if item, ok := newItem(it.Title, it.Link, parseRSSDate(it.PubDate)); ok {
+		if item, ok := newItem(it.Title, it.Link, ParseRSSDate(it.PubDate)); ok {
 			feed.Items = append(feed.Items, item)
 		}
 	}
@@ -110,7 +110,7 @@ func parseAtom(data []byte, maxItems int) (Feed, error) {
 	if err := xml.Unmarshal(data, &doc); err != nil {
 		return Feed{}, fmt.Errorf("parse Atom: %w", err)
 	}
-	feed := Feed{Title: plainText(doc.Title), Items: []Item{}}
+	feed := Feed{Title: PlainText(doc.Title), Items: []Item{}}
 	for _, e := range doc.Entries {
 		if len(feed.Items) == maxItems {
 			break
@@ -135,7 +135,7 @@ func parseAtom(data []byte, maxItems int) (Feed, error) {
 }
 
 func newItem(title, link string, published time.Time) (Item, bool) {
-	t := plainText(title)
+	t := PlainText(title)
 	if t == "" {
 		return Item{}, false
 	}
@@ -162,9 +162,9 @@ var rssDateLayouts = []string{
 	"Mon, 2 Jan 2006 15:04 -0700",
 }
 
-// parseRSSDate returns the zero time when the date is missing or unknown;
+// ParseRSSDate returns the zero time when the date is missing or unknown;
 // the headline is still worth showing without it.
-func parseRSSDate(s string) time.Time {
+func ParseRSSDate(s string) time.Time {
 	s = strings.TrimSpace(s)
 	for _, layout := range rssDateLayouts {
 		if t, err := time.Parse(layout, s); err == nil {
@@ -174,9 +174,9 @@ func parseRSSDate(s string) time.Time {
 	return time.Time{}
 }
 
-// plainText turns feed text into one line of plain text: tags removed,
+// PlainText turns feed text into one line of plain text: tags removed,
 // entities decoded, whitespace collapsed and long text cut.
-func plainText(s string) string {
+func PlainText(s string) string {
 	var b strings.Builder
 	inTag := false
 	for _, r := range s {

@@ -87,7 +87,7 @@ func TestParseDropsDatesJSONCannotWrite(t *testing.T) {
 }
 
 func TestPlainTextCutsLongTitles(t *testing.T) {
-	got := plainText(strings.Repeat("é", 300))
+	got := PlainText(strings.Repeat("é", 300))
 	if n := len([]rune(got)); n != maxTitleRunes {
 		t.Fatalf("length = %d runes, want %d", n, maxTitleRunes)
 	}

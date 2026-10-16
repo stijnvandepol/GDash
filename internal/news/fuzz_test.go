@@ -81,7 +81,7 @@ func FuzzParse(f *testing.F) {
 	})
 }
 
-// checkText asserts the rules of plainText: valid UTF-8 on one short line.
+// checkText asserts the rules of PlainText: valid UTF-8 on one short line.
 func checkText(t *testing.T, what, s string, mayBeEmpty bool) {
 	t.Helper()
 	if !utf8.ValidString(s) {
