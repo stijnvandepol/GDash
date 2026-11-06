@@ -111,7 +111,7 @@ type Snapshot struct {
 // View is what one display shows and when.
 type View struct {
 	Dashboard Dashboard
-	Hours     schedule.Hours
+	Active    schedule.Plan
 	// Schedule replaces Dashboard during parts of the day.
 	Schedule []ScheduledDashboard
 	// Pages are shown in turn with Dashboard, each for PageSeconds, while
@@ -202,7 +202,7 @@ func (b *Broadcaster) Publish(now time.Time, views map[string]View, data map[str
 	sent := make(map[string]map[string]datahub.Entry, len(views))
 	night := IsNight(now, data)
 	for displayID, view := range views {
-		active := view.Hours.Contains(now)
+		active := view.Active.Contains(now)
 		dashboard := withNightTheme(view.DashboardAt(now), night)
 		pages := withNightThemes(view.PagesAt(now), night)
 		seconds := 0

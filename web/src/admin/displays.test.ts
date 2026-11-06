@@ -9,8 +9,7 @@ function display(changes: Partial<Display> = {}): Display {
     castDeviceId: '',
     createdAt: '2026-10-01T10:00:00Z',
     dashboardId: '',
-    activeFrom: '',
-    activeUntil: '',
+    active: [],
     schedule: [],
     rotation: [],
     rotateSeconds: 0,
@@ -29,7 +28,19 @@ const slot = { from: '06:30', until: '09:00', days: [], dashboardId: 'morning' }
 describe('describeHours', () => {
   it('says when the display is on', () => {
     expect(describeHours(display())).toBe('Always on');
-    expect(describeHours(display({ activeFrom: '07:00', activeUntil: '22:00' }))).toBe('On 07:00–22:00');
+    expect(describeHours(display({ active: [{ days: [], from: '07:00', until: '22:00' }] }))).toBe('On 07:00–22:00');
+    expect(
+      describeHours(
+        display({
+          active: [
+            { days: ['mon', 'tue', 'wed'], from: '06:00', until: '10:00' },
+            { days: ['fri'], from: '07:00', until: '12:00' },
+            { days: ['sat', 'sun'], from: '09:00', until: '16:00' },
+            { days: ['mon', 'tue', 'wed', 'thu', 'fri'], from: '18:00', until: '22:00' },
+          ],
+        }),
+      ),
+    ).toBe('On Mon–Wed 06:00–10:00, Fri 07:00–12:00, Weekend 09:00–16:00, Weekdays 18:00–22:00');
   });
 
   it('counts the other dashboards in plain words', () => {

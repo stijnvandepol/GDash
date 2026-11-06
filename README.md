@@ -107,7 +107,7 @@ screen marks data that has gone stale.
   your real data before saving. Start from a template or from scratch, and
   export or import dashboards as files.
 - **Displays** with their own dashboard, **schedules** (another dashboard on
-  weekday mornings or at night), dashboards **in turn**, and **active hours**
+  weekday mornings or at night), dashboards **in turn**, and **times the screen is on**
   outside which the TV may sleep.
 - **Announcements**: a Home Assistant automation posts "The washing machine is
   done" with an API token, and the TVs show it over the dashboard.

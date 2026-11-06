@@ -80,10 +80,10 @@ func activeNow(ctx context.Context, db *store.Store, displayID string, logger *s
 	return func() bool {
 		d, err := db.Display(ctx, displayID)
 		if err != nil {
-			logger.Warn("could not read active hours; keeping the screen on", "display", displayID, "error", err)
+			logger.Warn("could not read the active plan; keeping the screen on", "display", displayID, "error", err)
 			return true
 		}
-		return d.Hours.Contains(time.Now())
+		return d.Active.Contains(time.Now())
 	}
 }
 

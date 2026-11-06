@@ -30,7 +30,7 @@ var cameraWidget = WidgetType{MinW: 4, MinH: 3, Settings: map[string]Setting{
 // active hours, else those of its dashboard at t and of the pages it
 // turns through. It decides which screens may load a camera's image.
 func (v View) WidgetsAt(t time.Time) []Widget {
-	if !v.Hours.Contains(t) {
+	if !v.Active.Contains(t) {
 		return nil
 	}
 	var widgets []Widget

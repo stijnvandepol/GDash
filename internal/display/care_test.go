@@ -92,7 +92,7 @@ func TestSnapshotIsDimmedDuringItsHoursOnlyWhileActive(t *testing.T) {
 	if got := publishView(t, now.Add(time.Hour), view, nil); got.Dimmed {
 		t.Fatal("dimmed outside its hours")
 	}
-	view.Hours = schedule.Hours{From: "09:00", Until: "22:00"}
+	view.Active = schedule.Plan{{From: "09:00", Until: "22:00"}}
 	if got := publishView(t, now, view, nil); got.Active || got.Dimmed {
 		t.Fatalf("outside active hours: active %v, dimmed %v; want a dark screen, not a dimmed one", got.Active, got.Dimmed)
 	}

@@ -20,9 +20,8 @@ export interface Display {
   pairedScreens?: number;
   /** Empty means the default dashboard. */
   dashboardId: string;
-  /** Active hours as HH:MM; both empty means always on. */
-  activeFrom: string;
-  activeUntil: string;
+  /** When the screen is on, as blocks of days and HH:MM times; none means always on. */
+  active: ActiveBlock[];
   /** Other dashboards during parts of the day; the first matching slot wins. */
   schedule: Slot[];
   /** Dashboards shown in turn with the display's own, each for rotateSeconds. */
@@ -68,6 +67,14 @@ export interface CastStatus {
   restartReason?: 'periodic';
   /** When the page on the TV last said it was hidden, such as by an app or a screensaver. */
   hiddenAt?: string;
+}
+
+/** Days of the week and a stretch of time the screen is on, as HH:MM; until before from runs past midnight. */
+export interface ActiveBlock {
+  /** mon to sun; empty means every day. */
+  days: string[];
+  from: string;
+  until: string;
 }
 
 /** A dashboard shown from one time of day until another, as HH:MM. */

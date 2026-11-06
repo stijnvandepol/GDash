@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/stijnvandepol/gdash/internal/schedule"
 	"github.com/stijnvandepol/gdash/internal/validation"
 )
 
@@ -35,6 +36,16 @@ func TestValidate(t *testing.T) {
 		}, []string{"schedule[0]"}},
 		{"slot without dashboard", func(d *Display) { d.Schedule = []Slot{{From: "06:30", Until: "09:00"}} }, []string{"schedule[0]"}},
 		{"too many slots", func(d *Display) { d.Schedule = make([]Slot, MaxSlots+1) }, []string{"schedule"}},
+		{"active blocks", func(d *Display) {
+			d.Active = schedule.Plan{{Days: []string{"mon", "tue", "wed"}, From: "06:00", Until: "10:00"}, {From: "17:00", Until: "22:00"}}
+		}, nil},
+		{"active block past midnight", func(d *Display) { d.Active = schedule.Plan{{From: "22:00", Until: "06:00"}} }, nil},
+		{"active block without times", func(d *Display) { d.Active = schedule.Plan{{Days: []string{"sat"}}} }, []string{"active[0]"}},
+		{"active block with equal times", func(d *Display) { d.Active = schedule.Plan{{From: "08:00", Until: "08:00"}} }, []string{"active[0]"}},
+		{"second active block with an unknown day", func(d *Display) {
+			d.Active = schedule.Plan{{From: "06:00", Until: "10:00"}, {Days: []string{"zaterdag"}, From: "08:00", Until: "12:00"}}
+		}, []string{"active[1]"}},
+		{"too many active blocks", func(d *Display) { d.Active = make(schedule.Plan, schedule.MaxBlocks+1) }, []string{"active"}},
 		{"rotation", func(d *Display) { d.Rotation, d.RotateSeconds = []string{"news", "calendar"}, 30 }, nil},
 		{"rotation without interval", func(d *Display) { d.Rotation = []string{"news"} }, []string{"rotation"}},
 		{"interval without rotation", func(d *Display) { d.RotateSeconds = 30 }, []string{"rotation"}},

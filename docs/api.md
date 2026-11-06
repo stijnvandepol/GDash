@@ -49,8 +49,8 @@ come from another site (cross-site request forgery protection).
 | `DELETE /api/api-tokens/{id}` | admin | `204`; automations that use it get `401` from then on | `401`, `404` |
 | `POST /api/announcements` `{message, title?, seconds?, displays?}` | API token or admin | `201 {title?, message, expiresAt, displays}` | `400`, `401 invalid_token` or `not_logged_in`, `422`, `429 rate_limited` |
 | `GET /api/displays` | admin | `200 {"displays": [display + pairedScreens + cast? + screenReports]}`; `pairedScreens` counts the screens paired with a code, never the TV a cast keeper opened; `screenReports` is what the display's screens last said about their browsers, newest first, see [Screen reports](#screen-reports) | `401` |
-| `POST /api/displays` `{id, name, castDeviceId, dashboardId?, activeFrom?, activeUntil?, schedule?, screensaverMinutes?, screenCare?, dimAtNight?, dimFrom?, dimUntil?}` | admin | `201` display | `401`, `409 conflict`, `422` (also for an unknown dashboard) |
-| `PATCH /api/displays/{id}` `{name?, castDeviceId?, dashboardId?, activeFrom?, activeUntil?, schedule?, rotation?, rotateSeconds?, textScale?, screensaverMinutes?, screenCare?, dimAtNight?, dimFrom?, dimUntil?}` | admin | `200` display | `401`, `404 not_found`, `422` (also for an unknown dashboard) |
+| `POST /api/displays` `{id, name, castDeviceId, dashboardId?, active?, schedule?, screensaverMinutes?, screenCare?, dimAtNight?, dimFrom?, dimUntil?}` | admin | `201` display | `401`, `409 conflict`, `422` (also for an unknown dashboard) |
+| `PATCH /api/displays/{id}` `{name?, castDeviceId?, dashboardId?, active?, schedule?, rotation?, rotateSeconds?, textScale?, screensaverMinutes?, screenCare?, dimAtNight?, dimFrom?, dimUntil?}` | admin | `200` display | `401`, `404 not_found`, `422` (also for an unknown dashboard) |
 | `DELETE /api/displays/{id}` | admin | `204` | `401`, `404 not_found` |
 | `POST /api/displays/{id}/cast-takeovers` | admin | `204`: the display's cast keeper shows the dashboard on the TV within seconds, also over what someone is watching, and stops waiting (`yielded`); recorded in the audit log as `cast_taken_over`. Not while the TV is in standby or outside active hours | `401`, `404 not_found`, `409 not_cast` (no Cast device) or `not_connected` (GDash is still connecting to the TV) |
 | `GET /api/widget-types` | admin | `200 {columns, rows, themes, fonts, types: {name: {minW, minH, settings: {key: {kind, min?, max?, required}}}}}` | `401` |
@@ -605,11 +605,13 @@ on the origin of the request is never listed. The web interface keeps its own po
 
 **user:** `{"id": 1, "username": "stijn"}`
 
-**display:** `{"id": "kitchen", "name": "Kitchen TV", "castDeviceId": "e542…", "dashboardId": "", "activeFrom": "06:30", "activeUntil": "23:00", "schedule": [slot], "createdAt": "2026-10-08T17:00:00Z"}`.
+**display:** `{"id": "kitchen", "name": "Kitchen TV", "castDeviceId": "e542…", "dashboardId": "", "active": [block], "schedule": [slot], "createdAt": "2026-10-08T17:00:00Z"}`.
 `id` is 1 to 32 lowercase letters, digits or dashes and is fixed after creation;
 `castDeviceId` is empty for browser and kiosk displays; an empty `dashboardId` means the default dashboard.
-`activeFrom`/`activeUntil` are HH:MM in the server's time zone (`TZ`), may wrap past midnight, and are both empty for
-always on. Outside them the page is dark, the snapshot has no data and the cast is stopped.
+`active` holds when the screen is on, at most 21 blocks, replaced as a whole by a `PATCH`; it is always a list, and
+empty means always on. Outside every block the page is dark, the snapshot has no data and the cast is stopped.
+The older `activeFrom`/`activeUntil` are still accepted when writing, as one block on every day (both empty: no
+blocks), and are not returned; `active` wins when both are sent.
 `schedule` holds at most 6 slots and is replaced as a whole by a `PATCH`; it is always a list, empty when unused.
 `rotation` lists up to 5 dashboard ids shown in turn with the display's own, each for `rotateSeconds` (10 to 600),
 while no slot applies; empty with `rotateSeconds` 0 means no rotation. Deleting a dashboard removes it from every
@@ -645,11 +647,17 @@ brightness. `sunset` dims between sunset and sunrise at the weather location, at
 zone, which may wrap past midnight and must differ (else `422` on `dimFrom`). The hours are kept when another mode is
 chosen. Outside active hours the screen is dark, not dimmed. The snapshot carries `screenCare` and `dimmed`.
 
+**block:** `{"days": ["mon", "tue", "wed"], "from": "06:00", "until": "10:00"}`. `from` and `until` are HH:MM in the
+server's time zone (`TZ`) and must differ; `until` before `from` runs past midnight and belongs to the day it
+starts. `days` holds `mon` to `sun`; empty means every day. The screen is on when any block contains the current
+time, so blocks may overlap and several may fall on one day. Field errors are named `active[i]`, and `active` for
+too many blocks.
+
 **slot:** `{"from": "06:30", "until": "09:00", "days": ["mon", "tue"], "dashboardId": "morning"}`. During the slot the
 display shows that dashboard instead of its own; the first slot that contains the current time wins. `days` holds
 `mon` to `sun`; empty means every day. A slot past midnight belongs to the day it starts, so Friday 22:00 to 01:00
 still applies at 00:30 on Saturday. Times follow the same rules as
-active hours, but both are required. Deleting a dashboard removes the slots that use it. Field errors are named
+blocks, but both are required. Deleting a dashboard removes the slots that use it. Field errors are named
 `schedule[i]`, and `schedule` for a slot with an unknown dashboard.
 
 **dashboard:** `{"id": "default", "name": "Default", "columns": 24, "rows": 14, "theme": "minimal-dark", "font": "", "nightTheme": "", "widgets": [widget]}`.

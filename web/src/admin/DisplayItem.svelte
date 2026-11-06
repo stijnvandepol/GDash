@@ -106,7 +106,7 @@
 
     <!-- What the screen is doing, first and in plain words. -->
     {#if isCast}
-      <p class="badge state {castTone(d.cast)}" title={d.cast?.problem ?? ''}>{describeCast(d.cast, tv, d.activeFrom)}</p>
+      <p class="badge state {castTone(d.cast)}" title={d.cast?.problem ?? ''}>{describeCast(d.cast, tv)}</p>
     {:else if screens > 0}
       <p class="badge state">{describeScreens(d)}</p>
     {:else}

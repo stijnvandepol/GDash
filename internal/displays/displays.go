@@ -65,8 +65,9 @@ type Display struct {
 	// DashboardID is the dashboard the display shows; empty means the
 	// default dashboard.
 	DashboardID string `json:"dashboardId"`
-	// Hours are the display's active hours; outside them it is left dark.
-	schedule.Hours
+	// Active is when the display is on; outside every block it is left dark.
+	// No blocks means always on.
+	Active schedule.Plan `json:"active"`
 	// Schedule shows other dashboards during parts of the day. The first
 	// slot that contains the current time wins; outside every slot the
 	// display shows DashboardID.
@@ -153,8 +154,12 @@ func Validate(d Display) error {
 	if d.DashboardID != "" && !display.ValidDashboardID(d.DashboardID) {
 		errs.Add("dashboardId", "must be the id of a dashboard")
 	}
-	if err := d.Hours.Validate(); err != nil {
-		errs.Add("activeHours", err.Error())
+	if i, err := d.Active.Validate(); err != nil {
+		if i == -2 {
+			errs.Add("active", err.Error())
+		} else {
+			errs.Add(fmt.Sprintf("active[%d]", i), err.Error())
+		}
 	}
 	if len(d.Schedule) > MaxSlots {
 		errs.Add("schedule", fmt.Sprintf("use at most %d time slots", MaxSlots))

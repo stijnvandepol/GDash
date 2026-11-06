@@ -76,6 +76,58 @@ func TestWindowDays(t *testing.T) {
 	}
 }
 
+func TestPlan(t *testing.T) {
+	// The week of 5 to 11 October 2026: Monday to Sunday.
+	day := func(weekday int, hhmm string) time.Time { return at(hhmm).AddDate(0, 0, weekday-3) }
+	plan := Plan{
+		{Days: []string{"mon", "tue", "wed"}, From: "06:00", Until: "10:00"},
+		{Days: []string{"fri"}, From: "07:00", Until: "12:00"},
+		{Days: []string{"sat", "sun"}, From: "09:00", Until: "16:00"},
+		{Days: []string{"sat"}, From: "19:00", Until: "23:00"},
+		{Days: []string{"fri"}, From: "22:00", Until: "01:00"},
+	}
+	tests := []struct {
+		name string
+		t    time.Time
+		want bool
+	}{
+		{"Monday morning", day(0, "07:00"), true},
+		{"Monday after its block", day(0, "10:00"), false},
+		{"Thursday has no block", day(3, "08:00"), false},
+		{"Friday morning", day(4, "08:00"), true},
+		{"Friday afternoon", day(4, "13:00"), false},
+		{"Saturday day block", day(5, "10:00"), true},
+		{"Saturday between its two blocks", day(5, "17:00"), false},
+		{"Saturday evening block", day(5, "20:00"), true},
+		{"Sunday has only the day block", day(6, "20:00"), false},
+		{"Friday night before midnight", day(4, "23:30"), true},
+		{"Saturday just after Friday's night block", day(5, "00:30"), true},
+	}
+	for _, tt := range tests {
+		if got := plan.Contains(tt.t); got != tt.want {
+			t.Errorf("%s: Contains(%s) = %v, want %v", tt.name, tt.t.Format("Mon 15:04"), got, tt.want)
+		}
+	}
+	if !(Plan{}).Contains(day(2, "03:00")) {
+		t.Error("a plan without blocks is not always on")
+	}
+	if i, err := plan.Validate(); err != nil {
+		t.Errorf("Validate = %d, %v", i, err)
+	}
+	if i, err := (Plan{{From: "06:00", Until: "10:00"}, {From: "08:00", Until: "08:00"}}).Validate(); err == nil || i != 1 {
+		t.Errorf("equal times: %d, %v", i, err)
+	}
+	if i, err := make(Plan, MaxBlocks+1).Validate(); err == nil || i != -2 {
+		t.Errorf("too many: %d, %v", i, err)
+	}
+	if p := (Hours{From: "06:30", Until: "23:00"}).Plan(); len(p) != 1 || p[0].From != "06:30" || len(p[0].Days) != 0 {
+		t.Errorf("Hours.Plan = %+v", p)
+	}
+	if p := (Hours{}).Plan(); len(p) != 0 {
+		t.Errorf("always-on Hours.Plan = %+v", p)
+	}
+}
+
 func TestWindowValidate(t *testing.T) {
 	for _, ok := range [][]string{nil, {"mon"}, {"sat", "sun"}, Weekdays} {
 		if err := (Window{Days: ok}).Validate(); err != nil {

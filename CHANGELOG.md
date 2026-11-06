@@ -5,6 +5,21 @@ the format follows [Keep a Changelog](https://keepachangelog.com).
 
 ## Unreleased
 
+### Changed
+
+- When a screen is on is now a list of times, each with its own days: for
+  example Monday to Wednesday 06:00–10:00, Friday 07:00–12:00 and the
+  weekend 09:00–16:00, with several times on one day if you like. The
+  schedule editor shows what you set in one sentence, has quick choices for
+  weekdays, weekend and every day, and keeps "show another dashboard at set
+  times" apart, since that only changes what is shown. A display's single
+  daily window becomes one time on every day, so nothing changes until you
+  edit it. In the API, `active` holds the times; `activeFrom` and
+  `activeUntil` still work when you write, as one time on every day, but are
+  no longer returned.
+- The display list no longer says at what time GDash comes back for a TV
+  outside its hours.
+
 ## 0.10.1 – 2026-10-16
 
 ### Changed

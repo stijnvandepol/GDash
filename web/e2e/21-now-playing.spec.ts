@@ -145,7 +145,7 @@ test('the editor adds a Now playing widget that follows chosen speakers, never a
     const body = (await response.json()) as { displays: unknown[] };
     body.displays.push({
       id: 'e2e-living-room', name: 'E2E Living room', castDeviceId: TV, createdAt: '2026-10-12T08:00:00Z', pairedScreens: 0,
-      dashboardId: '', activeFrom: '', activeUntil: '', schedule: [], rotation: [], rotateSeconds: 0, textScale: 100,
+      dashboardId: '', active: [], schedule: [], rotation: [], rotateSeconds: 0, textScale: 100,
     });
     await route.fulfill({ response, json: body });
   });

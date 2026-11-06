@@ -61,7 +61,7 @@ func TestWidgetsAtFollowsTheDisplayAndItsHours(t *testing.T) {
 	if _, ok := CameraRefresh(view.WidgetsAt(at), 2); !ok {
 		t.Error("a camera on a page the display turns to is not shown")
 	}
-	view.Hours = schedule.Hours{From: "22:00", Until: "23:00"}
+	view.Active = schedule.Plan{{From: "22:00", Until: "23:00"}}
 	if widgets := view.WidgetsAt(at); len(widgets) != 0 {
 		t.Errorf("outside active hours the display shows %d widgets", len(widgets))
 	}

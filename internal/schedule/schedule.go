@@ -114,3 +114,86 @@ func weekdayName(d time.Weekday) string {
 	// time.Weekday counts from Sunday; Weekdays starts on Monday.
 	return Weekdays[(int(d)+6)%7]
 }
+
+// MaxBlocks bounds the blocks of a Plan. A week with a few blocks a day fits
+// easily; the limit keeps every list and every check bounded.
+const MaxBlocks = 21
+
+// Block is one stretch of time a screen is on: from and until as HH:MM on
+// some days of the week. No days means every day. Until before From wraps
+// past midnight, and then belongs to the day it starts.
+type Block struct {
+	Days  []string `json:"days"`
+	From  string   `json:"from"`
+	Until string   `json:"until"`
+}
+
+// Window returns the block as a window.
+func (b Block) Window() Window {
+	return Window{Hours: Hours{From: b.From, Until: b.Until}, Days: b.Days}
+}
+
+// Validate checks the block. A block always has two different times: "all
+// day" is what a day without blocks is for, in a plan without blocks.
+func (b Block) Validate() error {
+	w := b.Window()
+	if w.Always() || w.Hours.Validate() != nil {
+		return errors.New("use two different times as HH:MM")
+	}
+	return w.Validate()
+}
+
+// Plan is when a screen is on: the blocks together. Blocks may overlap and
+// several may fall on one day. No blocks means always on.
+type Plan []Block
+
+// Contains reports whether the screen is on at t. A block with invalid times
+// counts as always on, as Hours does, so a bad value never switches a screen
+// off; Validate keeps them out of the database.
+func (p Plan) Contains(t time.Time) bool {
+	if len(p) == 0 {
+		return true
+	}
+	for _, b := range p {
+		if b.Window().Contains(t) {
+			return true
+		}
+	}
+	return false
+}
+
+// Validate checks the plan and returns the index of the first invalid block
+// with its message, or -1 for a valid plan. Too many blocks are index -2.
+func (p Plan) Validate() (int, error) {
+	if len(p) > MaxBlocks {
+		return -2, fmt.Errorf("use at most %d blocks", MaxBlocks)
+	}
+	for i, b := range p {
+		if err := b.Validate(); err != nil {
+			return i, err
+		}
+	}
+	return -1, nil
+}
+
+// Normalize returns a plan with empty lists instead of nil, so the API
+// always sends a list for the plan and for each block's days.
+func (p Plan) Normalize() Plan {
+	out := make(Plan, len(p))
+	for i, b := range p {
+		if b.Days == nil {
+			b.Days = []string{}
+		}
+		out[i] = b
+	}
+	return out
+}
+
+// Plan returns hours as a block on every day, or no blocks for hours that
+// are always on: how a single daily window is a plan.
+func (h Hours) Plan() Plan {
+	if h.Always() {
+		return Plan{}
+	}
+	return Plan{{Days: []string{}, From: h.From, Until: h.Until}}
+}

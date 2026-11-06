@@ -61,6 +61,7 @@ import type {
   Place,
   Settings,
   Slot,
+  ActiveBlock,
   Solar,
   SourceStatus,
   Synology,
@@ -159,8 +160,7 @@ export const api = {
       name?: string;
       castDeviceId?: string;
       dashboardId?: string;
-      activeFrom?: string;
-      activeUntil?: string;
+      active?: ActiveBlock[];
       schedule?: Slot[];
       rotation?: string[];
       rotateSeconds?: number;

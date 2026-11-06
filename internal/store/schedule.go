@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/stijnvandepol/gdash/internal/displays"
+	"github.com/stijnvandepol/gdash/internal/schedule"
 )
 
 // splitDays reads the stored day list; empty means every day and is
@@ -124,6 +125,50 @@ func replaceRotation(ctx context.Context, tx *sql.Tx, displayID string, ids []st
 		if _, err := tx.ExecContext(ctx,
 			"INSERT INTO display_rotation (display_id, position, dashboard_id) VALUES (?, ?, ?)", displayID, i, id); err != nil {
 			return fmt.Errorf("store rotation: %w", err)
+		}
+	}
+	return nil
+}
+
+// activePlans returns the blocks of every display, or of one display when
+// displayID is set, in their stored order.
+func activePlans(ctx context.Context, q querier, displayID string) (map[string]schedule.Plan, error) {
+	query := "SELECT display_id, starts, ends, days FROM display_active"
+	args := []any{}
+	if displayID != "" {
+		query += " WHERE display_id = ?"
+		args = append(args, displayID)
+	}
+	query += " ORDER BY display_id, position LIMIT ?"
+	args = append(args, displays.MaxDisplays*schedule.MaxBlocks)
+	rows, err := q.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("list active blocks: %w", err)
+	}
+	defer rows.Close()
+	result := map[string]schedule.Plan{}
+	for rows.Next() {
+		var id, days string
+		var block schedule.Block
+		if err := rows.Scan(&id, &block.From, &block.Until, &days); err != nil {
+			return nil, err
+		}
+		block.Days = splitDays(days)
+		result[id] = append(result[id], block)
+	}
+	return result, rows.Err()
+}
+
+// replaceActive stores plan as the whole active plan of a display.
+func replaceActive(ctx context.Context, tx *sql.Tx, displayID string, plan schedule.Plan) error {
+	if _, err := tx.ExecContext(ctx, "DELETE FROM display_active WHERE display_id = ?", displayID); err != nil {
+		return fmt.Errorf("clear active blocks: %w", err)
+	}
+	for i, block := range plan {
+		if _, err := tx.ExecContext(ctx,
+			"INSERT INTO display_active (display_id, position, starts, ends, days) VALUES (?, ?, ?, ?, ?)",
+			displayID, i, block.From, block.Until, strings.Join(block.Days, ",")); err != nil {
+			return fmt.Errorf("store active blocks: %w", err)
 		}
 	}
 	return nil

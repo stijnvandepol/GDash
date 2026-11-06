@@ -1,4 +1,4 @@
-import type { Dashboard, Display } from './api';
+import type { ActiveBlock, Dashboard, Display } from './api';
 
 // Words for the display list, kept out of the components so they can be
 // tested.
@@ -8,12 +8,43 @@ export const DEFAULT_DASHBOARD_ID = 'default';
 
 /** When the display is on and what else it shows: "Always on · another dashboard at 2 set times". */
 export function describeHours(d: Display): string {
-  const parts = [d.activeFrom ? `On ${d.activeFrom}–${d.activeUntil}` : 'Always on'];
+  const parts = [d.active.length > 0 ? `On ${describeBlocks(d.active)}` : 'Always on'];
   const slots = d.schedule.length;
   if (slots > 0) parts.push(`another dashboard at ${plural(slots, 'set time')}`);
   const turns = d.rotation.length;
   if (turns > 0) parts.push(`takes turns with ${plural(turns, 'other dashboard')}`);
   return parts.join(' · ');
+}
+
+const DAY_ORDER = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+const DAY_NAMES = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+/** Days in words: "Weekdays", "Weekend", "Mon–Wed, Fri", "Sat–Sun"; none or all seven is "every day". */
+export function describeDays(days: string[]): string {
+  const on = DAY_ORDER.map((d) => days.includes(d));
+  if (on.every((x) => !x) || on.every((x) => x)) return 'every day';
+  if (on.join() === 'true,true,true,true,true,false,false') return 'Weekdays';
+  if (on.join() === 'false,false,false,false,false,true,true') return 'Weekend';
+  const runs: string[] = [];
+  for (let i = 0; i < on.length; i++) {
+    if (!on[i]) continue;
+    let end = i;
+    while (on[end + 1]) end++;
+    runs.push(end === i ? DAY_NAMES[i]! : `${DAY_NAMES[i]}–${DAY_NAMES[end]}`);
+    i = end;
+  }
+  return runs.join(', ');
+}
+
+/**
+ * When the screen is on, in words: "07:00–22:00" for one daily block,
+ * else each block with its days: "Mon–Wed 06:00–10:00, Fri 07:00–12:00".
+ */
+export function describeBlocks(blocks: ActiveBlock[]): string {
+  const alone = blocks.length === 1 && describeDays(blocks[0]!.days) === 'every day';
+  return blocks
+    .map((b) => (alone ? '' : `${describeDays(b.days)} `) + `${b.from}–${b.until}`)
+    .join(', ');
 }
 
 /**

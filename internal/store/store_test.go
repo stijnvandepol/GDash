@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/stijnvandepol/gdash/internal/displays"
+	"github.com/stijnvandepol/gdash/internal/schedule"
 )
 
 var created = time.Date(2026, 10, 8, 17, 0, 0, 0, time.UTC)
@@ -29,7 +30,7 @@ func openTestStore(t *testing.T) (*Store, string) {
 
 func kitchen() displays.Display {
 	return displays.Display{ID: "keuken", Name: "Keuken TV", CastDeviceID: "e542c41e4d94baa86e46f36dfdebf26e",
-		Schedule: []displays.Slot{}, Rotation: []string{}, CreatedAt: created}
+		Active: schedule.Plan{}, Schedule: []displays.Slot{}, Rotation: []string{}, CreatedAt: created}
 }
 
 func TestDisplayLifecycle(t *testing.T) {

@@ -54,7 +54,7 @@ func (s *Server) listDisplays(w http.ResponseWriter, r *http.Request) {
 }
 
 // createDisplay handles POST /api/displays {id, name, castDeviceId,
-// dashboardId, activeFrom, activeUntil, schedule, screensaverMinutes,
+// dashboardId, active, schedule, screensaverMinutes,
 // screenCare, dimAtNight, dimFrom, dimUntil}: 201 with the display
 // (screensaverMinutes 15, screenCare and dimAtNight "off" when absent), 409
 // when the id is taken or the limit reached, 422 for invalid fields or a
@@ -66,6 +66,7 @@ func (s *Server) createDisplay(w http.ResponseWriter, r *http.Request) {
 		Name          string          `json:"name"`
 		CastDeviceID  string          `json:"castDeviceId"`
 		DashboardID   string          `json:"dashboardId"`
+		Active        *schedule.Plan  `json:"active"`
 		ActiveFrom    string          `json:"activeFrom"`
 		ActiveUntil   string          `json:"activeUntil"`
 		Schedule      []displays.Slot `json:"schedule"`
@@ -84,7 +85,7 @@ func (s *Server) createDisplay(w http.ResponseWriter, r *http.Request) {
 	}
 	d := displays.Display{
 		ID: body.ID, Name: body.Name, CastDeviceID: body.CastDeviceID, DashboardID: body.DashboardID,
-		Hours:    schedule.Hours{From: body.ActiveFrom, Until: body.ActiveUntil},
+		Active:   activeFor(body.Active, body.ActiveFrom, body.ActiveUntil),
 		Schedule: displays.NormalizeSchedule(body.Schedule), CreatedAt: s.Now().UTC(),
 		Rotation: displays.NormalizeRotation(body.Rotation), RotateSeconds: body.RotateSeconds,
 		TextScale: body.TextScale, ScreenCare: cmp.Or(body.ScreenCare, display.ScreenCareOff),
@@ -111,10 +112,11 @@ func (s *Server) createDisplay(w http.ResponseWriter, r *http.Request) {
 }
 
 // updateDisplay handles PATCH /api/displays/{display} {name?, castDeviceId?,
-// dashboardId?, activeFrom?, activeUntil?, schedule?, screensaverMinutes?,
+// dashboardId?, active?, schedule?, screensaverMinutes?,
 // screenCare?, dimAtNight?, dimFrom?, dimUntil?};
 // an empty dashboardId
-// means the default dashboard, empty active hours mean always on, and a
+// means the default dashboard, an empty active list means always on (the older
+// activeFrom and activeUntil still work as one block on every day), and a
 // schedule replaces the whole day plan. It changes only the fields present
 // and answers 200 with the display. The id is fixed, because it is part of
 // the display's URL.
@@ -123,6 +125,7 @@ func (s *Server) updateDisplay(w http.ResponseWriter, r *http.Request) {
 		Name          *string          `json:"name"`
 		CastDeviceID  *string          `json:"castDeviceId"`
 		DashboardID   *string          `json:"dashboardId"`
+		Active        *schedule.Plan   `json:"active"`
 		ActiveFrom    *string          `json:"activeFrom"`
 		ActiveUntil   *string          `json:"activeUntil"`
 		Schedule      *[]displays.Slot `json:"schedule"`
@@ -154,11 +157,11 @@ func (s *Server) updateDisplay(w http.ResponseWriter, r *http.Request) {
 	if body.DashboardID != nil {
 		d.DashboardID = *body.DashboardID
 	}
-	if body.ActiveFrom != nil {
-		d.From = *body.ActiveFrom
+	if body.ActiveFrom != nil || body.ActiveUntil != nil {
+		d.Active = activeFor(nil, deref(body.ActiveFrom), deref(body.ActiveUntil))
 	}
-	if body.ActiveUntil != nil {
-		d.Until = *body.ActiveUntil
+	if body.Active != nil {
+		d.Active = body.Active.Normalize()
 	}
 	if body.Schedule != nil {
 		d.Schedule = displays.NormalizeSchedule(*body.Schedule)
@@ -187,6 +190,23 @@ func (s *Server) updateDisplay(w http.ResponseWriter, r *http.Request) {
 	s.auditUser(r, auditDisplayUpdated, d.ID)
 	s.DisplaysChanged()
 	writeJSON(w, http.StatusOK, d)
+}
+
+// activeFor returns the active plan of a request: the blocks when given, else
+// the older single daily window as one block on every day, no blocks when
+// both times are empty.
+func activeFor(plan *schedule.Plan, from, until string) schedule.Plan {
+	if plan != nil {
+		return plan.Normalize()
+	}
+	return schedule.Hours{From: from, Until: until}.Plan().Normalize()
+}
+
+func deref(s *string) string {
+	if s == nil {
+		return ""
+	}
+	return *s
 }
 
 // applyScreenCare changes the screen care and dimming of d by the fields of

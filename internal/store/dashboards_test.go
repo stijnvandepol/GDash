@@ -91,7 +91,7 @@ func TestDisplayDashboards(t *testing.T) {
 		t.Fatal(err)
 	}
 	kitchen := displays.Display{ID: "kitchen", Name: "Kitchen", DashboardID: "morning", CreatedAt: created,
-		Hours: schedule.Hours{From: "06:30", Until: "23:00"}, ScreenCare: display.ScreenCareOLED,
+		Active: schedule.Plan{{Days: []string{"mon", "tue"}, From: "06:30", Until: "23:00"}, {Days: []string{}, From: "07:00", Until: "09:00"}}, ScreenCare: display.ScreenCareOLED,
 		DimAtNight: display.DimDuringHours, DimFrom: "22:00", DimUntil: "07:00"}
 	hall := displays.Display{ID: "hall", Name: "Hall", CreatedAt: created}
 	for _, d := range []displays.Display{kitchen, hall} {
@@ -103,8 +103,9 @@ func TestDisplayDashboards(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got["kitchen"].Hours.From != "06:30" || !got["hall"].Hours.Always() {
-		t.Fatalf("hours = kitchen:%+v hall:%+v", got["kitchen"].Hours, got["hall"].Hours)
+	wantActive := schedule.Plan{{Days: []string{"mon", "tue"}, From: "06:30", Until: "23:00"}, {Days: []string{}, From: "07:00", Until: "09:00"}}
+	if !reflect.DeepEqual(got["kitchen"].Active, wantActive) || len(got["hall"].Active) != 0 {
+		t.Fatalf("active = kitchen:%+v hall:%+v", got["kitchen"].Active, got["hall"].Active)
 	}
 	if got["kitchen"].Dashboard.ID != "morning" || got["hall"].Dashboard.ID != display.DefaultID {
 		t.Fatalf("DisplayViews = kitchen:%s hall:%s", got["kitchen"].Dashboard.ID, got["hall"].Dashboard.ID)

@@ -1539,9 +1539,9 @@ theme marked OLED-friendly (see Style under Dashboards), and at the display:
   is dimmed too. On an OLED TV that saves power; on an LCD TV it only makes
   the picture darker.
 
-What saves the most on any TV is not showing anything: **active hours**
-(under Schedule) leave the screen dark outside them, so the TV can go to
-standby.
+What saves the most on any TV is not showing anything: the times the
+screen is on (under Schedule) leave it dark outside them, so the TV can go
+to standby.
 
 ## Small screens
 
@@ -1555,12 +1555,21 @@ so nothing is cut off. The dashboard always fills the screen, also on
 
 Choose **Schedule** at a display:
 
-- **Active hours,** such as 06:30 to 23:00. Outside them GDash stops the
-  cast and the screen stays dark, so the TV can go to standby.
-- **Time slots** show another dashboard during part of the day, such as a
+- **When the screen is on** is a list of times. Each time has days of the
+  week and a start and end time. Press the days it applies to, or choose
+  *Weekdays*, *Weekend* or *Every day*, and add as many times as you like:
+  for example Monday to Wednesday 06:00–10:00, Friday 07:00–12:00 and
+  Saturday and Sunday 09:00–16:00. Several times on one day also work, such
+  as a morning and an evening. The screen is on when one of the times fits
+  and dark otherwise: GDash stops the cast, so the TV can go to standby.
+  Times may overlap. A time that runs past midnight (22:00–01:00) belongs
+  to the day it starts. Without any time the screen is always on. A
+  sentence under the list says what you set.
+- **Show another dashboard at set times** shows another dashboard during
+  part of the day, without switching the screen on or off, such as a
   morning dashboard with the calendar from 06:30 to 09:00 on weekdays, or a
   weekend dashboard on Saturday and Sunday. Pick no days for every day.
-  When slots overlap, the first one wins.
+  When times overlap, the first one wins.
 - **Pages in turn** show other dashboards one after another with the
   display's own, for example the overview, then the calendar, then the news,
   each for 30 seconds. During a time slot only the slot's dashboard shows.

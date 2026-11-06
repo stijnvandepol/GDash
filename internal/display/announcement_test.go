@@ -38,7 +38,7 @@ func TestDisplayOutsideActiveHoursGetsNoAnnouncement(t *testing.T) {
 	shown := &announcement.Announcement{Message: "Done", ExpiresAt: now.Add(time.Hour)}
 	// now is 07:30 UTC; the window opens at 08:00 in the same zone.
 	views := map[string]View{"kitchen": {
-		Dashboard: Normalize(DefaultDashboard(false)), Hours: schedule.Hours{From: "08:00", Until: "23:00"}, Announcement: shown,
+		Dashboard: Normalize(DefaultDashboard(false)), Active: schedule.Plan{{From: "08:00", Until: "23:00"}}, Announcement: shown,
 	}}
 	if err := b.Publish(now, views, nil, "en"); err != nil {
 		t.Fatal(err)

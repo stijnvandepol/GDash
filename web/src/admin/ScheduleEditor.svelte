@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { api, ApiError, type Dashboard, type Display, type Slot } from './api';
+  import { api, ApiError, type ActiveBlock, type Dashboard, type Display, type Slot } from './api';
+  import { describeBlocks } from './displays';
   import Icon from './Icon.svelte';
 
   let {
@@ -16,16 +17,31 @@
     onerror: (err: unknown) => string;
   } = $props();
 
-  // The server allows six slots; displays.MaxSlots holds the same number.
+  // The server allows six slots (displays.MaxSlots) and 21 blocks (schedule.MaxBlocks).
   const maxSlots = 6;
+  const maxBlocks = 21;
 
-  // The form edits a copy; the display prop only seeds it.
+  // The day names the server uses, with their labels; Monday first.
+  const DAYS = [
+    ['mon', 'Mo'],
+    ['tue', 'Tu'],
+    ['wed', 'We'],
+    ['thu', 'Th'],
+    ['fri', 'Fr'],
+    ['sat', 'Sa'],
+    ['sun', 'Su'],
+  ] as const;
+  const ALL_DAYS: string[] = DAYS.map(([day]) => day);
+  const PRESETS: [string, string[]][] = [
+    ['Weekdays', ['mon', 'tue', 'wed', 'thu', 'fri']],
+    ['Weekend', ['sat', 'sun']],
+    ['Every day', ALL_DAYS],
+  ];
+
+  // The form edits a copy; the display prop only seeds it. A block that
+  // the server stores without days (every day) shows all seven pressed.
   // svelte-ignore state_referenced_locally
-  let alwaysOn = $state(display.activeFrom === '');
-  // svelte-ignore state_referenced_locally
-  let from = $state(display.activeFrom || '06:30');
-  // svelte-ignore state_referenced_locally
-  let until = $state(display.activeUntil || '23:00');
+  let blocks = $state<ActiveBlock[]>(display.active.map((b) => ({ ...b, days: b.days.length === 0 ? [...ALL_DAYS] : [...b.days] })));
   // svelte-ignore state_referenced_locally
   let slots = $state<Slot[]>(display.schedule.map((s) => ({ ...s, days: [...s.days] })));
   // svelte-ignore state_referenced_locally
@@ -52,36 +68,44 @@
     return s < 60 ? `${s} seconds` : s === 60 ? '1 minute' : `${s / 60} minutes`;
   }
 
-  // The day names the server uses, with their labels; Monday first.
-  const DAYS = [
-    ['mon', 'Mo'],
-    ['tue', 'Tu'],
-    ['wed', 'We'],
-    ['thu', 'Th'],
-    ['fri', 'Fr'],
-    ['sat', 'Sa'],
-    ['sun', 'Su'],
-  ] as const;
-
-  function toggleDay(slot: Slot, day: string) {
-    slot.days = slot.days.includes(day) ? slot.days.filter((d) => d !== day) : [...slot.days, day];
+  function toggleDay(days: string[], day: string): string[] {
+    return days.includes(day) ? days.filter((d) => d !== day) : [...days, day];
   }
+  function samePress(days: string[], preset: string[]): boolean {
+    return days.length === preset.length && preset.every((d) => days.includes(d));
+  }
+
   let error = $state('');
   let saving = $state(false);
 
-  function add() {
+  // A new block is the weekdays 08:00 to 22:00; the second one continues
+  // where the first is not, so adding twice gives something to edit.
+  function addBlock() {
+    blocks.push({ days: blocks.length === 0 ? PRESETS[0]![1].slice() : ALL_DAYS.slice(), from: '08:00', until: '22:00' });
+  }
+
+  function addSlot() {
     const other = dashboards.find((b) => b.id !== (display.dashboardId || 'default')) ?? dashboards[0];
     slots.push({ from: '06:30', until: '09:00', days: [], dashboardId: other?.id ?? 'default' });
   }
 
+  /** What the screen does, in words, as the blocks stand now. */
+  const summary = $derived(blocks.length === 0 ? '' : describeBlocks(blocks));
+
   async function save(event: SubmitEvent) {
     event.preventDefault();
-    saving = true;
     error = '';
+    const empty = blocks.findIndex((b) => b.days.length === 0);
+    if (empty >= 0) {
+      error = `Time ${empty + 1}: choose at least one day.`;
+      return;
+    }
+    saving = true;
     try {
       await api.updateDisplay(display.id, {
-        activeFrom: alwaysOn ? '' : from,
-        activeUntil: alwaysOn ? '' : until,
+        // All seven days are stored as "every day", so a plan means the same
+        // after a day is added to the week.
+        active: blocks.map((b) => ({ days: b.days.length === ALL_DAYS.length ? [] : ALL_DAYS.filter((d) => b.days.includes(d)), from: b.from, until: b.until })),
         schedule: slots,
         rotation,
         rotateSeconds: rotation.length > 0 ? rotateSeconds : 0,
@@ -95,11 +119,15 @@
   }
 
   function fieldProblem(err: ApiError): string | undefined {
-    const hours = err.fieldMessage('activeHours');
-    if (hours) return `Active hours: ${hours}`;
+    for (let i = 0; i < blocks.length; i++) {
+      const msg = err.fieldMessage(`active[${i}]`);
+      if (msg) return `Time ${i + 1} for the screen: ${msg}`;
+    }
+    const active = err.fieldMessage('active');
+    if (active) return `When the screen is on: ${active}`;
     for (let i = 0; i < slots.length; i++) {
       const msg = err.fieldMessage(`schedule[${i}]`);
-      if (msg) return `Time slot ${i + 1}: ${msg}`;
+      if (msg) return `Other dashboard ${i + 1}: ${msg}`;
     }
     const pages = err.fieldMessage('rotation');
     if (pages) return `Pages in turn: ${pages}`;
@@ -112,21 +140,52 @@
 
   <fieldset>
     <legend>When the screen is on</legend>
-    <div class="inline">
-      <label class="inline-time"><input type="checkbox" bind:checked={alwaysOn} /> Always on</label>
-      {#if !alwaysOn}
-        <label class="inline-time">On from <input type="time" bind:value={from} required /></label>
-        <label class="inline-time">until <input type="time" bind:value={until} required /></label>
-      {/if}
-    </div>
-    <p class="muted small">Outside these hours the cast stops and the screen stays dark, so the TV can sleep.</p>
+    {#if blocks.length === 0}
+      <p>Always on, all day, every day.</p>
+      <p class="muted small">Add a time to have the screen on only then. Outside the times it stays dark, so the TV can sleep.</p>
+    {:else}
+      <p class="muted small">
+        The screen is on during these times, and dark in between so the TV can sleep. You can add several times on one
+        day, for example a morning and an evening.
+      </p>
+    {/if}
+    {#each blocks as block, i (i)}
+      <div class="slot" role="group" aria-label="Time {i + 1} for the screen">
+        <div class="days" role="group" aria-label="Days for time {i + 1}">
+          {#each DAYS as [day, label] (day)}
+            <button
+              type="button"
+              class="day"
+              class:on={block.days.includes(day)}
+              aria-pressed={block.days.includes(day)}
+              onclick={() => (block.days = toggleDay(block.days, day))}>{label}</button
+            >
+          {/each}
+          {#each PRESETS as [name, days] (name)}
+            <button type="button" class="link small" aria-pressed={samePress(block.days, days)} onclick={() => (block.days = [...days])}>{name}</button>
+          {/each}
+        </div>
+        <div class="inline">
+          <label class="inline-time">From <input type="time" bind:value={block.from} required /></label>
+          <label class="inline-time">until <input type="time" bind:value={block.until} required /></label>
+          <button type="button" class="link danger" onclick={() => blocks.splice(i, 1)}>Remove</button>
+        </div>
+      </div>
+    {/each}
+    {#if summary}
+      <p class="summary"><strong>On:</strong> {summary}. <span class="muted">Dark otherwise.</span></p>
+    {/if}
+    {#if blocks.length < maxBlocks}
+      <div><button type="button" class="secondary" onclick={addBlock}>Add a time</button></div>
+    {/if}
   </fieldset>
 
-  <fieldset>
-    <legend>Another dashboard at set times</legend>
+  <details class="optional" open={slots.length > 0}>
+    <summary>Show another dashboard at set times</summary>
     <p class="muted small">
-      For example the school run on weekday mornings. Outside these times the display shows {ownName}. When times
-      overlap, the first one wins.
+      This changes only what is shown, not whether the screen is on: use the times above for that. For example the
+      school run on weekday mornings. Outside these times the display shows {ownName}. When times overlap, the first
+      one wins.
     </p>
     {#each slots as slot, i (i)}
       <div class="slot">
@@ -147,7 +206,7 @@
               class="day"
               class:on={slot.days.includes(day)}
               aria-pressed={slot.days.includes(day)}
-              onclick={() => toggleDay(slot, day)}>{label}</button
+              onclick={() => (slot.days = toggleDay(slot.days, day))}>{label}</button
             >
           {/each}
           <span class="muted small">{slot.days.length === 0 ? 'every day' : ''}</span>
@@ -157,9 +216,9 @@
       <p class="muted small">No set times yet.</p>
     {/each}
     {#if slots.length < maxSlots}
-      <div><button type="button" class="secondary" onclick={add}>Add a time</button></div>
+      <div><button type="button" class="secondary" onclick={addSlot}>Add a time</button></div>
     {/if}
-  </fieldset>
+  </details>
 
   {#if others.length > 0}
     <fieldset>
@@ -225,6 +284,21 @@
     margin-bottom: var(--s-2);
     padding: 0;
     font-weight: 600;
+  }
+  .optional {
+    display: grid;
+    gap: var(--s-2);
+    padding-top: var(--s-3);
+    border-top: 1px solid var(--border);
+  }
+  .optional > summary {
+    cursor: pointer;
+    font-weight: 600;
+  }
+  .summary {
+    padding: var(--s-2) var(--s-3);
+    background: var(--surface);
+    border-radius: var(--radius, 6px);
   }
   .slot {
     display: grid;

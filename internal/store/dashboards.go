@@ -135,7 +135,7 @@ func (s *Store) EnsureDashboard(ctx context.Context, d display.Dashboard, now ti
 }
 
 // DisplayViews returns, for every display, the dashboard it shows, its
-// schedule and its active hours.
+// schedule and when it is on.
 func (s *Store) DisplayViews(ctx context.Context) (map[string]display.View, error) {
 	boards, err := s.Dashboards(ctx)
 	if err != nil {
@@ -162,7 +162,7 @@ func (s *Store) DisplayViews(ctx context.Context) (map[string]display.View, erro
 			continue
 		}
 		v := display.View{
-			Dashboard: dashboard, Hours: d.Hours, PageSeconds: d.RotateSeconds, TextScale: d.TextScale,
+			Dashboard: dashboard, Active: d.Active, PageSeconds: d.RotateSeconds, TextScale: d.TextScale,
 			ScreenCare: d.ScreenCare, Dimming: d.Dimming(),
 		}
 		for _, id := range d.Rotation {

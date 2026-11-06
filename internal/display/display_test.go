@@ -98,8 +98,8 @@ func TestEachDisplayGetsItsDashboardAndOnlyItsData(t *testing.T) {
 func TestDisplayOutsideActiveHoursGetsNoData(t *testing.T) {
 	b := NewBroadcaster()
 	// now is 07:30 UTC; the window opens at 08:00 in the same zone.
-	night := schedule.Hours{From: "08:00", Until: "23:00"}
-	views := map[string]View{"kitchen": {Dashboard: Normalize(DefaultDashboard(false)), Hours: night}}
+	night := schedule.Plan{{From: "08:00", Until: "23:00"}}
+	views := map[string]View{"kitchen": {Dashboard: Normalize(DefaultDashboard(false)), Active: night}}
 	data := map[string]datahub.Entry{"weather.current": {Value: []byte(`14`)}}
 	if err := b.Publish(now, views, data, "en"); err != nil {
 		t.Fatal(err)

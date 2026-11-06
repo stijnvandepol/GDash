@@ -10,27 +10,33 @@ import (
 	"github.com/stijnvandepol/gdash/internal/casting"
 )
 
-func TestDisplayActiveHours(t *testing.T) {
+func TestDisplayActiveBlocks(t *testing.T) {
 	env := newTestEnv(t, nil)
 	env.setUp(t)
-	status, body := env.do(t, "POST", "/api/displays", `{"id":"keuken","name":"Keuken","activeFrom":"06:30","activeUntil":"23:00"}`)
-	if status != http.StatusCreated || !strings.Contains(body, `"activeFrom":"06:30"`) || !strings.Contains(body, `"activeUntil":"23:00"`) {
+	status, body := env.do(t, "POST", "/api/displays", `{"id":"keuken","name":"Keuken","active":[{"days":["mon","tue","wed"],"from":"06:00","until":"10:00"},{"days":["fri"],"from":"07:00","until":"12:00"},{"days":["sat","sun"],"from":"09:00","until":"16:00"}]}`)
+	if status != http.StatusCreated || !strings.Contains(body, `"active":[{"days":["mon","tue","wed"],"from":"06:00","until":"10:00"},{"days":["fri"],"from":"07:00","until":"12:00"},{"days":["sat","sun"],"from":"09:00","until":"16:00"}]`) {
 		t.Fatalf("create = %d %s", status, body)
 	}
 
-	// A half-filled window is rejected with a field error.
-	status, body = env.do(t, "PATCH", "/api/displays/keuken", `{"activeUntil":""}`)
-	if status != http.StatusUnprocessableEntity || !strings.Contains(body, `"field":"activeHours"`) {
-		t.Fatalf("half window = %d %s", status, body)
+	// A block with one time is rejected with a field error naming the block.
+	status, body = env.do(t, "PATCH", "/api/displays/keuken", `{"active":[{"days":[],"from":"06:00","until":"10:00"},{"days":["sat"],"from":"09:00","until":""}]}`)
+	if status != http.StatusUnprocessableEntity || !strings.Contains(body, `"field":"active[1]"`) {
+		t.Fatalf("half block = %d %s", status, body)
 	}
 
-	// Clearing both means always on.
-	status, body = env.do(t, "PATCH", "/api/displays/keuken", `{"activeFrom":"","activeUntil":""}`)
-	if status != http.StatusOK || !strings.Contains(body, `"activeFrom":""`) {
+	// The older single window still works, as one block on every day.
+	status, body = env.do(t, "PATCH", "/api/displays/keuken", `{"activeFrom":"06:30","activeUntil":"23:00"}`)
+	if status != http.StatusOK || !strings.Contains(body, `"active":[{"days":[],"from":"06:30","until":"23:00"}]`) {
+		t.Fatalf("window = %d %s", status, body)
+	}
+
+	// No blocks means always on.
+	status, body = env.do(t, "PATCH", "/api/displays/keuken", `{"active":[]}`)
+	if status != http.StatusOK || !strings.Contains(body, `"active":[]`) {
 		t.Fatalf("clear = %d %s", status, body)
 	}
 	_, list := env.do(t, "GET", "/api/displays", "")
-	if !strings.Contains(list, `"activeFrom":"","activeUntil":""`) {
+	if !strings.Contains(list, `"active":[]`) {
 		t.Fatalf("list = %s", list)
 	}
 }

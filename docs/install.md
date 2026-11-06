@@ -361,5 +361,5 @@ was last hidden; the server log has a line for every restart, with
 moved without its `secret.key`. Remove the calendar and add it again under
 Integrations, Calendars.
 
-**The TV is dark outside the active hours.** That is the display's
+**The TV is dark outside the times it is on.** That is the display's
 schedule; change it under Displays, Schedule.
