@@ -158,7 +158,13 @@ func (s *Server) updateDisplay(w http.ResponseWriter, r *http.Request) {
 		d.DashboardID = *body.DashboardID
 	}
 	if body.ActiveFrom != nil || body.ActiveUntil != nil {
-		d.Active = activeFor(nil, deref(body.ActiveFrom), deref(body.ActiveUntil))
+		// One of the two changes the daily window the display had, as it
+		// did before the plan; against a plan of blocks it is a new window.
+		from, until := deref(body.ActiveFrom), deref(body.ActiveUntil)
+		if window, ok := dailyWindow(d.Active); ok {
+			from, until = valueOr(body.ActiveFrom, window.From), valueOr(body.ActiveUntil, window.Until)
+		}
+		d.Active = activeFor(nil, from, until)
 	}
 	if body.Active != nil {
 		d.Active = body.Active.Normalize()
@@ -200,6 +206,23 @@ func activeFor(plan *schedule.Plan, from, until string) schedule.Plan {
 		return plan.Normalize()
 	}
 	return schedule.Hours{From: from, Until: until}.Plan().Normalize()
+}
+
+// dailyWindow returns the plan as the single daily window it is, or ok
+// false for blocks with days or more than one.
+func dailyWindow(plan schedule.Plan) (schedule.Hours, bool) {
+	if len(plan) != 1 || len(plan[0].Days) != 0 {
+		return schedule.Hours{}, false
+	}
+	return schedule.Hours{From: plan[0].From, Until: plan[0].Until}, true
+}
+
+// valueOr returns *s, or fallback when s is nil.
+func valueOr(s *string, fallback string) string {
+	if s == nil {
+		return fallback
+	}
+	return *s
 }
 
 func deref(s *string) string {

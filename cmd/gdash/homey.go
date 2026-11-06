@@ -70,7 +70,7 @@ func (d *dataSources) homeySources(cfg settings.Sources, dashboards []display.Da
 	}
 	var sources []datahub.Source
 	if keys := display.HomeyCapabilityKeys(dashboards); len(keys) > 0 {
-		keys = keys[:min(len(keys), maxHomeyCapabilities)]
+		keys = capped(d.logger, "Homey capabilities", keys, maxHomeyCapabilities)
 		sources = append(sources, datahub.Source{
 			Key:      display.HomeySource,
 			Interval: homeyInterval,
@@ -80,7 +80,7 @@ func (d *dataSources) homeySources(cfg settings.Sources, dashboards []display.Da
 		})
 	}
 	if users := display.HomeyUserIDs(dashboards); len(users) > 0 {
-		users = users[:min(len(users), maxHomeyUsers)]
+		users = capped(d.logger, "Homey users", users, maxHomeyUsers)
 		sources = append(sources, datahub.Source{
 			Key:      display.HomeyUsersSource,
 			Interval: homeyInterval,

@@ -93,7 +93,7 @@ type dataSources struct {
 
 // startData starts fetching dashboard data. The publisher turns every data
 // or configuration change into new display snapshots on the broadcaster.
-func startData(ctx context.Context, cfg config, db *store.Store, svc *settings.Service, album *photos.Store, logger *slog.Logger) (*display.Broadcaster, *display.Publisher, *dataSources, error) {
+func startData(ctx context.Context, cfg config, db *store.Store, svc *settings.Service, album *photos.Store, background *sync.WaitGroup, logger *slog.Logger) (*display.Broadcaster, *display.Publisher, *dataSources, error) {
 	cache, err := datahub.NewFileStore(filepath.Join(cfg.dataDir, "cache"))
 	if err != nil {
 		return nil, nil, nil, err
@@ -143,7 +143,7 @@ func startData(ctx context.Context, cfg config, db *store.Store, svc *settings.S
 	}
 	hub = datahub.New(cache, logger, refresh)
 	publisher.Refresh(ctx)
-	go everyMinute(ctx, refresh)
+	background.Go(func() { everyMinute(ctx, refresh) })
 
 	dutch, err := time.LoadLocation(dutchTimeZone)
 	if err != nil {
@@ -352,7 +352,7 @@ func (d *dataSources) build(cfg settings.Sources, entities, stops []string) []da
 		})
 	}
 	if conn := cfg.HomeAssistant; conn != nil && len(entities) > 0 {
-		entities = entities[:min(len(entities), maxHomeAssistantEntities)]
+		entities = capped(d.logger, "Home Assistant entities", entities, maxHomeAssistantEntities)
 		sources = append(sources, datahub.Source{
 			Key:      display.HomeAssistantSource,
 			Interval: homeAssistantInterval,
@@ -363,7 +363,7 @@ func (d *dataSources) build(cfg settings.Sources, entities, stops []string) []da
 	}
 	if len(stops) > 0 {
 		// One request covers all stops; the cap keeps the address short.
-		stops = stops[:min(len(stops), maxDepartureStops)]
+		stops = capped(d.logger, "departure stops", stops, maxDepartureStops)
 		sources = append(sources, datahub.Source{
 			Key:      display.DeparturesSource,
 			Interval: departuresInterval,
@@ -385,6 +385,16 @@ func (d *dataSources) fingerprint(v any) string {
 // their active hours on time and time-based rules apply, even when no data
 // changes.
 func everyMinute(ctx context.Context, refresh func()) {
+	// The first tick is on the minute, so an edge of the active hours at
+	// 07:00 is not applied at 07:00:43.
+	first := time.NewTimer(time.Until(time.Now().Truncate(time.Minute).Add(time.Minute)))
+	select {
+	case <-ctx.Done():
+		first.Stop()
+		return
+	case <-first.C:
+		refresh()
+	}
 	ticker := time.NewTicker(time.Minute)
 	defer ticker.Stop()
 	for {
@@ -403,6 +413,7 @@ func everyMinute(ctx context.Context, refresh func()) {
 func announced(ctx context.Context, publisher *display.Publisher) func(expiresAt time.Time) {
 	return func(expiresAt time.Time) {
 		publisher.Refresh(ctx)
-		time.AfterFunc(time.Until(expiresAt), func() { publisher.Refresh(ctx) })
+		timer := time.AfterFunc(time.Until(expiresAt), func() { publisher.Refresh(ctx) })
+		context.AfterFunc(ctx, func() { timer.Stop() })
 	}
 }

@@ -81,13 +81,9 @@ function isWidget(v: unknown): v is Widget {
  */
 export function isSnapshot(v: unknown): v is Snapshot {
   if (!isRecord(v) || v.type !== 'snapshot' || typeof v.version !== 'number') return false;
-  const d = v.dashboard;
-  return (
-    isRecord(d) &&
-    Number.isInteger(d.columns) &&
-    Number.isInteger(d.rows) &&
-    Array.isArray(d.widgets) &&
-    d.widgets.every(isWidget) &&
-    isRecord(v.data)
-  );
+  return isDashboard(v.dashboard) && (v.pages === undefined || (Array.isArray(v.pages) && v.pages.every(isDashboard))) && isRecord(v.data);
+}
+
+function isDashboard(d: unknown): d is Dashboard {
+  return isRecord(d) && Number.isInteger(d.columns) && Number.isInteger(d.rows) && Array.isArray(d.widgets) && d.widgets.every(isWidget);
 }

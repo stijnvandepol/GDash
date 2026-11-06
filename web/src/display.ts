@@ -95,7 +95,9 @@ async function start(): Promise<void> {
 function connect(): void {
   // EventSource reconnects on its own after network errors, using the retry
   // interval the server sends. An error status (401 after unpairing, or a
-  // proxy error) closes it for good; then access is checked again.
+  // proxy error) closes it for good; then access is checked again, after a
+  // pause: a proxy that refuses only the stream must not be asked three
+  // times a second by every screen.
   const events = new EventSource(`/api/displays/${encodeURIComponent(displayId)}/events`);
   events.addEventListener('open', () => {
     display.connection = 'live';
@@ -105,7 +107,7 @@ function connect(): void {
     display.connection = 'offline';
     if (events.readyState === EventSource.CLOSED) {
       events.close();
-      void start();
+      setTimeout(() => void start(), OFFLINE_RETRY_MS);
     }
   });
   events.addEventListener('snapshot', (event) => {

@@ -77,7 +77,13 @@ type Hub struct {
 	mu      sync.Mutex
 	entries map[string]Entry
 	running map[string]runningSource
+	// loops counts the fetch loops, for Wait.
+	loops sync.WaitGroup
 }
+
+// Wait blocks until every fetch loop has ended, which they do when the
+// context of Configure ends. It lets the server close its store afterwards.
+func (h *Hub) Wait() { h.loops.Wait() }
 
 // runningSource is a configured source: a fetched one has a loop running,
 // which cancel stops.
@@ -151,7 +157,7 @@ func (h *Hub) Configure(ctx context.Context, sources []Source) {
 		loopCtx, cancel := context.WithCancel(ctx)
 		h.running[src.Key] = runningSource{version: src.Version, cancel: cancel, source: src}
 		if src.Fetch != nil {
-			go h.loop(loopCtx, src)
+			h.loops.Go(func() { h.loop(loopCtx, src) })
 		}
 	}
 	h.mu.Unlock()

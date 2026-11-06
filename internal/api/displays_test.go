@@ -30,6 +30,12 @@ func TestDisplayActiveBlocks(t *testing.T) {
 		t.Fatalf("window = %d %s", status, body)
 	}
 
+	// One of the two changes that window, as it did before the plan.
+	status, body = env.do(t, "PATCH", "/api/displays/keuken", `{"activeUntil":"22:00"}`)
+	if status != http.StatusOK || !strings.Contains(body, `"active":[{"days":[],"from":"06:30","until":"22:00"}]`) {
+		t.Fatalf("one time = %d %s", status, body)
+	}
+
 	// No blocks means always on.
 	status, body = env.do(t, "PATCH", "/api/displays/keuken", `{"active":[]}`)
 	if status != http.StatusOK || !strings.Contains(body, `"active":[]`) {

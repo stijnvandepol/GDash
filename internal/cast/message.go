@@ -107,12 +107,16 @@ func unmarshalMessage(b []byte) (Message, error) {
 	return m, nil
 }
 
+// ErrTooLarge is returned for a message above maxFrameSize, which is never
+// written.
+var ErrTooLarge = errors.New("cast message exceeds the 64 KiB limit")
+
 // writeFrame writes a message with the 4-byte big-endian length prefix that
 // CASTV2 uses on the wire.
 func writeFrame(w io.Writer, m Message) error {
 	body := m.marshal()
 	if len(body) > maxFrameSize {
-		return fmt.Errorf("cast message of %d bytes exceeds the %d byte limit", len(body), maxFrameSize)
+		return fmt.Errorf("%w: %d bytes", ErrTooLarge, len(body))
 	}
 	frame := binary.BigEndian.AppendUint32(make([]byte, 0, 4+len(body)), uint32(len(body)))
 	_, err := w.Write(append(frame, body...))

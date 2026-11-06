@@ -18,11 +18,14 @@
   $effect(() => {
     if (urls.length < 2) return;
     const every = seconds;
-    now = Date.now();
+    // The effect sets now without reading it back, so it does not run again.
+    const started = Date.now();
+    now = started;
     let timer = setTimeout(function next() {
-      now = Date.now();
-      timer = setTimeout(next, msToNextPage(now, every));
-    }, msToNextPage(now, every));
+      const at = Date.now();
+      now = at;
+      timer = setTimeout(next, msToNextPage(at, every));
+    }, msToNextPage(started, every));
     return () => clearTimeout(timer);
   });
   const current = $derived(urls.length > 0 ? urls[Math.floor(now / 1000 / seconds) % urls.length] : undefined);

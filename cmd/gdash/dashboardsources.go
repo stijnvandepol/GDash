@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"slices"
 	"strconv"
 	"time"
@@ -140,7 +141,7 @@ func (d *dataSources) rainSource(location *weather.Location, queries []rain.Quer
 	if len(resolved) == 0 {
 		return datahub.Source{}, false
 	}
-	resolved = resolved[:min(len(resolved), maxRainQueries)]
+	resolved = capped(d.logger, "rain places", resolved, maxRainQueries)
 	return datahub.Source{
 		Key:      display.RainSource,
 		Interval: rainInterval,
@@ -198,7 +199,7 @@ func (d *dataSources) fuelSource(location *weather.Location, queries []fuel.Quer
 	if len(resolved) == 0 {
 		return datahub.Source{}, false
 	}
-	resolved = resolved[:min(len(resolved), maxFuelQueries)]
+	resolved = capped(d.logger, "fuel searches", resolved, maxFuelQueries)
 	return datahub.Source{
 		Key:      display.FuelSource,
 		Interval: fuelInterval,
@@ -261,4 +262,17 @@ func (d *dataSources) wastePickups(ctx context.Context, calendars []calendar.Sou
 		}
 	}
 	return report, errors.Join(errs...)
+}
+
+// capped returns at most limit of list. More is said in the log once per
+// configuration, so a widget that stays on "loading" can be explained.
+func capped[T any](logger *slog.Logger, what string, list []T, limit int) []T {
+	if len(list) <= limit {
+		return list
+	}
+	if logger == nil {
+		return list[:limit]
+	}
+	logger.Warn("the dashboards ask for more than GDash fetches; the rest stays loading", "what", what, "limit", limit, "asked", len(list))
+	return list[:limit]
 }

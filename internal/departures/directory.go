@@ -18,6 +18,10 @@ const (
 	// A failed refresh keeps the old list and tries again after this, so a
 	// person typing in the editor does not make a request per keystroke.
 	retryAfter = 10 * time.Minute
+	// firstRetryAfter is the pause after a failed first load: without a
+	// list there is nothing to search, so the retry comes sooner, but not
+	// at every keystroke in the editor.
+	firstRetryAfter = 30 * time.Second
 	// maxResults is what the editor lists; more would need scrolling on a
 	// phone for a search that should be narrowed anyway.
 	maxResults = 20
@@ -38,6 +42,8 @@ type Directory struct {
 	mu       sync.Mutex
 	entries  []entry
 	nextLoad time.Time
+	// loadErr is why there is no list yet, until nextLoad.
+	loadErr error
 }
 
 // entry is a stop with what searching needs, worked out once per load.
@@ -85,13 +91,20 @@ func (d *Directory) Search(ctx context.Context, query string) ([]Stop, error) {
 // older list in hand is logged and the older list stays in use.
 func (d *Directory) refresh(ctx context.Context) error {
 	now := d.Now()
-	if d.entries != nil && now.Before(d.nextLoad) {
+	if now.Before(d.nextLoad) {
+		if d.entries == nil {
+			return d.loadErr
+		}
 		return nil
 	}
 	stops, err := d.Source.Stops(ctx)
 	if err != nil {
 		if d.entries == nil {
-			return fmt.Errorf("load stop areas: %w", err)
+			// Without a list every search would fetch again; the failure
+			// is kept until the next try, as a stale list is.
+			d.loadErr = fmt.Errorf("load stop areas: %w", err)
+			d.nextLoad = now.Add(firstRetryAfter)
+			return d.loadErr
 		}
 		d.Logger.Warn("could not refresh the list of stop areas; using the previous one", "error", err)
 		d.nextLoad = now.Add(retryAfter)

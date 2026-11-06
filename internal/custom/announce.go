@@ -16,6 +16,10 @@ type Target struct {
 	Key    string
 	Widget Widget
 	Doc    any
+	// Pending: the source has no answer at the moment, as right after its
+	// settings changed. The rules keep their state until it has one, so a
+	// rule that comes true meanwhile is still announced once.
+	Pending bool
 }
 
 // Announcement is a rule that just became true.
@@ -50,7 +54,10 @@ func (a *Announcer) Check(targets []Target, now time.Time) []Announcement {
 	seen := map[string]ruleState{}
 	var out []Announcement
 	for _, t := range targets {
-		matched := t.Widget.Matching(t.Doc, now)
+		var matched []bool
+		if !t.Pending {
+			matched = t.Widget.Matching(t.Doc, now)
+		}
 		for i, rule := range t.Widget.Rules {
 			if !rule.Announce {
 				continue
@@ -58,6 +65,12 @@ func (a *Announcer) Check(targets []Target, now time.Time) []Announcement {
 			// The condition is part of the key: an edited rule starts over.
 			key := t.Key + "#" + strconv.Itoa(i) + "#" + rule.When.String()
 			prev, known := a.rules[key]
+			if t.Pending {
+				if known {
+					seen[key] = prev
+				}
+				continue
+			}
 			state := ruleState{holds: matched[i], posted: prev.posted}
 			if known && !prev.holds && matched[i] && (prev.posted.IsZero() || now.Sub(prev.posted) >= a.Gap) {
 				state.posted = now

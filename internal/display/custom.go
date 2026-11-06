@@ -143,16 +143,15 @@ const customEntryValidity = time.Hour
 
 // CustomTargets returns the Custom widgets of the dashboards that announce,
 // with their source's answer, for the rules that post announcements.
-// Widgets whose source has no answer yet are left out.
+// Widgets whose source has no answer at the moment are pending.
 func CustomTargets(dashboards []Dashboard, data map[string]datahub.Entry, now time.Time) []custom.Target {
 	var out []custom.Target
 	for _, w := range customWidgets(dashboards) {
 		if !slices.ContainsFunc(w.widget.Rules, func(r custom.Rule) bool { return r.Announce }) {
 			continue
 		}
-		if d := CustomData(data, w.widget.Source, now); d.HasValue {
-			out = append(out, custom.Target{Key: w.key, Widget: w.widget, Doc: d.Doc})
-		}
+		d := CustomData(data, w.widget.Source, now)
+		out = append(out, custom.Target{Key: w.key, Widget: w.widget, Doc: d.Doc, Pending: !d.HasValue})
 	}
 	return out
 }

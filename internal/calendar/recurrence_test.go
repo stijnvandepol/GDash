@@ -173,3 +173,33 @@ func unboundedExpand(t *testing.T, e ical.Event, w Window) []occurrence {
 	}
 	return occs
 }
+
+// A repeating all-day event is a number of days, also when its first day is
+// the day the clocks change and lasts 23 or 25 hours; the TV would strike
+// through an occurrence whose end equals its start.
+func TestExpandKeepsAllDayLengthAcrossClockChange(t *testing.T) {
+	loc := amsterdam(t)
+	from := time.Date(2026, 3, 30, 0, 0, 0, 0, loc)
+	w := Window{From: from, To: from.AddDate(0, 0, 14), Location: loc}
+	// 29 March 2026 is the Sunday the clocks go forward.
+	events, err := Parse(strings.NewReader(vevent("DTSTART;VALUE=DATE:20260329", "DTEND;VALUE=DATE:20260330", "RRULE:FREQ=WEEKLY", "SUMMARY:Market")), w, "Test")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(events) != 2 || events[0].Start != "2026-04-05" || events[0].End != "2026-04-06" || events[1].End != "2026-04-13" {
+		t.Fatalf("events = %+v, want 5 and 12 April ending the next day", events)
+	}
+}
+
+// An event with RDATEs but no RRULE is on its start and on those dates.
+func TestParseListsDatesWithoutRule(t *testing.T) {
+	events := parseOne(t, "DTSTART:20261008T090000Z", "DTEND:20261008T100000Z", "RDATE:20261010T090000Z,20261012T090000Z", "EXDATE:20261012T090000Z", "SUMMARY:Extra")
+	var starts []string
+	for _, e := range events {
+		starts = append(starts, e.Start)
+	}
+	want := []string{"2026-10-08T11:00:00+02:00", "2026-10-10T11:00:00+02:00"}
+	if strings.Join(starts, " ") != strings.Join(want, " ") {
+		t.Fatalf("starts = %v, want %v", starts, want)
+	}
+}

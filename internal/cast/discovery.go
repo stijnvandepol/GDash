@@ -171,6 +171,9 @@ func sendQuery(conn *ipv4.PacketConn, ifaces []net.Interface, query []byte) erro
 		}
 		sent++
 	}
+	if sent == 0 && lastErr == nil {
+		return errors.New("no network interface can send multicast; is the container on the host network?")
+	}
 	if sent == 0 {
 		return fmt.Errorf("send mDNS query on any of %d interfaces: %w", len(ifaces), lastErr)
 	}

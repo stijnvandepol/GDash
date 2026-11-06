@@ -21,6 +21,7 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"sync"
 	"syscall"
 	"time"
 	_ "time/tzdata"
@@ -139,6 +140,11 @@ func newAuthService(ctx context.Context, db *store.Store, box *secret.Box, logge
 }
 
 func serve(ctx context.Context, logger *slog.Logger) error {
+	// Everything in the background stops with ctx, also when listening
+	// fails, and is waited for before the database closes under it.
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+	var background sync.WaitGroup
 	cfg, err := loadConfig(os.Getenv)
 	if err != nil {
 		return err
@@ -157,10 +163,11 @@ func serve(ctx context.Context, logger *slog.Logger) error {
 		return err
 	}
 	defer db.Close()
-	go (&backup.Daily{
+	daily := &backup.Daily{
 		Dir: filepath.Join(cfg.dataDir, "backups"), Keep: backupsKept,
 		Write: db.WriteCopy, Now: time.Now, Logger: logger,
-	}).Run(ctx)
+	}
+	background.Go(func() { daily.Run(ctx) })
 	box, err := secret.LoadOrCreateKey(filepath.Join(cfg.dataDir, secretKeyName))
 	if err != nil {
 		return err
@@ -177,16 +184,17 @@ func serve(ctx context.Context, logger *slog.Logger) error {
 	if err != nil {
 		return err
 	}
-	snapshots, publisher, sources, err := startData(ctx, cfg, db, settingsService, album, logger)
+	snapshots, publisher, sources, err := startData(ctx, cfg, db, settingsService, album, &background, logger)
 	if err != nil {
 		return err
 	}
+	background.Go(sources.hub.Wait)
 	pairings := pairing.New(db)
 	castManager, err := newCastManager(cfg, castDeps{db: db, snapshots: snapshots, pairings: pairings, logger: logger})
 	if err != nil {
 		return err
 	}
-	go castManager.Run(ctx)
+	background.Go(func() { castManager.Run(ctx) })
 
 	frontend, err := web.Dist()
 	if err != nil {
@@ -197,7 +205,7 @@ func serve(ctx context.Context, logger *slog.Logger) error {
 		Current: currentVersion(), Enabled: settingsService.UpdateCheck, Off: cfg.updateCheckOff,
 		Now: time.Now, Logger: logger,
 	}
-	go updates.Run(ctx)
+	background.Go(func() { updates.Run(ctx) })
 	handler := (&api.Server{
 		Snapshots:     snapshots,
 		Auth:          authService,
@@ -267,7 +275,25 @@ func serve(ctx context.Context, logger *slog.Logger) error {
 		Now:           time.Now,
 		Logger:        logger,
 	}).Handler()
-	return listen(ctx, cfg.addr, handler, logger)
+	err = listen(ctx, cfg.addr, handler, logger)
+	cancel()
+	waitFor(&background, shutdownTimeout, logger)
+	return err
+}
+
+// waitFor waits for the background work, at most timeout; what is still
+// running then is cut off by the database closing, and said so.
+func waitFor(wg *sync.WaitGroup, timeout time.Duration, logger *slog.Logger) {
+	done := make(chan struct{})
+	go func() {
+		wg.Wait()
+		close(done)
+	}()
+	select {
+	case <-done:
+	case <-time.After(timeout):
+		logger.Warn("background work did not stop in time; closing the database under it")
+	}
 }
 
 // secretKeyName is the key file in the data directory that seals calendar

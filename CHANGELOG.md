@@ -20,6 +20,35 @@ the format follows [Keep a Changelog](https://keepachangelog.com).
 - The display list no longer says at what time GDash comes back for a TV
   outside its hours.
 
+### Fixed
+
+- A repeating all-day appointment whose first day was the day the clocks
+  changed ended at 23:00 on every other day, so the TV struck it through
+  from midnight. It now lasts whole days.
+- An appointment with extra dates (RDATE) but no repeat rule was left out
+  altogether; it is now shown on its day and on the extra dates.
+- A Cast TV whose answer got lost or could not be read left the keeper
+  waiting for good: every request now has a deadline, and an error answer
+  to a status request is no longer taken for "no apps".
+- A dashboard too large for one cast message (64 KiB) made the keeper
+  reconnect over and over; the TV now keeps the previous page and the log
+  says so once.
+- The schedule edge at the whole minute, such as 07:00, is applied on the
+  minute instead of up to a minute late on paired screens.
+- A Custom widget rule kept no state while its source had no answer, as
+  right after its settings changed, so a rule that came true meanwhile was
+  announced late or twice.
+- On shutdown the background work (cast, backups, data fetching) is waited
+  for before the database closes, instead of being cut off.
+- A screen whose event stream is refused by a proxy waits 15 seconds
+  before asking again rather than at once.
+- Changing only `activeFrom` or `activeUntil` through the API keeps the
+  other time of the daily window, as it did.
+- More widgets than GDash fetches (such as an 11th traffic route) are
+  said in the log; the rest stayed on "loading" without a word.
+- Departures: when the list of stops cannot be loaded at start, it is
+  tried again after 30 seconds, not at every keystroke in the editor.
+
 ## 0.10.1 – 2026-10-16
 
 ### Changed

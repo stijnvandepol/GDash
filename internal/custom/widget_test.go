@@ -206,6 +206,12 @@ func TestAnnouncerFiresOnEdgesOnly(t *testing.T) {
 	if got := at(20, 14); len(got) != 1 {
 		t.Fatalf("rising after the gap = %v, want one announcement", got)
 	}
+	// While the source has no answer, as after its settings changed, the
+	// state stays: the rise after it is announced once, not twice.
+	a.Check([]Target{{Key: "d/w", Widget: w, Pending: true}}, exprNow.Add(13*time.Minute))
+	if got := at(5, 14); got != nil {
+		t.Fatalf("low after a pending check announced %v", got)
+	}
 	// A widget that is gone is forgotten.
 	a.Check(nil, exprNow.Add(15*time.Minute))
 	if len(a.rules) != 0 {

@@ -2,10 +2,12 @@ package cast
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"log/slog"
 	"os"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -406,5 +408,45 @@ func TestShouldRelaunch(t *testing.T) {
 				t.Fatalf("ShouldRelaunch = %v, want %v", got, tt.want)
 			}
 		})
+	}
+}
+
+func TestStatusRefusesAnAnswerWithoutStatus(t *testing.T) {
+	ctx := testContext(t)
+	device := newFakeDevice(t, Application{AppID: "ABCD1234", SessionID: "s1", TransportID: "web-1"})
+	c, err := Dial(ctx, device.addr())
+	if err != nil {
+		t.Fatalf("Dial: %v", err)
+	}
+	defer c.Close()
+	device.mu.Lock()
+	device.refuse = true
+	device.mu.Unlock()
+	if _, err := c.Status(ctx); err == nil || !strings.Contains(err.Error(), "INVALID_REQUEST") {
+		t.Fatalf("Status with an error answer = %v; want an error naming it, not an empty status", err)
+	}
+}
+
+func TestSendRefusesAMessageTooLargeAndStaysConnected(t *testing.T) {
+	ctx := testContext(t)
+	device := newFakeDevice(t)
+	c, err := Dial(ctx, device.addr())
+	if err != nil {
+		t.Fatalf("Dial: %v", err)
+	}
+	defer c.Close()
+	app, err := c.Launch(ctx, "ABCD1234")
+	if err != nil {
+		t.Fatalf("Launch: %v", err)
+	}
+	if err := c.Connect(app.TransportID); err != nil {
+		t.Fatalf("Connect: %v", err)
+	}
+	huge := []byte(`{"type":"snapshot","pad":"` + strings.Repeat("x", maxFrameSize) + `"}`)
+	if err := c.Send(app.TransportID, "urn:x-cast:app.gdash.display", huge); !errors.Is(err, ErrTooLarge) {
+		t.Fatalf("Send of %d bytes = %v, want ErrTooLarge", len(huge), err)
+	}
+	if _, err := c.Status(ctx); err != nil {
+		t.Fatalf("Status after a message too large = %v; the connection should be as it was", err)
 	}
 }

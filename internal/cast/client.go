@@ -26,6 +26,9 @@ const (
 	// intervals means the connection is dead even if TCP has not noticed.
 	readTimeout  = 3 * heartbeatInterval
 	writeTimeout = 10 * time.Second
+	// requestTimeout bounds a request to the device, whose reply can be
+	// lost or unreadable while the heartbeat keeps the connection alive.
+	requestTimeout = 20 * time.Second
 )
 
 type receiverMessage struct {
@@ -107,6 +110,8 @@ func (c *Client) StatusUpdates() <-chan ReceiverStatus { return c.statusUpdates 
 func (c *Client) AppMessages() <-chan Message { return c.appMessages }
 
 func (c *Client) request(ctx context.Context, payload map[string]any) (receiverMessage, error) {
+	ctx, cancel := context.WithTimeout(ctx, requestTimeout)
+	defer cancel()
 	id := c.requestID.Add(1)
 	payload["requestId"] = id
 	reply := make(chan receiverMessage, 1)
@@ -148,7 +153,11 @@ func (c *Client) write(m Message) error {
 		return err
 	}
 	if err := writeFrame(c.conn, m); err != nil {
-		c.shutdown(err)
+		// A message too large for the wire never reached the socket; the
+		// connection is as good as it was.
+		if !errors.Is(err, ErrTooLarge) {
+			c.shutdown(err)
+		}
 		return fmt.Errorf("write %s message: %w", m.Namespace, err)
 	}
 	return nil
@@ -210,7 +219,12 @@ func (c *Client) deliverReply(msg receiverMessage) {
 	reply, ok := c.pending[msg.RequestID]
 	c.pendingMu.Unlock()
 	if ok {
-		reply <- msg
+		// The requester may be gone already (its context ended); a second
+		// reply to the same id must not stall the read loop.
+		select {
+		case reply <- msg:
+		default:
+		}
 	}
 }
 

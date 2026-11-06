@@ -78,8 +78,8 @@
   let error = $state('');
   let saving = $state(false);
 
-  // A new block is the weekdays 08:00 to 22:00; the second one continues
-  // where the first is not, so adding twice gives something to edit.
+  // A new block is the weekdays 08:00 to 22:00; the next ones start with
+  // every day pressed, so the days to drop are one click each.
   function addBlock() {
     blocks.push({ days: blocks.length === 0 ? PRESETS[0]![1].slice() : ALL_DAYS.slice(), from: '08:00', until: '22:00' });
   }

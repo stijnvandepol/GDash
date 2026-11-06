@@ -2,6 +2,9 @@ package calendar
 
 import (
 	"errors"
+	"fmt"
+	"math"
+	"strings"
 	"time"
 
 	"github.com/emersion/go-ical"
@@ -56,9 +59,17 @@ func expand(e ical.Event, w Window, limit int) (occs []occurrence, err error) {
 		return nil, err
 	}
 	if set == nil {
-		return nil, errors.New("event has no recurrence set")
+		// Only RDATEs, no RRULE: go-ical makes no set for that, so the
+		// dates are listed here, DTSTART among them.
+		if set, err = dateSet(e, first.start, w.Location); err != nil {
+			return nil, err
+		}
 	}
 	duration := first.end.Sub(first.start)
+	// An all-day event is a number of days, not a number of hours: a
+	// birthday whose first day is the day the clocks change lasts 23 or 25
+	// hours, and every other occurrence must still end at midnight.
+	days := max(1, int(math.Round(duration.Hours()/24)))
 	// Start the search one duration early, so an occurrence that began
 	// before the window but still runs is found.
 	searchFrom := w.From.Add(-duration)
@@ -75,7 +86,11 @@ func expand(e ical.Event, w Window, limit int) (occs []occurrence, err error) {
 		if start.Before(searchFrom) {
 			continue
 		}
-		occ := occurrence{start: start, end: start.Add(duration), allDay: first.allDay}
+		end := start.Add(duration)
+		if first.allDay {
+			end = start.AddDate(0, 0, days)
+		}
+		occ := occurrence{start: start, end: end, allDay: first.allDay}
 		if overlaps(occ, w) {
 			occs = append(occs, occ)
 		}
@@ -89,6 +104,9 @@ func expand(e ical.Event, w Window, limit int) (occs []occurrence, err error) {
 // from..to stay the same, because the shift is a multiple of the interval
 // and keeps the weekday and the time of day.
 func boundRule(set *rrule.Set, from, to time.Time) error {
+	if set.GetRRule() == nil {
+		return nil
+	}
 	opt := set.GetRRule().OrigOptions
 	if opt.Freq == rrule.SECONDLY || opt.Freq == rrule.MINUTELY {
 		return errTooFrequent
@@ -157,4 +175,47 @@ func closerStart(opt rrule.ROption, from time.Time) time.Time {
 func clockSeconds(t time.Time, loc *time.Location) int64 {
 	_, offset := t.In(loc).Zone()
 	return t.Unix() + int64(offset)
+}
+
+// dateSet is the recurrence set of an event with RDATEs but no RRULE: its
+// start and the dates, without the EXDATEs.
+func dateSet(e ical.Event, start time.Time, loc *time.Location) (*rrule.Set, error) {
+	set := &rrule.Set{}
+	set.DTStart(start)
+	set.RDate(start)
+	for _, p := range e.Props[ical.PropRecurrenceDates] {
+		dates, err := propDates(p, loc)
+		if err != nil {
+			return nil, fmt.Errorf("parse RDATE: %w", err)
+		}
+		for _, t := range dates {
+			set.RDate(t)
+		}
+	}
+	for _, p := range e.Props[ical.PropExceptionDates] {
+		dates, err := propDates(p, loc)
+		if err != nil {
+			return nil, fmt.Errorf("parse EXDATE: %w", err)
+		}
+		for _, t := range dates {
+			set.ExDate(t)
+		}
+	}
+	return set, nil
+}
+
+// propDates reads a date property that may list several dates separated
+// by commas, which go-ical reads as one value.
+func propDates(p ical.Prop, loc *time.Location) ([]time.Time, error) {
+	var out []time.Time
+	for _, value := range strings.Split(p.Value, ",") {
+		one := p
+		one.Value = value
+		t, err := one.DateTime(loc)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, t)
+	}
+	return out, nil
 }

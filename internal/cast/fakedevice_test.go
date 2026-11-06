@@ -34,7 +34,9 @@ type fakeDevice struct {
 	// activeInput is left out of the status while nil, as by a device
 	// without HDMI-CEC.
 	activeInput *bool
-	open        []*fakeConn
+	// refuse makes every receiver request answer INVALID_REQUEST.
+	refuse bool
+	open   []*fakeConn
 	// media is the "status" list that each running media app, by
 	// transport ID, answers GET_STATUS with on the media namespace.
 	media map[string]string
@@ -326,6 +328,10 @@ func (d *fakeDevice) receiverRequest(payload map[string]any) bool {
 func (d *fakeDevice) statusPayload(requestID any) string {
 	d.mu.Lock()
 	defer d.mu.Unlock()
+	if d.refuse {
+		body, _ := json.Marshal(map[string]any{"type": "INVALID_REQUEST", "requestId": requestID, "reason": "INVALID_COMMAND"})
+		return string(body)
+	}
 	status := map[string]any{"applications": d.apps, "isStandBy": d.standby}
 	if d.activeInput != nil {
 		status["isActiveInput"] = *d.activeInput

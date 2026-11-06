@@ -113,7 +113,7 @@ func TestCustomSourceIDsAndTargets(t *testing.T) {
 	if len(targets) != 1 || targets[0].Key != "one/y" {
 		t.Fatalf("CustomTargets = %+v, want only the announcing widget", targets)
 	}
-	if got := CustomTargets(dashboards, nil, now); len(got) != 0 {
-		t.Fatalf("targets without data = %+v", got)
+	if got := CustomTargets(dashboards, nil, now); len(got) != 1 || !got[0].Pending || got[0].Key != "one/y" {
+		t.Fatalf("targets without data = %+v, want the announcing widget as pending", got)
 	}
 }

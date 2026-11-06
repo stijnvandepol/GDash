@@ -96,6 +96,11 @@ func (c *Client) Status(ctx context.Context) (ReceiverStatus, error) {
 	if err != nil {
 		return ReceiverStatus{}, fmt.Errorf("get receiver status: %w", err)
 	}
+	if resp.Type != "RECEIVER_STATUS" {
+		// An error answer carries no status; "no apps" must not be made
+		// of it, or the keeper would launch or yield for nothing.
+		return ReceiverStatus{}, fmt.Errorf("get receiver status: device answered %s", resp.Type)
+	}
 	return resp.Status, nil
 }
 

@@ -57,7 +57,7 @@ func (d *dataSources) trafficSources(cfg settings.Sources, dashboards []display.
 		}
 		resolved = append(resolved, q)
 	}
-	resolved = resolved[:min(len(resolved), maxTrafficQueries)]
+	resolved = capped(d.logger, "traffic routes", resolved, maxTrafficQueries)
 	showsCameras := display.TrafficShows(dashboards, traffic.ShowCameras)
 	if len(resolved) == 0 || (!cfg.TrafficInfo && !showsCameras) {
 		return nil

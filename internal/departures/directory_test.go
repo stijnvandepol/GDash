@@ -146,8 +146,13 @@ func TestFirstLoadFailureIsAnError(t *testing.T) {
 	if _, err := d.Search(context.Background(), "oss"); err == nil {
 		t.Fatal("no list and no error")
 	}
+	// Typing on in the editor does not ask OVapi again at once.
+	if _, err := d.Search(context.Background(), "oss"); err == nil || lister.loads != 1 {
+		t.Fatalf("Search a moment later = %v, loads %d; want the same error without a load", err, lister.loads)
+	}
+	now = now.Add(firstRetryAfter)
 	lister.err, lister.stops = nil, []Stop{{"a1", "Oss, Station"}}
 	if got, err := d.Search(context.Background(), "oss"); err != nil || len(got) != 1 {
-		t.Fatalf("Search after OVapi came back = %v, %v; want it to load at once", got, err)
+		t.Fatalf("Search after OVapi came back = %v, %v; want it to load after %s", got, err, firstRetryAfter)
 	}
 }

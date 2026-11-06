@@ -130,8 +130,10 @@ type keeperSession struct {
 	otherInput bool
 	// seen is set by the session's first status. Before it the keeper was
 	// not connected, so it cannot tell what happened on the TV meanwhile.
-	seen      bool
-	latest    []byte
+	seen   bool
+	latest []byte
+	// tooLarge: the latest message did not fit on the wire, said once.
+	tooLarge  bool
 	resend    *time.Timer
 	resendIdx int
 	// refresh fires the periodic restart, refreshEvery after the keeper's
@@ -394,5 +396,16 @@ func (s *keeperSession) sendLatest() error {
 	if s.transport == "" || s.latest == nil {
 		return nil
 	}
-	return s.client.Send(s.transport, s.keeper.Namespace, s.latest)
+	err := s.client.Send(s.transport, s.keeper.Namespace, s.latest)
+	if errors.Is(err, ErrTooLarge) {
+		// The TV keeps what it had; the next, smaller message gets through.
+		// Reconnecting would not help, so the session goes on.
+		if !s.tooLarge {
+			s.keeper.Logger.Warn("the dashboard does not fit in a cast message; the TV keeps the previous one", "error", err)
+		}
+		s.tooLarge = true
+		return nil
+	}
+	s.tooLarge = false
+	return err
 }
