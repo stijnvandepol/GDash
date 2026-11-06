@@ -5,6 +5,8 @@ the format follows [Keep a Changelog](https://keepachangelog.com).
 
 ## Unreleased
 
+## 0.11.0 – 2026-11-06
+
 ### Changed
 
 - When a screen is on is now a list of times, each with its own days: for
