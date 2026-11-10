@@ -500,6 +500,8 @@ export interface SourceStatus {
 /** GET /api/traffic: the switch for the unofficial ANWB traffic info and how it goes. */
 export interface TrafficInfo {
   enabled: boolean;
+  /** False unless the server runs with GDASH_UNOFFICIAL_SOURCES=on; then it cannot be turned on. */
+  available: boolean;
   /** When the admin last acknowledged the terms; absent if never. */
   acknowledgedAt?: string;
   anwb: {

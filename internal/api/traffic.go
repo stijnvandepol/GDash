@@ -20,9 +20,12 @@ type TrafficGuard interface {
 // ANWB go, and the data status of the widgets and the camera list.
 type trafficView struct {
 	settings.TrafficInfo
-	ANWB    traffic.Status `json:"anwb"`
-	Data    *sourceStatus  `json:"data,omitempty"`
-	Cameras *sourceStatus  `json:"cameras,omitempty"`
+	// Available is false unless GDASH_UNOFFICIAL_SOURCES=on; then the
+	// switch cannot be turned on and nothing is asked from the ANWB.
+	Available bool           `json:"available"`
+	ANWB      traffic.Status `json:"anwb"`
+	Data      *sourceStatus  `json:"data,omitempty"`
+	Cameras   *sourceStatus  `json:"cameras,omitempty"`
 }
 
 // getTraffic handles GET /api/traffic.
@@ -33,8 +36,10 @@ func (s *Server) getTraffic(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	entries := s.SourceStatus()
+	info.Enabled = info.Enabled && s.UnofficialSources
 	writeJSON(w, http.StatusOK, trafficView{
 		TrafficInfo: info,
+		Available:   s.UnofficialSources,
 		ANWB:        s.Traffic.Status(),
 		Data:        statusOf(entries, display.TrafficSource),
 		Cameras:     statusOf(entries, display.CamerasSource),
@@ -42,7 +47,8 @@ func (s *Server) getTraffic(w http.ResponseWriter, r *http.Request) {
 }
 
 // putTraffic handles PUT /api/traffic {enabled, acknowledged}. Turning it on
-// needs acknowledged: true (422 otherwise) and starts the requests afresh,
+// needs GDASH_UNOFFICIAL_SOURCES=on (409 unofficial_sources_off otherwise)
+// and acknowledged: true (422 otherwise) and starts the requests afresh,
 // also after the ANWB made GDash stop.
 func (s *Server) putTraffic(w http.ResponseWriter, r *http.Request) {
 	var body struct {
@@ -50,6 +56,11 @@ func (s *Server) putTraffic(w http.ResponseWriter, r *http.Request) {
 		Acknowledged bool `json:"acknowledged"`
 	}
 	if !decodeJSON(w, r, &body) {
+		return
+	}
+	if body.Enabled && !s.UnofficialSources {
+		writeError(w, http.StatusConflict, "unofficial_sources_off",
+			"ANWB traffic info is off on this server. Whoever runs GDash can allow it with GDASH_UNOFFICIAL_SOURCES=on.")
 		return
 	}
 	info, err := s.Settings.SetTrafficInfo(r.Context(), body.Enabled, body.Acknowledged)

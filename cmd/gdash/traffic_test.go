@@ -52,9 +52,10 @@ func trafficStandIns(t *testing.T) (*dataSources, *atomic.Int32, *atomic.Int32) 
 		t.Fatal(err)
 	}
 	d := &dataSources{
-		settings: &settings.Service{Box: box},
-		logger:   slog.New(slog.NewTextHandler(io.Discard, nil)),
-		traffic:  &traffic.Guard{Client: traffic.Client{BaseURL: anwb.URL, HTTP: anwb.Client()}, Now: time.Now},
+		settings:   &settings.Service{Box: box},
+		logger:     slog.New(slog.NewTextHandler(io.Discard, nil)),
+		unofficial: true,
+		traffic:    &traffic.Guard{Client: traffic.Client{BaseURL: anwb.URL, HTTP: anwb.Client()}, Now: time.Now},
 		cameras: &speedcameras.Store{
 			Client: speedcameras.Client{BaseURL: overpass.URL, HTTP: overpass.Client()},
 			Path:   filepath.Join(t.TempDir(), "speedcameras.json"), Now: time.Now,
@@ -98,6 +99,13 @@ func TestTrafficIsNotAskedBeforeTheAcknowledgement(t *testing.T) {
 	if result.Incidents || result.CameraCount != 2 || overpassCalls.Load() != 1 {
 		t.Fatalf("result while traffic info is off = %+v after %d queries, want two A2 cameras, no incidents, one query", result, overpassCalls.Load())
 	}
+
+	// The switch alone is not enough where GDASH_UNOFFICIAL_SOURCES is off.
+	d.unofficial = false
+	if got := fetchAll(t, d, settings.Sources{TrafficInfo: true}, roads); len(got) != 0 || anwbCalls.Load() != 0 {
+		t.Fatalf("with unofficial sources off: sources %v after %d requests, want none", got, anwbCalls.Load())
+	}
+	d.unofficial = true
 
 	on := fetchAll(t, d, settings.Sources{TrafficInfo: true}, roads)[display.TrafficSource].(map[string]traffic.Result)["roads:A2"]
 	if anwbCalls.Load() != 1 || !on.Incidents || len(on.Jams) != 2 {

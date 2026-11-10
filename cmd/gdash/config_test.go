@@ -77,6 +77,18 @@ func TestLoadConfigUpdateCheck(t *testing.T) {
 	}
 }
 
+func TestLoadConfigUnofficialSources(t *testing.T) {
+	for value, on := range map[string]bool{"": false, "off": false, "on": true} {
+		cfg, err := loadConfig(env(map[string]string{"GDASH_UNOFFICIAL_SOURCES": value}))
+		if err != nil || cfg.unofficialSources != on {
+			t.Errorf("GDASH_UNOFFICIAL_SOURCES=%q: unofficialSources = %v, %v; want %v", value, cfg.unofficialSources, err, on)
+		}
+	}
+	if _, err := loadConfig(env(map[string]string{"GDASH_UNOFFICIAL_SOURCES": "yes"})); err == nil {
+		t.Error("GDASH_UNOFFICIAL_SOURCES=yes accepted; only on and off are")
+	}
+}
+
 func TestLoadConfigSchoolHolidaysURL(t *testing.T) {
 	cfg, err := loadConfig(env(map[string]string{}))
 	if err != nil || cfg.schoolHolidaysURL != holidays.DefaultSchoolURL {

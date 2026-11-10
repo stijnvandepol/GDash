@@ -12,6 +12,9 @@ services:
       # Optional: the app ID of an own registered receiver, see
       # docs/receiver.md. Without it GDash uses the public DashCast receiver.
       # GDASH_CAST_APP_ID: "ABCD1234"
+      # Optional: allow the ANWB's fuel prices and traffic info, which GDash
+      # reads unofficially. For your own household only; see the README.
+      # GDASH_UNOFFICIAL_SOURCES: "on"
     volumes:
       - gdash-data:/data
     restart: unless-stopped

@@ -18,6 +18,9 @@ ExecStart=/usr/local/bin/gdash
 Environment=GDASH_DATA_DIR=/var/lib/gdash
 # Uncomment to listen on another port; open it in the firewall for your TVs.
 #Environment=GDASH_ADDR=:8420
+# Uncomment to allow the ANWB's fuel prices and traffic info, which GDash
+# reads unofficially; for your own household only (see the README).
+#Environment=GDASH_UNOFFICIAL_SOURCES=on
 Restart=on-failure
 RestartSec=5
 

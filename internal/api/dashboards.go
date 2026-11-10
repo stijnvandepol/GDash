@@ -29,6 +29,11 @@ func (s *Server) getWidgetTypes(w http.ResponseWriter, _ *http.Request) {
 	}
 	types := map[string]widgetType{}
 	for name, t := range display.WidgetTypes {
+		// A Fuel widget already on a dashboard stays valid, but a new one
+		// is not offered where the ANWB may not be asked.
+		if name == display.FuelWidget && !s.UnofficialSources {
+			continue
+		}
 		settings := t.Settings
 		if settings == nil {
 			settings = map[string]display.Setting{}

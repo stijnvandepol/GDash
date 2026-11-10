@@ -151,6 +151,7 @@ export const de: Record<TextKey, string> = {
   fuelDiesel: 'Diesel',
   fuelAutogas: 'LPG',
   fuelCng: 'CNG',
+  fuelOff: 'Kraftstoffpreise sind auf diesem Server ausgeschaltet',
   rainTitle: 'Regen',
   rainLoading: 'Regenvorhersage wird geladen…',
   rainFailed: 'Die Regenvorhersage konnte nicht geladen werden',

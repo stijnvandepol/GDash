@@ -729,9 +729,16 @@ Good to know:
 ## Fuel prices
 
 The Fuel prices widget lists the cheapest petrol stations within a few
-kilometres of a place, for the fuel you choose. It needs no account or key:
-the prices are the public price data of the [ANWB](https://www.anwb.nl),
-the same that its route planner and app show.
+kilometres of a place, for the fuel you choose. It needs no account or key.
+
+**The prices come from the ANWB, unofficially.** GDash reads them from the
+service that the [ANWB](https://www.anwb.nl)'s own route planner and app
+use. The ANWB offers it to no one else, and its answers say that the data
+may not be reused without its written permission. So the widget is off
+unless whoever runs GDash starts it with `GDASH_UNOFFICIAL_SOURCES=on`;
+without it the widget is not offered, and one that is already on a
+dashboard says "Fuel prices are off on this server". Show it on your own
+screens at home only.
 
 1. Add a **Fuel prices** widget to a dashboard and select it.
 2. **Place**: type a town or postcode and choose it from the list. Leave it
@@ -907,7 +914,10 @@ therefore leaves it off until you turn it on, labels it "Unofficial · ANWB"
 on every screen, and only asks for it the way a person with the website
 open would:
 
-- It is off by default. Under **Integrations**, open **ANWB traffic info
+- It is off by default, twice. Whoever runs GDash first has to allow it by
+  starting GDash with `GDASH_UNOFFICIAL_SOURCES=on`; without it the setting
+  says so and cannot be turned on, and nothing is asked from the ANWB. Then,
+  under **Integrations**, open **ANWB traffic info
   (unofficial)** (under Travel), tick "I use this for my own household only; the data
   belongs to the ANWB" and choose **Turn on**. GDash stores when you did;
   turning it off and on asks again.

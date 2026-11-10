@@ -41,6 +41,11 @@ type config struct {
 	// updateCheckOff is set by GDASH_UPDATE_CHECK=off: GDash never asks
 	// for the latest release, whatever the setting in the web interface.
 	updateCheckOff bool
+	// unofficialSources is set by GDASH_UNOFFICIAL_SOURCES=on: the sources
+	// that read a service through endpoints it does not offer for reuse
+	// (the ANWB's fuel prices and traffic info) may be used. They are off
+	// unless the person who runs GDash turns them on.
+	unofficialSources bool
 	// schoolHolidaysURL is where the school holidays are read. Only the
 	// end-to-end tests set GDASH_SCHOOL_HOLIDAYS_URL, to a stand-in.
 	schoolHolidaysURL string
@@ -78,6 +83,14 @@ func loadConfig(getenv func(string) string) (config, error) {
 		cfg.updateCheckOff = true
 	default:
 		return config{}, fmt.Errorf("GDASH_UPDATE_CHECK %q is neither on nor off", getenv("GDASH_UPDATE_CHECK"))
+	}
+
+	switch getenv("GDASH_UNOFFICIAL_SOURCES") {
+	case "", "off":
+	case "on":
+		cfg.unofficialSources = true
+	default:
+		return config{}, fmt.Errorf("GDASH_UNOFFICIAL_SOURCES %q is neither on nor off", getenv("GDASH_UNOFFICIAL_SOURCES"))
 	}
 
 	cfg.schoolHolidaysURL = valueOr(getenv("GDASH_SCHOOL_HOLIDAYS_URL"), holidays.DefaultSchoolURL)

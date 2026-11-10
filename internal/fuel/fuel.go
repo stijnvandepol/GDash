@@ -93,3 +93,12 @@ func Round(degrees float64) float64 {
 func Coordinate(degrees float64) string {
 	return strconv.FormatFloat(Round(degrees), 'f', -1, 64)
 }
+
+// OffValue is what a Fuel widget gets when GDash does not ask the ANWB on
+// this server: {"off": true}, which the widget shows as such.
+type OffValue struct {
+	Off bool `json:"off"`
+}
+
+// Off returns the value of fuel prices that are turned off.
+func Off() OffValue { return OffValue{Off: true} }

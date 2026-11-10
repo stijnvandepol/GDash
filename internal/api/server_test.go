@@ -191,6 +191,8 @@ func (f *fakeSources) set(places []weather.Place, err error, entries map[string]
 const testReadTimeout = 2 * time.Second
 
 type testEnv struct {
+	// server is the Server under test; a test may change its switches.
+	server  *Server
 	srv     *httptest.Server
 	client  *http.Client
 	changes *atomic.Int32
@@ -284,6 +286,7 @@ func newTestEnv(t *testing.T, discover func(context.Context) ([]cast.Device, err
 		Stops:             stops,
 		P2000Places:       sources,
 		Traffic:           trafficGuard,
+		UnofficialSources: true,
 		KNMI:              fakeKNMI{},
 		Calendars:         &calendar.Client{HTTP: outbound.NewClient(5 * time.Second), Location: time.UTC, Now: now},
 		CustomFetcher:     &custom.Fetcher{HTTP: outbound.NewClient(5 * time.Second), Box: box, Now: now},
@@ -325,7 +328,7 @@ func newTestEnv(t *testing.T, discover func(context.Context) ([]cast.Device, err
 	t.Cleanup(srv.Close)
 	jar, _ := cookiejar.New(nil)
 	return &testEnv{
-		srv: srv, client: &http.Client{Jar: jar}, changes: changes, settingsChanges: settingsChanges,
+		server: s, srv: srv, client: &http.Client{Jar: jar}, changes: changes, settingsChanges: settingsChanges,
 		pairing: pairingService, store: st, sources: sources, stops: stops, artwork: artwork, board: board, announced: announced, logs: logs,
 		updates: updates, elapsed: elapsed, cameraClock: cameraClock, traffic: trafficGuard,
 	}

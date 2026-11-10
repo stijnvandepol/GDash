@@ -11,10 +11,6 @@ import (
 // a normal weekday; this stops a broken server without cutting a busy day.
 const maxAnswerBytes = 8 << 20
 
-// callerID is what the ANWB's own website sends to name itself; the service
-// answers without it, but it marks the request as a traffic list reader.
-const callerID = "routing/traffic-info-web"
-
 // StatusError is an answer other than 200 OK.
 type StatusError struct {
 	Code int
@@ -47,7 +43,6 @@ func (c Client) Fetch(ctx context.Context) (Report, error) {
 	}
 	req.Header.Set("User-Agent", c.UserAgent)
 	req.Header.Set("Accept", "application/json")
-	req.Header.Set("x-anwb-caller-id", callerID)
 	resp, err := c.HTTP.Do(req)
 	if err != nil {
 		return Report{}, fmt.Errorf("request anwb traffic: %w", err)

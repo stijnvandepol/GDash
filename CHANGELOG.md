@@ -5,6 +5,21 @@ the format follows [Keep a Changelog](https://keepachangelog.com).
 
 ## Unreleased
 
+### Changed
+
+- The ANWB's fuel prices and traffic info are off unless GDash runs with
+  `GDASH_UNOFFICIAL_SOURCES=on`. Both are read through endpoints of the
+  ANWB's own apps and website, which it does not offer for reuse. Without
+  the variable the Fuel widget is not offered (one already on a dashboard
+  says the prices are off), traffic info cannot be turned on, and nothing is
+  asked from the ANWB; fixed speed cameras from OpenStreetMap still work.
+  Set it to keep using them as before.
+- Requests for the ANWB's traffic list no longer pretend to come from the
+  ANWB's website (the `x-anwb-caller-id` header is gone; the list answers
+  without it).
+- The dashboard and preview pages have the GDash icon in the browser tab,
+  as the admin pages had.
+
 ## 0.11.0 – 2026-11-06
 
 ### Changed

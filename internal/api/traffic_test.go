@@ -72,6 +72,32 @@ func TestTrafficInfoNeedsTheAcknowledgement(t *testing.T) {
 	}
 }
 
+func TestUnofficialSourcesAreOffUnlessAllowed(t *testing.T) {
+	env := newTestEnv(t, nil)
+	env.setUp(t)
+	env.server.UnofficialSources = false
+
+	status, body := env.do(t, "GET", "/api/traffic", "")
+	if status != http.StatusOK || !strings.Contains(body, `"available":false`) || !strings.Contains(body, `"enabled":false`) {
+		t.Fatalf("traffic = %d %s, want it unavailable", status, body)
+	}
+	status, body = env.do(t, "PUT", "/api/traffic", `{"enabled":true,"acknowledged":true}`)
+	if status != http.StatusConflict || !strings.Contains(body, "unofficial_sources_off") {
+		t.Fatalf("turning it on = %d %s, want 409", status, body)
+	}
+	if env.settingsChanges.Load() != 0 || env.traffic.resets.Load() != 0 {
+		t.Fatal("a refused switch changed something")
+	}
+	// Turning it off is always allowed.
+	if status, _ := env.do(t, "PUT", "/api/traffic", `{"enabled":false}`); status != http.StatusOK {
+		t.Fatalf("off = %d", status)
+	}
+	_, types := env.do(t, "GET", "/api/widget-types", "")
+	if strings.Contains(types, `"fuel"`) || !strings.Contains(types, `"traffic"`) {
+		t.Fatalf("widget types offer fuel without GDASH_UNOFFICIAL_SOURCES: %s", types)
+	}
+}
+
 func TestKNMIKeyIsTriedAndNeverShown(t *testing.T) {
 	env := newTestEnv(t, nil)
 	env.setUp(t)

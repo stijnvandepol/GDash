@@ -84,6 +84,10 @@ type Server struct {
 	P2000Places P2000PlaceFinder
 	// Traffic guards the requests to the ANWB's traffic info.
 	Traffic TrafficGuard
+	// UnofficialSources is GDASH_UNOFFICIAL_SOURCES=on: the ANWB's fuel
+	// prices and traffic info may be used. Without it the Fuel widget is
+	// not offered and traffic info cannot be turned on.
+	UnofficialSources bool
 	// KNMI tries a KNMI key before it is stored.
 	KNMI KNMIChecker
 	// Calendars reads a calendar or a waste calendar for its Test button.

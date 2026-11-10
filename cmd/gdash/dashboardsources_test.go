@@ -27,7 +27,7 @@ func widgetSources(t *testing.T, cfg settings.Sources, widgets ...display.Widget
 	if err != nil {
 		t.Fatal(err)
 	}
-	d := &dataSources{settings: &settings.Service{Box: box}}
+	d := &dataSources{settings: &settings.Service{Box: box}, unofficial: true}
 	out := map[string]datahub.Source{}
 	for _, src := range d.dashboardSources(cfg, []display.Dashboard{{Widgets: widgets}}) {
 		out[src.Key] = src
@@ -168,7 +168,7 @@ func TestFuelSourceFetchesTheWeatherLocationForWidgetsWithoutAPlace(t *testing.T
 	if err != nil {
 		t.Fatal(err)
 	}
-	d := &dataSources{settings: &settings.Service{Box: box}, fuel: &fuel.Client{BaseURL: srv.URL, HTTP: srv.Client()}}
+	d := &dataSources{settings: &settings.Service{Box: box}, fuel: &fuel.Client{BaseURL: srv.URL, HTTP: srv.Client()}, unofficial: true}
 	cfg := settings.Sources{Location: &weather.Location{Latitude: 51.76, Longitude: 5.52}}
 	source, ok := d.fuelSource(cfg.Location, display.FuelQueries([]display.Dashboard{{Widgets: []display.Widget{fuelOn(map[string]any{"radius": float64(3)})}}}))
 	if !ok {
@@ -333,5 +333,21 @@ func TestAWasteWidgetWithoutACalendarShowsTheOnlyWasteCalendar(t *testing.T) {
 	}
 	if len(report[display.WasteDefaultKey]) != 5 || len(report["7"]) != 5 {
 		t.Fatalf("report = %v, want the five pickups under the calendar and under %q", report, display.WasteDefaultKey)
+	}
+}
+
+func TestFuelIsOffUnlessUnofficialSourcesAreAllowed(t *testing.T) {
+	d := &dataSources{}
+	queries := display.FuelQueries([]display.Dashboard{{Widgets: []display.Widget{fuelOn(nil)}}})
+	if _, ok := d.fuelSource(nil, nil); ok {
+		t.Fatal("a source without Fuel widgets")
+	}
+	source, ok := d.fuelSource(nil, queries)
+	if !ok || source.Key != display.FuelSource {
+		t.Fatalf("source = %+v, %v; want one that says the prices are off", source, ok)
+	}
+	value, err := source.Fetch(context.Background())
+	if err != nil || value != fuel.Off() {
+		t.Fatalf("value = %+v, %v; want fuel.Off(), and no request to the ANWB", value, err)
 	}
 }

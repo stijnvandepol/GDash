@@ -10,6 +10,9 @@ import (
 	"github.com/stijnvandepol/gdash/internal/fuel"
 )
 
+// FuelWidget is the type of the Fuel widget.
+const FuelWidget = "fuel"
+
 // FuelSource is the data key of the cheapest petrol stations for the places
 // that Fuel widgets show: query key to stations (fuel.Query.Key).
 const FuelSource = "fuel.default"

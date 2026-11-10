@@ -61,10 +61,13 @@ type dataSources struct {
 	solar       solar.Client
 	departures  *departures.Client
 	fuel        *fuel.Client
-	holidays    holidays.Client
-	rain        *rain.Client
-	warnings    *warnings.Client
-	p2000       *p2000.Client
+	// unofficial: the ANWB's fuel prices and traffic info may be fetched
+	// (GDASH_UNOFFICIAL_SOURCES=on).
+	unofficial bool
+	holidays   holidays.Client
+	rain       *rain.Client
+	warnings   *warnings.Client
+	p2000      *p2000.Client
 	// traffic guards the requests to the ANWB; cameras keeps the fixed
 	// camera list; knmi reads measured weather.
 	traffic *traffic.Guard
@@ -173,6 +176,7 @@ func startData(ctx context.Context, cfg config, db *store.Store, svc *settings.S
 		immich:     &immich.Client{HTTP: outbound.NewClient(immich.Timeout)},
 		synology:   &synology.Client{},
 		departures: transit,
+		unofficial: cfg.unofficialSources,
 		fuel:       &fuel.Client{BaseURL: fuel.DefaultBaseURL, HTTP: outbound.NewClient(upstreamTimeout), UserAgent: userAgent},
 		traffic: &traffic.Guard{
 			Client: traffic.Client{BaseURL: anwbURL, HTTP: outbound.NewClient(upstreamTimeout), UserAgent: userAgent},

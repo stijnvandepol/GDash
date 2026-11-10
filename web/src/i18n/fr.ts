@@ -152,6 +152,7 @@ export const fr: Record<TextKey, string> = {
   fuelDiesel: 'Diesel',
   fuelAutogas: 'GPL',
   fuelCng: 'GNV',
+  fuelOff: 'Les prix des carburants sont désactivés sur ce serveur',
   rainTitle: 'Pluie',
   rainLoading: 'Chargement des prévisions de pluie…',
   rainFailed: 'Impossible de charger les prévisions de pluie',

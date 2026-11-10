@@ -158,6 +158,12 @@ describe('fuelWaitingText', () => {
     expect(fuelWaitingText(others, {})).toBe('Set a weather location under Integrations, or choose a place for this widget.');
     expect(fuelWaitingText(others, { place: { name: 'Oss', latitude: 51.7, longitude: 5.5 } })).toBe('Loading fuel prices…');
   });
+
+  it('says the prices are off when the server does not ask the ANWB', () => {
+    const off = { ...entry, value: { off: true } };
+    expect(fuelWaitingText(off, {})).toBe('Fuel prices are off on this server');
+    expect(fuelWaitingText(off, { place: { name: 'Oss', latitude: 51.7, longitude: 5.5 } })).toBe('Fuel prices are off on this server');
+  });
 });
 
 describe('readPlace', () => {

@@ -43,6 +43,9 @@ function serverEnvironment(dataDir: string, schoolHolidaysUrl: string, upstream:
     // The suite never asks GitHub for the latest release; tests that show
     // the update notice answer /api/system themselves.
     GDASH_UPDATE_CHECK: 'off',
+    // The suite covers the Fuel widget and ANWB traffic info, which are
+    // off unless the server allows them.
+    GDASH_UNOFFICIAL_SOURCES: 'on',
     GDASH_SCHOOL_HOLIDAYS_URL: schoolHolidaysUrl,
     // Rain and weather warnings come from e2e/upstream.ts.
     GDASH_TEST_UPSTREAM: upstream,

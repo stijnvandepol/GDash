@@ -133,12 +133,18 @@ export function savingText(rows: Row[], fuel: string): string | undefined {
   return t('fuelSave', { amount, unit: unitText(fuel) });
 }
 
+/** Whether the server says it does not ask the ANWB ({"off": true}). */
+export function isOff(value: unknown): boolean {
+  return typeof value === 'object' && value !== null && (value as Record<string, unknown>).off === true;
+}
+
 /**
  * What the widget says while it has no list. A widget without a place
  * follows the weather location; when other widgets have lists and this one
  * has not, there is no weather location to follow.
  */
 export function fuelWaitingText(entry: Entry | undefined, settings: Record<string, unknown> | undefined): string {
+  if (isOff(entry?.value)) return t('fuelOff');
   if (entry?.value !== undefined && !entry.failing && settings?.place === undefined) return t('fuelNotSetUp');
   return waitingText(entry, 'fuel');
 }

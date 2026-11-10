@@ -53,7 +53,7 @@ come from another site (cross-site request forgery protection).
 | `PATCH /api/displays/{id}` `{name?, castDeviceId?, dashboardId?, active?, schedule?, rotation?, rotateSeconds?, textScale?, screensaverMinutes?, screenCare?, dimAtNight?, dimFrom?, dimUntil?}` | admin | `200` display | `401`, `404 not_found`, `422` (also for an unknown dashboard) |
 | `DELETE /api/displays/{id}` | admin | `204` | `401`, `404 not_found` |
 | `POST /api/displays/{id}/cast-takeovers` | admin | `204`: the display's cast keeper shows the dashboard on the TV within seconds, also over what someone is watching, and stops waiting (`yielded`); recorded in the audit log as `cast_taken_over`. Not while the TV is in standby or outside active hours | `401`, `404 not_found`, `409 not_cast` (no Cast device) or `not_connected` (GDash is still connecting to the TV) |
-| `GET /api/widget-types` | admin | `200 {columns, rows, themes, fonts, types: {name: {minW, minH, settings: {key: {kind, min?, max?, required}}}}}` | `401` |
+| `GET /api/widget-types` | admin | `200 {columns, rows, themes, fonts, types: {name: {minW, minH, settings: {key: {kind, min?, max?, required}}}}}`; `fuel` is left out unless `GDASH_UNOFFICIAL_SOURCES=on` | `401` |
 | `GET /api/dashboard-templates` | admin | `200 {"templates": [{id, name, description, theme, widgets}]}`; create a dashboard from one with `POST /api/dashboards` and its `theme` and `widgets` | `401` |
 | `GET /api/dashboards` | admin | `200 {"dashboards": [dashboard + createdAt]}` | `401` |
 | `POST /api/dashboards` `{id, name, theme?, font?, nightTheme?, widgets}` | admin | `201` dashboard | `401`, `409 conflict`, `422` |
@@ -87,8 +87,8 @@ come from another site (cross-site request forgery protection).
 | `DELETE /api/homey` | admin | `204`; Homey widgets show that it is not connected | `401` |
 | `GET /api/homey/capabilities` | admin | `200 {"capabilities": [capability]}`, every readable value of every device, sorted by zone, device and title | `401`, `409 not_connected` or `nothing_received`, `502 upstream_unavailable` |
 | `GET /api/homey/users` | admin | `200 {"users": [{id, name}]}`, sorted by name, without whether they are home | `401`, `409 not_connected` or `nothing_received`, `502 upstream_unavailable` (also when the key lacks View users) |
-| `GET /api/traffic` | admin | `200 {enabled, acknowledgedAt?, anwb: {state, httpStatus?, nextAttemptAt?}, data?, cameras?}`; `state` is `idle`, `ok`, `failing` or `stopped`, `data` and `cameras` are `{updatedAt?, failing}` while a Traffic widget needs them | `401` |
-| `PUT /api/traffic` `{enabled, acknowledged}` | admin | `200 {enabled, acknowledgedAt?}`; turning it on needs `acknowledged: true` and starts asking the ANWB afresh, also after a stop | `401`, `422` naming `acknowledged` |
+| `GET /api/traffic` | admin | `200 {enabled, available, acknowledgedAt?, anwb: {state, httpStatus?, nextAttemptAt?}, data?, cameras?}`; `state` is `idle`, `ok`, `failing` or `stopped`, `data` and `cameras` are `{updatedAt?, failing}` while a Traffic widget needs them; `available` is false unless `GDASH_UNOFFICIAL_SOURCES=on`, and `enabled` is then false too | `401` |
+| `PUT /api/traffic` `{enabled, acknowledged}` | admin | `200 {enabled, acknowledgedAt?}`; turning it on needs `acknowledged: true` and starts asking the ANWB afresh, also after a stop | `401`, `409 unofficial_sources_off` when turning it on without `GDASH_UNOFFICIAL_SOURCES=on`, `422` naming `acknowledged` |
 | `GET /api/knmi` | admin | `200 {connected, unreadable, data?}`, never the key | `401` |
 | `PUT /api/knmi` `{key}` | admin | `200 {"connected": true}` after the KNMI accepted the key | `401`, `422` naming `key` (refused, or the KNMI cannot be reached) |
 | `DELETE /api/knmi` | admin | `204`; Weather widgets show the model's values again | `401` |
@@ -360,7 +360,7 @@ data. The stop search loads `/stopareacode`, all 4600 stop areas, on first use a
 memory; when a refresh fails it keeps using the previous list.
 
 Fuel prices come from the ANWB points-of-interest service (`api.anwb.nl/routing/points-of-interest/v3/all`), which needs
-no key. Every 15 minutes the server asks once per distinct place and radius that dashboards show, at most ten, with
+no key but is not offered for reuse; the server only asks it with `GDASH_UNOFFICIAL_SOURCES=on`. Every 15 minutes the server asks once per distinct place and radius that dashboards show, at most ten, with
 `type-filter=FUEL_STATION` and a `bounding-box-filter` around the place, sends a `User-Agent` that names GDash and its
 version, reads at most 8 MB, and cuts the circle out of the box itself (haversine distance). A price below 0.10 euro is
 ignored, as the service sends 0 for a fuel a station does not sell. When a request fails the last complete answer
@@ -396,7 +396,7 @@ server refuses an address that is not on the loopback address.
 
 Traffic info comes from the ANWB's undocumented traffic list
 (`api.anwb.nl/traffic/traffic-info/v1/incidents/incidents-desktop`), unofficially: the ANWB forbids reusing its
-content without permission, so it is off until an admin turns it on with `PUT /api/traffic` and
+content without permission, so it is off unless the server runs with `GDASH_UNOFFICIAL_SOURCES=on` and an admin turns it on with `PUT /api/traffic` and
 `acknowledged: true`, which is stored with its time and audited (`traffic_info_enabled`). While it is on and a
 Traffic widget is on a dashboard, the server asks once for the whole country, at most every 3 minutes for all
 widgets together, with a `User-Agent` that names GDash and its version, and reads at most 8 MB. The answer is read
@@ -879,7 +879,8 @@ three decimals, the radius and the fuel, joined by commas; a widget without a pl
 and follows the weather location, so no key holds its coordinates. `name` is the station's name with its town unless the
 name holds it already, `price` is euro per litre (per kilogram for `CNG`) and `distanceKm` is the straight-line distance
 with one decimal. A place without a station that sells the fuel has an empty list. Without a place and without a weather
-location there is no `fuel.default` entry at all.
+location there is no `fuel.default` entry at all. Without `GDASH_UNOFFICIAL_SOURCES=on` the entry is `{"off": true}`
+while a Fuel widget is on a dashboard, and the ANWB is not asked.
 
 **rain data (`rain.default`):** maps the keys of the places that a screen's own widgets show to their forecast:
 `{"51.77,5.52": {"source": "buienradar", "stepMinutes": 5, "points": [{"time": "2026-10-13T14:05:00+02:00", "mmPerHour": 0.52}]}}`.

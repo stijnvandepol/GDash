@@ -59,10 +59,12 @@ func (d *dataSources) trafficSources(cfg settings.Sources, dashboards []display.
 	}
 	resolved = capped(d.logger, "traffic routes", resolved, maxTrafficQueries)
 	showsCameras := display.TrafficShows(dashboards, traffic.ShowCameras)
-	if len(resolved) == 0 || (!cfg.TrafficInfo && !showsCameras) {
+	if len(resolved) == 0 || (!(cfg.TrafficInfo && d.unofficial) && !showsCameras) {
 		return nil
 	}
-	anwb := cfg.TrafficInfo
+	// The switch in the web interface only counts when the person who runs
+	// GDash allowed the ANWB at all.
+	anwb := cfg.TrafficInfo && d.unofficial
 	trafficData := datahub.Source{
 		Key:      display.TrafficSource,
 		Interval: trafficInterval,

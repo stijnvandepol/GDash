@@ -83,6 +83,11 @@
     {:else}
       <p class="small muted">Add a Traffic widget to a dashboard to choose the roads it watches.</p>
     {/if}
+  {:else if info && !info.available}
+    <p class="small">
+      Off on this server. Whoever runs GDash can allow it by starting it with
+      <code>GDASH_UNOFFICIAL_SOURCES=on</code>; you then still turn it on here.
+    </p>
   {:else if info}
     <form onsubmit={(e) => turn(true, e)}>
       <label class="check">

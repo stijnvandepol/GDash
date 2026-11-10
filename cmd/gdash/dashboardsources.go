@@ -47,6 +47,9 @@ const (
 	fuelTimeout = 2 * time.Minute
 	// maxFuelQueries bounds those requests for a screen full of widgets.
 	maxFuelQueries = 10
+	// offInterval is how often a source that is turned off on this server
+	// says so again; it never leaves the server.
+	offInterval = 24 * time.Hour
 	// The school holidays are set years ahead and change a few times a
 	// year at most; the public holidays only need a new day to start.
 	holidaysInterval = 24 * time.Hour
@@ -186,6 +189,18 @@ func (d *dataSources) warningsSource(location *weather.Location, queries []warni
 // show. A widget without a place follows the weather location; without one
 // it has nothing to fetch, and its screen says to set one up.
 func (d *dataSources) fuelSource(location *weather.Location, queries []fuel.Query) (datahub.Source, bool) {
+	if !d.unofficial {
+		if len(queries) == 0 {
+			return datahub.Source{}, false
+		}
+		// The ANWB is not asked; the widgets say why, instead of loading.
+		return datahub.Source{
+			Key:      display.FuelSource,
+			Interval: offInterval,
+			Version:  "off",
+			Fetch:    func(context.Context) (any, error) { return fuel.Off(), nil },
+		}, true
+	}
 	var resolved []fuel.Query
 	for _, q := range queries {
 		if q.Here {
