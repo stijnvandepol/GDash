@@ -5,6 +5,8 @@ the format follows [Keep a Changelog](https://keepachangelog.com).
 
 ## Unreleased
 
+## 0.12.0 – 2026-11-10
+
 ### Changed
 
 - The ANWB's fuel prices and traffic info are off unless GDash runs with

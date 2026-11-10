@@ -80,6 +80,8 @@ for setup on an empty data directory and served the web interface.
 
 **0.11.0** was tagged on 6 November 2026: when a screen is on is a list of times with their own days (several on one day too), with a sentence that says what is set, and the "another dashboard" slots kept apart; a review round fixed repeating all-day appointments around the clock change, RDATE-only appointments, a Cast keeper that could wait for good or reconnect endlessly on a page too large, shutdown order, and smaller things. 89 Playwright tests passed.
 
+**0.12.0** was tagged on 10 November 2026: the ANWB's fuel prices and traffic info, which GDash reads through endpoints the ANWB does not offer for reuse, are off unless GDash runs with `GDASH_UNOFFICIAL_SOURCES=on`; the traffic requests no longer pretend to come from the ANWB's website; the dashboard and preview pages have the GDash icon. 89 Playwright tests passed.
+
 ## Checked by CI on every push
 
 gofmt, go vet, staticcheck, the Go tests with the race detector (fuzz seeds included), govulncheck, svelte-check with zero warnings, the web unit tests (Vitest), npm audit, an up-to-date THIRD_PARTY_LICENSES, a gitleaks scan of the whole history, 24 Playwright browser tests (setup, settings, backup, dashboards, styles, pairing, schedule) with axe accessibility checks in light and dark mode and a check that every button keeps 4.5:1 while hovered, and a Docker build for amd64 and arm64. The first run passed on 8 October 2026; all of it passed on 9 October 2026 after the security and design rounds.
