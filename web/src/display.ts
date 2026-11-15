@@ -41,7 +41,11 @@ window.addEventListener('focus', () => visibility.add('focus', new Date()));
 let lastReportAt = -Infinity;
 // The page loads on screen; the keeper assumes so after every launch.
 let reportedVisibility: 'hidden' | 'visible' = 'visible';
-let lastVisibilityAt = -Infinity;
+// Counted from the load: within the keeper's ownPageGoneGap after a launch
+// the server takes a hidden report for the previous page, and this page
+// would never send it again. An app opened right after the TV is switched
+// on is therefore reported once that gap has passed.
+let lastVisibilityAt = Date.now();
 let visibilityTimer: ReturnType<typeof setTimeout> | undefined;
 
 startCompat();

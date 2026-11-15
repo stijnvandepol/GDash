@@ -5,6 +5,15 @@ the format follows [Keep a Changelog](https://keepachangelog.com).
 
 ## Unreleased
 
+### Fixed
+
+- An app opened on a Google TV within 30 seconds after the dashboard
+  started, such as right after the TV was switched on, no longer gets the
+  dashboard put over it by the next restart against the screensaver. The
+  page's report that it is hidden was sent in the moment the server still
+  takes such a report for the previous page, and never again; the page now
+  reports it once that moment has passed.
+
 ## 0.12.0 – 2026-11-10
 
 ### Changed

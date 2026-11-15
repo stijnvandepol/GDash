@@ -16,6 +16,8 @@ async function reportsOf(page: Page): Promise<{ reason: string; visibility: { st
 }
 
 test('a paired TV reports its browser, and the Displays page shows it', async ({ adminPage: page, browser, baseURL }) => {
+  // The page waits 30 seconds after its load before it reports that it is hidden.
+  test.setTimeout(90_000);
   const created = await page.request.post('/api/displays', { data: { id: DISPLAY, name: 'E2E Report' } });
   expect(created.status()).toBe(201);
 
@@ -34,12 +36,14 @@ test('a paired TV reports its browser, and the Displays page shows it', async ({
 
     await expect.poll(async () => (await reportsOf(page)).map((r) => r.reason), { timeout: 20_000 }).toEqual(['connected']);
 
-    // A screensaver covers the page: it says so at once.
+    // A screensaver covers the page: it says so once the first 30 seconds
+    // after the load have passed, in which the server would take the report
+    // for the previous page.
     await screen.evaluate(() => {
       Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => 'hidden' });
       document.dispatchEvent(new Event('visibilitychange'));
     });
-    await expect.poll(async () => (await reportsOf(page)).map((r) => r.reason)).toEqual(['hidden']);
+    await expect.poll(async () => (await reportsOf(page)).map((r) => r.reason), { timeout: 45_000 }).toEqual(['hidden']);
     expect((await reportsOf(page))[0]!.visibility.map((e) => e.state)).toContain('hidden');
   } finally {
     await tv.close();
