@@ -5,6 +5,8 @@ the format follows [Keep a Changelog](https://keepachangelog.com).
 
 ## Unreleased
 
+## 0.12.1 – 2026-11-18
+
 ### Fixed
 
 - An app opened on a Google TV within 30 seconds after the dashboard
