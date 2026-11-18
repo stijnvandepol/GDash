@@ -211,12 +211,12 @@ A change is done when every line is true:
 Fill this in per repository. It is the one section an agent cannot infer, and the one most often left empty. Fill it in before anything else in this file matters.
 
 ```
-Stack:            Go 1.26.9+, standard library first (x/net, x/crypto for argon2id, modernc.org/sqlite). Svelte 5,
+Stack:            Go 1.26.11+, standard library first (x/net, x/crypto for argon2id, modernc.org/sqlite). Svelte 5,
                   TypeScript 6, Vite 8 in web/. All UI text, docs and code are in English.
 Run locally:      cd web && npm run build && cd .. && go run ./cmd/gdash
 Run tests:        go test ./... (CI adds -race, which needs cgo) && (cd web && npm test)
 Lint / format:    gofmt -l . && go vet ./... && go run honnef.co/go/tools/cmd/staticcheck@v0.8.1 ./... && (cd web && npm run check)
-Security scan:    go run golang.org/x/vuln/cmd/govulncheck@v1.8.0 ./... && (cd web && npm audit --audit-level=high)
+Security scan:    go run golang.org/x/vuln/cmd/govulncheck@v1.8.0 ./... && (cd web && npm run audit)
                   go run github.com/zricethezav/gitleaks/v8@v8.30.1 git --config .gitleaks.toml .  (whole history)
 Build:            (cd web && npm ci && npm run build) && go build ./cmd/gdash, or docker build .
 CI:               .github/workflows/ci.yml runs all of the above on every push.

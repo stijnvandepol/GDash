@@ -14,8 +14,8 @@ RUN npm ci
 COPY web/ ./
 RUN npm run build
 
-# golang:1.26-alpine (Go 1.26.9, the version go.mod asks for)
-FROM --platform=$BUILDPLATFORM golang:1.26-alpine@sha256:c95332c2af86b6d89b91bd0500f4b9529ccbd090a0d1855c6d1ceaa142ae8615 AS server
+# golang:1.26-alpine (Go 1.26.11, the version go.mod asks for)
+FROM --platform=$BUILDPLATFORM golang:1.26-alpine@sha256:ecb67f987aa1a57794c91d19ade7ae0209f2f0f5496aaef9e6ae85ddf92d02ab AS server
 WORKDIR /src
 COPY go.mod go.sum ./
 RUN go mod download
