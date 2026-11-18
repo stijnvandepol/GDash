@@ -5,6 +5,14 @@ the format follows [Keep a Changelog](https://keepachangelog.com).
 
 ## Unreleased
 
+## 0.12.2 – 2026-11-18
+
+### Security
+
+- GDash is built with Go 1.26.11, which fixes two flaws in Go's standard
+  library that GDash's code reaches: one in `net/http` (GO-2026-6859) and
+  one in how `crypto/x509` checks certificates (GO-2026-6809).
+
 ## 0.12.1 – 2026-11-18
 
 ### Fixed

@@ -80,6 +80,8 @@ for setup on an empty data directory and served the web interface.
 
 **0.11.0** was tagged on 6 November 2026: when a screen is on is a list of times with their own days (several on one day too), with a sentence that says what is set, and the "another dashboard" slots kept apart; a review round fixed repeating all-day appointments around the clock change, RDATE-only appointments, a Cast keeper that could wait for good or reconnect endlessly on a page too large, shutdown order, and smaller things. 89 Playwright tests passed.
 
+**0.12.2** was tagged on 18 November 2026: GDash is built with Go 1.26.11, which fixes two flaws in Go's standard library that govulncheck found GDash's code to reach (GO-2026-6859 in net/http, GO-2026-6809 in crypto/x509). CI's npm audit now runs through `web/scripts/audit.mjs`, which accepts advisories listed there with a reason: picomatch's ReDoS advisory has no fixed version and only touches build tools. 89 Playwright tests passed.
+
 **0.12.1** was tagged on 18 November 2026: an app opened on a Google TV within 30 seconds after the dashboard started no longer gets the dashboard put over it by the next restart against the screensaver; the page now reports that it is hidden once the server no longer takes that report for the previous page. 89 Playwright tests passed.
 
 **0.12.0** was tagged on 10 November 2026: the ANWB's fuel prices and traffic info, which GDash reads through endpoints the ANWB does not offer for reuse, are off unless GDash runs with `GDASH_UNOFFICIAL_SOURCES=on`; the traffic requests no longer pretend to come from the ANWB's website; the dashboard and preview pages have the GDash icon. 89 Playwright tests passed.
